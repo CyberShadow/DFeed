@@ -3,6 +3,8 @@ module WebPoller;
 import Team15.Timing;
 import Team15.ASockets;
 
+import std.stdio;
+
 class WebPoller(Post)
 {
 	this(int pollPeriod)
@@ -23,15 +25,20 @@ private:
 
 	void run()
 	{
-		auto posts = getPosts();
-		if (oldPosts !is null)
+		try
 		{
-			foreach (id, q; posts)
-				if (!(id in oldPosts))
-					if (handleNotify)
-						handleNotify(q.toString());
+			auto posts = getPosts();
+			if (oldPosts !is null)
+			{
+				foreach (id, q; posts)
+					if (!(id in oldPosts))
+						if (handleNotify)
+							handleNotify(q.toString());
+			}
+			oldPosts = posts;
 		}
-		oldPosts = posts;
+		catch (Object o)
+			writefln("WebPoller error: %s", o.toString());
 		setTimeout(&run, pollPeriod);
 	}
 
