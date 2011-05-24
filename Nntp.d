@@ -8,7 +8,7 @@ import Team15.Timing;
 import Team15.Utils;
 import Team15.Logging;
 
-const POLL_PERIOD = 5*TicksPerSecond;
+const POLL_PERIOD = 2*TicksPerSecond;
 
 class NntpClient
 {
@@ -79,6 +79,7 @@ private:
 				foreach (message; messages)
 					send("HEAD " ~ message);
 				int queued = messages.length;
+				log(format("* Waiting for %d messages", queued));
 				if (queued==0)
 					setTimeout(&poll, POLL_PERIOD);
 				break;
@@ -89,6 +90,7 @@ private:
 				if (handleMessage)
 					handleMessage(message);
 				queued--;
+				log(format("* Waiting for %d more messages", queued));
 				if (queued==0)
 					setTimeout(&poll, POLL_PERIOD);
 				break;

@@ -7,7 +7,7 @@ import Team15.Utils;
 string summarizeMessage(string lines)
 {
 	string[string] headers;
-	lines = lines.replace("\r\n", "\n").replace("\n ", " ");
+	lines = lines.replace("\r\n", "\n").replace("\n\t", " ").replace("\n ", " ");
 	foreach (s; splitlines(lines))
 	{
 		int p = s.find(": ");
