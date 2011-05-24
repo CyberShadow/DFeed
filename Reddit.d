@@ -28,7 +28,7 @@ class Reddit : WebPoller.WebPoller!(Post)
 {
 	this(string subreddit, RegExp filter)
 	{
-		super(POLL_PERIOD);
+		super("Reddit", POLL_PERIOD);
 		this.subreddit = subreddit;
 		this.filter = filter;
 	}

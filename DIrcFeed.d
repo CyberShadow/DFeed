@@ -1,6 +1,5 @@
 module DIrcFeed;
 
-import std.stdio;
 import std.string;
 import std.file;
 import std.conv;
@@ -9,6 +8,7 @@ import std.regexp;
 import Team15.ASockets;
 import Team15.IrcClient;
 import Team15.Logging;
+import Team15.CommandLine;
 import Team15.Timing;
 
 import Rfc850;
@@ -28,15 +28,25 @@ private:
 	IrcClient conn;
 	LineBufferedServerSocket server;
 	LineBufferedSocket[] clients;
+	Logger log, relayLog;
+
+	void addNotifier(T)(T notifier)
+	{
+		notifier.handleNotify = &sendToIrc;
+		notifier.start();
+	}
 
 public:
 	this()
 	{
+		log = createLogger("IRC");
+		relayLog = createLogger("Relay");
+
 		conn = new IrcClient();
 		conn.handleConnect = &onConnect;
 		conn.handleDisconnect = &onDisconnect;
 		conn.handleRaw = &onRaw;
-		writefln("Connecting to IRC...");
+		log("Connecting to IRC...");
 		connect();
 
 		auto client = new NntpClient();
@@ -48,25 +58,13 @@ public:
 		server.handleAccept = &onAccept;
 		server.listen(toUshort(serverConfig[1]), serverConfig[0]);
 
-		auto so = new StackOverflow("d");
-		so.handleNotify = &sendToIrc;
-		so.start();
-
-		auto planetd = new Feed("Planet D", "http://feeds.feedburner.com/dplanet");
-		planetd.handleNotify = &sendToIrc;
-		planetd.start();
-
-		auto wp = new Feed("Wikipedia", "http://en.wikipedia.org/w/api.php?action=feedwatchlist&allrev=allrev&hours=1&"~cast(string)read("data/wikipedia.txt")~"&feedformat=atom", "edited");
-		wp.handleNotify = &sendToIrc;
-		wp.start();
-
-		auto github = new Feed("GitHub", "https://github.com/"~cast(string)read("data/github.txt"), null);
-		github.handleNotify = &sendToIrc;
-		github.start();
-
-		auto reddit = new Reddit("programming", new RegExp(`(^|[^\w\d\-:*=])D([^\w\-:*=]|$)`));
-		reddit.handleNotify = &sendToIrc;
-		reddit.start();
+		addNotifier(new StackOverflow("d"));
+		addNotifier(new Feed("Planet D", "http://feeds.feedburner.com/dplanet"));
+		addNotifier(new Feed("Wikipedia", "http://en.wikipedia.org/w/api.php?action=feedwatchlist&allrev=allrev&hours=1&"~cast(string)read("data/wikipedia.txt")~"&feedformat=atom", "edited"));
+		addNotifier(new Feed("GitHub", "https://github.com/"~cast(string)read("data/github.txt"), null));
+		addNotifier(new Reddit("programming", new RegExp(`(^|[^\w\d\-:*=])D([^\w\-:*=]|$)`)));
+		addNotifier(new Feed("Twitter", "http://twitter.com/statuses/user_timeline/18061210.atom", null));
+		addNotifier(new Feed("Twitter", "http://twitter.com/statuses/user_timeline/155425162.atom", null));
 	}
 
 	void connect()
@@ -81,7 +79,7 @@ public:
 
 	void onDisconnect(IrcClient sender, string reason, DisconnectType type)
 	{
-		writefln("IRC connection lost (%s)", reason);
+		log(format("IRC connection lost (%s)", reason));
 		setTimeout(&connect, 10*TicksPerSecond);
 	}
 
@@ -93,6 +91,7 @@ public:
 
 	void onAccept(LineBufferedSocket incoming)
 	{
+		relayLog("* New connection");
 		incoming.delimiter = "\n";
 		incoming.handleDisconnect = &onRelayDisconnect;
 		incoming.handleReadLine = &onRelayLine;
@@ -101,16 +100,19 @@ public:
 
 	void onRelayLine(LineBufferedSocket s, string line)
 	{
+		relayLog("> " ~ line);
 		sendToIrc(line);
 	}
 
 	void sendToIrc(string s)
 	{
+		log("< " ~ s);
 		conn.sendRaw("PRIVMSG " ~ CHANNEL ~ " :" ~ s);
 	}
 
 	void onRelayDisconnect(ClientSocket s, string reason, DisconnectType type)
 	{
+		relayLog("* Disconnected");
 		foreach (i, client; clients)
 			if (client is s)
 			{
@@ -125,8 +127,9 @@ public:
 	}
 }
 
-void main()
+void main(string[] args)
 {
+	parseCommandLine(args);
 	new DIrcFeed();
 	socketManager.loop();
 }

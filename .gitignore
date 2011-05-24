@@ -1,0 +1,16 @@
+# Temporary files
+*.exe
+*.o
+*.obj
+*.def
+!ws2_32x.def
+*.ksp
+*.pdb
+*.rsp
+*.map
+*.mem
+*.suo
+
+# Logs and configuration
+/data/
+/logs/

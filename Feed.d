@@ -32,7 +32,7 @@ class Feed : WebPoller.WebPoller!(Post)
 {
 	this(string name, string url, string action = "posted")
 	{
-		super(POLL_PERIOD);
+		super(name, POLL_PERIOD);
 		this.name = name;
 		this.url = url;
 		this.action = action;

@@ -7,6 +7,7 @@ import Team15.ASockets;
 import Team15.Timing;
 import Team15.Utils;
 import Team15.Logging;
+import Team15.CommandLine;
 
 const POLL_PERIOD = 2*TicksPerSecond;
 
@@ -116,7 +117,7 @@ private:
 public:
 	void connect(string server)
 	{
-		log = new FileLogger("NNTP");
+		log = createLogger("NNTP");
 
 		this.server = server;
 
@@ -129,7 +130,4 @@ public:
 	void delegate(string[] head) handleMessage;
 }
 
-static this()
-{
-	logFormatVersion = 1;
-}
+static this() { logFormatVersion = 1; }

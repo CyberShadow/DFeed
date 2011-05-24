@@ -27,7 +27,7 @@ class StackOverflow : WebPoller.WebPoller!(Question)
 {
 	this(string tags)
 	{
-		super(POLL_PERIOD);
+		super("StackOverflow", POLL_PERIOD);
 		this.tags = tags;
 	}
 
