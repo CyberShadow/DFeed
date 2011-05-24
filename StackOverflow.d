@@ -1,6 +1,7 @@
 module StackOverflow;
 
 import std.string;
+import std.file;
 
 import WebPoller;
 
@@ -64,7 +65,9 @@ protected:
 			JsonQuestion[] questions;
 		}
 
-		auto data = jsonParse!(JsonQuestions)(download("http://api.stackoverflow.com/1.1/questions?pagesize=10&tagged=" ~ tags, " | gzip -d"));
+		auto json = download("http://api.stackoverflow.com/1.1/questions?pagesize=10&tagged=" ~ tags ~ (exists("data/stackoverflow.txt") ? "&key=" ~ cast(string)read("data/stackoverflow.txt") : ""), " | gzip -d");
+		scope(failure) std.file.write("so-error.txt", json);
+		auto data = jsonParse!(JsonQuestions)(json);
 		Question[string] r;
 
 		foreach (q; data.questions)
