@@ -20,6 +20,7 @@ private:
 	int queued;
 	string lastTime;
 	Logger log;
+	bool[string] oldMessages;
 
 	void reconnect()
 	{
@@ -75,11 +76,18 @@ private:
 			}
 			case "230":
 			{
-				auto messages = reply[1..$];
-				foreach (message; messages)
-					send("HEAD " ~ message);
-				int queued = messages.length;
-				log(format("* Waiting for %d messages", queued));
+				bool[string] messages;
+				foreach (message; reply[1..$])
+					messages[message] = true;
+
+				assert(queued == 0);
+				foreach (message, b; messages)
+					if (!(message in oldMessages))
+					{
+						send("HEAD " ~ message);
+						queued++;
+					}
+				oldMessages = messages;
 				if (queued==0)
 					setTimeout(&poll, POLL_PERIOD);
 				break;
@@ -90,7 +98,6 @@ private:
 				if (handleMessage)
 					handleMessage(message);
 				queued--;
-				log(format("* Waiting for %d more messages", queued));
 				if (queued==0)
 					setTimeout(&poll, POLL_PERIOD);
 				break;
