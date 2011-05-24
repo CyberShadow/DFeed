@@ -6,6 +6,7 @@ import std.string;
 import Team15.ASockets;
 import Team15.Timing;
 import Team15.Utils;
+import Team15.Logging;
 
 const POLL_PERIOD = 5*TicksPerSecond;
 
@@ -18,6 +19,7 @@ private:
 	string server;
 	int queued;
 	string lastTime;
+	Logger log;
 
 	void reconnect()
 	{
@@ -28,12 +30,13 @@ private:
 
 	void onDisconnect(ClientSocket sender, string reason, DisconnectType type)
 	{
+		log("* Disconnected (" ~ reason ~ ")");
 		setTimeout(&reconnect, 10*TicksPerSecond);
 	}
 
 	void onReadLine(LineBufferedSocket s, string line)
 	{
-		debug(NNTP) std.stdio.writefln("> %s", line);
+		log("> " ~ line);
 
 		if (line == ".")
 		{
@@ -49,7 +52,7 @@ private:
 
 	void send(string line)
 	{
-		debug(NNTP) std.stdio.writefln("< %s", line);
+		log("< " ~ line);
 		conn.send(line);
 	}
 
@@ -104,6 +107,8 @@ private:
 public:
 	void connect(string server)
 	{
+		log = new FileLogger("NNTP");
+
 		this.server = server;
 
 		conn = new LineBufferedSocket(60*TicksPerSecond);
@@ -113,4 +118,9 @@ public:
 	}
 
 	void delegate(string[] head) handleMessage;
+}
+
+static this()
+{
+	logFormatVersion = 1;
 }
