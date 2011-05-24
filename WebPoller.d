@@ -34,7 +34,7 @@ private:
 		try
 		{
 			auto posts = getPosts();
-			log(format("Got %d posts"));
+			log(format("Got %d posts", posts.length));
 			if (oldPosts !is null)
 			{
 				foreach (id, q; posts)

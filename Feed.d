@@ -50,7 +50,7 @@ protected:
 
 		foreach (e; feed)
 			if (e.tag == "entry")
-				r[e["updated"].text ~ e["id"].text] = Post(e["title"].text, e["author"]["name"].text, e["link"].attributes["href"], name, action);
+				r[e["id"].text ~ " / " ~ e["updated"].text] = Post(e["title"].text, e["author"]["name"].text, e["link"].attributes["href"], name, action);
 
 		return r;
 	}
