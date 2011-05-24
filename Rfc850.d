@@ -30,6 +30,14 @@ string summarizeMessage(string lines)
 		author = strip(author[1..$-1]);
 
 	auto where = "Newsgroups" in headers ? headers["Newsgroups"] : "<unknown>";
+
+	if ("List-Id" in headers && subject.startsWith(`"[`) && where == "<unknown>")
+	{
+		auto p = subject.find("] ");
+		where = subject[2..p];
+		subject = subject[0..1] ~ subject[p+2..$];
+	}
+
 	if (where.startsWith("digitalmars."))
 		where = "dm." ~ where[12..$];
 
@@ -44,6 +52,15 @@ string summarizeMessage(string lines)
 		auto ng = xref[0];
 		auto id = xref[1];
 		auto link = format("http://www.digitalmars.com/pnews/read.php?server=news.digitalmars.com&group=%s&artnum=%s", ng, id);
+		link = shortenURL(link);
+		summary ~= ": " ~ link;
+	}
+	else
+	if ("List-Id" in headers && "Message-ID" in headers)
+	{
+		auto id = headers["Message-ID"];
+		assert(id.startsWith("<") && id.endsWith(">"));
+		auto link = "http://mid.gmane.org/" ~ id[1..$-1];
 		link = shortenURL(link);
 		summary ~= ": " ~ link;
 	}
