@@ -49,7 +49,10 @@ private:
 		}
 		catch (Object o)
 			log(format("WebPoller error: %s", o.toString()));
-		setTimeout(&run, pollPeriod + (rand()%30-15) * TicksPerSecond);
+
+		auto delay = pollPeriod + (rand()%10-5) * TicksPerSecond;
+		log(format("Next poll in %d seconds", delay/TicksPerSecond));
+		setTimeout(&run, delay);
 	}
 
 protected:
