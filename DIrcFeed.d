@@ -4,6 +4,7 @@ import std.stdio;
 import std.string;
 import std.file;
 import std.conv;
+import std.regexp;
 
 import Team15.ASockets;
 import Team15.IrcClient;
@@ -14,6 +15,7 @@ import Rfc850;
 import Nntp;
 import StackOverflow;
 import Feed;
+import Reddit;
 
 alias GenericServerSocket!(LineBufferedSocket) LineBufferedServerSocket;
 
@@ -61,6 +63,10 @@ public:
 		auto github = new Feed("GitHub", "https://github.com/"~cast(string)read("data/github.txt"), null);
 		github.handleNotify = &sendToIrc;
 		github.start();
+
+		auto reddit = new Reddit("programming", new RegExp(`(^|[^\w\d\-:*=])D([^\w\-:*=]|$)`));
+		reddit.handleNotify = &sendToIrc;
+		reddit.start();
 	}
 
 	void connect()
