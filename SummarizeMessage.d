@@ -1,3 +1,5 @@
+module SummarizeMessage;
+
 import std.stdio;
 import std.string;
 

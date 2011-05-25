@@ -27,6 +27,7 @@ private:
 	{
 		queued = 0;
 		lastTime = null;
+		reply = null;
 		conn.connect(server, 119);
 	}
 
