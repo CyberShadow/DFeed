@@ -20,14 +20,14 @@ string summarizeMessage(string lines)
 	auto subject = "Subject" in headers ? headers["Subject"] : "";
 	if (subject.startsWith("Re: "))
 		subject = subject[4..$];
-	subject = subject.length ? `"` ~ subject ~ `"` : "<no subject>";
+	subject = subject.length ? `"` ~ demunge(subject) ~ `"` : "<no subject>";
 	auto author = "From" in headers ? headers["From"] : "<no sender>";
 	if ("X-Bugzilla-Who" in headers)
 		author = headers["X-Bugzilla-Who"];
 	if (author.find('<')>0)
-		author = strip(author[0..author.find('<')]);
+		author = demunge(strip(author[0..author.find('<')]));
 	if (author.length>2 && author[0]=='"' && author[$-1]=='"')
-		author = strip(author[1..$-1]);
+		author = demunge(strip(author[1..$-1]));
 
 	auto where = "Newsgroups" in headers ? headers["Newsgroups"] : "<unknown>";
 
@@ -69,4 +69,51 @@ string summarizeMessage(string lines)
 		fields ~= "news://news.digitalmars.com/" ~ headers["Message-ID"][1..$-1];*/
 
 	return summary;
+}
+
+static import std.base64;
+
+string demunge(string str)
+{
+	if (str.startsWith("=?") && str.endsWith("?=") && str.length>4)
+	{
+		string s = str[2..$-2];
+
+		int p = s.find('?');
+		if (p<=0) return str;
+		auto textEncoding = s[0..p];
+		s = s[p+1..$];
+
+		p = s.find('?');
+		if (p<=0) return str;
+		auto contentEncoding = s[0..p];
+		s = s[p+1..$];
+
+		switch (contentEncoding)
+		{
+		case "Q":
+			s = quotedPrintableDecode(s);
+			break;
+		case "B":
+			s = std.base64.decode(s);
+			break;
+		default:
+			return str;
+		}
+
+		return iconv(s, textEncoding);
+	}
+	else
+		return str;
+}
+
+string quotedPrintableDecode(string s)
+{
+	string r;
+	for (int i=0; i<s.length; )
+		if (s[i]=='=')
+			r ~= fromHex(s[i+1..i+3]), i+=3;
+		else
+			r ~= s[i++];
+	return r;
 }
