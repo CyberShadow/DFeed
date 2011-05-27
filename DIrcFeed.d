@@ -22,7 +22,8 @@ alias GenericServerSocket!(LineBufferedSocket) LineBufferedServerSocket;
 const CHANNEL = "#d";
 const CHANNEL2 = "#d.feed";
 const NICK = "DFeed";
-const FORMAT = "PRIVMSG %s :\x01ACTION %s\x01";
+//const FORMAT = "PRIVMSG %s :\x01ACTION %s\x01";
+const FORMAT = "PRIVMSG %s :\x01ACTION \x0314%s\x01";
 
 class DIrcFeed
 {
