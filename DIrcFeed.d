@@ -107,7 +107,7 @@ public:
 	void sendToIrc(string s)
 	{
 		log("< " ~ s);
-		conn.sendRaw("PRIVMSG " ~ CHANNEL ~ " :" ~ s);
+		conn.sendRaw("PRIVMSG " ~ CHANNEL ~ " :\x0314" ~ s);
 	}
 
 	void onRelayDisconnect(ClientSocket s, string reason, DisconnectType type)
