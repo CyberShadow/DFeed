@@ -13,25 +13,25 @@ string summarizeMessage(string lines)
 		int p = s.find(": ");
 		if (p<0) continue;
 		//assert(p>0, "Bad header line: " ~ s);
-		headers[s[0..p]] = s[p+2..$];
+		headers[toupper(s[0..p])] = s[p+2..$];
 	}
 
-	bool reply = "References" in headers ? true : false;
-	auto subject = "Subject" in headers ? headers["Subject"] : "";
+	bool reply = "REFERENCES" in headers ? true : false;
+	auto subject = "SUBJECT" in headers ? headers["SUBJECT"] : "";
 	if (subject.startsWith("Re: "))
 		subject = subject[4..$];
 	subject = subject.length ? `"` ~ demunge(subject) ~ `"` : "<no subject>";
-	auto author = "From" in headers ? headers["From"] : "<no sender>";
-	if ("X-Bugzilla-Who" in headers)
-		author = headers["X-Bugzilla-Who"];
+	auto author = "FROM" in headers ? headers["FROM"] : "<no sender>";
+	if ("X-BUGZILLA-WHO" in headers)
+		author = headers["X-BUGZILLA-WHO"];
 	if (author.find('<')>0)
 		author = demunge(strip(author[0..author.find('<')]));
 	if (author.length>2 && author[0]=='"' && author[$-1]=='"')
 		author = demunge(strip(author[1..$-1]));
 
-	auto where = "Newsgroups" in headers ? headers["Newsgroups"] : "<unknown>";
+	auto where = "NEWSGROUPS" in headers ? headers["NEWSGROUPS"] : "<unknown>";
 
-	if ("List-Id" in headers && subject.startsWith(`"[`) && where == "<unknown>")
+	if ("LIST-ID" in headers && subject.startsWith(`"[`) && where == "<unknown>")
 	{
 		auto p = subject.find("] ");
 		where = subject[2..p];
@@ -46,9 +46,9 @@ string summarizeMessage(string lines)
 	if (subject.startsWith("\"[Issue "))
 		summary ~= ": " ~ shortenURL("http://d.puremagic.com/issues/show_bug.cgi?id=" ~ subject.split(" ")[1][0..$-1]);
 	else
-	if ("Xref" in headers)
+	if ("XREF" in headers)
 	{
-		auto xref = split(split(headers["Xref"], " ")[1], ":");
+		auto xref = split(split(headers["XREF"], " ")[1], ":");
 		auto ng = xref[0];
 		auto id = xref[1];
 		auto link = format("http://www.digitalmars.com/pnews/read.php?server=news.digitalmars.com&group=%s&artnum=%s", ng, id);
@@ -56,17 +56,17 @@ string summarizeMessage(string lines)
 		summary ~= ": " ~ link;
 	}
 	else
-	if ("List-Id" in headers && "Message-ID" in headers)
+	if ("LIST-ID" in headers && "MESSAGE-ID" in headers)
 	{
-		auto id = headers["Message-ID"];
+		auto id = headers["MESSAGE-ID"];
 		assert(id.startsWith("<") && id.endsWith(">"));
 		auto link = "http://mid.gmane.org/" ~ id[1..$-1];
 		link = shortenURL(link);
 		summary ~= ": " ~ link;
 	}
 
-	/*if ("Message-ID" in headers)
-		fields ~= "news://news.digitalmars.com/" ~ headers["Message-ID"][1..$-1];*/
+	/*if ("MESSAGE-ID" in headers)
+		fields ~= "news://news.digitalmars.com/" ~ headers["MESSAGE-ID"][1..$-1];*/
 
 	return summary;
 }
