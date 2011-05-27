@@ -104,7 +104,7 @@ public:
 	void onRelayLine(LineBufferedSocket s, string line)
 	{
 		relayLog("> " ~ line);
-		sendToIrc(line, true);
+		sendToIrc(line, isMLMessageImportant(line));
 	}
 
 	void sendToIrc(string s, bool important)
@@ -129,15 +129,23 @@ public:
 	void onNntpMessage(string[] lines)
 	{
 		auto summary = summarizeMessage(lines.join("\n"));
-		sendToIrc(summary, isImportant(summary));
+		sendToIrc(summary, isNGMessageImportant(summary));
 	}
 
-	static bool isImportant(string s)
+	static bool isNGMessageImportant(string s)
 	{
 		if (s.startsWith("[dm.D]") || s.startsWith("[dm.D.learn]"))
 			return s.contains(" posted \"")
 				|| s.contains("Walter Bright")
 				|| s.contains("Andrei Alexandrescu");
+		else
+			return true;
+	}
+
+	static bool isMLMessageImportant(string s)
+	{
+		if (s.contains("noreply@github.com posted"))
+			return false;
 		else
 			return true;
 	}
