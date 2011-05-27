@@ -21,7 +21,7 @@ class WebPoller(Post)
 		run();
 	}
 
-	void delegate(string) handleNotify;
+	void delegate(string, bool) handleNotify;
 
 private:
 	int pollPeriod;
@@ -42,7 +42,7 @@ private:
 					{
 						log(format("Announcing %s", id));
 						if (handleNotify)
-							handleNotify(q.toString());
+							handleNotify(q.toString(), true);
 					}
 			}
 			oldPosts = posts;

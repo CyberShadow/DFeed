@@ -20,7 +20,9 @@ import Reddit;
 alias GenericServerSocket!(LineBufferedSocket) LineBufferedServerSocket;
 
 const CHANNEL = "#d";
+const CHANNEL2 = "#d.feed";
 const NICK = "DFeed";
+const FORMAT = "PRIVMSG %s :\x01ACTION %s\x01";
 
 class DIrcFeed
 {
@@ -75,6 +77,7 @@ public:
 	void onConnect(IrcClient sender)
 	{
 		conn.join(CHANNEL);
+		conn.join(CHANNEL2);
 	}
 
 	void onDisconnect(IrcClient sender, string reason, DisconnectType type)
@@ -101,13 +104,15 @@ public:
 	void onRelayLine(LineBufferedSocket s, string line)
 	{
 		relayLog("> " ~ line);
-		sendToIrc(line);
+		sendToIrc(line, true);
 	}
 
-	void sendToIrc(string s)
+	void sendToIrc(string s, bool important)
 	{
 		log("< " ~ s);
-		conn.sendRaw("PRIVMSG " ~ CHANNEL ~ " :\x0314" ~ s);
+		if (important)
+			conn.sendRaw(format(FORMAT, CHANNEL, s));
+		conn.sendRaw(format(FORMAT, CHANNEL2, s));
 	}
 
 	void onRelayDisconnect(ClientSocket s, string reason, DisconnectType type)
@@ -123,7 +128,18 @@ public:
 
 	void onNntpMessage(string[] lines)
 	{
-		sendToIrc(summarizeMessage(lines.join("\n")));
+		auto summary = summarizeMessage(lines.join("\n"));
+		sendToIrc(summary, isImportant(summary));
+	}
+
+	static bool isImportant(string s)
+	{
+		if (s.startsWith("[dm.D]") || s.startsWith("[dm.D.learn]"))
+			return s.contains(" posted \"")
+				|| s.contains("Walter Bright")
+				|| s.contains("Andrei Alexandrescu");
+		else
+			return true;
 	}
 }
 
