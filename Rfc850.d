@@ -6,8 +6,8 @@ import Team15.Utils;
 
 string summarizeMessage(string lines)
 {
-	string[string] headers;
 	lines = lines.replace("\r\n", "\n").replace("\n\t", " ").replace("\n ", " ");
+	string[string] headers;
 	foreach (s; splitlines(lines))
 	{
 		int p = s.find(": ");
@@ -17,17 +17,17 @@ string summarizeMessage(string lines)
 	}
 
 	bool reply = "REFERENCES" in headers ? true : false;
-	auto subject = "SUBJECT" in headers ? headers["SUBJECT"] : "";
+	auto subject = "SUBJECT" in headers ? decodeRfc5335(headers["SUBJECT"]) : "";
 	if (subject.startsWith("Re: "))
 		subject = subject[4..$];
-	subject = subject.length ? `"` ~ demunge(subject) ~ `"` : "<no subject>";
+	subject = subject.length ? `"` ~ subject ~ `"` : "<no subject>";
 	auto author = "FROM" in headers ? headers["FROM"] : "<no sender>";
 	if ("X-BUGZILLA-WHO" in headers)
 		author = headers["X-BUGZILLA-WHO"];
 	if (author.find('<')>0)
-		author = demunge(strip(author[0..author.find('<')]));
+		author = decodeRfc5335(strip(author[0..author.find('<')]));
 	if (author.length>2 && author[0]=='"' && author[$-1]=='"')
-		author = demunge(strip(author[1..$-1]));
+		author = decodeRfc5335(strip(author[1..$-1]));
 
 	auto where = "NEWSGROUPS" in headers ? headers["NEWSGROUPS"] : "<unknown>";
 
@@ -71,13 +71,15 @@ string summarizeMessage(string lines)
 	return summary;
 }
 
-static import std.base64;
+import std.base64 : decodeBase64 = decode;
 
-string demunge(string str)
+string decodeRfc5335(string str)
 {
-	if (str.startsWith("=?") && str.endsWith("?=") && str.length>4)
+	str = str.replace("?= =?", "?==?");
+	int start, end;
+	while ((start=str.find("=?"))>=0 && (end=str.find("?="))>=0 && str.length>4)
 	{
-		string s = str[2..$-2];
+		string s = str[start+2..end];
 
 		int p = s.find('?');
 		if (p<=0) return str;
@@ -92,27 +94,29 @@ string demunge(string str)
 		switch (contentEncoding)
 		{
 		case "Q":
-			s = quotedPrintableDecode(s);
+			s = decodeQuotedPrintable(s);
 			break;
 		case "B":
-			s = std.base64.decode(s);
+			s = decodeBase64(s);
 			break;
 		default:
 			return str;
 		}
 
-		return iconv(s, textEncoding);
+		str = str[0..start] ~ iconv(s, textEncoding) ~ str[end+2..$];
 	}
-	else
-		return str;
+	return str;
 }
 
-string quotedPrintableDecode(string s)
+string decodeQuotedPrintable(string s)
 {
 	string r;
 	for (int i=0; i<s.length; )
 		if (s[i]=='=')
 			r ~= fromHex(s[i+1..i+3]), i+=3;
+		else
+		if (s[i]=='_')
+			r ~= ' ', i++;
 		else
 			r ~= s[i++];
 	return r;
