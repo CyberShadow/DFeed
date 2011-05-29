@@ -8,12 +8,12 @@ import Rfc850;
 void main()
 {
 	string s;
-	string[] lines;
+	string lines;
 	while ((s=readln())!is null)
 		if (strip(s) == "")
 			break;
 		else
-			lines ~= strip(s);
+			lines ~= s;
 
-	writefln("%s", summarizeMessage(lines.join("\n")));
+	writefln("%s", summarizeMessage(lines));
 }
