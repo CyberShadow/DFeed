@@ -17,20 +17,32 @@ import StackOverflow;
 import Feed;
 import Reddit;
 
-alias GenericServerSocket!(LineBufferedSocket) LineBufferedServerSocket;
+class RelaySocket : ClientSocket
+{
+	string data;
 
-const CHANNEL = "#d";
-const CHANNEL2 = "#d.feed";
-const NICK = "DFeed";
+	this(Socket conn) { super(conn); }
+}
+
+alias GenericServerSocket!(RelaySocket) RelayServerSocket;
+
+debug const
+	CHANNEL = "#d.test",
+	CHANNEL2 = "#d.feed.test",
+	NICK = "DFeed\\Test";
+else const
+	CHANNEL = "#d",
+	CHANNEL2 = "#d.feed",
+	NICK = "DFeed";
+
 //const FORMAT = "PRIVMSG %s :\x01ACTION %s\x01";
 const FORMAT = "PRIVMSG %s :\x01ACTION \x0314%s\x01";
 
-class DIrcFeed
+final class DIrcFeed
 {
 private:
 	IrcClient conn;
-	LineBufferedServerSocket server;
-	LineBufferedSocket[] clients;
+	RelayServerSocket server;
 	Logger log, relayLog;
 
 	void addNotifier(T)(T notifier)
@@ -48,7 +60,6 @@ public:
 		conn = new IrcClient();
 		conn.handleConnect = &onConnect;
 		conn.handleDisconnect = &onDisconnect;
-		conn.handleRaw = &onRaw;
 		log("Connecting to IRC...");
 		connect();
 
@@ -57,7 +68,7 @@ public:
 		client.connect("news.digitalmars.com");
 
 		auto serverConfig = splitlines(cast(string)read("data/dircfeed.txt"));
-		server = new LineBufferedServerSocket();
+		server = new RelayServerSocket();
 		server.handleAccept = &onAccept;
 		server.listen(toUshort(serverConfig[1]), serverConfig[0]);
 
@@ -87,25 +98,17 @@ public:
 		setTimeout(&connect, 10*TicksPerSecond);
 	}
 
-	void onRaw(IrcClient sender, ref string s)
-	{
-		foreach (client; clients)
-			client.send(s);
-	}
-
-	void onAccept(LineBufferedSocket incoming)
+	void onAccept(RelaySocket incoming)
 	{
 		relayLog("* New connection");
-		incoming.delimiter = "\n";
 		incoming.handleDisconnect = &onRelayDisconnect;
-		incoming.handleReadLine = &onRelayLine;
-		clients ~= incoming;
+		incoming.handleReadData = &onRelayData;
 	}
 
-	void onRelayLine(LineBufferedSocket s, string line)
+	void onRelayData(ClientSocket sender, void[] data)
 	{
-		relayLog("> " ~ line);
-		sendToIrc(line, isMLMessageImportant(line));
+		auto relay = cast(RelaySocket)sender;
+		relay.data ~= cast(string)data;
 	}
 
 	void sendToIrc(string s, bool important)
@@ -116,15 +119,14 @@ public:
 		conn.sendRaw(format(FORMAT, CHANNEL2, s));
 	}
 
-	void onRelayDisconnect(ClientSocket s, string reason, DisconnectType type)
+	void onRelayDisconnect(ClientSocket sender, string reason, DisconnectType type)
 	{
+		auto relay = cast(RelaySocket)sender;
+		foreach (line; splitlines(relay.data))
+			relayLog("> " ~ line);
 		relayLog("* Disconnected");
-		foreach (i, client; clients)
-			if (client is s)
-			{
-				clients = clients[0..i] ~ clients[i+1..$];
-				return;
-			}
+		auto summary = summarizeMessage(relay.data);
+		sendToIrc(summary, isMLMessageImportant(summary));
 	}
 
 	void onNntpMessage(string[] lines)
