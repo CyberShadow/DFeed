@@ -38,6 +38,9 @@ else const
 //const FORMAT = "PRIVMSG %s :\x01ACTION %s\x01";
 const FORMAT = "PRIVMSG %s :\x01ACTION \x0314%s\x01";
 
+const string[] VIP_ONLY = ["digitalmars.D", "digitalmars.D.learn"];
+const string[] VIPs = ["Walter Bright", "Andrei Alexandrescu", "Sean Kelly", "Don", "dsimcha"];
+
 final class DIrcFeed
 {
 private:
@@ -125,32 +128,44 @@ public:
 		foreach (line; splitlines(relay.data))
 			relayLog("> " ~ line);
 		relayLog("* Disconnected");
-		auto summary = summarizeMessage(relay.data);
-		sendToIrc(summary, isMLMessageImportant(summary));
+		auto message = parseMessage(relay.data);
+		sendToIrc(summarizeMessage(message), isMessageImportant(message));
 	}
 
 	void onNntpMessage(string[] lines)
 	{
-		auto summary = summarizeMessage(lines.join("\n"));
-		sendToIrc(summary, isNGMessageImportant(summary));
+		auto message = parseMessage(lines.join("\n"));
+		sendToIrc(summarizeMessage(message), isMessageImportant(message));
 	}
 
-	static bool isNGMessageImportant(string s)
+	static string summarizeMessage(MessageInfo m)
 	{
-		if (s.startsWith("[dm.D]") || s.startsWith("[dm.D.learn]"))
-			return s.contains(" posted \"")
-				|| s.contains("Walter Bright")
-				|| s.contains("Andrei Alexandrescu");
-		else
-			return true;
+		return format("%s%s %s %s%s",
+			m.where is null ? null : (
+				"[" ~ (
+					m.where.startsWith("digitalmars.") ?
+						"dm." ~ m.where[12..$]
+					:
+						m.where
+				) ~ "] "
+			),
+			m.author == "" ? "<no name>" : m.author,
+			m.reply ? "replied to" : "posted",
+			m.subject == "" ? "<no subject>" : `"` ~ m.subject ~ `"`,
+			m.url ? ": " ~ shortenURL(m.url) : ""
+		);
 	}
 
-	static bool isMLMessageImportant(string s)
+	static bool isMessageImportant(MessageInfo m)
 	{
-		if (s.contains("noreply@github.com posted"))
+		// GitHub notifications are already grabbed from RSS
+		if (m.author == "noreply@github.com")
 			return false;
-		else
-			return true;
+
+		if (inArray(VIP_ONLY, m.where))
+			return !m.reply || inArray(VIPs, m.author);
+
+		return true;
 	}
 }
 

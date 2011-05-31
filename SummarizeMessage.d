@@ -15,5 +15,7 @@ void main()
 		else
 			lines ~= s;
 
-	writefln("%s", summarizeMessage(lines));
+	auto m = parseMessage(lines);
+	foreach (i, f; m.tupleof)
+		writefln("%s: %s", m.tupleof[i].stringof, m.tupleof[i]);
 }

@@ -4,7 +4,13 @@ import std.string;
 
 import Team15.Utils;
 
-string summarizeMessage(string lines)
+struct MessageInfo
+{
+	string subject, author, where, url;
+	bool reply;
+}
+
+MessageInfo parseMessage(string lines)
 {
 	lines = lines.replace("\r\n", "\n").replace("\n\t", " ").replace("\n ", " ");
 	string[string] headers;
@@ -16,59 +22,54 @@ string summarizeMessage(string lines)
 		headers[toupper(s[0..p])] = s[p+2..$];
 	}
 
-	bool reply = "REFERENCES" in headers ? true : false;
-	auto subject = "SUBJECT" in headers ? decodeRfc5335(headers["SUBJECT"]) : "";
-	if (subject.startsWith("Re: "))
-		subject = subject[4..$];
-	subject = subject.length ? `"` ~ subject ~ `"` : "<no subject>";
-	auto author = "FROM" in headers ? headers["FROM"] : "<no sender>";
-	if ("X-BUGZILLA-WHO" in headers)
-		author = headers["X-BUGZILLA-WHO"];
-	if (author.find('<')>0)
-		author = decodeRfc5335(strip(author[0..author.find('<')]));
-	if (author.length>2 && author[0]=='"' && author[$-1]=='"')
-		author = decodeRfc5335(strip(author[1..$-1]));
-
-	auto where = "NEWSGROUPS" in headers ? headers["NEWSGROUPS"] : "<unknown>";
-
-	if ("LIST-ID" in headers && subject.startsWith(`"[`) && where == "<unknown>")
+	MessageInfo m;
+	m.reply = "REFERENCES" in headers ? true : false;
+	m.subject = "SUBJECT" in headers ? decodeRfc5335(headers["SUBJECT"]) : null;
+	if (m.subject.startsWith("Re: "))
 	{
-		auto p = subject.find("] ");
-		where = subject[2..p];
-		subject = subject[0..1] ~ subject[p+2..$];
+		m.subject = m.subject[4..$];
+		m.reply = true;
 	}
 
-	if (where.startsWith("digitalmars."))
-		where = "dm." ~ where[12..$];
+	m.author = "FROM" in headers ? headers["FROM"] : null;
+	if ("X-BUGZILLA-WHO" in headers)
+		m.author = headers["X-BUGZILLA-WHO"];
+	if (m.author.find('<')>0)
+		m.author = decodeRfc5335(strip(m.author[0..m.author.find('<')]));
+	if (m.author.length>2 && m.author[0]=='"' && m.author[$-1]=='"')
+		m.author = decodeRfc5335(strip(m.author[1..$-1]));
 
-	auto summary = format("[%s] %s %s %s", where, author, reply ? "replied to" : "posted", subject);
+	m.where = "NEWSGROUPS" in headers ? headers["NEWSGROUPS"] : null;
 
-	if (subject.startsWith("\"[Issue "))
-		summary ~= ": " ~ shortenURL("http://d.puremagic.com/issues/show_bug.cgi?id=" ~ subject.split(" ")[1][0..$-1]);
+	if ("LIST-ID" in headers && m.subject.startsWith("[") && m.where is null)
+	{
+		auto p = m.subject.find("] ");
+		m.where = m.subject[1..p];
+		m.subject = m.subject[p+2..$];
+	}
+
+	if (m.subject.startsWith("[Issue "))
+		m.url = "http://d.puremagic.com/issues/show_bug.cgi?id=" ~ m.subject.split(" ")[1][0..$-1];
 	else
 	if ("XREF" in headers)
 	{
 		auto xref = split(split(headers["XREF"], " ")[1], ":");
 		auto ng = xref[0];
 		auto id = xref[1];
-		auto link = format("http://www.digitalmars.com/pnews/read.php?server=news.digitalmars.com&group=%s&artnum=%s", ng, id);
-		link = shortenURL(link);
-		summary ~= ": " ~ link;
+		m.url = format("http://www.digitalmars.com/pnews/read.php?server=news.digitalmars.com&group=%s&artnum=%s", ng, id);
 	}
 	else
 	if ("LIST-ID" in headers && "MESSAGE-ID" in headers)
 	{
 		auto id = headers["MESSAGE-ID"];
-		assert(id.startsWith("<") && id.endsWith(">"));
-		auto link = "http://mid.gmane.org/" ~ id[1..$-1];
-		link = shortenURL(link);
-		summary ~= ": " ~ link;
+		if (id.startsWith("<") && id.endsWith(">"))
+			m.url = "http://mid.gmane.org/" ~ id[1..$-1];
 	}
 
-	/*if ("MESSAGE-ID" in headers)
-		fields ~= "news://news.digitalmars.com/" ~ headers["MESSAGE-ID"][1..$-1];*/
+	//if ("MESSAGE-ID" in headers)
+	//	m.url = "news://news.digitalmars.com/" ~ headers["MESSAGE-ID"][1..$-1];
 
-	return summary;
+	return m;
 }
 
 import std.base64 : decodeBase64 = decode;
