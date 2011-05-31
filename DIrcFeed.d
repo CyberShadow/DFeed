@@ -83,7 +83,7 @@ public:
 
 	void connect()
 	{
-		conn.connect(NICK, NICK ~ " (operated by CyberShadow)", "irc.freenode.net");
+		conn.connect(NICK, "https://github.com/CyberShadow/DIrcFeed", "irc.freenode.net");
 	}
 
 	void onConnect(IrcClient sender)
