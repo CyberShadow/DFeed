@@ -36,19 +36,16 @@ private:
 		{
 			auto posts = getPosts();
 			log(format("Got %d posts", posts.length));
-			if (!first)
+			foreach (id, q; posts)
 			{
-				foreach (id, q; posts)
-					if (!(id in oldPosts))
-					{
-						oldPosts[id] = true;
-						log(format("Announcing %s", id));
-						if (handleNotify)
-							handleNotify(q.toString(), true);
-					}
+				if (!first && !(id in oldPosts))
+				{
+					log(format("Announcing %s", id));
+					if (handleNotify)
+						handleNotify(q.toString(), true);
+				}
+				oldPosts[id] = true;
 			}
-			else
-				log("First run, stashing.");
 			first = false;
 		}
 		catch (Object o)
