@@ -27,6 +27,7 @@ private:
 	int pollPeriod;
 	Post[string] oldPosts;
 	Logger log;
+	bool first = true;
 
 	void run()
 	{
@@ -35,7 +36,7 @@ private:
 		{
 			auto posts = getPosts();
 			log(format("Got %d posts", posts.length));
-			if (oldPosts !is null)
+			if (!first)
 			{
 				foreach (id, q; posts)
 					if (!(id in oldPosts))
@@ -45,7 +46,10 @@ private:
 							handleNotify(q.toString(), true);
 					}
 			}
+			else
+				log("First run, stashing.");
 			oldPosts = posts;
+			first = false;
 		}
 		catch (Object o)
 			log(format("WebPoller error: %s", o.toString()));
