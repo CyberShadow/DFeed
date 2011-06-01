@@ -53,7 +53,7 @@ protected:
 		foreach (e; feed)
 			if (e.tag == "item")
 				if (filter.test(e["title"].text))
-					r[e["pubDate"].text ~ e["guid"].text] = Post(e["title"].text, getAuthor(e["description"].text), e["link"].text);
+					r[e["guid"].text ~ " / " ~ e["pubDate"].text] = Post(e["title"].text, getAuthor(e["description"].text), e["link"].text);
 
 		return r;
 	}

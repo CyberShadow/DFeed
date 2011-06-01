@@ -25,7 +25,7 @@ class WebPoller(Post)
 
 private:
 	int pollPeriod;
-	Post[string] oldPosts;
+	bool[string] oldPosts;
 	Logger log;
 	bool first = true;
 
@@ -41,6 +41,7 @@ private:
 				foreach (id, q; posts)
 					if (!(id in oldPosts))
 					{
+						oldPosts[id] = true;
 						log(format("Announcing %s", id));
 						if (handleNotify)
 							handleNotify(q.toString(), true);
@@ -48,7 +49,6 @@ private:
 			}
 			else
 				log("First run, stashing.");
-			oldPosts = posts;
 			first = false;
 		}
 		catch (Object o)
