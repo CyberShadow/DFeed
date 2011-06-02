@@ -46,7 +46,7 @@ final class DIrcFeed
 private:
 	IrcClient conn;
 	RelayServerSocket server;
-	Logger log, relayLog;
+	Logger relayLog;
 
 	void addNotifier(T)(T notifier)
 	{
@@ -57,13 +57,12 @@ private:
 public:
 	this()
 	{
-		log = createLogger("IRC");
 		relayLog = createLogger("Relay");
 
 		conn = new IrcClient();
+		conn.log = createLogger("IRC");
 		conn.handleConnect = &onConnect;
 		conn.handleDisconnect = &onDisconnect;
-		log("Connecting to IRC...");
 		connect();
 
 		auto client = new NntpClient();
@@ -97,7 +96,6 @@ public:
 
 	void onDisconnect(IrcClient sender, string reason, DisconnectType type)
 	{
-		log(format("IRC connection lost (%s)", reason));
 		setTimeout(&connect, 10*TicksPerSecond);
 	}
 
@@ -116,7 +114,6 @@ public:
 
 	void sendToIrc(string s, bool important)
 	{
-		log("< " ~ s);
 		if (important)
 			conn.sendRaw(format(FORMAT, CHANNEL, s));
 		conn.sendRaw(format(FORMAT, CHANNEL2, s));
