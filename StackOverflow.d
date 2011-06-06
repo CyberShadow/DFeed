@@ -65,7 +65,8 @@ protected:
 			JsonQuestion[] questions;
 		}
 
-		auto json = download("http://api.stackoverflow.com/1.1/questions?pagesize=10&tagged=" ~ tags ~ (exists("data/stackoverflow.txt") ? "&key=" ~ cast(string)read("data/stackoverflow.txt") : ""), " | gzip -d");
+		auto gzip = download("http://api.stackoverflow.com/1.1/questions?pagesize=10&tagged=" ~ tags ~ (exists("data/stackoverflow.txt") ? "&key=" ~ cast(string)read("data/stackoverflow.txt") : ""));
+		auto json = .run("gzip -d", gzip);
 		scope(failure) std.file.write("so-error.txt", json);
 		auto data = jsonParse!(JsonQuestions)(json);
 		Question[string] r;
