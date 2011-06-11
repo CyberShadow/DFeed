@@ -60,6 +60,7 @@ public:
 		relayLog = createLogger("Relay");
 
 		conn = new IrcClient();
+		conn.encoder = conn.decoder = &nullStringTransform;
 		conn.log = createLogger("IRC");
 		conn.handleConnect = &onConnect;
 		conn.handleDisconnect = &onDisconnect;
