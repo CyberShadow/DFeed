@@ -61,6 +61,7 @@ public:
 
 		conn = new IrcClient();
 		conn.encoder = conn.decoder = &nullStringTransform;
+		conn.exactNickname = true;
 		conn.log = createLogger("IRC");
 		conn.handleConnect = &onConnect;
 		conn.handleDisconnect = &onDisconnect;
