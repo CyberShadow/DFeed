@@ -31,7 +31,7 @@ MessageInfo parseMessage(string lines)
 		m.reply = true;
 	}
 
-	m.author = "FROM" in headers ? headers["FROM"] : null;
+	m.author = "FROM" in headers ? decodeRfc5335(headers["FROM"]) : null;
 	if ("X-BUGZILLA-WHO" in headers)
 		m.author = headers["X-BUGZILLA-WHO"];
 	if (m.author.find('<')>0)
@@ -76,23 +76,23 @@ import std.base64 : decodeBase64 = decode;
 
 string decodeRfc5335(string str)
 {
-	str = str.replace("?= =?", "?==?");
 	int start, end;
-	while ((start=str.find("=?"))>=0 && (end=str.find("?="))>=0 && str.length>4)
+conversionLoop:
+	while ((start=str.find("=?"))>=0 && (end=str.find("?= "), end<0&&str.endsWith("?=")?(end=str.length-2):0)>=0 && str.length>4)
 	{
 		string s = str[start+2..end];
 
 		int p = s.find('?');
-		if (p<=0) return str;
+		if (p<=0) break;
 		auto textEncoding = s[0..p];
 		s = s[p+1..$];
 
 		p = s.find('?');
-		if (p<=0) return str;
+		if (p<=0) break;
 		auto contentEncoding = s[0..p];
 		s = s[p+1..$];
 
-		switch (contentEncoding)
+		switch (toupper(contentEncoding))
 		{
 		case "Q":
 			s = decodeQuotedPrintable(s);
@@ -101,10 +101,10 @@ string decodeRfc5335(string str)
 			s = decodeBase64(s);
 			break;
 		default:
-			return str;
+			break conversionLoop;
 		}
 
-		str = str[0..start] ~ iconv(s, textEncoding) ~ str[end+2..$];
+		str = str[0..start] ~ iconv(s, textEncoding) ~ str[end==$-2?$:end+3..$];
 	}
 	return str;
 }
@@ -114,7 +114,7 @@ string decodeQuotedPrintable(string s)
 	string r;
 	for (int i=0; i<s.length; )
 		if (s[i]=='=')
-			r ~= fromHex(s[i+1..i+3]), i+=3;
+			r ~= cast(char)fromHex(s[i+1..i+3]), i+=3;
 		else
 		if (s[i]=='_')
 			r ~= ' ', i++;
