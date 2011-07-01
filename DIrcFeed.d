@@ -161,6 +161,9 @@ public:
 		if (m.author == "noreply@github.com")
 			return false;
 
+		if (m.where == "")
+			return false;
+
 		if (inArray(VIP_ONLY, m.where))
 			return !m.reply || inArray(VIPs, m.author);
 
