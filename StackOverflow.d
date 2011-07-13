@@ -50,6 +50,7 @@ protected:
 		{
 			string[] tags;
 			int answer_count, accepted_answer_id, favorite_count;
+			int bounty_closes_date, bounty_amount;
 			string question_timeline_url, question_comments_url, question_answers_url;
 			int question_id;
 			JsonQuestionOwner owner;
