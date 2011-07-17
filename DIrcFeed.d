@@ -77,7 +77,7 @@ public:
 		server.listen(toUshort(serverConfig[1]), serverConfig[0]);
 
 		addNotifier(new StackOverflow("d"));
-		addNotifier(new Feed("Planet D", "http://feeds.feedburner.com/dplanet"));
+		addNotifier(new Feed("Planet D", "http://planetd.thecybershadow.net/_atom.xml"));
 		addNotifier(new Feed("Wikipedia", "http://en.wikipedia.org/w/api.php?action=feedwatchlist&allrev=allrev&hours=1&"~cast(string)read("data/wikipedia.txt")~"&feedformat=atom", "edited"));
 		addNotifier(new Feed("GitHub", "https://github.com/"~cast(string)read("data/github.txt"), null));
 		addNotifier(new Reddit("programming", new RegExp(`(^|[^\w\d\-:*=])D([^\w\-:*=]|$)`)));
