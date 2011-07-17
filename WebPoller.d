@@ -8,6 +8,8 @@ import Team15.CommandLine;
 import std.random;
 import std.string;
 
+enum { LIMIT = 5 }
+
 class WebPoller(Post)
 {
 	this(string name, int pollPeriod)
@@ -35,18 +37,25 @@ private:
 		try
 		{
 			auto posts = getPosts();
+			Post[string] newPosts;
 			log(format("Got %d posts", posts.length));
 			foreach (id, q; posts)
 			{
 				if (!first && !(id in oldPosts))
-				{
-					log(format("Announcing %s", id));
-					if (handleNotify)
-						handleNotify(q.toString(), true);
-				}
+					newPosts[id] = q;
 				oldPosts[id] = true;
 			}
 			first = false;
+
+			if (newPosts.length > LIMIT)
+				throw new Exception("Too many posts, aborting!");
+
+			foreach (id, q; newPosts)
+			{
+				log(format("Announcing %s", id));
+				if (handleNotify)
+					handleNotify(q.toString(), true);
+			}
 		}
 		catch (Object o)
 			log(format("WebPoller error: %s", o.toString()));
