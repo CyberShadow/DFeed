@@ -3,6 +3,7 @@ module Rfc850;
 import std.string;
 
 import Team15.Utils;
+import Team15.Http.Common : encodeUrlParameter;
 
 struct MessageInfo
 {
@@ -56,8 +57,8 @@ MessageInfo parseMessage(string lines)
 		auto xref = split(split(headers["XREF"], " ")[1], ":");
 		auto ng = xref[0];
 		auto id = xref[1];
-		//m.url = format("http://www.digitalmars.com/pnews/read.php?server=news.digitalmars.com&group=%s&artnum=%s", ng, id);
-		m.url = format("http://digitalmars.com/webnews/newsgroups.php?art_group=%s&article_id=%s", ng, id);
+		//m.url = format("http://www.digitalmars.com/pnews/read.php?server=news.digitalmars.com&group=%s&artnum=%s", encodeUrlParameter(ng), id);
+		m.url = format("http://digitalmars.com/webnews/newsgroups.php?art_group=%s&article_id=%s", encodeUrlParameter(ng), id);
 	}
 	else
 	if ("LIST-ID" in headers && "MESSAGE-ID" in headers)
