@@ -38,7 +38,7 @@ else const
 //const FORMAT = "PRIVMSG %s :\x01ACTION %s\x01";
 const FORMAT = "PRIVMSG %s :\x01ACTION \x0314%s\x01";
 
-const string[] VIP_ONLY = ["digitalmars.D", "digitalmars.D.learn", "digitalmars.D.announce"];
+const string[] ANNOUNCE_REPLIES = ["digitalmars.D.bugs"];
 const string[] VIPs = ["Walter Bright", "Andrei Alexandrescu", "Sean Kelly", "Don", "dsimcha"];
 
 final class DIrcFeed
@@ -164,10 +164,10 @@ public:
 		if (m.where == "")
 			return false;
 
-		if (inArray(VIP_ONLY, m.where))
-			return !m.reply || inArray(VIPs, m.author);
+		if (inArray(ANNOUNCE_REPLIES, m.where))
+			return true;
 
-		return true;
+		return !m.reply || inArray(VIPs, m.author);
 	}
 }
 
