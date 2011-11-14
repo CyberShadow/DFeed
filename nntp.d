@@ -1,21 +1,22 @@
-module Nntp;
+module nntp;
 
-import std.date;
+import std.datetime;
 import std.string;
 
-import Team15.ASockets;
-import Team15.Timing;
-import Team15.Utils;
-import Team15.Logging;
-import Team15.CommandLine;
+import ae.net.asockets;
+import ae.sys.timing;
+//import ae.utils.*;
+import ae.utils.log;
 
-const POLL_PERIOD = 2*TicksPerSecond;
+alias core.time.TickDuration TickDuration;
+
+const POLL_PERIOD = 2;
 
 class NntpClient
 {
 private:
 	LineBufferedSocket conn;
-	d_time last;
+	SysTime last;
 	string[] reply;
 	string server;
 	int queued;
@@ -34,7 +35,7 @@ private:
 	void onDisconnect(ClientSocket sender, string reason, DisconnectType type)
 	{
 		log("* Disconnected (" ~ reason ~ ")");
-		setTimeout(&reconnect, 10*TicksPerSecond);
+		setTimeout(&reconnect, TickDuration.from!"seconds"(10));
 	}
 
 	void onReadLine(LineBufferedSocket s, string line)
@@ -72,7 +73,7 @@ private:
 				auto time = firstLine[1];
 				assert(time.length == 14);
 				if (lastTime is null)
-					setTimeout(&poll, POLL_PERIOD);
+					setTimeout(&poll, TickDuration.from!"seconds"(POLL_PERIOD));
 				lastTime = time;
 				break;
 			}
@@ -91,7 +92,7 @@ private:
 					}
 				oldMessages = messages;
 				if (queued==0)
-					setTimeout(&poll, POLL_PERIOD);
+					setTimeout(&poll, TickDuration.from!"seconds"(POLL_PERIOD));
 				break;
 			}
 			case "221":
@@ -101,7 +102,7 @@ private:
 					handleMessage(message);
 				queued--;
 				if (queued==0)
-					setTimeout(&poll, POLL_PERIOD);
+					setTimeout(&poll, TickDuration.from!"seconds"(POLL_PERIOD));
 				break;
 			}
 			default:
@@ -118,11 +119,11 @@ private:
 public:
 	void connect(string server)
 	{
-		log = createLogger("NNTP");
+		log = new FileLogger("NNTP");
 
 		this.server = server;
 
-		conn = new LineBufferedSocket(60*TicksPerSecond);
+		conn = new LineBufferedSocket(TickDuration.from!"seconds"(60));
 		conn.handleDisconnect = &onDisconnect;
 		conn.handleReadLine = &onReadLine;
 		reconnect();
@@ -130,5 +131,3 @@ public:
 
 	void delegate(string[] head) handleMessage;
 }
-
-static this() { logFormatVersion = 1; }

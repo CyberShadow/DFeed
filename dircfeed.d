@@ -1,25 +1,28 @@
-module DIrcFeed;
+module dircfeed;
 
 import std.string;
 import std.file;
 import std.conv;
-import std.regexp;
+import std.regex;
 
-import Team15.ASockets;
-import Team15.IrcClient;
-import Team15.Logging;
-import Team15.CommandLine;
-import Team15.Timing;
+import ae.net.asockets;
+import ae.net.irc.client;
+import ae.utils.log;
+import ae.utils.cmd;
+import ae.utils.array;
+import ae.sys.timing;
 
-import Rfc850;
-import Nntp;
-import StackOverflow;
-import Feed;
-import Reddit;
+import rfc850;
+import nntp;
+import stackoverflow;
+import feed;
+import reddit;
+
+alias core.time.TickDuration TickDuration;
 
 class RelaySocket : ClientSocket
 {
-	string data;
+	Data data;
 
 	this(Socket conn) { super(conn); }
 }
@@ -38,8 +41,8 @@ else const
 //const FORMAT = "PRIVMSG %s :\x01ACTION %s\x01";
 const FORMAT = "PRIVMSG %s :\x01ACTION \x0314%s\x01";
 
-const string[] ANNOUNCE_REPLIES = ["digitalmars.D.bugs"];
-const string[] VIPs = ["Walter Bright", "Andrei Alexandrescu", "Sean Kelly", "Don", "dsimcha"];
+string[] ANNOUNCE_REPLIES = ["digitalmars.D.bugs"];
+string[] VIPs = ["Walter Bright", "Andrei Alexandrescu", "Sean Kelly", "Don", "dsimcha"];
 
 final class DIrcFeed
 {
@@ -57,12 +60,12 @@ private:
 public:
 	this()
 	{
-		relayLog = createLogger("Relay");
+		relayLog = new FileLogger("Relay");
 
 		conn = new IrcClient();
 		conn.encoder = conn.decoder = &nullStringTransform;
 		conn.exactNickname = true;
-		conn.log = createLogger("IRC");
+		conn.log = new FileLogger("IRC");
 		conn.handleConnect = &onConnect;
 		conn.handleDisconnect = &onDisconnect;
 		connect();
@@ -71,16 +74,16 @@ public:
 		client.handleMessage = &onNntpMessage;
 		client.connect("news.digitalmars.com");
 
-		auto serverConfig = splitlines(cast(string)read("data/dircfeed.txt"));
+		auto serverConfig = splitLines(cast(string)read("data/dircfeed.txt"));
 		server = new RelayServerSocket();
 		server.handleAccept = &onAccept;
-		server.listen(toUshort(serverConfig[1]), serverConfig[0]);
+		server.listen(to!ushort(serverConfig[1]), serverConfig[0]);
 
 		addNotifier(new StackOverflow("d"));
 		addNotifier(new Feed("Planet D", "http://planetd.thecybershadow.net/_atom.xml"));
 		addNotifier(new Feed("Wikipedia", "http://en.wikipedia.org/w/api.php?action=feedwatchlist&allrev=allrev&hours=1&"~cast(string)read("data/wikipedia.txt")~"&feedformat=atom", "edited"));
 		addNotifier(new Feed("GitHub", "https://github.com/"~cast(string)read("data/github.txt"), null));
-		addNotifier(new Reddit("programming", new RegExp(`(^|[^\w\d\-:*=])D([^\w\-:*=]|$)`)));
+		addNotifier(new Reddit("programming", regex(`(^|[^\w\d\-:*=])D([^\w\-:*=]|$)`)));
 		addNotifier(new Feed("Twitter", "http://twitter.com/statuses/user_timeline/18061210.atom", null));
 		addNotifier(new Feed("Twitter", "http://twitter.com/statuses/user_timeline/155425162.atom", null));
 	}
@@ -98,7 +101,7 @@ public:
 
 	void onDisconnect(IrcClient sender, string reason, DisconnectType type)
 	{
-		setTimeout(&connect, 10*TicksPerSecond);
+		setTimeout(&connect, TickDuration.from!"seconds"(10));
 	}
 
 	void onAccept(RelaySocket incoming)
@@ -108,10 +111,10 @@ public:
 		incoming.handleReadData = &onRelayData;
 	}
 
-	void onRelayData(ClientSocket sender, void[] data)
+	void onRelayData(ClientSocket sender, Data data)
 	{
 		auto relay = cast(RelaySocket)sender;
-		relay.data ~= cast(string)data;
+		relay.data ~= data;
 	}
 
 	void sendToIrc(string s, bool important)
@@ -124,10 +127,11 @@ public:
 	void onRelayDisconnect(ClientSocket sender, string reason, DisconnectType type)
 	{
 		auto relay = cast(RelaySocket)sender;
-		foreach (line; splitlines(relay.data))
+		auto text = (cast(string)relay.data.contents).idup;
+		foreach (line; splitAsciiLines(text))
 			relayLog("> " ~ line);
 		relayLog("* Disconnected");
-		auto message = parseMessage(relay.data);
+		auto message = parseMessage(text);
 		sendToIrc(summarizeMessage(message), isMessageImportant(message));
 	}
 
@@ -171,9 +175,8 @@ public:
 	}
 }
 
-void main(string[] args)
+void main()
 {
-	parseCommandLine(args);
 	new DIrcFeed();
 	socketManager.loop();
 }

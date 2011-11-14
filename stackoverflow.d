@@ -1,15 +1,15 @@
-module StackOverflow;
+module stackoverflow;
 
 import std.string;
 import std.file;
+import std.conv;
 
-import WebPoller;
+import ae.utils.cmd;
+import ae.utils.json;
 
-import Team15.Utils;
-import Team15.Timing;
-import Team15.Http.Json;
+import webpoller;
 
-const POLL_PERIOD = 15 * TicksPerSecond;
+const POLL_PERIOD = 15;
 
 private struct Question
 {
@@ -23,7 +23,7 @@ private struct Question
 	}
 }
 
-class StackOverflow : WebPoller.WebPoller!(Question)
+class StackOverflow : WebPoller!(Question)
 {
 	this(string tags)
 	{
@@ -73,7 +73,7 @@ protected:
 		Question[string] r;
 
 		foreach (q; data.questions)
-			r[.toString(q.question_id)] = Question(q.title, q.owner.display_name, format("http://stackoverflow.com/q/%d", q.question_id));
+			r[text(q.question_id)] = Question(q.title, q.owner.display_name, format("http://stackoverflow.com/q/%d", q.question_id));
 
 		return r;
 	}

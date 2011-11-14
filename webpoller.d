@@ -1,9 +1,8 @@
-module WebPoller;
+module webpoller;
 
-import Team15.Timing;
-import Team15.ASockets;
-import Team15.Logging;
-import Team15.CommandLine;
+import ae.sys.timing;
+import ae.net.asockets;
+import ae.utils.log;
 
 import std.random;
 import std.string;
@@ -15,7 +14,7 @@ class WebPoller(Post)
 	this(string name, int pollPeriod)
 	{
 		this.pollPeriod = pollPeriod;
-		log = createLogger(name);
+		log = new FileLogger(name);
 	}
 
 	void start()
@@ -57,16 +56,14 @@ private:
 					handleNotify(q.toString(), true);
 			}
 		}
-		catch (Object o)
-			log(format("WebPoller error: %s", o.toString()));
+		catch (Throwable e)
+			log(format("WebPoller error: %s", e.toString()));
 
-		auto delay = pollPeriod + (rand()%10-5) * TicksPerSecond;
-		log(format("Next poll in %d seconds", delay/TicksPerSecond));
-		setTimeout(&run, delay);
+		auto delay = pollPeriod + uniform(-5, 5);
+		log(format("Next poll in %d seconds", delay));
+		setTimeout(&run, TickDuration.from!"seconds"(delay));
 	}
 
 protected:
 	abstract Post[string] getPosts();
 }
-
-static this() { logFormatVersion = 1; }

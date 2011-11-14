@@ -1,15 +1,14 @@
-module Feed;
+module feed;
 
 import std.string;
 import std.stream;
 
-import Team15.Utils;
-import Team15.Timing;
-import Team15.LiteXML;
+import ae.utils.cmd;
+import ae.utils.xml;
 
-import WebPoller;
+import webpoller;
 
-const POLL_PERIOD = 60 * TicksPerSecond;
+const POLL_PERIOD = 60;
 
 private struct Post
 {
@@ -28,7 +27,7 @@ private struct Post
 	}
 }
 
-class Feed : WebPoller.WebPoller!(Post)
+class Feed : WebPoller!(Post)
 {
 	this(string name, string url, string action = "posted")
 	{
@@ -44,7 +43,7 @@ private:
 protected:
 	override Post[string] getPosts()
 	{
-		auto data = new XmlDocument(new MemoryStream(download(url)));
+		auto data = new XmlDocument(new MemoryStream(cast(char[])download(url)));
 		Post[string] r;
 		auto feed = data["feed"];
 

@@ -1,9 +1,9 @@
-module SummarizeMessage;
+module summarizemessage;
 
 import std.stdio;
 import std.string;
 
-import Rfc850;
+import rfc850;
 
 void main()
 {

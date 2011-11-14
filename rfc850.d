@@ -1,9 +1,12 @@
-module Rfc850;
+module rfc850;
 
 import std.string;
+import std.conv;
+import std.array;
+import std.uri;
+import std.base64;
 
-import Team15.Utils;
-import Team15.Http.Common : encodeUrlParameter;
+import ae.utils.cmd;
 
 struct MessageInfo
 {
@@ -17,7 +20,7 @@ MessageInfo parseMessage(string lines)
 	string[string] headers;
 	foreach (s; splitlines(lines))
 	{
-		int p = s.find(": ");
+		int p = s.indexOf(": ");
 		if (p<0) continue;
 		//assert(p>0, "Bad header line: " ~ s);
 		headers[toupper(s[0..p])] = s[p+2..$];
@@ -35,8 +38,8 @@ MessageInfo parseMessage(string lines)
 	m.author = "FROM" in headers ? decodeRfc5335(headers["FROM"]) : null;
 	if ("X-BUGZILLA-WHO" in headers)
 		m.author = headers["X-BUGZILLA-WHO"];
-	if (m.author.find('<')>0)
-		m.author = decodeRfc5335(strip(m.author[0..m.author.find('<')]));
+	if (m.author.indexOf('<')>0)
+		m.author = decodeRfc5335(strip(m.author[0..m.author.indexOf('<')]));
 	if (m.author.length>2 && m.author[0]=='"' && m.author[$-1]=='"')
 		m.author = decodeRfc5335(strip(m.author[1..$-1]));
 
@@ -44,7 +47,7 @@ MessageInfo parseMessage(string lines)
 
 	if ("LIST-ID" in headers && m.subject.startsWith("[") && m.where is null)
 	{
-		auto p = m.subject.find("] ");
+		auto p = m.subject.indexOf("] ");
 		m.where = m.subject[1..p];
 		m.subject = m.subject[p+2..$];
 	}
@@ -58,7 +61,7 @@ MessageInfo parseMessage(string lines)
 		auto ng = xref[0];
 		auto id = xref[1];
 		//m.url = format("http://www.digitalmars.com/pnews/read.php?server=news.digitalmars.com&group=%s&artnum=%s", encodeUrlParameter(ng), id);
-		m.url = format("http://digitalmars.com/webnews/newsgroups.php?art_group=%s&article_id=%s", encodeUrlParameter(ng), id);
+		m.url = format("http://digitalmars.com/webnews/newsgroups.php?art_group=%s&article_id=%s", encodeComponent(ng), id);
 	}
 	else
 	if ("LIST-ID" in headers && "MESSAGE-ID" in headers)
@@ -74,22 +77,20 @@ MessageInfo parseMessage(string lines)
 	return m;
 }
 
-import std.base64 : decodeBase64 = decode;
-
 string decodeRfc5335(string str)
 {
 	int start, end;
 conversionLoop:
-	while ((start=str.find("=?"))>=0 && (end=str.find("?= "), end<0&&str.endsWith("?=")?(end=str.length-2):0)>=0 && str.length>4)
+	while ((start=str.indexOf("=?"))>=0 && (end=str.indexOf("?= "), end<0&&str.endsWith("?=")?(end=str.length-2):0)>=0 && str.length>4)
 	{
 		string s = str[start+2..end];
 
-		int p = s.find('?');
+		int p = s.indexOf('?');
 		if (p<=0) break;
 		auto textEncoding = s[0..p];
 		s = s[p+1..$];
 
-		p = s.find('?');
+		p = s.indexOf('?');
 		if (p<=0) break;
 		auto contentEncoding = s[0..p];
 		s = s[p+1..$];
@@ -100,7 +101,7 @@ conversionLoop:
 			s = decodeQuotedPrintable(s);
 			break;
 		case "B":
-			s = decodeBase64(s);
+			s = cast(string)Base64.decode(s);
 			break;
 		default:
 			break conversionLoop;
@@ -116,7 +117,7 @@ string decodeQuotedPrintable(string s)
 	string r;
 	for (int i=0; i<s.length; )
 		if (s[i]=='=')
-			r ~= cast(char)fromHex(s[i+1..i+3]), i+=3;
+			r ~= cast(char)parse!ubyte(s[i+1..i+3], 16), i+=3;
 		else
 		if (s[i]=='_')
 			r ~= ' ', i++;

@@ -1,16 +1,15 @@
-module Reddit;
+module reddit;
 
 import std.string;
 import std.stream;
-import std.regexp;
+import std.regex;
 
-import Team15.Utils;
-import Team15.Timing;
-import Team15.LiteXML;
+import ae.utils.cmd;
+import ae.utils.xml;
 
-import WebPoller;
+import webpoller;
 
-const POLL_PERIOD = 60 * TicksPerSecond;
+const POLL_PERIOD = 60;
 
 private struct Post
 {
@@ -24,9 +23,9 @@ private struct Post
 	}
 }
 
-class Reddit : WebPoller.WebPoller!(Post)
+class Reddit : WebPoller!(Post)
 {
-	this(string subreddit, RegExp filter)
+	this(string subreddit, Regex!char filter)
 	{
 		super("Reddit", POLL_PERIOD);
 		this.subreddit = subreddit;
@@ -35,24 +34,24 @@ class Reddit : WebPoller.WebPoller!(Post)
 
 private:
 	string subreddit;
-	RegExp filter;
+	Regex!char filter;
 
 	static string getAuthor(string description)
 	{
-		auto doc = new XmlDocument(new MemoryStream(description));
+		auto doc = new XmlDocument(new MemoryStream(description.dup));
 		return strip(doc[1].text);
 	}
 
 protected:
 	override Post[string] getPosts()
 	{
-		auto data = new XmlDocument(new MemoryStream(download("http://www.reddit.com/r/"~subreddit~"/.rss")));
+		auto data = new XmlDocument(new MemoryStream(cast(char[])download("http://www.reddit.com/r/"~subreddit~"/.rss")));
 		Post[string] r;
 
 		auto feed = data["rss"]["channel"];
 		foreach (e; feed)
 			if (e.tag == "item")
-				if (filter.test(e["title"].text))
+				if (!match(e["title"].text, filter).empty)
 					r[e["guid"].text ~ " / " ~ e["pubDate"].text] = Post(e["title"].text, getAuthor(e["description"].text), e["link"].text);
 
 		return r;
