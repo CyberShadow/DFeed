@@ -7,22 +7,19 @@ import ae.utils.log;
 import std.random;
 import std.string;
 
-enum { LIMIT = 5 }
+import common;
 
-class WebPoller(Post)
+class WebPoller : PostSource
 {
-	this(string name, int pollPeriod)
-	{
-		this.pollPeriod = pollPeriod;
-		log = new FileLogger(name);
-	}
+	enum LIMIT = 5;
 
-	void start()
+	this(string name, int pollPeriod, PostHandler postHandler)
 	{
+		super(postHandler);
+		this.pollPeriod = pollPeriod;
+		log = createLogger(name);
 		run();
 	}
-
-	void delegate(string, bool) handleNotify;
 
 private:
 	int pollPeriod;
@@ -52,11 +49,10 @@ private:
 			foreach (id, q; newPosts)
 			{
 				log(format("Announcing %s", id));
-				if (handleNotify)
-					handleNotify(q.toString(), true);
+				postHandler(q);
 			}
 		}
-		catch (Throwable e)
+		catch (Exception e)
 			log(format("WebPoller error: %s", e.toString()));
 
 		auto delay = pollPeriod + uniform(-5, 5);

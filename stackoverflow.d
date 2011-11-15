@@ -7,35 +7,43 @@ import std.conv;
 import ae.utils.cmd;
 import ae.utils.json;
 
+import common;
 import webpoller;
 
 const POLL_PERIOD = 15;
 
-private struct Question
+class StackOverflow : WebPoller
 {
-	string title;
-	string author;
-	string url;
-
-	string toString()
+	this(string tags, PostHandler handler)
 	{
-		return format("[StackOverflow] %s asked \"%s\": %s", author, title, shortenURL(url));
-	}
-}
-
-class StackOverflow : WebPoller!(Question)
-{
-	this(string tags)
-	{
-		super("StackOverflow", POLL_PERIOD);
 		this.tags = tags;
+		super("StackOverflow", POLL_PERIOD, handler);
 	}
 
 private:
 	string tags;
 
+	class Question : Post
+	{
+		string title;
+		string author;
+		string url;
+
+		this(string title, string author, string url)
+		{
+			this.title = title;
+			this.author = author;
+			this.url = url;
+		}
+
+		override string toString()
+		{
+			return format("[StackOverflow] %s asked \"%s\": %s", author, title, shortenURL(url));
+		}
+	}
+
 protected:
-	override Question[string] getPosts()
+	override Post[string] getPosts()
 	{
 		struct JsonQuestionOwner
 		{
@@ -70,10 +78,10 @@ protected:
 		auto json = .run("gzip -d", gzip);
 		scope(failure) std.file.write("so-error.txt", json);
 		auto data = jsonParse!(JsonQuestions)(json);
-		Question[string] r;
+		Post[string] r;
 
 		foreach (q; data.questions)
-			r[text(q.question_id)] = Question(q.title, q.owner.display_name, format("http://stackoverflow.com/q/%d", q.question_id));
+			r[text(q.question_id)] = new Question(q.title, q.owner.display_name, format("http://stackoverflow.com/q/%d", q.question_id));
 
 		return r;
 	}

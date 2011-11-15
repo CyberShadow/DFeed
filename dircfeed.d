@@ -4,6 +4,7 @@ import std.string;
 import std.file;
 import std.conv;
 import std.regex;
+import std.getopt;
 
 import ae.net.asockets;
 import ae.net.irc.client;
@@ -17,6 +18,7 @@ import nntp;
 import stackoverflow;
 import feed;
 import reddit;
+import common;
 
 alias core.time.TickDuration TickDuration;
 
@@ -46,26 +48,18 @@ string[] VIPs = ["Walter Bright", "Andrei Alexandrescu", "Sean Kelly", "Don", "d
 
 final class DIrcFeed
 {
-private:
 	IrcClient conn;
 	RelayServerSocket server;
 	Logger relayLog;
 
-	void addNotifier(T)(T notifier)
-	{
-		notifier.handleNotify = &sendToIrc;
-		notifier.start();
-	}
-
-public:
 	this()
 	{
-		relayLog = new FileLogger("Relay");
+		relayLog = createLogger("Relay");
 
 		conn = new IrcClient();
 		conn.encoder = conn.decoder = &nullStringTransform;
 		conn.exactNickname = true;
-		conn.log = new FileLogger("IRC");
+		conn.log = createLogger("IRC");
 		conn.handleConnect = &onConnect;
 		conn.handleDisconnect = &onDisconnect;
 		connect();
@@ -79,13 +73,13 @@ public:
 		server.handleAccept = &onAccept;
 		server.listen(to!ushort(serverConfig[1]), serverConfig[0]);
 
-		addNotifier(new StackOverflow("d"));
-		addNotifier(new Feed("Planet D", "http://planetd.thecybershadow.net/_atom.xml"));
-		addNotifier(new Feed("Wikipedia", "http://en.wikipedia.org/w/api.php?action=feedwatchlist&allrev=allrev&hours=1&"~cast(string)read("data/wikipedia.txt")~"&feedformat=atom", "edited"));
-		addNotifier(new Feed("GitHub", "https://github.com/"~cast(string)read("data/github.txt"), null));
-		addNotifier(new Reddit("programming", regex(`(^|[^\w\d\-:*=])D([^\w\-:*=]|$)`)));
-		addNotifier(new Feed("Twitter", "http://twitter.com/statuses/user_timeline/18061210.atom", null));
-		addNotifier(new Feed("Twitter", "http://twitter.com/statuses/user_timeline/155425162.atom", null));
+		new StackOverflow("d", &onNewPost);
+		new Feed("Planet D", "http://planetd.thecybershadow.net/_atom.xml", &onNewPost);
+		new Feed("Wikipedia", "http://en.wikipedia.org/w/api.php?action=feedwatchlist&allrev=allrev&hours=1&"~cast(string)read("data/wikipedia.txt")~"&feedformat=atom", &onNewPost, "edited");
+		new Feed("GitHub", "https://github.com/"~cast(string)read("data/github.txt"), &onNewPost, null);
+		new Reddit("programming", regex(`(^|[^\w\d\-:*=])D([^\w\-:*=]|$)`), &onNewPost);
+		new Feed("Twitter1", "http://twitter.com/statuses/user_timeline/18061210.atom", &onNewPost, null);
+		new Feed("Twitter2", "http://twitter.com/statuses/user_timeline/155425162.atom", &onNewPost, null);
 	}
 
 	void connect()
@@ -115,6 +109,11 @@ public:
 	{
 		auto relay = cast(RelaySocket)sender;
 		relay.data ~= data;
+	}
+
+	void onNewPost(Post post)
+	{
+		sendToIrc(post.toString(), true);
 	}
 
 	void sendToIrc(string s, bool important)
@@ -175,8 +174,11 @@ public:
 	}
 }
 
-void main()
+void main(string[] args)
 {
+	getopt(args,
+		"q|quiet", &common.quiet);
+
 	new DIrcFeed();
 	socketManager.loop();
 }

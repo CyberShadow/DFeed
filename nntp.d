@@ -8,6 +8,8 @@ import ae.sys.timing;
 //import ae.utils.*;
 import ae.utils.log;
 
+import common;
+
 alias core.time.TickDuration TickDuration;
 
 const POLL_PERIOD = 2;
@@ -119,7 +121,7 @@ private:
 public:
 	void connect(string server)
 	{
-		log = new FileLogger("NNTP");
+		log = createLogger("NNTP");
 
 		this.server = server;
 

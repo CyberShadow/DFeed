@@ -6,39 +6,45 @@ import std.stream;
 import ae.utils.cmd;
 import ae.utils.xml;
 
+import common;
 import webpoller;
 
-const POLL_PERIOD = 60;
-
-private struct Post
+class Feed : WebPoller
 {
-	string title;
-	string author;
-	string url;
+	enum POLL_PERIOD = 60;
 
-	string feedName, action;
-
-	string toString()
+	this(string name, string url, PostHandler postHandler, string action = "posted")
 	{
-		if (action)
-			return format("[%s] %s %s \"%s\": %s", feedName, author, action, title, shortenURL(url));
-		else // author is already indicated in title
-			return format("[%s] %s: %s", feedName, title, shortenURL(url));
-	}
-}
-
-class Feed : WebPoller!(Post)
-{
-	this(string name, string url, string action = "posted")
-	{
-		super(name, POLL_PERIOD);
 		this.name = name;
 		this.url = url;
 		this.action = action;
+		super(name, POLL_PERIOD, postHandler);
 	}
 
 private:
 	string name, url, action;
+
+	class FeedPost : Post
+	{
+		string title;
+		string author;
+		string url;
+
+		this(string title, string author, string url)
+		{
+			this.title = title;
+			this.author = author;
+			this.url = url;
+		}
+
+		override string toString()
+		{
+			if (action)
+				return format("[%s] %s %s \"%s\": %s", this.outer.name, author, this.outer.action, title, shortenURL(url));
+			else // author is already indicated in title
+				return format("[%s] %s: %s", this.outer.name, title, shortenURL(url));
+		}
+	}
 
 protected:
 	override Post[string] getPosts()
@@ -49,7 +55,7 @@ protected:
 
 		foreach (e; feed)
 			if (e.tag == "entry")
-				r[e["id"].text ~ " / " ~ e["updated"].text] = Post(e["title"].text, e["author"]["name"].text, e["link"].attributes["href"], name, action);
+				r[e["id"].text ~ " / " ~ e["updated"].text] = new FeedPost(e["title"].text, e["author"]["name"].text, e["link"].attributes["href"]);
 
 		return r;
 	}
