@@ -62,7 +62,15 @@ protected:
 				if (e.tag == "entry")
 				{
 					auto key = e["id"].text ~ " / " ~ e["updated"].text;
-					auto post = new FeedPost(e["title"].text, e["author"]["name"].text, e["link"].attributes["href"], SysTime.fromISOExtString(e["published"].text));
+
+					auto published = e.findChild("published");
+					SysTime time;
+					if (published)
+						time = SysTime.fromISOExtString(published.text);
+					else
+						time = Clock.currTime();
+
+					auto post = new FeedPost(e["title"].text, e["author"]["name"].text, e["link"].attributes["href"], time);
 					r[key] = post;
 				}
 
