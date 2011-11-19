@@ -2,6 +2,7 @@ module feed;
 
 import std.string;
 import std.stream;
+import std.datetime;
 
 import ae.utils.xml;
 import ae.net.http.client;
@@ -30,11 +31,12 @@ private:
 		string author;
 		string url;
 
-		this(string title, string author, string url)
+		this(string title, string author, string url, SysTime time)
 		{
 			this.title = title;
 			this.author = author;
 			this.url = url;
+			this.time = time;
 		}
 
 		override void formatForIRC(void delegate(string) handler)
@@ -60,7 +62,7 @@ protected:
 				if (e.tag == "entry")
 				{
 					auto key = e["id"].text ~ " / " ~ e["updated"].text;
-					auto post = new FeedPost(e["title"].text, e["author"]["name"].text, e["link"].attributes["href"]);
+					auto post = new FeedPost(e["title"].text, e["author"]["name"].text, e["link"].attributes["href"], SysTime.fromISOExtString(e["published"].text));
 					r[key] = post;
 				}
 

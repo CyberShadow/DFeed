@@ -1,6 +1,7 @@
 module common;
 
 import ae.utils.log;
+import std.datetime;
 
 bool quiet;
 
@@ -18,6 +19,13 @@ abstract class Post
 
 	/// Only "important" posts are sent to IRC
 	bool isImportant() { return true; }
+
+	this()
+	{
+		time = Clock.currTime();
+	}
+
+	SysTime time;
 }
 
 abstract class NewsSource
@@ -59,6 +67,9 @@ void startNewsSources()
 
 void announcePost(Post p)
 {
+	if (p.time < Clock.currTime() - dur!"days"(1))
+		return; // ignore posts older than a day old (e.g. StackOverflow question activity bumps the questions)
+
 	foreach (sink; newsSinks)
 		sink.handlePost(p);
 }

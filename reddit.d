@@ -3,9 +3,11 @@ module reddit;
 import std.string;
 import std.stream;
 import std.regex;
+import std.datetime;
 
 import ae.utils.xml;
 import ae.net.http.client;
+import ae.utils.time;
 
 import common;
 import webpoller;
@@ -38,11 +40,12 @@ private:
 		string author;
 		string url;
 
-		this(string title, string author, string url)
+		this(string title, string author, string url, SysTime time)
 		{
 			this.title = title;
 			this.author = author;
 			this.url = url;
+			this.time = time;
 		}
 
 		override void formatForIRC(void delegate(string) handler)
@@ -65,7 +68,12 @@ protected:
 			foreach (e; feed)
 				if (e.tag == "item")
 					if (!match(e["title"].text, filter).empty)
-						r[e["guid"].text ~ " / " ~ e["pubDate"].text] = new RedditPost(e["title"].text, getAuthor(e["description"].text), e["link"].text);
+						r[e["guid"].text ~ " / " ~ e["pubDate"].text] = new RedditPost(
+							e["title"].text,
+							getAuthor(e["description"].text),
+							e["link"].text,
+							parseTime(TimeFormats.RSS, e["pubDate"].text)
+						);
 
 			handlePosts(r);
 		}, (string error) {

@@ -3,6 +3,7 @@ module stackoverflow;
 import std.string;
 import std.file;
 import std.conv;
+import std.datetime;
 
 import ae.net.http.client;
 import ae.utils.json;
@@ -30,11 +31,12 @@ private:
 		string author;
 		string url;
 
-		this(string title, string author, string url)
+		this(string title, string author, string url, SysTime time)
 		{
 			this.title = title;
 			this.author = author;
 			this.url = url;
+			this.time = time;
 		}
 
 		override void formatForIRC(void delegate(string) handler)
@@ -70,7 +72,7 @@ protected:
 				string question_timeline_url, question_comments_url, question_answers_url;
 				int question_id;
 				JsonQuestionOwner owner;
-				long creation_date, last_edit_date, last_activity_date;
+				int creation_date, last_edit_date, last_activity_date;
 				int up_vote_count, down_vote_count, view_count, score;
 				bool community_owned;
 				string title;
@@ -87,7 +89,7 @@ protected:
 			Post[string] r;
 
 			foreach (q; data.questions)
-				r[text(q.question_id)] = new Question(q.title, q.owner.display_name, format("http://stackoverflow.com/q/%d", q.question_id));
+				r[text(q.question_id)] = new Question(q.title, q.owner.display_name, format("http://stackoverflow.com/q/%d", q.question_id), SysTime(unixTimeToStdTime(q.creation_date)));
 
 			handlePosts(r);
 		}, (string error) {

@@ -9,6 +9,7 @@ import std.base64;
 import ae.net.http.client;
 import ae.utils.array;
 import ae.utils.cmd : iconv;
+import ae.utils.time;
 
 import common;
 import bitly;
@@ -77,6 +78,18 @@ class Rfc850Post : Post
 
 		//if ("MESSAGE-ID" in headers)
 		//	url = "news://news.digitalmars.com/" ~ headers["MESSAGE-ID"][1..$-1];
+
+		if ("DATE" in headers)
+		{
+			auto str = headers["DATE"];
+			try
+				time = parseTime(TimeFormats.RFC850, str);
+			catch (Exception e)
+			try
+				time = parseTime(TimeFormats.RFC2822, str);
+			catch (Exception e)
+			{ /* fall-back to default (class creation time) */ }
+		}
 	}
 
 	override void formatForIRC(void delegate(string) handler)

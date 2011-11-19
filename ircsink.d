@@ -37,8 +37,6 @@ final class IrcSink : NewsSink
 {
 	this()
 	{
-		super();
-
 		conn = new IrcClient();
 		conn.encoder = conn.decoder = &nullStringTransform;
 		conn.exactNickname = true;
@@ -89,4 +87,3 @@ private:
 		return (CHANNEL2 in conn.channels) && conn.channels[CHANNEL2].users.length > 1;
 	}
 }
-
