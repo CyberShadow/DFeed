@@ -13,17 +13,52 @@ Logger createLogger(string name)
 
 abstract class Post
 {
+	/// Asynchronously summarise this post to a single line, ready to be sent to IRC
+	abstract void formatForIRC(void delegate(string) handler);
+
+	/// Only "important" posts are sent to IRC
+	bool isImportant() { return true; }
 }
 
-alias void delegate(Post) PostHandler;
-
-abstract class PostSource
+abstract class NewsSource
 {
-	this(PostHandler postHandler)
+	this(string name)
 	{
-		this.postHandler = postHandler;
+		this.name = name;
+		log = createLogger(name);
+		newsSources[name] = this;
 	}
 
+	abstract void start();
+
 protected:
-	PostHandler postHandler;
+	Logger log;
+
+public:
+	string name;
+}
+
+abstract class NewsSink
+{
+	this()
+	{
+		newsSinks ~= this;
+	}
+
+	abstract void handlePost(Post p);
+}
+
+private NewsSource[string] newsSources;
+private NewsSink[] newsSinks;
+
+void startNewsSources()
+{
+	foreach (source; newsSources)
+		source.start();
+}
+
+void announcePost(Post p)
+{
+	foreach (sink; newsSinks)
+		sink.handlePost(p);
 }

@@ -4,21 +4,22 @@ import std.string;
 import std.stream;
 import std.regex;
 
-import ae.utils.cmd;
 import ae.utils.xml;
+import ae.net.http.client;
 
 import common;
 import webpoller;
+import bitly;
 
 class Reddit : WebPoller
 {
 	enum POLL_PERIOD = 60;
 
-	this(string subreddit, Regex!char filter, PostHandler postHandler)
+	this(string subreddit, string filter)
 	{
 		this.subreddit = subreddit;
-		this.filter = filter;
-		super("Reddit", POLL_PERIOD, postHandler);
+		this.filter = regex(filter);
+		super("Reddit-"~subreddit, POLL_PERIOD);
 	}
 
 private:
@@ -44,24 +45,31 @@ private:
 			this.url = url;
 		}
 
-		override string toString()
+		override void formatForIRC(void delegate(string) handler)
 		{
-			return format("[Reddit] %s posted \"%s\": %s", author, title, shortenURL(url));
+			// TODO: use redd.it
+			shortenURL(url, (string shortenedURL) {
+				handler(format("[Reddit] %s posted \"%s\": %s", author, title, shortenedURL));
+			});
 		}
 	}
 
 protected:
-	override Post[string] getPosts()
+	override void getPosts()
 	{
-		auto data = new XmlDocument(new MemoryStream(cast(char[])download("http://www.reddit.com/r/"~subreddit~"/.rss")));
-		Post[string] r;
+		httpGet("http://www.reddit.com/r/"~subreddit~"/.rss", (string result) {
+			auto data = new XmlDocument(new MemoryStream(cast(char[])result));
+			Post[string] r;
 
-		auto feed = data["rss"]["channel"];
-		foreach (e; feed)
-			if (e.tag == "item")
-				if (!match(e["title"].text, filter).empty)
-					r[e["guid"].text ~ " / " ~ e["pubDate"].text] = new RedditPost(e["title"].text, getAuthor(e["description"].text), e["link"].text);
+			auto feed = data["rss"]["channel"];
+			foreach (e; feed)
+				if (e.tag == "item")
+					if (!match(e["title"].text, filter).empty)
+						r[e["guid"].text ~ " / " ~ e["pubDate"].text] = new RedditPost(e["title"].text, getAuthor(e["description"].text), e["link"].text);
 
-		return r;
+			handlePosts(r);
+		}, (string error) {
+			handleError(error);
+		});
 	}
 }

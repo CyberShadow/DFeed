@@ -5,10 +5,7 @@ import std.string;
 
 import ae.net.asockets;
 import ae.sys.timing;
-//import ae.utils.*;
 import ae.utils.log;
-
-import common;
 
 alias core.time.TickDuration TickDuration;
 
@@ -119,10 +116,13 @@ private:
 	}
 
 public:
+	this(Logger log)
+	{
+		this.log = log;
+	}
+
 	void connect(string server)
 	{
-		log = createLogger("NNTP");
-
 		this.server = server;
 
 		conn = new LineBufferedSocket(TickDuration.from!"seconds"(60));

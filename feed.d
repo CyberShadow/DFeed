@@ -3,26 +3,26 @@ module feed;
 import std.string;
 import std.stream;
 
-import ae.utils.cmd;
 import ae.utils.xml;
+import ae.net.http.client;
 
 import common;
+import bitly;
 import webpoller;
 
 class Feed : WebPoller
 {
 	enum POLL_PERIOD = 60;
 
-	this(string name, string url, PostHandler postHandler, string action = "posted")
+	this(string name, string url, string action = "posted")
 	{
-		this.name = name;
 		this.url = url;
 		this.action = action;
-		super(name, POLL_PERIOD, postHandler);
+		super(name, POLL_PERIOD);
 	}
 
 private:
-	string name, url, action;
+	string url, action;
 
 	class FeedPost : Post
 	{
@@ -37,26 +37,36 @@ private:
 			this.url = url;
 		}
 
-		override string toString()
+		override void formatForIRC(void delegate(string) handler)
 		{
-			if (action)
-				return format("[%s] %s %s \"%s\": %s", this.outer.name, author, this.outer.action, title, shortenURL(url));
-			else // author is already indicated in title
-				return format("[%s] %s: %s", this.outer.name, title, shortenURL(url));
+			shortenURL(url, (string shortenedURL) {
+				if (action)
+					handler(format("[%s] %s %s \"%s\": %s", this.outer.name, author, this.outer.action, title, shortenedURL));
+				else // author is already indicated in title
+					handler(format("[%s] %s: %s", this.outer.name, title, shortenedURL));
+			});
 		}
 	}
 
 protected:
-	override Post[string] getPosts()
+	override void getPosts()
 	{
-		auto data = new XmlDocument(new MemoryStream(cast(char[])download(url)));
-		Post[string] r;
-		auto feed = data["feed"];
+		httpGet(url, (string result) {
+			auto data = new XmlDocument(new MemoryStream(cast(char[])result));
+			Post[string] r;
+			auto feed = data["feed"];
 
-		foreach (e; feed)
-			if (e.tag == "entry")
-				r[e["id"].text ~ " / " ~ e["updated"].text] = new FeedPost(e["title"].text, e["author"]["name"].text, e["link"].attributes["href"]);
+			foreach (e; feed)
+				if (e.tag == "entry")
+				{
+					auto key = e["id"].text ~ " / " ~ e["updated"].text;
+					auto post = new FeedPost(e["title"].text, e["author"]["name"].text, e["link"].attributes["href"]);
+					r[key] = post;
+				}
 
-		return r;
+			handlePosts(r);
+		}, (string error) {
+			handleError(error);
+		});
 	}
 }
