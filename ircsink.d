@@ -67,7 +67,7 @@ private:
 
 	void connect()
 	{
-		conn.connect(NICK, "https://github.com/CyberShadow/DIrcFeed", "irc.freenode.net");
+		conn.connect(NICK, "https://github.com/CyberShadow/DFeed", "irc.freenode.net");
 	}
 
 	void onConnect(IrcClient sender)
