@@ -53,9 +53,12 @@ protected:
 		if (important || haveUnimportantListeners())
 		{
 			post.formatForIRC((string summary) {
-				conn.sendRaw(format(FORMAT, CHANNEL2, summary));
-				if (important)
-					conn.sendRaw(format(FORMAT, CHANNEL, summary));
+				if (conn.connected)
+				{
+					conn.sendRaw(format(FORMAT, CHANNEL2, summary));
+					if (important)
+						conn.sendRaw(format(FORMAT, CHANNEL, summary));
+				}
 			});
 		}
 	}
