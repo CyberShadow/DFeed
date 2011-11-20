@@ -16,10 +16,12 @@ SQLite.PreparedStatement query(string sql)
 	return cache[sql.ptr] = db.prepare(sql);
 }
 
+bool allowTransactions = true;
+
 enum DB_TRANSACTION = q{
-	query("BEGIN TRANSACTION").exec();
-	scope(failure) query("ROLLBACK TRANSACTION").exec();
-	scope(success) query("COMMIT TRANSACTION").exec();
+	if (allowTransactions) query("BEGIN TRANSACTION").exec();
+	scope(failure) if (allowTransactions) query("ROLLBACK TRANSACTION").exec();
+	scope(success) if (allowTransactions) query("COMMIT TRANSACTION").exec();
 };
 
 static this()

@@ -18,6 +18,8 @@ class DatabaseSource : NewsSource
 	override void start()
 	{
 		auto select = query("SELECT `Message`, `ID` FROM `OldPosts`");
+		db.exec("BEGIN");
+		allowTransactions = false;
 		while (select.step())
 		{
 			string message, id;
@@ -25,6 +27,9 @@ class DatabaseSource : NewsSource
 			log("Announcing: " ~ id);
 			announcePost(new Rfc850Post(message, id));
 		}
+		allowTransactions = true;
+		log("Committing...");
+		db.exec("COMMIT");
 	}
 }
 
@@ -38,6 +43,7 @@ void main(string[] args)
 	db.exec("SELECT COUNT(*) FROM `OldPosts`"); // Make sure it exists
 	db.exec("DELETE FROM `Posts`");
 	db.exec("DELETE FROM `Groups`");
+	db.exec("DELETE FROM `Threads`");
 
 	new DatabaseSource();
 	new MessageDBSink();
