@@ -13,7 +13,7 @@ void main(string[] args)
 	getopt(args,
 		"q|quiet", &common.quiet);
 
-	new NntpDownloader("news.digitalmars.com");
+	new NntpDownloader("news.digitalmars.com", true);
 	new MessageDBSink();
 
 	startNewsSources();

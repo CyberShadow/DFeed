@@ -2,6 +2,7 @@ module nntp;
 
 import std.datetime;
 import std.string;
+import std.exception;
 
 import ae.net.asockets;
 import ae.sys.timing;
@@ -10,6 +11,8 @@ import ae.utils.log;
 alias core.time.TickDuration TickDuration;
 
 const POLL_PERIOD = 2;
+
+struct GroupInfo { string name; int high, low; char mode; }
 
 class NntpClient
 {
@@ -80,7 +83,7 @@ private:
 				if (polling)
 				{
 					auto time = firstLine[1];
-					assert(time.length == 14);
+					enforce(time.length == 14, "DATE format");
 					if (lastTime is null)
 						setTimeout(&poll, TickDuration.from!"seconds"(POLL_PERIOD));
 					lastTime = time;
@@ -109,7 +112,7 @@ private:
 			}
 			case "220": // ARTICLE reply
 			{
-				//assert(firstLine.length==3);
+				//enforce(firstLine.length==3);
 				auto message = reply[1..$];
 				if (handleMessage)
 					handleMessage(message, firstLine[1], firstLine[2]);
@@ -125,12 +128,15 @@ private:
 			case "215": // LIST reply
 			{
 				// assume the command was LIST [ACTIVE]
-				// TODO: misc info
-				string[] names = new string[reply.length-1];
+				GroupInfo[] groups = new GroupInfo[reply.length-1];
 				foreach (i, line; reply[1..$])
-					names[i] = split(line)[0];
+				{
+					auto info = split(line);
+					enforce(info.length == 4, "Unrecognized LIST reply");
+					groups[i] = GroupInfo(info[0], to!int(info[1]), to!int(info[2]), info[3][0]);
+				}
 				if (handleGroups)
-					handleGroups(names);
+					handleGroups(groups);
 				break;
 			}
 			case "211": // LISTGROUP reply
@@ -183,9 +189,12 @@ public:
 		send("GROUP " ~ name);
 	}
 
-	void listGroup(string name)
+	void listGroup(string name, int from = 1)
 	{
-		send("LISTGROUP " ~ name);
+		if (from > 1)
+			send(format("LISTGROUP %s %d-", name, from));
+		else
+			send(format("LISTGROUP %s", name));
 	}
 
 	void getMessage(string numOrID)
@@ -194,7 +203,7 @@ public:
 	}
 
 	void delegate() handleConnect;
-	void delegate(string[] names) handleGroups;
+	void delegate(GroupInfo[] groups) handleGroups;
 	void delegate(string[] messages) handleListGroup;
 	void delegate(string[] lines, string num, string id) handleMessage;
 }

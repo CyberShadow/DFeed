@@ -23,7 +23,7 @@ void main(string[] args)
 		"q|quiet", &common.quiet);
 
 	// Create sources
-	new NntpDownloader("news.digitalmars.com");
+	new NntpDownloader("news.digitalmars.com", false);
 	new NntpListener("news.digitalmars.com");
 	new MailingLists();
 	new StackOverflow("d");

@@ -46,10 +46,11 @@ class NntpDownloader : NewsSource
 
 	NntpClient client;
 
-	this(string server)
+	this(string server, bool fullCheck)
 	{
 		super("NNTP-Downloader");
 		this.server = server;
+		this.fullCheck = fullCheck;
 		client = new NntpClient(log);
 		client.handleConnect = &onConnect;
 		client.handleGroups = &onGroups;
@@ -64,8 +65,9 @@ class NntpDownloader : NewsSource
 
 private:
 	string server;
-	string[] queuedGroups;
-	string currentGroup;
+	bool fullCheck;
+	GroupInfo[] queuedGroups;
+	GroupInfo currentGroup;
 	int[] queuedMessages;
 	uint messagesToDownload;
 
@@ -75,10 +77,10 @@ private:
 		client.listGroups();
 	}
 
-	void onGroups(string[] names)
+	void onGroups(GroupInfo[] groups)
 	{
-		log(format("Got %d groups.", names.length));
-		queuedGroups = names;
+		log(format("Got %d groups.", groups.length));
+		queuedGroups = groups;
 		nextGroup();
 	}
 
@@ -88,8 +90,26 @@ private:
 			return done();
 		currentGroup = queuedGroups[0];
 		queuedGroups = queuedGroups[1..$];
-		log(format("Listing group: %s", currentGroup));
-		client.listGroup(currentGroup);
+		log(format("Listing group: %s", currentGroup.name));
+		if (fullCheck)
+			client.listGroup(currentGroup.name);
+		else
+		{
+			auto select = query("SELECT MAX(`ArtNum`) FROM `Groups` WHERE `Group` = ?");
+			select.bindAll(currentGroup.name);
+			int maxNum = 0;
+			while (select.step())
+				select.columns(maxNum);
+			log(format("Highest article number is database: %d", maxNum));
+			if (currentGroup.high > maxNum)
+			{
+				// news.digitalmars.com doesn't seem to support LISTGROUP ranges :(
+				//client.listGroup(currentGroup.name, maxNum+1);
+				client.listGroup(currentGroup.name);
+			}
+			else
+				nextGroup();
+		}
 	}
 
 	void done()
@@ -109,7 +129,7 @@ private:
 
 		// Remove posts present in the database
 		auto select = query("SELECT `ArtNum` FROM `Groups` WHERE `Group` = ?");
-		select.bindAll(currentGroup);
+		select.bindAll(currentGroup.name);
 		while (select.step())
 		{
 			int num;
