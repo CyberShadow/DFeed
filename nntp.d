@@ -45,8 +45,12 @@ private:
 		{
 			onReply(reply);
 			reply = null;
+			return;
 		}
-		else
+
+		if (line.length && line[0] == '.')
+			line = line[1..$];
+
 		if (reply.length==0 && (line.startsWith("200") || line.startsWith("111")))
 			onReply([line]);
 		else
