@@ -67,9 +67,6 @@ void startNewsSources()
 
 void announcePost(Post p)
 {
-	if (p.time < Clock.currTime() - dur!"days"(1))
-		return; // ignore posts older than a day old (e.g. StackOverflow question activity bumps the questions)
-
 	foreach (sink; newsSinks)
 		sink.handlePost(p);
 }

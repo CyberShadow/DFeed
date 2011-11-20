@@ -32,8 +32,9 @@ class Rfc850Post : Post
 		// TODO: actually read RFC 850
 		auto text = lines.replace("\r\n", "\n").replace("\n\t", " ").replace("\n ", " ");
 		string[string] headers;
-		foreach (s; splitlines(text))
+		foreach (s; text.split("\n"))
 		{
+			if (s == "") break;
 			int p = s.indexOf(": ");
 			if (p<0) continue;
 			//assert(p>0, "Bad header line: " ~ s);
@@ -94,6 +95,9 @@ class Rfc850Post : Post
 		//if ("MESSAGE-ID" in headers)
 		//	url = "news://news.digitalmars.com/" ~ headers["MESSAGE-ID"][1..$-1];
 
+		if ("NNTP-POSTING-DATE" in headers)
+			time = parseTime("D, j M Y H:i:s O", headers["NNTP-POSTING-DATE"]);
+		else
 		if ("DATE" in headers)
 		{
 			auto str = headers["DATE"];
@@ -101,7 +105,10 @@ class Rfc850Post : Post
 				time = parseTime(TimeFormats.RFC850, str);
 			catch (Exception e)
 			try
-				time = parseTime(TimeFormats.RFC2822, str);
+				time = parseTime(`D, j M Y H:i:s O`, str);
+			catch (Exception e)
+			try
+				time = parseTime(`D, j M Y H:i:s e`, str);
 			catch (Exception e)
 			{ /* fall-back to default (class creation time) */ }
 		}
@@ -166,6 +173,10 @@ private:
 string decodeRfc5335(string str)
 {
 	// TODO: actually read RFC 5335
+
+	if (hasIntlCharacters(str))
+		str = decodeEncodedText(str, "windows1252");
+
 	int start, end;
 conversionLoop:
 	while ((start=str.indexOf("=?"))>=0 && (end=str.indexOf("?= "), end<0&&str.endsWith("?=")?(end=str.length-2):0)>=0 && str.length>4)
@@ -211,6 +222,14 @@ string decodeQuotedPrintable(string s)
 		else
 			r ~= s[i++];
 	return r;
+}
+
+bool hasIntlCharacters(string s)
+{
+	foreach (char c; s)
+		if (c >= 0x80)
+			return true;
+	return false;
 }
 
 string decodeEncodedText(string s, string textEncoding)

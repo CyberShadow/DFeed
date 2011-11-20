@@ -1,22 +1,12 @@
 module ircsink;
 
 import std.string;
-//import std.file;
-//import std.conv;
-//import std.regex;
-//import std.getopt;
+import std.datetime;
 
 import ae.net.asockets;
 import ae.net.irc.client;
-//import ae.utils.log;
-//import ae.utils.array;
 import ae.sys.timing;
 
-//import rfc850;
-//import nntp;
-//import stackoverflow;
-//import feed;
-//import reddit;
 import common;
 
 alias core.time.TickDuration TickDuration;
@@ -49,11 +39,14 @@ final class IrcSink : NewsSink
 protected:
 	override void handlePost(Post post)
 	{
+		if (post.time < Clock.currTime() - dur!"days"(1))
+			return; // ignore posts older than a day old (e.g. StackOverflow question activity bumps the questions)
+
 		bool important = post.isImportant();
 		if (important || haveUnimportantListeners())
 		{
 			post.formatForIRC((string summary) {
-				if (conn.connected)
+				if (connected)
 				{
 					conn.sendRaw(format(FORMAT, CHANNEL2, summary));
 					if (important)
@@ -65,6 +58,7 @@ protected:
 
 private:
 	IrcClient conn;
+	bool connected;
 
 	void connect()
 	{
@@ -75,10 +69,12 @@ private:
 	{
 		conn.join(CHANNEL);
 		conn.join(CHANNEL2);
+		connected = true;
 	}
 
 	void onDisconnect(IrcClient sender, string reason, DisconnectType type)
 	{
+		connected = false;
 		setTimeout(&connect, TickDuration.from!"seconds"(10));
 	}
 

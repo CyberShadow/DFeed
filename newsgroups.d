@@ -120,8 +120,13 @@ private:
 		queuedMessages = messageNums.keys.sort;
 		messagesToDownload = queuedMessages.length;
 
-		foreach (n; 0..PREFETCH)
-			requestNextMessage();
+		if (messagesToDownload)
+		{
+			foreach (n; 0..PREFETCH)
+				requestNextMessage();
+		}
+		else
+			nextGroup();
 	}
 
 	void requestNextMessage()
