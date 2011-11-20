@@ -8,7 +8,6 @@ import std.base64;
 
 import ae.net.http.client;
 import ae.utils.array;
-import ae.utils.cmd : iconv;
 import ae.utils.time;
 
 import common;
@@ -18,9 +17,9 @@ import database;
 class Rfc850Post : Post
 {
 	string lines, where, num, id;
-	bool parsed;
 
 	string subject, author, url, shortURL;
+	string[] references;
 	bool reply;
 
 	this(string lines, string where=null, string num=null, string id=null)
@@ -29,13 +28,6 @@ class Rfc850Post : Post
 		this.where = where;
 		this.num   = num;
 		this.id    = id;
-		this.parsed = false;
-	}
-
-	void parse()
-	{
-		if (parsed)
-			return;
 
 		// TODO: actually read RFC 850
 		auto text = lines.replace("\r\n", "\n").replace("\n\t", " ").replace("\n ", " ");
@@ -48,7 +40,12 @@ class Rfc850Post : Post
 			headers[toupper(s[0..p])] = s[p+2..$];
 		}
 
-		reply = "REFERENCES" in headers ? true : false;
+		if ("REFERENCES" in headers)
+		{
+			reply = true;
+			references = headers["REFERENCES"].split();
+		}
+
 		subject = "SUBJECT" in headers ? decodeRfc5335(headers["SUBJECT"]) : null;
 		if (subject.startsWith("Re: "))
 		{
@@ -73,21 +70,23 @@ class Rfc850Post : Post
 			subject = subject[p+2..$];
 		}
 
+		if ("MESSAGE-ID" in headers && !id)
+			id = headers["MESSAGE-ID"];
+
 		if (subject.startsWith("[Issue "))
 			url = "http://d.puremagic.com/issues/show_bug.cgi?id=" ~ subject.split(" ")[1][0..$-1];
 		else
 		if ("XREF" in headers)
 		{
 			auto xref = split(split(headers["XREF"], " ")[1], ":");
-			auto ng = xref[0];
-			auto id = xref[1];
-			//url = format("http://www.digitalmars.com/pnews/read.php?server=news.digitalmars.com&group=%s&artnum=%s", encodeUrlParameter(ng), id);
-			url = format("http://digitalmars.com/webnews/newsgroups.php?art_group=%s&article_id=%s", encodeComponent(ng), id);
+			where = xref[0];
+			num = xref[1];
+			//url = format("http://www.digitalmars.com/pnews/read.php?server=news.digitalmars.com&group=%s&artnum=%s", encodeUrlParameter(where), num);
+			url = format("http://digitalmars.com/webnews/newsgroups.php?art_group=%s&article_id=%s", encodeComponent(where), num);
 		}
 		else
-		if ("LIST-ID" in headers && "MESSAGE-ID" in headers)
+		if ("LIST-ID" in headers && id)
 		{
-			auto id = headers["MESSAGE-ID"];
 			if (id.startsWith("<") && id.endsWith(">"))
 				url = "http://mid.gmane.org/" ~ id[1..$-1];
 		}
@@ -110,8 +109,6 @@ class Rfc850Post : Post
 
 	override void formatForIRC(void delegate(string) handler)
 	{
-		parse();
-
 		if (url && !shortURL)
 			return shortenURL(url, (string shortenedURL) {
 				shortURL = shortenedURL;
@@ -136,8 +133,6 @@ class Rfc850Post : Post
 
 	override bool isImportant()
 	{
-		parse();
-
 		// GitHub notifications are already grabbed from RSS
 		if (author == "noreply@github.com")
 			return false;
@@ -149,6 +144,16 @@ class Rfc850Post : Post
 			return true;
 
 		return !reply || inArray(VIPs, author);
+	}
+
+	string parentID()
+	{
+		return references.length ? references[$-1] : null;
+	}
+
+	string threadID()
+	{
+		return references.length ? references[0] : id;
 	}
 
 private:
@@ -189,7 +194,7 @@ conversionLoop:
 			break conversionLoop;
 		}
 
-		str = str[0..start] ~ iconv(s, textEncoding) ~ str[end==$-2?$:end+3..$];
+		str = str[0..start] ~ decodeEncodedText(s, textEncoding) ~ str[end==$-2?$:end+3..$];
 	}
 	return str;
 }
@@ -206,4 +211,18 @@ string decodeQuotedPrintable(string s)
 		else
 			r ~= s[i++];
 	return r;
+}
+
+string decodeEncodedText(string s, string textEncoding)
+{
+	try
+	{
+		import arsd.characterencodings;
+		return convertToUtf8(cast(immutable(ubyte)[])s, textEncoding);
+	}
+	catch (Exception e)
+	{
+		import ae.utils.cmd;
+		return iconv(s, textEncoding);
+	}
 }

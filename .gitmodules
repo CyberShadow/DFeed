@@ -1,3 +1,6 @@
 [submodule "ae"]
 	path = ae
 	url = git://github.com/CyberShadow/ae.git
+[submodule "arsd"]
+	path = arsd
+	url = git://github.com/CyberShadow/misc-stuff-including-D-programming-language-web-stuff.git

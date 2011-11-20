@@ -5,9 +5,8 @@ import std.getopt;
 import ae.net.asockets;
 
 import common;
-
-// Sources
 import newsgroups;
+import messagedb;
 
 void main(string[] args)
 {
@@ -15,6 +14,7 @@ void main(string[] args)
 		"q|quiet", &common.quiet);
 
 	new NntpDownloader("news.digitalmars.com");
+	new MessageDBSink();
 
 	startNewsSources();
 	socketManager.loop();
