@@ -64,20 +64,28 @@ private:
 		auto firstLine = split(reply[0]);
 		switch (firstLine[0])
 		{
-			case "200":
-				send("DATE");
+			case "200": // greeting
+				if (handleConnect)
+					handleConnect();
+				if (polling)
+					send("DATE");
 				break;
-			case "111":
+			case "111": // DATE reply
 			{	
-				auto time = firstLine[1];
-				assert(time.length == 14);
-				if (lastTime is null)
-					setTimeout(&poll, TickDuration.from!"seconds"(POLL_PERIOD));
-				lastTime = time;
+				if (polling)
+				{
+					auto time = firstLine[1];
+					assert(time.length == 14);
+					if (lastTime is null)
+						setTimeout(&poll, TickDuration.from!"seconds"(POLL_PERIOD));
+					lastTime = time;
+				}
 				break;
 			}
-			case "230":
+			case "230": // NEWNEWS reply
 			{
+				assert(polling);
+
 				bool[string] messages;
 				foreach (message; reply[1..$])
 					messages[message] = true;
@@ -86,7 +94,7 @@ private:
 				foreach (message, b; messages)
 					if (!(message in oldMessages))
 					{
-						send("HEAD " ~ message);
+						send("ARTICLE " ~ message);
 						queued++;
 					}
 				oldMessages = messages;
@@ -94,14 +102,36 @@ private:
 					setTimeout(&poll, TickDuration.from!"seconds"(POLL_PERIOD));
 				break;
 			}
-			case "221":
+			case "220": // ARTICLE reply
 			{
+				//assert(firstLine.length==3);
 				auto message = reply[1..$];
 				if (handleMessage)
-					handleMessage(message);
-				queued--;
-				if (queued==0)
-					setTimeout(&poll, TickDuration.from!"seconds"(POLL_PERIOD));
+					handleMessage(message, firstLine[1], firstLine[2]);
+
+				if (polling)
+				{
+					queued--;
+					if (queued==0)
+						setTimeout(&poll, TickDuration.from!"seconds"(POLL_PERIOD));
+				}
+				break;
+			}
+			case "215": // LIST reply
+			{
+				// assume the command was LIST [ACTIVE]
+				// TODO: misc info
+				string[] names = new string[reply.length-1];
+				foreach (i, line; reply[1..$])
+					names[i] = split(line)[0];
+				if (handleGroups)
+					handleGroups(names);
+				break;
+			}
+			case "211": // LISTGROUP reply
+			{
+				if (handleListGroup)
+					handleListGroup(reply[1..$]);
 				break;
 			}
 			default:
@@ -116,6 +146,8 @@ private:
 	}
 
 public:
+	bool polling;
+
 	this(Logger log)
 	{
 		this.log = log;
@@ -125,11 +157,34 @@ public:
 	{
 		this.server = server;
 
-		conn = new LineBufferedSocket(TickDuration.from!"seconds"(60));
+		conn = new LineBufferedSocket(TickDuration.from!"seconds"(POLL_PERIOD*10));
 		conn.handleDisconnect = &onDisconnect;
 		conn.handleReadLine = &onReadLine;
 		reconnect();
 	}
 
-	void delegate(string[] head) handleMessage;
+	void listGroups()
+	{
+		send("LIST");
+	}
+
+	void selectGroup(string name)
+	{
+		send("GROUP " ~ name);
+	}
+
+	void listGroup(string name)
+	{
+		send("LISTGROUP " ~ name);
+	}
+
+	void getMessage(string numOrID)
+	{
+		send("ARTICLE " ~ numOrID);
+	}
+
+	void delegate() handleConnect;
+	void delegate(string[] names) handleGroups;
+	void delegate(string[] messages) handleListGroup;
+	void delegate(string[] lines, string num, string id) handleMessage;
 }

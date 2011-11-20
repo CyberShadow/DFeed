@@ -13,18 +13,34 @@ import ae.utils.time;
 
 import common;
 import bitly;
+import database;
 
 class Rfc850Post : Post
 {
-	string subject, author, where, url, shortURL;
+	string lines, where, num, id;
+	bool parsed;
+
+	string subject, author, url, shortURL;
 	bool reply;
 
-	this(string lines)
+	this(string lines, string where=null, string num=null, string id=null)
 	{
+		this.lines = lines;
+		this.where = where;
+		this.num   = num;
+		this.id    = id;
+		this.parsed = false;
+	}
+
+	void parse()
+	{
+		if (parsed)
+			return;
+
 		// TODO: actually read RFC 850
-		lines = lines.replace("\r\n", "\n").replace("\n\t", " ").replace("\n ", " ");
+		auto text = lines.replace("\r\n", "\n").replace("\n\t", " ").replace("\n ", " ");
 		string[string] headers;
-		foreach (s; splitlines(lines))
+		foreach (s; splitlines(text))
 		{
 			int p = s.indexOf(": ");
 			if (p<0) continue;
@@ -94,6 +110,8 @@ class Rfc850Post : Post
 
 	override void formatForIRC(void delegate(string) handler)
 	{
+		parse();
+
 		if (url && !shortURL)
 			return shortenURL(url, (string shortenedURL) {
 				shortURL = shortenedURL;
@@ -118,6 +136,8 @@ class Rfc850Post : Post
 
 	override bool isImportant()
 	{
+		parse();
+
 		// GitHub notifications are already grabbed from RSS
 		if (author == "noreply@github.com")
 			return false;
