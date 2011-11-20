@@ -14,27 +14,41 @@ import common;
 import bitly;
 import database;
 
+struct Xref
+{
+	string group;
+	int num;
+}
+
 class Rfc850Post : Post
 {
-	string lines, where, num, id;
+	string lines, id;
+	Xref[] xref;
 
 	string subject, author, url, shortURL;
 	string[] references;
 	bool reply;
 
-	this(string lines, string where=null, string num=null, string id=null)
+	this(string lines, string id=null)
 	{
 		this.lines = lines;
-		this.where = where;
-		this.num   = num;
 		this.id    = id;
 
 		// TODO: actually read RFC 850
-		auto text = lines.replace("\r\n", "\n").replace("\n\t", " ").replace("\n ", " ");
+		auto text = lines.replace("\r\n", "\n");
+		auto headerEnd = text.indexOf("\n\n");
+		if (headerEnd < 0) headerEnd = text.length;
+		auto header = text[0..headerEnd];
+		string content = text[headerEnd..$];
+		header = header.replace("\n\t", " ").replace("\n ", " ");
+
 		string[string] headers;
-		foreach (s; text.split("\n"))
+		foreach (s; header.split("\n"))
 		{
 			if (s == "") break;
+			if (hasIntlCharacters(s))
+				s = decodeEncodedText(s, "windows1252");
+
 			int p = s.indexOf(": ");
 			if (p<0) continue;
 			//assert(p>0, "Bad header line: " ~ s);
@@ -62,12 +76,21 @@ class Rfc850Post : Post
 		if (author.length>2 && author[0]=='"' && author[$-1]=='"')
 			author = decodeRfc5335(strip(author[1..$-1]));
 
-		where = "NEWSGROUPS" in headers ? headers["NEWSGROUPS"] : null;
+		//where = "NEWSGROUPS" in headers ? headers["NEWSGROUPS"] : null;
+		if ("XREF" in headers)
+		{
+			auto xrefStrings = split(headers["XREF"], " ")[1..$];
+			foreach (str; xrefStrings)
+			{
+				auto segs = str.split(":");
+				xref ~= Xref(segs[0], to!int(segs[1]));
+			}
+		}
 
-		if ("LIST-ID" in headers && subject.startsWith("[") && where is null)
+		if ("LIST-ID" in headers && subject.startsWith("[") && !xref.length)
 		{
 			auto p = subject.indexOf("] ");
-			where = subject[1..p];
+			xref = [Xref(subject[1..p])];
 			subject = subject[p+2..$];
 		}
 
@@ -77,13 +100,12 @@ class Rfc850Post : Post
 		if (subject.startsWith("[Issue "))
 			url = "http://d.puremagic.com/issues/show_bug.cgi?id=" ~ subject.split(" ")[1][0..$-1];
 		else
-		if ("XREF" in headers)
+		if (xref.length)
 		{
-			auto xref = split(split(headers["XREF"], " ")[1], ":");
-			where = xref[0];
-			num = xref[1];
-			//url = format("http://www.digitalmars.com/pnews/read.php?server=news.digitalmars.com&group=%s&artnum=%s", encodeUrlParameter(where), num);
-			url = format("http://digitalmars.com/webnews/newsgroups.php?art_group=%s&article_id=%s", encodeComponent(where), num);
+			auto group = xref[0].group;
+			auto num = xref[0].num;
+			//url = format("http://www.digitalmars.com/pnews/read.php?server=news.digitalmars.com&group=%s&artnum=%s", encodeUrlParameter(group), num);
+			url = format("http://digitalmars.com/webnews/newsgroups.php?art_group=%s&article_id=%s", encodeComponent(group), num);
 		}
 		else
 		if ("LIST-ID" in headers && id)
@@ -123,14 +145,7 @@ class Rfc850Post : Post
 			});
 
 		handler(format("%s%s %s %s%s",
-			where is null ? null : (
-				"[" ~ (
-					where.startsWith("digitalmars.") ?
-						"dm." ~ where[12..$]
-					:
-						where
-				) ~ "] "
-			),
+			where is null ? null : "[" ~ where.replace("digitalmars.", "dm.") ~ "] ",
 			author == "" ? "<no name>" : author,
 			reply ? "replied to" : "posted",
 			subject == "" ? "<no subject>" : `"` ~ subject ~ `"`,
@@ -153,12 +168,20 @@ class Rfc850Post : Post
 		return !reply || inArray(VIPs, author);
 	}
 
-	string parentID()
+	@property string where()
+	{
+		string[] groups;
+		foreach (x; xref)
+			groups ~= x.group;
+		return groups.join(",");
+	}
+
+	@property string parentID()
 	{
 		return references.length ? references[$-1] : null;
 	}
 
-	string threadID()
+	@property string threadID()
 	{
 		return references.length ? references[0] : id;
 	}
@@ -172,42 +195,50 @@ private:
 
 string decodeRfc5335(string str)
 {
-	// TODO: actually read RFC 5335
+	// TODO: find the actual RFC this is described in and implement it according to standard
 
-	if (hasIntlCharacters(str))
-		str = decodeEncodedText(str, "windows1252");
+	auto words = str.split(" ");
+	bool[] encoded = new bool[words.length];
 
-	int start, end;
-conversionLoop:
-	while ((start=str.indexOf("=?"))>=0 && (end=str.indexOf("?= "), end<0&&str.endsWith("?=")?(end=str.length-2):0)>=0 && str.length>4)
-	{
-		string s = str[start+2..end];
-
-		int p = s.indexOf('?');
-		if (p<=0) break;
-		auto textEncoding = s[0..p];
-		s = s[p+1..$];
-
-		p = s.indexOf('?');
-		if (p<=0) break;
-		auto contentEncoding = s[0..p];
-		s = s[p+1..$];
-
-		switch (toupper(contentEncoding))
+	foreach (wordIndex, ref word; words)
+		if (word.length >= 4 && word.startsWith("=?") && word.endsWith("?="))
 		{
-		case "Q":
-			s = decodeQuotedPrintable(s);
-			break;
-		case "B":
-			s = cast(string)Base64.decode(s);
-			break;
-		default:
-			break conversionLoop;
+			string s = word[2..$-2];
+
+			int p = s.indexOf('?');
+			if (p<=0) continue;
+			auto textEncoding = s[0..p];
+			s = s[p+1..$];
+
+			p = s.indexOf('?');
+			if (p<=0) continue;
+			auto contentEncoding = s[0..p];
+			s = s[p+1..$];
+
+			switch (toupper(contentEncoding))
+			{
+			case "Q":
+				s = decodeQuotedPrintable(s);
+				break;
+			case "B":
+				s = cast(string)Base64.decode(s);
+				break;
+			default:
+				continue /*foreach*/;
+			}
+
+			word = decodeEncodedText(s, textEncoding);
+			encoded[wordIndex] = true;
 		}
 
-		str = str[0..start] ~ decodeEncodedText(s, textEncoding) ~ str[end==$-2?$:end+3..$];
+	string result;
+	foreach (wordIndex, word; words)
+	{
+		if (wordIndex > 0 && !(encoded[wordIndex-1] && encoded[wordIndex]))
+			result ~= ' ';
+		result ~= word;
 	}
-	return str;
+	return result;
 }
 
 string decodeQuotedPrintable(string s)

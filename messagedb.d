@@ -25,8 +25,14 @@ protected:
 		if (!message)
 			return;
 
-		log(format("Saving message %s (%s:%s)", message.id, message.where, message.num));
-		auto insert = query("INSERT INTO `Posts` (`Group`, `ArtNum`, `ID`, `Message`, `Author`, `Subject`, `Time`, `ParentID`, `ThreadID`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-		insert.exec(message.where, message.num, message.id, message.lines, message.author, message.subject, message.time.stdTime, message.parentID, message.threadID);
+		log(format("Saving message %s (%s)", message.id, message.where));
+		mixin(DB_TRANSACTION);
+
+		query("INSERT OR IGNORE INTO `Posts` (`ID`, `Message`, `Author`, `Subject`, `Time`, `ParentID`, `ThreadID`) VALUES (?, ?, ?, ?, ?, ?, ?)")
+			.exec(message.id, message.lines, message.author, message.subject, message.time.stdTime, message.parentID, message.threadID);
+
+		foreach (xref; message.xref)
+			query("INSERT OR IGNORE INTO `Groups` (`Group`, `ArtNum`, `ID`) VALUES (?, ?, ?)")
+				.exec(xref.group, xref.num, message.id);
 	}
 }

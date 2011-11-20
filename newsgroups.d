@@ -95,6 +95,7 @@ private:
 	void done()
 	{
 		log("All done!");
+		client.disconnect();
 	}
 
 	void onListGroup(string[] messages)
@@ -107,7 +108,7 @@ private:
 			messageNums[to!int(m)] = true;
 
 		// Remove posts present in the database
-		auto select = query("SELECT `ArtNum` FROM `Posts` WHERE `Group` = ?");
+		auto select = query("SELECT `ArtNum` FROM `Groups` WHERE `Group` = ?");
 		select.bindAll(currentGroup);
 		while (select.step())
 		{
@@ -145,7 +146,7 @@ private:
 	{
 		log(format("Got message %s (%s)", num, id));
 
-		announcePost(new Rfc850Post(lines.join("\n"), currentGroup, num, id));
+		announcePost(new Rfc850Post(lines.join("\n"), id));
 		messagesToDownload--;
 		if (messagesToDownload == 0)
 			nextGroup();

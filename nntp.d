@@ -34,7 +34,8 @@ private:
 	void onDisconnect(ClientSocket sender, string reason, DisconnectType type)
 	{
 		log("* Disconnected (" ~ reason ~ ")");
-		setTimeout(&reconnect, TickDuration.from!"seconds"(10));
+		if (polling && type != DisconnectType.Requested)
+			setTimeout(&reconnect, TickDuration.from!"seconds"(10));
 	}
 
 	void onReadLine(LineBufferedSocket s, string line)
@@ -165,6 +166,11 @@ public:
 		conn.handleDisconnect = &onDisconnect;
 		conn.handleReadLine = &onReadLine;
 		reconnect();
+	}
+
+	void disconnect()
+	{
+		conn.disconnect();
 	}
 
 	void listGroups()
