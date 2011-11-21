@@ -58,7 +58,15 @@ class Rfc850Post : Post
 		if ("REFERENCES" in headers)
 		{
 			reply = true;
-			references = headers["REFERENCES"].split();
+			auto refs = strip(headers["REFERENCES"]);
+			while (refs.startsWith("<"))
+			{
+				auto p = refs.indexOf(">");
+				if (p < 0)
+					break;
+				references ~= refs[0..p+1];
+				refs = strip(refs[p+1..$]);
+			}
 		}
 
 		subject = "SUBJECT" in headers ? decodeRfc5335(headers["SUBJECT"]) : null;
