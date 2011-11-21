@@ -19,6 +19,7 @@ import ae.utils.time;
 
 import common;
 import database;
+import cache;
 
 class WebUI
 {
@@ -140,21 +141,40 @@ class WebUI
 		{ "D",	"Retired, use digitalmars.D instead" },
 	]}];
 
-	string discussionIndex()
+	int[string] getThreadCounts()
 	{
 		int[string] threadCounts;
-		int[string] postCounts;
-		string[string] lastPosts;
-
-		// TODO: the next two queries take about 300 ms in total, cache this data
 		foreach (string group, int count; query("SELECT `Group`, COUNT(*) FROM `Threads` GROUP BY `Group`").iterate())
 			threadCounts[group] = count;
+		return threadCounts;
+	}
+
+	int[string] getPostCounts()
+	{
+		int[string] postCounts;
 		foreach (string group, int count; query("SELECT `Group`, COUNT(*) FROM `Groups`  GROUP BY `Group`").iterate())
 			postCounts[group] = count;
+		return postCounts;
+	}
+
+	string[string] getLastPosts()
+	{
+		string[string] lastPosts;
 		foreach (set; groupHierarchy)
 			foreach (group; set.groups)
 				foreach (string id; query("SELECT `ID` FROM `Groups` WHERE `Group`=? ORDER BY `Time` DESC LIMIT 1").iterate(group.name))
 					lastPosts[group.name] = id;
+		return lastPosts;
+	}
+
+	Cached!(int[string]) threadCountCache, postCountCache;
+	Cached!(string[string]) lastPostCache;
+
+	string discussionIndex()
+	{
+		auto threadCounts = threadCountCache(getThreadCounts());
+		auto postCounts = postCountCache(getPostCounts());
+		auto lastPosts = lastPostCache(getLastPosts());
 
 		string summarizePost(string postID)
 		{
@@ -195,8 +215,7 @@ class WebUI
 	{
 		enum THREADS_PER_PAGE = 25;
 
-		page--;
-		enforce(page >= 0, "Invalid page");
+		enforce(page >= 1, "Invalid page");
 
 		struct Thread
 		{
@@ -205,21 +224,23 @@ class WebUI
 
 			/// Handle orphan posts
 			@property PostInfo* thread() { return _firstPost ? _firstPost : _lastPost; }
-			@property PostInfo* lastPost() { return _lastPost ? _lastPost : _firstPost; }
+			@property PostInfo* lastPost() { return _lastPost; }
 		}
 		Thread[] threads;
 
-		foreach (string firstPostID, string lastPostID; query("SELECT `ID`, `LastPost` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?").iterate(group, THREADS_PER_PAGE, page*THREADS_PER_PAGE))
+		foreach (string firstPostID, string lastPostID; query("SELECT `ID`, `LastPost` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?").iterate(group, THREADS_PER_PAGE, (page-1)*THREADS_PER_PAGE))
 			foreach (int count; query("SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ?").iterate(firstPostID))
-				threads ~= Thread(getPostInfo(firstPostID), firstPostID==lastPostID ? null : getPostInfo(lastPostID), count);
+				threads ~= Thread(getPostInfo(firstPostID), getPostInfo(lastPostID), count);
 
 		string summarizeThread(PostInfo* info)
 		{
-			assert(info !is null);
-			with (*info)
-				return
-					`<a class="forum-postsummary-subject" href="/discussion/post/` ~ encodeEntities(id[1..$-1]) ~ `">` ~ truncateString(subject, 100) ~ `</a><br>` ~
-					`by <span class="forum-postsummary-author">` ~ truncateString(author, 100) ~ `</span><br>`;
+			if (info)
+				with (*info)
+					return
+						`<a class="forum-postsummary-subject" href="/discussion/post/` ~ encodeEntities(id[1..$-1]) ~ `">` ~ truncateString(subject, 100) ~ `</a><br>` ~
+						`by <span class="forum-postsummary-author">` ~ truncateString(author, 100) ~ `</span><br>`;
+
+			return `<div class="forum-no-data">-</div>`;
 		}
 
 		string summarizeLastPost(PostInfo* info)
@@ -233,10 +254,18 @@ class WebUI
 			return `<div class="forum-no-data">-</div>`;
 		}
 
+		auto threadCount = threadCountCache(getThreadCounts())[group];
+		auto pageCount = (threadCount + (THREADS_PER_PAGE-1)) / THREADS_PER_PAGE;
+
+		string linkOrNot(string text, string url, bool cond)
+		{
+			return (cond ? `<a href="`~encodeEntities(url)~`">` : `<span class="disabled-link">`) ~ text ~ (cond ? `</a>` : `</span>`);
+		}
+
 		return
 			`<table id="group-index" class="forum-table">` ~
-			`<tr class="forum-index-set-header"><th colspan="3">` ~ encodeEntities(group) ~ `</th></tr>` ~ newline ~
-			`<tr class="forum-index-set-captions"><th>Thread / Thread Starter</th><th>Last Post</th><th>Replies</th>` ~ newline ~
+			`<tr class="group-index-header"><th colspan="3">` ~ encodeEntities(group) ~ `</th></tr>` ~ newline ~
+			`<tr class="group-index-captions"><th>Thread / Thread Starter</th><th>Last Post</th><th>Replies</th>` ~ newline ~
 			join(array(map!(
 				(Thread thread) { return `<tr>` ~
 					`<td class="group-index-col-first">` ~ summarizeThread(thread.thread) ~ `</td>` ~
@@ -245,21 +274,43 @@ class WebUI
 					`</tr>` ~ newline;
 				}
 			)(threads))) ~
+			`<tr class="group-index-pager"><th colspan="3">` ~ 
+				`<div class="pager-left">` ~
+					linkOrNot("&laquo; First", "?page=1", page!=1) ~
+					`&nbsp;&nbsp;&nbsp;` ~
+					linkOrNot("&lt; Prev", "?page=" ~ text(page-1), page>1) ~
+				`</div>` ~
+				`<div class="pager-right">` ~
+					linkOrNot("Next &gt;", "?page=" ~ text(page+1), page<pageCount) ~
+					`&nbsp;&nbsp;&nbsp;` ~
+					linkOrNot("Last &raquo; ", "?page=" ~ text(pageCount), page!=pageCount) ~
+				`</div>` ~
+			`</th></tr>` ~ newline ~
 			`</table>`;
 	}
 
 	struct PostInfo { string id, author, subject; SysTime time; }
+	CachedSet!(string, PostInfo*) postInfoCache;
 
 	PostInfo* getPostInfo(string id)
+	{
+		return postInfoCache(id, retrievePostInfo(id));
+	}
+
+	PostInfo* retrievePostInfo(string id)
 	{
 		if (id.startsWith('<') && id.endsWith('>'))
 			foreach (string author, string subject, long stdTime; query("SELECT `Author`, `Subject`, `Time` FROM `Posts` WHERE `ID` = ?").iterate(id))
 				return [PostInfo(id, author, subject, SysTime(stdTime, UTC()))].ptr;
-		return null;
+		return [PostInfo(id, "Unknown", "-")].dup.ptr;
+		//return null;
 	}
 
 	string summarizeTime(SysTime time)
 	{
+		if (!time.stdTime)
+			return "-";
+
 		string ago(long amount, string units)
 		{
 			assert(amount > 0);
@@ -267,7 +318,6 @@ class WebUI
 		}
 
 		auto now = Clock.currTime();
-		scope(failure) std.stdio.writeln([time, now]);
 		auto duration = now - time;
 		auto diffMonths = now.diffMonths(time);
 
@@ -304,7 +354,7 @@ class WebUI
 	{
 		string s = text(n);
 		int digits = 0;
-		foreach_reverse(p; 0..s.length-1)
+		foreach_reverse(p; 1..s.length)
 			if (++digits % 3 == 0)
 				s = s[0..p] ~ ',' ~ s[p..$];
 		return s;

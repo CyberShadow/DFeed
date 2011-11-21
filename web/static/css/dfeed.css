@@ -53,7 +53,9 @@
 .forum-table td {
 }
 
-.forum-index-set-header {
+.forum-index-set-header,
+.group-index-header,
+.group-index-pager {
 	background-color: #D0D0D0;
 }
 .forum-index-set-captions {
@@ -67,4 +69,13 @@
 
 .forum-no-data {
 	text-align: center;
+}
+.pager-left {
+	float: left;
+}
+.pager-right {
+	float: right;
+}
+.disabled-link {
+	color: #666;
 }
