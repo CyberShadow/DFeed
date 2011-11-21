@@ -146,8 +146,8 @@ class WebUI
 			`<table id="forum-index">` ~
 			join(array(map!(
 				(GroupSet set) { return
-					`<tr class="forum-index-set-header"><th colspan="4">` ~ set.name ~ `</th></tr>` ~
-					`<tr class="forum-index-set-captions"><th>Forum</th><th>Last Post</th><th>Threads</th><th>Posts</th>` ~
+					`<tr class="forum-index-set-header"><th colspan="4">` ~ set.name ~ `</th></tr>` ~ newline ~
+					`<tr class="forum-index-set-captions"><th>Forum</th><th>Last Post</th><th>Threads</th><th>Posts</th>` ~ newline ~
 					join(array(map!(
 						(Group group) { return `<tr>` ~
 							`<td class="forum-index-col-forum"><a href="/discussion/` ~ encodeEntities(group.name) ~ `/">` ~ encodeEntities(group.name) ~ `</a>` ~
@@ -156,7 +156,7 @@ class WebUI
 							`<td class="forum-index-col-lastpost">`    ~ (group.name in lastPosts    ? summarizePost(lastPosts[group.name]) : `<div class="forum-no-data">-</div>`) ~ `</td>` ~
 							`<td class="forum-index-col-threadcount">` ~ (group.name in threadCounts ? text(threadCounts[group.name]) : `-`) ~ `</td>` ~
 							`<td class="forum-index-col-postcount">`   ~ (group.name in postCounts   ? text(postCounts[group.name]) : `-`)  ~ `</td>` ~
-							`</tr>`;
+							`</tr>` ~ newline;
 						}
 					)(set.groups)));
 				}
@@ -171,8 +171,8 @@ class WebUI
 		if (id.startsWith('<') && id.endsWith('>'))
 			foreach (string author, string subject, long stdTime; query("SELECT `Author`, `Subject`, `Time` FROM `Posts` WHERE `ID` = ?").iterate(id))
 				return
-					`<a class="forum-postsummary-subject" href="/discussion/post/` ~ encodeEntities(id[1..$-1]) ~ `">` ~ truncateString(subject) ~ `</a><br/>` ~
-					`by <span class="forum-postsummary-author">` ~ truncateString(author) ~ `</span><br/>` ~
+					`<a class="forum-postsummary-subject" href="/discussion/post/` ~ encodeEntities(id[1..$-1]) ~ `">` ~ truncateString(subject) ~ `</a><br>` ~
+					`by <span class="forum-postsummary-author">` ~ truncateString(author) ~ `</span><br>` ~
 					`<span class="forum-postsummary-time">` ~ summarizeTime(stdTime) ~ `</span>`;
 
 		return "-";
@@ -235,5 +235,11 @@ class WebUI
 			}
 
 		return `<span title="`~encodeEntities(s)~`">` ~ encodeEntities(s[0..end] ~ "\&hellip;") ~ `</span>`;
+	}
+
+	/// &apos; is not a recognized entity in HTML 4 (even though it is in XML and XHTML).
+	string encodeEntities(string s)
+	{
+		return ae.utils.xml.encodeEntities(s).replace("&apos;", "'");
 	}
 }

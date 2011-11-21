@@ -235,6 +235,7 @@ div#header
 img#logo
 {
 	vertical-align: bottom;
+	border: none;
 }
 
 /*div#d-language a*/
