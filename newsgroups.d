@@ -95,11 +95,10 @@ private:
 			client.listGroup(currentGroup.name);
 		else
 		{
-			auto select = query("SELECT MAX(`ArtNum`) FROM `Groups` WHERE `Group` = ?");
-			select.bindAll(currentGroup.name);
 			int maxNum = 0;
-			while (select.step())
-				select.columns(maxNum);
+			foreach (int num; query("SELECT MAX(`ArtNum`) FROM `Groups` WHERE `Group` = ?").iterate(currentGroup.name))
+				maxNum = num;
+
 			log(format("Highest article number is database: %d", maxNum));
 			if (currentGroup.high > maxNum)
 			{
@@ -128,15 +127,9 @@ private:
 			messageNums[to!int(m)] = true;
 
 		// Remove posts present in the database
-		auto select = query("SELECT `ArtNum` FROM `Groups` WHERE `Group` = ?");
-		select.bindAll(currentGroup.name);
-		while (select.step())
-		{
-			int num;
-			select.columns(num);
+		foreach (int num; query("SELECT `ArtNum` FROM `Groups` WHERE `Group` = ?").iterate(currentGroup.name))
 			if (num in messageNums)
 				messageNums.remove(num);
-		}
 
 		queuedMessages = messageNums.keys.sort;
 		messagesToDownload = queuedMessages.length;

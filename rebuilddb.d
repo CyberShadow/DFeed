@@ -17,13 +17,10 @@ class DatabaseSource : NewsSource
 
 	override void start()
 	{
-		auto select = query("SELECT `Message`, `ID` FROM `OldPosts`");
 		db.exec("BEGIN");
 		allowTransactions = false;
-		while (select.step())
+		foreach (string message, string id; query("SELECT `Message`, `ID` FROM `OldPosts`").iterate())
 		{
-			string message, id;
-			select.columns(message, id);
 			log("Announcing: " ~ id);
 			announcePost(new Rfc850Post(message, id));
 		}

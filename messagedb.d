@@ -37,10 +37,8 @@ protected:
 				.exec(xref.group, xref.num, message.id, message.time.stdTime);
 
 			long threadIndex = 0, lastUpdated;
-			auto threadSelect = query("SELECT `ROWID`, `LastUpdated` FROM `Threads` WHERE `ID` = ? AND `Group` = ?");
-			threadSelect.bindAll(message.threadID, xref.group);
-			while (threadSelect.step())
-				threadSelect.columns(threadIndex, lastUpdated);
+			foreach (long rowid, long updated; query("SELECT `ROWID`, `LastUpdated` FROM `Threads` WHERE `ID` = ? AND `Group` = ?").iterate(message.threadID, xref.group))
+				threadIndex = rowid, lastUpdated = updated;
 
 			if (!threadIndex) // new thread
 				query("INSERT INTO `Threads` (`Group`, `ID`, `LastPost`, `LastUpdated`) VALUES (?, ?, ?, ?)").exec(xref.group, message.threadID, message.id, message.time.stdTime);
