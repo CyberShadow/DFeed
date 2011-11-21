@@ -6,6 +6,7 @@ import std.getopt;
 import ae.net.asockets;
 
 import common;
+import web;
 
 // Sources
 import newsgroups;
@@ -39,6 +40,9 @@ void main(string[] args)
 	// Create sinks
 	new IrcSink();
 	new MessageDBSink();
+
+	// Start web server
+	new WebUI();
 
 	startNewsSources();
 	socketManager.loop();
