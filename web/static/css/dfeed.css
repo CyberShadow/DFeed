@@ -70,6 +70,9 @@
 .forum-no-data {
 	text-align: center;
 }
+.group-index-pager th {
+	font-weight: normal;
+}
 .pager-left {
 	float: left;
 }
@@ -78,4 +81,20 @@
 }
 .disabled-link {
 	color: #666;
+}
+
+.group-index-header > th {
+	padding: 0;
+}
+.group-index-header > th > div {
+	position: relative;
+	padding: 4px;
+}
+#new-post-button {
+	position: absolute;
+	top: 1px;
+	right: 1px;
+}
+#new-post-button input[type=submit] {
+	margin: 0;
 }

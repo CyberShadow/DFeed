@@ -256,15 +256,36 @@ class WebUI
 
 		auto threadCount = threadCountCache(getThreadCounts())[group];
 		auto pageCount = (threadCount + (THREADS_PER_PAGE-1)) / THREADS_PER_PAGE;
+		enum PAGER_RADIUS = 4;
+		int pagerStart = max(1, page - PAGER_RADIUS);
+		int pagerEnd = min(pageCount, page + PAGER_RADIUS);
+		string[] pager;
+		if (pagerStart > 1)
+			pager ~= "&hellip;";
+		foreach (pagerPage; pagerStart..pagerEnd+1)
+			if (pagerPage == page)
+				pager ~= `<b>` ~ text(pagerPage) ~ `</b>`;
+			else
+				pager ~= `<a href="?page=` ~ text(pagerPage) ~ `">` ~ text(pagerPage) ~ `</a>`;
+		if (pagerEnd < pageCount)
+			pager ~= "&hellip;";
 
 		string linkOrNot(string text, string url, bool cond)
 		{
 			return (cond ? `<a href="`~encodeEntities(url)~`">` : `<span class="disabled-link">`) ~ text ~ (cond ? `</a>` : `</span>`);
 		}
 
+		string newPostButton =
+			`<div id="new-post-button">` ~
+				`<form name="new-post-form" method="get" action="/discussion/compose">` ~
+					`<input type="hidden" name="group" value="`~encodeEntities(group)~`">` ~
+					`<input type="submit" value="Create thread">` ~
+				`</form>` ~
+			`</div>`;
+
 		return
 			`<table id="group-index" class="forum-table">` ~
-			`<tr class="group-index-header"><th colspan="3">` ~ encodeEntities(group) ~ `</th></tr>` ~ newline ~
+			`<tr class="group-index-header"><th colspan="3"><div>` ~ newPostButton ~ encodeEntities(group) ~ `</div></th></tr>` ~ newline ~
 			`<tr class="group-index-captions"><th>Thread / Thread Starter</th><th>Last Post</th><th>Replies</th>` ~ newline ~
 			join(array(map!(
 				(Thread thread) { return `<tr>` ~
@@ -278,13 +299,14 @@ class WebUI
 				`<div class="pager-left">` ~
 					linkOrNot("&laquo; First", "?page=1", page!=1) ~
 					`&nbsp;&nbsp;&nbsp;` ~
-					linkOrNot("&lt; Prev", "?page=" ~ text(page-1), page>1) ~
+					linkOrNot("&lsaquo; Prev", "?page=" ~ text(page-1), page>1) ~
 				`</div>` ~
 				`<div class="pager-right">` ~
-					linkOrNot("Next &gt;", "?page=" ~ text(page+1), page<pageCount) ~
+					linkOrNot("Next &rsaquo;", "?page=" ~ text(page+1), page<pageCount) ~
 					`&nbsp;&nbsp;&nbsp;` ~
 					linkOrNot("Last &raquo; ", "?page=" ~ text(pageCount), page!=pageCount) ~
 				`</div>` ~
+				`<div class="pager-numbers">` ~ pager.join(` `) ~ `</div>` ~
 			`</th></tr>` ~ newline ~
 			`</table>`;
 	}
@@ -302,8 +324,7 @@ class WebUI
 		if (id.startsWith('<') && id.endsWith('>'))
 			foreach (string author, string subject, long stdTime; query("SELECT `Author`, `Subject`, `Time` FROM `Posts` WHERE `ID` = ?").iterate(id))
 				return [PostInfo(id, author, subject, SysTime(stdTime, UTC()))].ptr;
-		return [PostInfo(id, "Unknown", "-")].dup.ptr;
-		//return null;
+		return null;
 	}
 
 	string summarizeTime(SysTime time)
@@ -323,7 +344,7 @@ class WebUI
 
 		string shortTime;
 		if (duration < dur!"seconds"(0))
-			shortTime = "in the future";
+			shortTime = "from the future";
 		else
 		if (duration < dur!"seconds"(1))
 			shortTime = "just now";
