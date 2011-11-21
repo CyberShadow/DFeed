@@ -33,9 +33,8 @@ protected:
 
 		foreach (xref; message.xref)
 		{
-			// The purpose of the "Groups" table is to handle redirects from the old PHP web newsreaders.
-			query("INSERT OR IGNORE INTO `Groups` (`Group`, `ArtNum`, `ID`) VALUES (?, ?, ?)")
-				.exec(xref.group, xref.num, message.id);
+			query("INSERT OR IGNORE INTO `Groups` (`Group`, `ArtNum`, `ID`, `Time`) VALUES (?, ?, ?, ?)")
+				.exec(xref.group, xref.num, message.id, message.time.stdTime);
 
 			long threadIndex = 0, lastUpdated;
 			auto threadSelect = query("SELECT `ROWID`, `LastUpdated` FROM `Threads` WHERE `ID` = ? AND `Group` = ?");
@@ -44,10 +43,10 @@ protected:
 				threadSelect.columns(threadIndex, lastUpdated);
 
 			if (!threadIndex) // new thread
-				query("INSERT INTO `Threads` (`Group`, `ID`, `LastUpdated`) VALUES (?, ?, ?)").exec(xref.group, message.threadID, message.time.stdTime);
+				query("INSERT INTO `Threads` (`Group`, `ID`, `LastPost`, `LastUpdated`) VALUES (?, ?, ?, ?)").exec(xref.group, message.threadID, message.id, message.time.stdTime);
 			else
 			if (lastUpdated < message.time.stdTime)
-				query("UPDATE `Threads` SET `LastUpdated` = ? WHERE `ROWID` = ?").exec(message.time.stdTime, threadIndex);
+				query("UPDATE `Threads` SET `LastPost` = ?, `LastUpdated` = ? WHERE `ROWID` = ?").exec(message.id, message.time.stdTime, threadIndex);
 		}
 	}
 }
