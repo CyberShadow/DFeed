@@ -272,7 +272,7 @@ string decodeEncodedText(string s, string textEncoding)
 	}
 	catch (Exception e)
 	{
-		import ae.utils.cmd;
+		import ae.sys.cmd;
 		return iconv(s, textEncoding);
 	}
 }

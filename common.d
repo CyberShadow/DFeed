@@ -1,6 +1,6 @@
 module common;
 
-import ae.utils.log;
+import ae.sys.log;
 import std.datetime;
 
 bool quiet;

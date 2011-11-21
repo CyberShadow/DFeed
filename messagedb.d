@@ -2,7 +2,7 @@ module messagedb;
 
 import std.string;
 
-import ae.utils.log;
+import ae.sys.log;
 
 import common;
 import database;

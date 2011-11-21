@@ -16,6 +16,7 @@ import reddit;
 
 // Sinks
 import ircsink;
+import messagedb;
 
 void main(string[] args)
 {
@@ -37,6 +38,7 @@ void main(string[] args)
 
 	// Create sinks
 	new IrcSink();
+	new MessageDBSink();
 
 	startNewsSources();
 	socketManager.loop();

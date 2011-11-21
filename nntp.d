@@ -6,7 +6,7 @@ import std.exception;
 
 import ae.net.asockets;
 import ae.sys.timing;
-import ae.utils.log;
+import ae.sys.log;
 
 alias core.time.TickDuration TickDuration;
 
