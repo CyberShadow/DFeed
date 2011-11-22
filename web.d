@@ -45,7 +45,7 @@ class WebUI
 		responseTime.start();
 		scope(exit) log(format("%s - %dms - %s", from.remoteAddress, responseTime.peek().msecs, request.resource));
 		auto response = new HttpResponseEx();
-		string title, content;
+		string title, content, breadcrumb1, breadcrumb2;
 		HttpStatusCode status = HttpStatusCode.OK;
 		try
 		{
@@ -71,17 +71,30 @@ class WebUI
 					{
 						case "":
 							title = "Index";
+							breadcrumb1 = `<a href="/discussion/">Forum Index</a>`;
 							content = discussionIndex();
 							break;
 						case "group":
+						{
 							enforce(path.length > 2, "No group specified");
-							title = path[2] ~ " index";
-							content = discussionGroup(path[2], to!int(aaGet(parameters, "page", "1")));
+							string group = path[2];
+							int page = to!int(aaGet(parameters, "page", "1"));
+							string pageStr = page==1 ? "" : format(" (page %d)", page);
+							title = group ~ " index" ~ pageStr;
+							breadcrumb1 = `<a href="/discussion/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
+							content = discussionGroup(group, page);
 							break;
+						}
 						case "thread":
+						{
 							enforce(path.length > 2, "No thread specified");
-							content = discussionThread(decodeUrlParameter(path[2]), to!int(aaGet(parameters, "page", "1")), title);
+							string group, subject;
+							content = discussionThread(decodeUrlParameter(path[2]), group, subject);
+							title = subject;
+							breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group  )~`">` ~ encodeEntities(group  ) ~ `</a>`;
+							breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(path[2])~`">` ~ encodeEntities(subject) ~ `</a>`;
 							break;
+						}
 						case "post":
 							enforce(path.length > 2, "No post specified");
 							return response.redirect(resolvePostUrl(decodeUrlParameter(path[2])));
@@ -100,9 +113,9 @@ class WebUI
 		{
 			//return response.writeError(HttpStatusCode.InternalServerError, "Unprocessed exception: " ~ e.msg);
 			if (cast(NotFoundException) e)
-				title = "Not Found";
+				breadcrumb1 = title = "Not Found";
 			else
-				title = "Error";
+				breadcrumb1 = title = "Error";
 			content =
 				`<table class="forum-table forum-error">` ~
 					`<tr><th>` ~ encodeEntities(title) ~ `</th></tr>` ~
@@ -111,8 +124,15 @@ class WebUI
 		}
 
 		assert(title && content);
+		if (breadcrumb1) breadcrumb1 = "&rsaquo; " ~ breadcrumb1;
+		if (breadcrumb2) breadcrumb2 = "&raquo; " ~ breadcrumb2;
 		response.disableCache();
-		response.serveData(HttpResponseEx.loadTemplate("web/skel.htt", ["title" : title, "content" : content]));
+		response.serveData(HttpResponseEx.loadTemplate("web/skel.htt", [
+			"title" : encodeEntities(title), 
+			"content" : content,
+			"breadcrumb1" : breadcrumb1,
+			"breadcrumb2" : breadcrumb2,
+		]));
 		response.setStatus(status);
 		return response;
 	}
@@ -337,7 +357,7 @@ class WebUI
 			`</table>`;
 	}
 
-	string discussionThread(string id, int page, out string title)
+	string discussionThread(string id, out string group, out string title)
 	{
 		id = `<` ~ id ~ `>`;
 
@@ -352,6 +372,7 @@ class WebUI
 
 		enforce(posts.length, "Thread not found");
 
+		group = posts[0].xref[0].group;
 		title = posts[0].subject;
 		return
 			join(array(map!(
@@ -396,13 +417,15 @@ class WebUI
 							`<table class="post forum-table" id="post-`~encodeAnchor(id[1..$-1])~`">` ~
 							`<tr class="post-header"><th colspan="2">` ~ 
 								`<div class="post-time">` ~ summarizeTime(time) ~ `</div>` ~
-								encodeEntities(realSubject) ~ 
+								`<a title="Permanent link to this post" href="/discussion/post/` ~ encodeUrlParameter(id[1..$-1]) ~ `">` ~
+									encodeEntities(realSubject) ~
+								`</a>` ~
 							`</th></tr>` ~
 							`<tr>` ~
 								`<td class="post-info">` ~
 									`<div class="post-author">` ~ encodeEntities(author) ~ `</div>` ~
 									`<a href="http://www.gravatar.com/` ~ gravatarHash ~ `">` ~
-										`<img class="post-gravatar" width="80" height="80" src="http://www.gravatar.com/avatar/` ~ gravatarHash ~ `?d=identicon">` ~
+										`<img alt="Gravatar" class="post-gravatar" width="80" height="80" src="http://www.gravatar.com/avatar/` ~ gravatarHash ~ `?d=identicon">` ~
 									`</a><br>` ~
 									`<hr>` ~
 									/*`Posted on ` ~ formatLongTime(time) ~ inReplyTo ~ `<br>` ~*/
