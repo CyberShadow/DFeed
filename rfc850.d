@@ -25,7 +25,7 @@ class Rfc850Post : Post
 	string lines, id;
 	Xref[] xref;
 
-	string subject, author, url, shortURL;
+	string subject, realSubject, author, authorEmail, url, shortURL;
 	string[] references;
 	bool reply;
 
@@ -69,18 +69,22 @@ class Rfc850Post : Post
 			}
 		}
 
-		subject = "SUBJECT" in headers ? decodeRfc5335(headers["SUBJECT"]) : null;
+		subject = realSubject = "SUBJECT" in headers ? decodeRfc5335(headers["SUBJECT"]) : null;
 		if (subject.startsWith("Re: "))
 		{
 			subject = subject[4..$];
 			reply = true;
 		}
 
-		author = "FROM" in headers ? decodeRfc5335(headers["FROM"]) : null;
+		author = authorEmail = "FROM" in headers ? decodeRfc5335(headers["FROM"]) : null;
 		if ("X-BUGZILLA-WHO" in headers)
-			author = headers["X-BUGZILLA-WHO"];
-		if (author.indexOf('<')>0)
-			author = decodeRfc5335(strip(author[0..author.indexOf('<')]));
+			author = authorEmail = headers["X-BUGZILLA-WHO"];
+		if (author.indexOf('<')>=0 && author.endsWith('>'))
+		{
+			auto p = author.indexOf('<');
+			authorEmail = author[p+1..$-1];
+			author = decodeRfc5335(strip(author[0..p]));
+		}
 		if (author.length>2 && author[0]=='"' && author[$-1]=='"')
 			author = decodeRfc5335(strip(author[1..$-1]));
 

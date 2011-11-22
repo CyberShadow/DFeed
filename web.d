@@ -20,6 +20,7 @@ import ae.utils.time;
 import common;
 import database;
 import cache;
+import rfc850;
 
 class WebUI
 {
@@ -75,6 +76,10 @@ class WebUI
 							enforce(path.length >= 2, "No group specified");
 							title = path[2] ~ " index";
 							content = discussionGroup(path[2], to!int(aaGet(parameters, "page", "1")));
+							break;
+						case "thread":
+							enforce(path.length >= 2, "No thread specified");
+							content = discussionThread(path[2], to!int(aaGet(parameters, "page", "1")), title);
 							break;
 						default:
 							return response.writeError(HttpStatusCode.NotFound);
@@ -237,7 +242,7 @@ class WebUI
 			if (info)
 				with (*info)
 					return
-						`<a class="forum-postsummary-subject" href="/discussion/post/` ~ encodeEntities(id[1..$-1]) ~ `">` ~ truncateString(subject, 100) ~ `</a><br>` ~
+						`<a class="forum-postsummary-subject" href="/discussion/thread/` ~ encodeEntities(id[1..$-1]) ~ `">` ~ truncateString(subject, 100) ~ `</a><br>` ~
 						`by <span class="forum-postsummary-author">` ~ truncateString(author, 100) ~ `</span><br>`;
 
 			return `<div class="forum-no-data">-</div>`;
@@ -309,6 +314,43 @@ class WebUI
 				`<div class="pager-numbers">` ~ pager.join(` `) ~ `</div>` ~
 			`</th></tr>` ~ newline ~
 			`</table>`;
+	}
+
+	string discussionThread(string id, int page, out string title)
+	{
+		id = `<` ~ id ~ `>`;
+
+		// TODO: page
+		Rfc850Post[] posts;
+		foreach (string message; query("SELECT `Message` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC").iterate(id))
+			posts ~= new Rfc850Post(message);
+
+		enforce(posts.length, "Thread not found");
+
+		title = posts[0].subject;
+		return
+			join(array(map!(
+				(Rfc850Post post) {
+					import std.md5;
+					with (post)
+						return
+							`<table class="post forum-table">` ~
+							`<tr class="post-header"><th colspan="2">` ~ 
+								`<div class="post-time">` ~ summarizeTime(time) ~ `</div>` ~
+								encodeEntities(realSubject) ~ 
+							`</th></tr>` ~
+							`<tr>` ~
+								`<td class="post-info">` ~
+									`<div class="post-author">` ~encodeEntities(author) ~ `</div>` ~
+									`<img class="post-gravatar" src="http://www.gravatar.com/avatar/` ~ toLower(getDigestString(strip(toLower(authorEmail)))) ~ `?d=mm">` ~
+								`</td>` ~
+								`<td class="post-body">` ~
+									`<div>` ~ encodeEntities(lines) ~ `</div>` ~
+								`</td>` ~
+							`</tr>` ~
+							`</table>`;
+				}
+			)(posts)));
 	}
 
 	struct PostInfo { string id, author, subject; SysTime time; }

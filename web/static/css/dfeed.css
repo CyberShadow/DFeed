@@ -55,7 +55,8 @@
 
 .forum-index-set-header,
 .group-index-header,
-.group-index-pager {
+.group-index-pager,
+.post-header {
 	background-color: #D0D0D0;
 }
 .forum-index-set-captions {
@@ -63,8 +64,13 @@
 }
 
 .forum-table td:nth-child(even), 
-.forum-table th:nth-child(even) {
+.forum-table th:nth-child(even),
+.post td:nth-child(odd) {
 	background-color: #F0F0F0;
+}
+
+.post td:nth-child(even) {
+	background-color: inherit;
 }
 
 .forum-no-data {
@@ -97,4 +103,24 @@
 }
 #new-post-button input[type=submit] {
 	margin: 0;
+}
+
+.post {
+	table-layout: fixed;
+}
+.post td {
+	vertical-align: top;
+	text-align: left;
+}
+.post-info {
+	width: 150px;
+}
+.post-body {
+	overflow: auto;
+	width: 300px;
+}
+.post-body > div {
+	font-family: monospace;
+	white-space: pre;
+	width: auto;
 }
