@@ -57,7 +57,8 @@
 .forum-index-set-header,
 .group-index-header,
 .group-index-pager,
-.post-header {
+.post-header,
+.forum-error th {
 	background-color: #D0D0D0;
 }
 .forum-index-set-captions {
@@ -125,6 +126,7 @@
 	background-color: #F0F0F0;
 	border-bottom: none !important;
 	font-size: 9pt;
+	word-wrap: break-word;
 }
 .post-author {
 	font-weight: bold;
@@ -159,4 +161,9 @@
 
 .forum-quote {
 	color: #706666;
+}
+
+.forum-table-message {
+	text-align: center;
+	padding: 50px 0 !important;
 }

@@ -39,8 +39,10 @@ class Rfc850Post : Post
 		auto headerEnd = text.indexOf("\n\n");
 		if (headerEnd < 0) headerEnd = text.length;
 		auto header = text[0..headerEnd];
-		content = text[headerEnd+2..$];
 		header = header.replace("\n\t", " ").replace("\n ", " ");
+
+		content = text[headerEnd+2..$];
+		auto contentLines = content.split("\n");
 
 		string[string] headers;
 		foreach (s; header.split("\n"))
@@ -78,7 +80,16 @@ class Rfc850Post : Post
 
 		author = authorEmail = "FROM" in headers ? decodeRfc5335(headers["FROM"]) : null;
 		if ("X-BUGZILLA-WHO" in headers)
+		{
 			author = authorEmail = headers["X-BUGZILLA-WHO"];
+
+			foreach (line; contentLines)
+				if (line.endsWith("> changed:"))
+					author = line[0..line.indexOf(" <")];
+				else
+				if (line.startsWith("--- Comment #") && line.indexOf(" from ")>0 && line.indexOf(" <")>0 && line.endsWith(" ---"))
+					author = line[line.indexOf(" from ")+6 .. line.indexOf(" <")];
+		}
 		if (author.indexOf('<')>=0 && author.endsWith('>'))
 		{
 			auto p = author.indexOf('<');

@@ -58,7 +58,7 @@ function bodyLoad()
 	</div>
 	<div id="header">
 		<a href="/"><img id="logo" width="125" height="95" alt="D Logo" src="/images/dlogo.png"></a>
-		<a id="d-language" href="/">D Programming Language</a>
+		<a id="d-language" href="/discussion/">D Programming Language Discussion</a>
 	</div>
 </div>
 

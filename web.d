@@ -46,6 +46,7 @@ class WebUI
 		scope(exit) log(format("%s - %dms - %s", from.remoteAddress, responseTime.peek().msecs, request.resource));
 		auto response = new HttpResponseEx();
 		string title, content;
+		HttpStatusCode status = HttpStatusCode.OK;
 		try
 		{
 			auto pathStr = request.resource;
@@ -91,14 +92,29 @@ class WebUI
 				}
 				default:
 					//return response.writeError(HttpStatusCode.NotFound);
+					response.cacheForever();
 					return response.serveFile(pathStr[1..$], "web/static/");
 			}
-
-			assert(title && content);
-			return response.serveData(HttpResponseEx.loadTemplate("web/skel.htt", ["title" : title, "content" : content]));
 		}
 		catch (Exception e)
-			return response.writeError(HttpStatusCode.InternalServerError, "Unprocessed exception: " ~ e.msg);
+		{
+			//return response.writeError(HttpStatusCode.InternalServerError, "Unprocessed exception: " ~ e.msg);
+			if (cast(NotFoundException) e)
+				title = "Not Found";
+			else
+				title = "Error";
+			content =
+				`<table class="forum-table forum-error">` ~
+					`<tr><th>` ~ encodeEntities(title) ~ `</th></tr>` ~
+					`<tr><td class="forum-table-message">` ~ encodeEntities(e.msg) ~ `</th></tr>` ~
+				`</table>`;
+		}
+
+		assert(title && content);
+		response.disableCache();
+		response.serveData(HttpResponseEx.loadTemplate("web/skel.htt", ["title" : title, "content" : content]));
+		response.setStatus(status);
+		return response;
 	}
 
 	struct Group { string name, description; }
@@ -262,7 +278,9 @@ class WebUI
 			return `<div class="forum-no-data">-</div>`;
 		}
 
-		auto threadCount = threadCountCache(getThreadCounts())[group];
+		auto threadCounts = threadCountCache(getThreadCounts());
+		enforce(group in threadCounts, "Empty or unknown group");
+		auto threadCount = threadCounts[group];
 		auto pageCount = (threadCount + (THREADS_PER_PAGE-1)) / THREADS_PER_PAGE;
 		enum PAGER_RADIUS = 4;
 		int pagerStart = max(1, page - PAGER_RADIUS);
@@ -352,16 +370,25 @@ class WebUI
 					string inReplyTo;
 					if (post.parentID)
 					{
-						auto parent = getPostInfo(post.parentID);
-						if (parent)
+						string author, link;
+						if (post.parentID in knownPosts)
 						{
-							string link;
-							if (id in knownPosts)
-								link = `#post-` ~ encodeAnchor(id[1..$-1]);
-							else
-								link = `/discussion/post/` ~ encodeUrlParameter(parent.id[1..$-1]);
-							inReplyTo = ` in reply to <a href="` ~ encodeEntities(link) ~ `">` ~ encodeEntities(parent.author) ~ `</a>`;
+							auto parent = knownPosts[post.parentID];
+							author = parent.author;
+							link = `#post-` ~ encodeAnchor(parent.id[1..$-1]);
 						}
+						else
+						{
+							auto parent = getPostInfo(post.parentID);
+							if (parent)
+							{
+								author = parent.author;
+								link = `/discussion/post/` ~ encodeUrlParameter(parent.id[1..$-1]);
+							}
+						}
+
+						if (author && link)
+							inReplyTo = ` in reply to <a href="` ~ encodeEntities(link) ~ `">` ~ encodeEntities(author) ~ `</a>`;
 					}
 
 					with (post)
@@ -524,4 +551,9 @@ class WebUI
 	{
 		return encodeUrlParameter(s).replace("%", ".");
 	}
+}
+
+class NotFoundException : Exception
+{
+	this() { super("The specified resource cannot be found on this server."); }
 }
