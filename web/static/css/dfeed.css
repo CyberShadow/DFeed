@@ -64,6 +64,9 @@
 .forum-index-set-captions {
 	/* border-bottom: 2px solid #CCD5D5; */
 }
+.forum-index-set-captions th {
+	background-color: #e8e8e8 !important;
+}
 
 .forum-table td:nth-child(even), 
 .forum-table th:nth-child(even) {
@@ -154,7 +157,8 @@
 }
 .post-body > div {
 	position: relative;
-	font-family: monospace;
+	font-family: Consolas, monospace;
+	font-size: 14px;
 	white-space: pre-wrap;
 	word-wrap: break-word;
 }
