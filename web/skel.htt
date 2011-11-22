@@ -92,7 +92,7 @@ function bodyLoad()
 
 <div class="navblock">
 <h2>Community</h2>
-<ul><li><a href="http://digitalmars.com/NewsGroup.html" title="User forums">Forums</a></li>
+<ul><li><a href="/discussion/" title="User forums">Forums</a></li>
 	<li><a href="http://github.com/D-Programming-Language" title="D on github">Github</a></li>
 	<li><a href="http://prowiki.org/wiki4d/wiki.cgi?FrontPage" title="Wiki for the D Programming Language">Wiki</a></li>
 	<li><a href="http://dsource.org/" title="D projects and libraries at dsource.org">Projects &amp; Libraries</a></li>

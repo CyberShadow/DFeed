@@ -1,6 +1,7 @@
 .forum-table {
 	line-height: normal;
 	width: 100%;
+	border-spacing: 0;
 	border-collapse: collapse;
 	text-align: left;
 }
@@ -64,13 +65,8 @@
 }
 
 .forum-table td:nth-child(even), 
-.forum-table th:nth-child(even),
-.post td:nth-child(odd) {
+.forum-table th:nth-child(even) {
 	background-color: #F0F0F0;
-}
-
-.post td:nth-child(even) {
-	background-color: inherit;
 }
 
 .forum-no-data {
@@ -106,21 +102,61 @@
 }
 
 .post {
-	table-layout: fixed;
+	margin-bottom: 10px;
+	border-collapse: separate;
 }
 .post td {
 	vertical-align: top;
 	text-align: left;
 }
-.post-info {
-	width: 150px;
+.post-header th {
+	text-align: left;
 }
+.post td {
+	padding: 10px !important;
+}
+.post-time {
+	float: right;
+	font-weight: normal;
+}
+.post-info {
+	width: 160px;
+	position: relative;
+	background-color: #F0F0F0;
+	border-bottom: none !important;
+	font-size: 9pt;
+}
+.post-author {
+	font-weight: bold;
+	font-size: 11pt;
+}
+.post-gravatar {
+	margin-top: 4px;
+	border: 5px solid #D0D0D0;
+}
+.post-info hr {
+	border: 1px solid #D0D0D0;
+	border-bottom: none;
+	margin: 6px 0;
+}
+.post-toolbar {
+	position: absolute;
+	bottom: 10px;
+}
+
 .post-body {
 	overflow: auto;
-	width: 300px;
+	position: relative;
+	background-color: #F6F6F6 !important;
+	border: none !important;
 }
 .post-body > div {
+	position: relative;
 	font-family: monospace;
-	white-space: pre;
-	width: auto;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+}
+
+.forum-quote {
+	color: #706666;
 }

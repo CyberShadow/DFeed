@@ -25,7 +25,7 @@ class Rfc850Post : Post
 	string lines, id;
 	Xref[] xref;
 
-	string subject, realSubject, author, authorEmail, url, shortURL;
+	string subject, realSubject, author, authorEmail, url, shortURL, content;
 	string[] references;
 	bool reply;
 
@@ -39,7 +39,7 @@ class Rfc850Post : Post
 		auto headerEnd = text.indexOf("\n\n");
 		if (headerEnd < 0) headerEnd = text.length;
 		auto header = text[0..headerEnd];
-		string content = text[headerEnd..$];
+		content = text[headerEnd+2..$];
 		header = header.replace("\n\t", " ").replace("\n ", " ");
 
 		string[string] headers;

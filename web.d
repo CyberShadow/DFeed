@@ -73,14 +73,17 @@ class WebUI
 							content = discussionIndex();
 							break;
 						case "group":
-							enforce(path.length >= 2, "No group specified");
+							enforce(path.length > 2, "No group specified");
 							title = path[2] ~ " index";
 							content = discussionGroup(path[2], to!int(aaGet(parameters, "page", "1")));
 							break;
 						case "thread":
-							enforce(path.length >= 2, "No thread specified");
-							content = discussionThread(path[2], to!int(aaGet(parameters, "page", "1")), title);
+							enforce(path.length > 2, "No thread specified");
+							content = discussionThread(decodeUrlParameter(path[2]), to!int(aaGet(parameters, "page", "1")), title);
 							break;
+						case "post":
+							enforce(path.length > 2, "No post specified");
+							return response.redirect(resolvePostUrl(decodeUrlParameter(path[2])));
 						default:
 							return response.writeError(HttpStatusCode.NotFound);
 					}
@@ -187,7 +190,7 @@ class WebUI
 			if (info)
 				with (*info)
 					return
-						`<a class="forum-postsummary-subject" href="/discussion/post/` ~ encodeEntities(id[1..$-1]) ~ `">` ~ truncateString(subject) ~ `</a><br>` ~
+						`<a class="forum-postsummary-subject" href="/discussion/post/` ~ encodeEntities(encodeUrlParameter(id[1..$-1])) ~ `">` ~ truncateString(subject) ~ `</a><br>` ~
 						`by <span class="forum-postsummary-author">` ~ truncateString(author) ~ `</span><br>` ~
 						`<span class="forum-postsummary-time">` ~ summarizeTime(time) ~ `</span>`;
 
@@ -242,7 +245,7 @@ class WebUI
 			if (info)
 				with (*info)
 					return
-						`<a class="forum-postsummary-subject" href="/discussion/thread/` ~ encodeEntities(id[1..$-1]) ~ `">` ~ truncateString(subject, 100) ~ `</a><br>` ~
+						`<a class="forum-postsummary-subject" href="/discussion/thread/` ~ encodeEntities(encodeUrlParameter(id[1..$-1])) ~ `">` ~ truncateString(subject, 100) ~ `</a><br>` ~
 						`by <span class="forum-postsummary-author">` ~ truncateString(author, 100) ~ `</span><br>`;
 
 			return `<div class="forum-no-data">-</div>`;
@@ -320,10 +323,14 @@ class WebUI
 	{
 		id = `<` ~ id ~ `>`;
 
-		// TODO: page
+		// TODO: pages?
 		Rfc850Post[] posts;
-		foreach (string message; query("SELECT `Message` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC").iterate(id))
-			posts ~= new Rfc850Post(message);
+		foreach (string postID, string message; query("SELECT `ID`, `Message` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC").iterate(id))
+			posts ~= new Rfc850Post(message, postID);
+
+		Rfc850Post[string] knownPosts;
+		foreach (post; posts)
+			knownPosts[post.id] = post;
 
 		enforce(posts.length, "Thread not found");
 
@@ -331,26 +338,66 @@ class WebUI
 		return
 			join(array(map!(
 				(Rfc850Post post) {
+					string replyButton =
+						`<div id="reply-button">` ~
+							`<form name="reply-form" method="get" action="/discussion/reply">` ~
+								`<input type="hidden" name="parent" value="`~encodeEntities(post.id)~`">` ~
+								`<input type="submit" value="Reply">` ~
+							`</form>` ~
+						`</div>`;
+
 					import std.md5;
+					string gravatarHash = toLower(getDigestString(strip(toLower(post.authorEmail))));
+
+					string inReplyTo;
+					if (post.parentID)
+					{
+						auto parent = getPostInfo(post.parentID);
+						if (parent)
+						{
+							string link;
+							if (id in knownPosts)
+								link = `#post-` ~ encodeAnchor(id[1..$-1]);
+							else
+								link = `/discussion/post/` ~ encodeUrlParameter(parent.id[1..$-1]);
+							inReplyTo = ` in reply to <a href="` ~ encodeEntities(link) ~ `">` ~ encodeEntities(parent.author) ~ `</a>`;
+						}
+					}
+
 					with (post)
 						return
-							`<table class="post forum-table">` ~
+							`<table class="post forum-table" id="post-`~encodeAnchor(id[1..$-1])~`">` ~
 							`<tr class="post-header"><th colspan="2">` ~ 
 								`<div class="post-time">` ~ summarizeTime(time) ~ `</div>` ~
 								encodeEntities(realSubject) ~ 
 							`</th></tr>` ~
 							`<tr>` ~
 								`<td class="post-info">` ~
-									`<div class="post-author">` ~encodeEntities(author) ~ `</div>` ~
-									`<img class="post-gravatar" src="http://www.gravatar.com/avatar/` ~ toLower(getDigestString(strip(toLower(authorEmail)))) ~ `?d=mm">` ~
+									`<div class="post-author">` ~ encodeEntities(author) ~ `</div>` ~
+									`<a href="http://www.gravatar.com/` ~ gravatarHash ~ `">` ~
+										`<img class="post-gravatar" width="80" height="80" src="http://www.gravatar.com/avatar/` ~ gravatarHash ~ `?d=identicon">` ~
+									`</a><br>` ~
+									`<hr>` ~
+									/*`Posted on ` ~ formatLongTime(time) ~ inReplyTo ~ `<br>` ~*/
+									(inReplyTo ? `Posted` ~ inReplyTo ~ `<br>` : ``) ~
+									`<br><br>` ~ // guarantee space for the "toolbar"
+									`<div class="post-toolbar">` ~ replyButton ~ `</div>`
 								`</td>` ~
 								`<td class="post-body">` ~
-									`<div>` ~ encodeEntities(lines) ~ `</div>` ~
+									`<div>` ~ formatBody(content) ~ `</div>` ~
 								`</td>` ~
 							`</tr>` ~
 							`</table>`;
 				}
 			)(posts)));
+	}
+
+	string resolvePostUrl(string id)
+	{
+		foreach (string threadID; query("SELECT `ThreadID` FROM `Posts` WHERE `ID` = ?").iterate(`<` ~ id ~ `>`))
+			return "/discussion/thread/" ~ encodeUrlParameter(threadID[1..$-1]) ~ "#post-" ~ encodeAnchor(id);
+
+		throw new Exception("Post not found");
 	}
 
 	struct PostInfo { string id, author, subject; SysTime time; }
@@ -367,6 +414,27 @@ class WebUI
 			foreach (string author, string subject, long stdTime; query("SELECT `Author`, `Subject`, `Time` FROM `Posts` WHERE `ID` = ?").iterate(id))
 				return [PostInfo(id, author, subject, SysTime(stdTime, UTC()))].ptr;
 		return null;
+	}
+
+	string formatBody(string text)
+	{
+		auto lines = text.split("\n");
+		bool wasQuoted = false, inSignature = false;
+		text = null;
+		foreach (line; lines)
+		{
+			if (line == "-- ")
+				inSignature = true;
+			auto isQuoted = inSignature || line.startsWith(">");
+			if (isQuoted && !wasQuoted)
+				text ~= `<span class="forum-quote">`;
+			else
+			if (!isQuoted && wasQuoted)
+				text ~= `</span>`;
+			wasQuoted = isQuoted;
+			text ~= encodeEntities(line) ~ "\n";
+		}
+		return text.chomp();
 	}
 
 	string summarizeTime(SysTime time)
@@ -409,7 +477,12 @@ class WebUI
 			shortTime = ago(diffMonths / 12, "year");
 			//shortTime = time.toSimpleString();
 
-		return `<span title="` ~ encodeEntities(formatTime("l, d F Y, H:i:s e", time)) ~ `">` ~ shortTime ~ `</span>`;
+		return `<span title="` ~ encodeEntities(formatLongTime(time)) ~ `">` ~ shortTime ~ `</span>`;
+	}
+
+	string formatLongTime(SysTime time)
+	{
+		return formatTime("l, d F Y, H:i:s e", time);
 	}
 
 	/// Add thousand-separators
@@ -444,5 +517,11 @@ class WebUI
 	string encodeEntities(string s)
 	{
 		return ae.utils.xml.encodeEntities(s).replace("&apos;", "'");
+	}
+
+	/// Encode a string to one suitable for an HTML anchor
+	string encodeAnchor(string s)
+	{
+		return encodeUrlParameter(s).replace("%", ".");
 	}
 }
