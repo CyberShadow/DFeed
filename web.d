@@ -322,12 +322,12 @@ class WebUI
 		}
 
 		string newPostButton =
-			`<div id="new-post-button">` ~
-				`<form name="new-post-form" method="get" action="/discussion/compose">` ~
+			`<form name="new-post-form" method="get" action="/discussion/compose">` ~
+				`<div id="new-post-button">` ~
 					`<input type="hidden" name="group" value="`~encodeEntities(group)~`">` ~
 					`<input type="submit" value="Create thread">` ~
-				`</form>` ~
-			`</div>`;
+				`</div>` ~
+			`</form>`;
 
 		return
 			`<table id="group-index" class="forum-table">` ~
@@ -378,12 +378,12 @@ class WebUI
 			join(array(map!(
 				(Rfc850Post post) {
 					string replyButton =
-						`<div id="reply-button">` ~
-							`<form name="reply-form" method="get" action="/discussion/reply">` ~
+						`<form name="reply-form" method="get" action="/discussion/reply">` ~
+							`<div id="reply-button">` ~
 								`<input type="hidden" name="parent" value="`~encodeEntities(post.id)~`">` ~
 								`<input type="submit" value="Reply">` ~
-							`</form>` ~
-						`</div>`;
+							`</div>` ~
+						`</form>`;
 
 					import std.md5;
 					string gravatarHash = toLower(getDigestString(strip(toLower(post.authorEmail))));
