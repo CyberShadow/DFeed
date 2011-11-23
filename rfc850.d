@@ -29,6 +29,9 @@ class Rfc850Post : Post
 	string[] references;
 	bool reply;
 
+	/// Result of threadify()
+	Rfc850Post[] children;
+
 	this(string lines, string id=null)
 	{
 		this.lines = lines;
@@ -207,6 +210,34 @@ class Rfc850Post : Post
 	@property string threadID()
 	{
 		return references.length ? references[0] : id;
+	}
+
+	/// Arrange a bunch of posts in a thread hierarchy. Returns the root posts.
+	static Rfc850Post[] threadify(Rfc850Post[] posts)
+	{
+		Rfc850Post[string] postLookup;
+		foreach (post; posts)
+		{
+			post.children = null;
+			postLookup[post.id] = post;
+		}
+
+		Rfc850Post[] roots;
+		postLoop:
+		foreach (post; posts)
+		{
+			foreach_reverse(reference; post.references)
+			{
+				auto pparent = reference in postLookup;
+				if (pparent)
+				{
+					(*pparent).children ~= post;
+					continue postLoop;
+				}
+			}
+			roots ~= post;
+		}
+		return roots;
 	}
 
 private:

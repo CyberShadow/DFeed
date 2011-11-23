@@ -110,8 +110,11 @@ class WebUI
 						case "set":
 							foreach (name, value; parameters)
 								if (name != "url")
-									user[name] = value;
-							return response.redirect(parameters["url"]);
+									user[name] = value; // TODO: is this a good idea?
+							if ("url" in parameters)
+								return response.redirect(parameters["url"]);
+							else
+								return response.serveText("OK");
 						default:
 							return response.writeError(HttpStatusCode.NotFound);
 					}
@@ -389,72 +392,87 @@ class WebUI
 
 		group = posts[0].xref[0].group;
 		title = posts[0].subject;
-		return
-			join(array(map!(
-				(Rfc850Post post) {
-					string replyButton =
-						`<form name="reply-form" method="get" action="/discussion/reply">` ~
-							`<div id="reply-button">` ~
-								`<input type="hidden" name="parent" value="`~encodeEntities(post.id)~`">` ~
-								`<input type="submit" value="Reply">` ~
-							`</div>` ~
-						`</form>`;
+		bool threaded = user.get("viewmode", "flat") == "threaded";
 
-					import std.md5;
-					string gravatarHash = toLower(getDigestString(strip(toLower(post.authorEmail))));
+		string formatPost(Rfc850Post post)
+		{
+			string replyButton =
+				`<form name="reply-form" method="get" action="/discussion/reply">` ~
+					`<div id="reply-button">` ~
+						`<input type="hidden" name="parent" value="`~encodeEntities(post.id)~`">` ~
+						`<input type="submit" value="Reply">` ~
+					`</div>` ~
+				`</form>`;
 
-					string inReplyTo;
-					if (post.parentID)
-					{
-						string author, link;
-						if (post.parentID in knownPosts)
-						{
-							auto parent = knownPosts[post.parentID];
-							author = parent.author;
-							link = `#post-` ~ encodeAnchor(parent.id[1..$-1]);
-						}
-						else
-						{
-							auto parent = getPostInfo(post.parentID);
-							if (parent)
-							{
-								author = parent.author;
-								link = `/discussion/post/` ~ encodeUrlParameter(parent.id[1..$-1]);
-							}
-						}
+			import std.md5;
+			string gravatarHash = toLower(getDigestString(strip(toLower(post.authorEmail))));
 
-						if (author && link)
-							inReplyTo = ` in reply to <a href="` ~ encodeEntities(link) ~ `">` ~ encodeEntities(author) ~ `</a>`;
-					}
-
-					with (post)
-						return
-							`<table class="post forum-table" id="post-`~encodeAnchor(id[1..$-1])~`">` ~
-							`<tr class="post-header"><th colspan="2">` ~ 
-								`<div class="post-time">` ~ summarizeTime(time) ~ `</div>` ~
-								`<a title="Permanent link to this post" href="/discussion/post/` ~ encodeUrlParameter(id[1..$-1]) ~ `">` ~
-									encodeEntities(realSubject) ~
-								`</a>` ~
-							`</th></tr>` ~
-							`<tr>` ~
-								`<td class="post-info">` ~
-									`<div class="post-author">` ~ encodeEntities(author) ~ `</div>` ~
-									`<a href="http://www.gravatar.com/` ~ gravatarHash ~ `">` ~
-										`<img alt="Gravatar" class="post-gravatar" width="80" height="80" src="http://www.gravatar.com/avatar/` ~ gravatarHash ~ `?d=identicon">` ~
-									`</a><br>` ~
-									`<hr>` ~
-									/*`Posted on ` ~ formatLongTime(time) ~ inReplyTo ~ `<br>` ~*/
-									(inReplyTo ? `Posted` ~ inReplyTo ~ `<br>` : ``) ~
-									`<br><br>` ~ // guarantee space for the "toolbar"
-									`<div class="post-toolbar">` ~ replyButton ~ `</div>`
-								`</td>` ~
-								`<td class="post-body">` ~
-									`<div>` ~ formatBody(content) ~ `</div>` ~
-								`</td>` ~
-							`</tr>` ~
-							`</table>`;
+			string inReplyTo;
+			if (post.parentID)
+			{
+				string author, link;
+				if (post.parentID in knownPosts)
+				{
+					auto parent = knownPosts[post.parentID];
+					author = parent.author;
+					link = `#post-` ~ encodeAnchor(parent.id[1..$-1]);
 				}
-			)(posts)));
+				else
+				{
+					auto parent = getPostInfo(post.parentID);
+					if (parent)
+					{
+						author = parent.author;
+						link = `/discussion/post/` ~ encodeUrlParameter(parent.id[1..$-1]);
+					}
+				}
+
+				if (author && link)
+					inReplyTo = ` in reply to <a href="` ~ encodeEntities(link) ~ `">` ~ encodeEntities(author) ~ `</a>`;
+			}
+
+			with (post)
+				return
+					`<table class="post forum-table` ~ (children ? ` with-children` : ``) ~ `" id="post-`~encodeAnchor(id[1..$-1])~`">` ~
+					`<tr class="post-header"><th colspan="2">` ~ 
+						`<div class="post-time">` ~ summarizeTime(time) ~ `</div>` ~
+						`<a title="Permanent link to this post" href="/discussion/post/` ~ encodeUrlParameter(id[1..$-1]) ~ `">` ~
+							encodeEntities(realSubject) ~
+						`</a>` ~
+					`</th></tr>` ~
+					`<tr>` ~
+						`<td class="post-info">` ~
+							`<div class="post-author">` ~ encodeEntities(author) ~ `</div>` ~
+							`<a href="http://www.gravatar.com/` ~ gravatarHash ~ `">` ~
+								`<img alt="Gravatar" class="post-gravatar" width="80" height="80" src="http://www.gravatar.com/avatar/` ~ gravatarHash ~ `?d=identicon">` ~
+							`</a><br>` ~
+							`<hr>` ~
+							/*`Posted on ` ~ formatLongTime(time) ~ inReplyTo ~ `<br>` ~*/
+							(inReplyTo ? `Posted` ~ inReplyTo ~ `<br>` : ``) ~
+							`<br><br>` ~ // guarantee space for the "toolbar"
+							`<div class="post-toolbar">` ~ replyButton ~ `</div>`
+						`</td>` ~
+						`<td class="post-body">` ~
+							`<div>` ~ formatBody(content) ~ `</div>` ~
+						`</td>` ~
+					`</tr>` ~
+					`</table>` ~
+					(children ?
+						`<table class="post-nester"><tr>` ~
+						`<td class="post-nester-bar">` ~
+							`<a href="#post-`~encodeAnchor(id[1..$-1])~`" ` ~
+								`title="Replies to `~encodeEntities(author)~`'s post from `~encodeEntities(formatShortTime(time))~`"></a>` ~
+						`</td>` ~
+						`<td>` ~ join(array(map!formatPost(children))) ~ `</td>`
+						`</tr></table>`
+					: ``);
+		}
+		if (threaded)
+			posts = Rfc850Post.threadify(posts);
+		return
+			`<div id="forum-posts">` ~
+			join(array(map!formatPost(posts))) ~
+			`</div>`;
 	}
 
 	string resolvePostUrl(string id)
@@ -507,6 +525,14 @@ class WebUI
 		if (!time.stdTime)
 			return "-";
 
+		return `<span title="` ~ encodeEntities(formatLongTime(time)) ~ `">` ~ encodeEntities(formatShortTime(time)) ~ `</span>`;
+	}
+
+	string formatShortTime(SysTime time)
+	{
+		if (!time.stdTime)
+			return "-";
+
 		string ago(long amount, string units)
 		{
 			assert(amount > 0);
@@ -517,32 +543,35 @@ class WebUI
 		auto duration = now - time;
 		auto diffMonths = now.diffMonths(time);
 
-		string shortTime;
 		if (duration < dur!"seconds"(0))
-			shortTime = "from the future";
+			return "from the future";
 		else
 		if (duration < dur!"seconds"(1))
-			shortTime = "just now";
+			return "just now";
 		else
 		if (duration < dur!"minutes"(1))
-			shortTime = ago(duration.seconds, "second");
+			return ago(duration.seconds, "second");
 		else
 		if (duration < dur!"hours"(1))
-			shortTime = ago(duration.minutes, "minute");
+			return ago(duration.minutes, "minute");
 		else
 		if (duration < dur!"days"(1))
-			shortTime = ago(duration.hours, "hour");
+			return ago(duration.hours, "hour");
 		else
+		/*if (duration < dur!"days"(2))
+			return "yesterday";
+		else
+		if (duration < dur!"days"(6))
+			return formatTime("l", time);
+		else*/
 		if (duration < dur!"days"(30))
-			shortTime = ago(duration.total!"days", "day");
+			return ago(duration.total!"days", "day");
 		else
 		if (diffMonths < 12)
-			shortTime = ago(diffMonths, "month");
+			return ago(diffMonths, "month");
 		else
-			shortTime = ago(diffMonths / 12, "year");
-			//shortTime = time.toSimpleString();
-
-		return `<span title="` ~ encodeEntities(formatLongTime(time)) ~ `">` ~ shortTime ~ `</span>`;
+			return ago(diffMonths / 12, "year");
+			//return time.toSimpleString();
 	}
 
 	string formatLongTime(SysTime time)
@@ -602,7 +631,7 @@ class WebUI
 			})(modes)).join(" / ");
 	}
 
-	/// Generate a link 
+	/// Generate a link to set a user preference
 	string setOptionLink(string name, string value, string currentPath)
 	{
 		// TODO: add XSRF security?

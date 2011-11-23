@@ -106,8 +106,12 @@
 	margin: 0;
 }
 
+#forum-posts > .post:first-child {
+	margin-top: 0;
+}
+
 .post {
-	margin-bottom: 10px;
+	margin-top: 10px;
 	border-collapse: separate;
 }
 .post td {
@@ -173,6 +177,33 @@
 
 .forum-quote {
 	color: #706666;
+}
+
+.post-nester {
+	border-collapse: collapse;
+	width: 100%;
+}
+
+.post-nester > tbody > tr > td {
+	padding: 0;
+}
+
+.post-nester-bar {
+	position: relative;
+	width: 10px;
+	vertical-align: top;
+}
+
+.post-nester-bar a {
+	display: block;
+	position: absolute;
+	width: 10px;
+	/*height: 100%;*/
+	top: 0;
+	bottom: 0;
+	/*background-color: #D0D0D0;*/
+	background: url('/images/nestgrad.png');
+	border-bottom: 1px solid #D0D0D0;
 }
 
 .forum-table-message {
