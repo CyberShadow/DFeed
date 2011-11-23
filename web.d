@@ -306,33 +306,36 @@ class WebUI
 		struct Thread
 		{
 			PostInfo* _firstPost, _lastPost;
-			int postCount;
+			int postCount, unreadPostCount;
 
 			/// Handle orphan posts
 			@property PostInfo* thread() { return _firstPost ? _firstPost : _lastPost; }
 			@property PostInfo* lastPost() { return _lastPost; }
+
+			@property bool isRead() { return unreadPostCount==0; }
 		}
 		Thread[] threads;
 
-		foreach (string firstPostID, string lastPostID; query("SELECT `ID`, `LastPost` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?").iterate(group, THREADS_PER_PAGE, (page-1)*THREADS_PER_PAGE))
-			foreach (int count; query("SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ?").iterate(firstPostID))
-				threads ~= Thread(getPostInfo(firstPostID), getPostInfo(lastPostID), count);
-
-		bool isThreadRead(string id)
+		int getUnreadPostCount(string id)
 		{
 			auto posts = threadPostIndexCache(id, getThreadPostIndexes(id));
+			int count = 0;
 			foreach (post; posts)
 				if (!user.isRead(post))
-					return false;
-			return true;
+					count++;
+			return count;
 		}
 
-		string summarizeThread(PostInfo* info)
+		foreach (string firstPostID, string lastPostID; query("SELECT `ID`, `LastPost` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?").iterate(group, THREADS_PER_PAGE, (page-1)*THREADS_PER_PAGE))
+			foreach (int count; query("SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ?").iterate(firstPostID))
+				threads ~= Thread(getPostInfo(firstPostID), getPostInfo(lastPostID), count, getUnreadPostCount(firstPostID));
+
+		string summarizeThread(PostInfo* info, bool isRead)
 		{
 			if (info)
 				with (*info)
 					return
-						`<a class="forum-postsummary-subject ` ~ (isThreadRead(id) ? "forum-read" : "forum-unread") ~ `" href="/discussion/thread/` ~ encodeEntities(encodeUrlParameter(id[1..$-1])) ~ `">` ~ truncateString(subject, 100) ~ `</a><br>` ~
+						`<a class="forum-postsummary-subject ` ~ (isRead ? "forum-read" : "forum-unread") ~ `" href="/discussion/thread/` ~ encodeEntities(encodeUrlParameter(id[1..$-1])) ~ `">` ~ truncateString(subject, 100) ~ `</a><br>` ~
 						`by <span class="forum-postsummary-author">` ~ truncateString(author, 100) ~ `</span><br>`;
 
 			return `<div class="forum-no-data">-</div>`;
@@ -348,6 +351,19 @@ class WebUI
 						`by <span class="forum-postsummary-author">` ~ truncateString(author) ~ `</span><br>`;
 
 			return `<div class="forum-no-data">-</div>`;
+		}
+
+		string summarizePostCount(ref Thread thread)
+		{
+			if (thread.unreadPostCount == 0)
+				return formatNumber(thread.postCount-1);
+			else
+			if (thread.unreadPostCount == thread.postCount)
+				return `<b>` ~ formatNumber(thread.postCount-1) ~ `</b>`;
+			else
+				return
+					formatNumber(thread.postCount-1) ~
+					`<br>(<b>` ~ formatNumber(thread.unreadPostCount) ~ `</b> new)`;
 		}
 
 		auto threadCounts = threadCountCache(getThreadCounts());
@@ -387,9 +403,9 @@ class WebUI
 			`<tr class="group-index-captions"><th>Thread / Thread Starter</th><th>Last Post</th><th>Replies</th>` ~ newline ~
 			join(array(map!(
 				(Thread thread) { return `<tr>` ~
-					`<td class="group-index-col-first">` ~ summarizeThread(thread.thread) ~ `</td>` ~
+					`<td class="group-index-col-first">` ~ summarizeThread(thread.thread, thread.isRead) ~ `</td>` ~
 					`<td class="group-index-col-last">`  ~ summarizeLastPost(thread.lastPost) ~ `</td>` ~
-					`<td class="group-index-col-replies">`  ~ formatNumber(thread.postCount-1) ~ `</td>` ~
+					`<td class="group-index-col-replies">`  ~ summarizePostCount(thread) ~ `</td>` ~
 					`</tr>` ~ newline;
 				}
 			)(threads))) ~
