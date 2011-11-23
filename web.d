@@ -107,6 +107,18 @@ class WebUI
 						case "post":
 							enforce(path.length > 2, "No post specified");
 							return response.redirect(resolvePostUrl(decodeUrlParameter(path[2])));
+						case "raw":
+						{
+							enforce(path.length > 2, "Invalid attachment URL");
+							auto post = getPost(decodeUrlParameter(path[2]), array(map!(to!uint)(path[3..$])));
+							enforce(post, "Post not found");
+							if (!post.data && post.error)
+								throw new Exception(post.error);
+							if (post.fileName)
+								response.headers["Content-Disposition"] = `inline; filename="` ~ post.fileName ~ `"`;
+							// TODO: is allowing text/html (others?) OK here?
+							return response.serveData(Data(post.data), post.mimeType ? post.mimeType : "application/octet-stream");
+						}
 						case "set":
 							foreach (name, value; parameters)
 								if (name != "url")
@@ -133,10 +145,12 @@ class WebUI
 				breadcrumb1 = title = "Not Found";
 			else
 				breadcrumb1 = title = "Error";
+			auto text = encodeEntities(e.msg);
+			debug text ~= `<pre>` ~ encodeEntities(e.toString()) ~ `</pre>`;
 			content =
 				`<table class="forum-table forum-error">` ~
 					`<tr><th>` ~ encodeEntities(title) ~ `</th></tr>` ~
-					`<tr><td class="forum-table-message">` ~ encodeEntities(e.msg) ~ `</th></tr>` ~
+					`<tr><td class="forum-table-message">` ~ text ~ `</th></tr>` ~
 				`</table>`;
 		}
 
@@ -451,6 +465,34 @@ class WebUI
 					inReplyTo = ` in reply to <a href="` ~ encodeEntities(link) ~ `">` ~ encodeEntities(author) ~ `</a>`;
 			}
 
+			string[] partList;
+			void visitParts(Rfc850Post[] parts, int[] path)
+			{
+				foreach (i, part; parts)
+				{
+					if (part.content !is post.content)
+					{
+						string partUrl = "/discussion/raw/" ~ encodeUrlParameter(post.id[1..$-1]) ~ "/" ~ array(map!text(path~i)).join("/");
+						with (part)
+							partList ~=
+								(name || fileName) ?
+									`<a href="` ~ encodeEntities(partUrl) ~ `" title="` ~ encodeEntities(mimeType) ~ `">` ~
+									encodeEntities(name) ~
+									(name && fileName ? " - " : "") ~
+									encodeEntities(fileName) ~
+									`</a>` ~
+									(description ? ` (` ~ encodeEntities(description) ~ `)` : "")
+								:
+									`<a href="` ~ encodeEntities(partUrl) ~ `">` ~
+									encodeEntities(mimeType) ~
+									`</a> part` ~
+									(description ? ` (` ~ encodeEntities(description) ~ `)` : "");
+					}
+					visitParts(part.parts, path~i);
+				}
+			}
+			visitParts(post.parts, null);
+
 			scope(success) user.setRead(post.rowid, true);
 
 			with (post)
@@ -465,17 +507,20 @@ class WebUI
 					`<tr>` ~
 						`<td class="post-info">` ~
 							`<div class="post-author">` ~ encodeEntities(author) ~ `</div>` ~
-							`<a href="http://www.gravatar.com/` ~ gravatarHash ~ `">` ~
+							`<a href="http://www.gravatar.com/` ~ gravatarHash ~ `" title="` ~ encodeEntities(author) ~ `'s Gravatar profile">` ~
 								`<img alt="Gravatar" class="post-gravatar" width="80" height="80" src="http://www.gravatar.com/avatar/` ~ gravatarHash ~ `?d=identicon">` ~
 							`</a><br>` ~
-							`<hr>` ~
-							/*`Posted on ` ~ formatLongTime(time) ~ inReplyTo ~ `<br>` ~*/
-							(inReplyTo ? `Posted` ~ inReplyTo ~ `<br>` : ``) ~
+							(inReplyTo || partList ? `<hr>` : ``) ~
+							/*`<hr>` ~
+							`Posted on ` ~ formatLongTime(time) ~ inReplyTo ~ `<br>` ~*/
+							(inReplyTo ? `<div class="post-info-reply">Posted` ~ inReplyTo ~ `</div>` : ``) ~
+							(partList ? `<div class="post-info-parts">Attachments:<ul><li>` ~ partList.join(`</li><li>`) ~ `</li></ul></div>` : ``) ~
 							`<br><br>` ~ // guarantee space for the "toolbar"
 							`<div class="post-toolbar">` ~ replyButton ~ `</div>`
 						`</td>` ~
 						`<td class="post-body">` ~
 							`<div>` ~ formatBody(content) ~ `</div>` ~
+							(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``) ~
 						`</td>` ~
 					`</tr>` ~
 					`</table>` ~
@@ -505,6 +550,24 @@ class WebUI
 		throw new Exception("Post not found");
 	}
 
+	Rfc850Post getPost(string id, uint[] partPath = null)
+	{
+		id = `<` ~ id ~ `>`;
+
+		foreach (string message; query("SELECT `Message` FROM `Posts` WHERE `ID` = ?").iterate(id))
+		{
+			auto post = new Rfc850Post(message);
+			while (partPath.length)
+			{
+				enforce(partPath[0] < post.parts.length, "Invalid attachment");
+				post = post.parts[partPath[0]];
+				partPath = partPath[1..$];
+			}
+			return post;
+		}
+		return null;
+	}
+
 	struct PostInfo { int rowid; string id, author, subject; SysTime time; }
 	CachedSet!(string, PostInfo*) postInfoCache;
 
@@ -523,7 +586,7 @@ class WebUI
 
 	string formatBody(string text)
 	{
-		auto lines = text.split("\n");
+		auto lines = text.strip().split("\n");
 		bool wasQuoted = false, inSignature = false;
 		text = null;
 		foreach (line; lines)

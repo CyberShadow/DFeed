@@ -156,6 +156,20 @@
 	border-bottom: none;
 	margin: 6px 0;
 }
+.post-info-reply,
+.post-info-parts {
+	margin-bottom: 12px;
+}
+.post-info-parts ul {
+	padding-left: 12px;
+	margin: 0;
+}
+.post-info-parts li {
+	padding: 0 !important;
+}
+.post-error {
+	color: red;
+}
 .post-toolbar {
 	position: absolute;
 	bottom: 10px;
@@ -209,6 +223,12 @@
 .forum-table-message {
 	text-align: center;
 	padding: 50px 0 !important;
+}
+
+.forum-table-message pre {
+	text-align: left;
+	font-size: 8pt;
+	margin: 30px;
 }
 
 .forum-unread,

@@ -20,12 +20,14 @@ struct Xref
 	int num;
 }
 
+enum DEFAULT_ENCODING = "windows1252";
+
 class Rfc850Post : Post
 {
 	string lines, id;
 	Xref[] xref;
 
-	string subject, realSubject, author, authorEmail, url, shortURL, content;
+	string subject, realSubject, author, authorEmail, url, shortURL;
 	string[] references;
 	bool reply;
 
@@ -35,6 +37,15 @@ class Rfc850Post : Post
 	/// Internal database index
 	int rowid;
 
+	string[string] headers;
+	string content; /// text/plain only
+	ubyte[] data; /// can be anything
+	string error; /// Explanation for null content
+
+	/// Multipart stuff
+	string name, fileName, description, mimeType;
+	Rfc850Post[] parts;
+
 	this(string lines, string id=null, int rowid=0)
 	{
 		this.lines = lines;
@@ -42,27 +53,92 @@ class Rfc850Post : Post
 		this.rowid = rowid;
 
 		// TODO: actually read RFC 850
+		// TODO: this breaks binary encodings, FIXME?
 		auto text = lines.replace("\r\n", "\n");
 		auto headerEnd = text.indexOf("\n\n");
 		if (headerEnd < 0) headerEnd = text.length;
 		auto header = text[0..headerEnd];
 		header = header.replace("\n\t", " ").replace("\n ", " ");
 
-		content = text[headerEnd+2..$];
-		auto contentLines = content.split("\n");
-
-		string[string] headers;
 		foreach (s; header.split("\n"))
 		{
 			if (s == "") break;
 			if (hasIntlCharacters(s))
-				s = decodeEncodedText(s, "windows1252");
+				s = decodeEncodedText(s, DEFAULT_ENCODING);
 
 			int p = s.indexOf(": ");
 			if (p<0) continue;
 			//assert(p>0, "Bad header line: " ~ s);
 			headers[toupper(s[0..p])] = s[p+2..$];
 		}
+
+		string rawContent = text[headerEnd+2..$]; // not UTF-8
+
+		if ("CONTENT-TRANSFER-ENCODING" in headers)
+			try
+				rawContent = decodeTransferEncoding(rawContent, headers["CONTENT-TRANSFER-ENCODING"]);
+			catch (Exception e)
+			{
+				rawContent = null;
+				error = "Error decoding " ~ headers["CONTENT-TRANSFER-ENCODING"] ~ " message: " ~ e.msg;
+			}
+
+		data = cast(ubyte[])rawContent;
+
+		TokenHeader contentType, contentDisposition;
+		if ("CONTENT-TYPE" in headers)
+			contentType = decodeTokenHeader(headers["CONTENT-TYPE"]);
+		if ("CONTENT-DISPOSITION" in headers)
+			contentDisposition = decodeTokenHeader(headers["CONTENT-DISPOSITION"]);
+		mimeType = contentType.value;
+
+		if (rawContent)
+		{
+			if (!contentType.value || contentType.value == "text/plain")
+			{
+				if ("charset" in contentType.properties)
+					content = decodeEncodedText(rawContent, contentType.properties["charset"]);
+				else
+				if (hasIntlCharacters(rawContent))
+					content = decodeEncodedText(rawContent, DEFAULT_ENCODING);
+				else
+					content = rawContent;
+			}
+			else
+			if (contentType.value.startsWith("multipart/") && "boundary" in contentType.properties)
+			{
+				string boundary = contentType.properties["boundary"];
+				auto end = rawContent.indexOf("--" ~ boundary ~ "--");
+				if (end < 0)
+					end = rawContent.length;
+				rawContent = rawContent[0..end];
+
+				auto rawParts = rawContent.split("--" ~ boundary ~ "\n");
+				foreach (rawPart; rawParts[1..$])
+				{
+					auto part = new Rfc850Post(rawPart);
+					if (part.content && !content)
+						content = part.content;
+					parts ~= part;
+				}
+
+				if (!content)
+				{
+					if (rawParts.length && rawParts[0].strip().length)
+						content = rawParts[0]; // default content to multipart stub
+					else
+						error = "Couldn't find text part in this " ~ contentType.value ~ " message";
+				}
+			}
+			else
+				error = "Don't know how parse " ~ contentType.value ~ " message";
+		}
+
+		name = aaGet(contentType.properties, "name", string.init);
+		fileName = aaGet(contentDisposition.properties, "filename", string.init);
+		description = aaGet(headers, "CONTENT-DESCRIPTION", string.init);
+		if (name == fileName)
+			name = null;
 
 		if ("REFERENCES" in headers)
 		{
@@ -90,7 +166,7 @@ class Rfc850Post : Post
 		{
 			author = authorEmail = headers["X-BUGZILLA-WHO"];
 
-			foreach (line; contentLines)
+			foreach (line; content.split("\n"))
 				if (line.endsWith("> changed:"))
 					author = line[0..line.indexOf(" <")];
 				else
@@ -301,16 +377,21 @@ string decodeRfc5335(string str)
 
 string decodeQuotedPrintable(string s)
 {
-	string r;
+	auto r = appender!string();
 	for (int i=0; i<s.length; )
 		if (s[i]=='=')
-			r ~= cast(char)parse!ubyte(s[i+1..i+3], 16), i+=3;
+		{
+			if (i+1 < s.length && s[i+1] == '\n')
+				i+=2; // escape newline
+			else
+				r.put(cast(char)parse!ubyte(s[i+1..i+3], 16)), i+=3;
+		}
 		else
 		if (s[i]=='_')
-			r ~= ' ', i++;
+			r.put(' '), i++;
 		else
-			r ~= s[i++];
-	return r;
+			r.put(s[i++]);
+	return r.data;
 }
 
 bool hasIntlCharacters(string s)
@@ -330,7 +411,70 @@ string decodeEncodedText(string s, string textEncoding)
 	}
 	catch (Exception e)
 	{
+		debug std.stdio.writefln("iconv fallback for %s (%s)", textEncoding, e.msg);
 		import ae.sys.cmd;
 		return iconv(s, textEncoding);
 	}
+}
+
+struct TokenHeader
+{
+	string value;
+	string[string] properties;
+}
+
+TokenHeader decodeTokenHeader(string s)
+{
+	string take(char until)
+	{
+		string result;
+		auto p = s.indexOf(until);
+		if (p < 0)
+			result = s,
+			s = null;
+		else
+			result = s[0..p],
+			s = strip(s[p+1..$]);
+		return result;
+	}
+
+	TokenHeader result;
+	result.value = take(';');
+
+	while (s.length)
+	{
+		string name = take('=');
+		string value;
+		if (s.length && s[0] == '"')
+		{
+			s = s[1..$];
+			value = take('"');
+			take(';');
+		}
+		else
+			value = take(';');
+		result.properties[name] = value;
+	}
+
+	return result;
+}
+
+string decodeTransferEncoding(string data, string encoding)
+{
+    switch (toLower(encoding))
+    {
+    case "7bit":
+    	return data;
+    case "quoted-printable":
+    	return decodeQuotedPrintable(data);
+    case "base64":
+    	//return cast(string)Base64.decode(data.replace("\n", ""));
+    {
+    	auto s = data.replace("\n", "");
+    	scope(failure) std.stdio.writeln(s);
+    	return cast(string)Base64.decode(s);
+    }
+    default:
+    	return data;
+    }
 }
