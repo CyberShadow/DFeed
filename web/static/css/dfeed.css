@@ -211,6 +211,17 @@
 	padding: 50px 0 !important;
 }
 
+.forum-unread,
+.forum-unread:visited {
+	font-weight: bold;
+	color: #333;
+}
+.forum-read,
+.forum-read:visited {
+	font-weight: normal;
+	color: black;
+}
+
 #breadcrumbs {
 	color: white;
 	position: absolute;

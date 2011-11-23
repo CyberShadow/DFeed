@@ -32,10 +32,14 @@ class Rfc850Post : Post
 	/// Result of threadify()
 	Rfc850Post[] children;
 
-	this(string lines, string id=null)
+	/// Internal database index
+	int rowid;
+
+	this(string lines, string id=null, int rowid=0)
 	{
 		this.lines = lines;
 		this.id    = id;
+		this.rowid = rowid;
 
 		// TODO: actually read RFC 850
 		auto text = lines.replace("\r\n", "\n");

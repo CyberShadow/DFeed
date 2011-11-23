@@ -1,6 +1,10 @@
 module user;
 
 import std.string;
+import std.exception;
+import std.base64;
+import ae.sys.data;
+import ae.utils.zlib;
 
 struct User
 {
@@ -50,15 +54,72 @@ struct User
 
 	string[] getCookies()
 	{
+		encodeReadPosts();
+
 		string[] result;
 		foreach (name, value; newCookies)
 		{
 			if (name in cookies && cookies[name] == value)
 				continue;
 
-			// TODO
-			result ~= "dfeed_" ~ name ~ "=" ~ value ~ "; Expires=Wed, 09 Jun 2021 10:18:14 GMT";
+			// TODO Expires
+			result ~= "dfeed_" ~ name ~ "=" ~ value ~ "; Expires=Wed, 09 Jun 2021 10:18:14 GMT; Path=/";
 		}
 		return result;
+	}
+
+	// ***********************************************************************
+
+	Data* readPosts;
+	bool readPostsDirty;
+
+	void needReadPosts()
+	{
+		if (!readPosts)
+		{
+			auto b64 = get("readposts", null);
+			if (b64)
+			{
+				auto zcode = Base64.decode(b64);
+				readPosts = [uncompress(Data(zcode))].ptr;
+			}
+			else
+				readPosts = new Data();
+		}
+	}
+
+	void encodeReadPosts()
+	{
+		if (readPosts && readPosts.length && readPostsDirty)
+		{
+			auto b64 = Base64.encode(cast(ubyte[])compress(*readPosts, 1).contents);
+			newCookies["readposts"] = assumeUnique(b64);
+		}
+	}
+
+	bool isRead(size_t post)
+	{
+		needReadPosts();
+		auto pos = post/8;
+		if (pos >= readPosts.length)
+			return false;
+		else
+			return ((cast(ubyte[])readPosts.contents)[pos] & (1 << (post % 8))) != 0;
+	}
+
+	void setRead(size_t post, bool value)
+	{
+		needReadPosts();
+		auto pos = post/8;
+		if (pos >= readPosts.length)
+			readPosts.length = pos+1;
+		ubyte mask = cast(ubyte)(1 << (post % 8));
+		assert(pos < readPosts.length);
+		auto pbyte = (cast(ubyte*)readPosts.ptr) + pos;
+		if (value)
+			*pbyte = *pbyte | mask;
+		else
+			*pbyte = *pbyte & ~mask;
+		readPostsDirty = true;
 	}
 }

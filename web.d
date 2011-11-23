@@ -244,7 +244,7 @@ class WebUI
 			if (info)
 				with (*info)
 					return
-						`<a class="forum-postsummary-subject" href="/discussion/post/` ~ encodeEntities(encodeUrlParameter(id[1..$-1])) ~ `">` ~ truncateString(subject) ~ `</a><br>` ~
+						`<a class="forum-postsummary-subject ` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `" href="/discussion/post/` ~ encodeEntities(encodeUrlParameter(id[1..$-1])) ~ `">` ~ truncateString(subject) ~ `</a><br>` ~
 						`by <span class="forum-postsummary-author">` ~ truncateString(author) ~ `</span><br>` ~
 						`<span class="forum-postsummary-time">` ~ summarizeTime(time) ~ `</span>`;
 
@@ -273,6 +273,16 @@ class WebUI
 			`</table>`;
 	}
 
+	int[] getThreadPostIndexes(string id)
+	{
+		int[] result;
+		foreach (int rowid; query("SELECT `ROWID` FROM `Posts` WHERE `ThreadID` = ?").iterate(id))
+			result ~= rowid;
+		return result;
+	}
+
+	CachedSet!(string, int[]) threadPostIndexCache;
+
 	string discussionGroup(string group, int page)
 	{
 		enum THREADS_PER_PAGE = 25;
@@ -294,12 +304,21 @@ class WebUI
 			foreach (int count; query("SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ?").iterate(firstPostID))
 				threads ~= Thread(getPostInfo(firstPostID), getPostInfo(lastPostID), count);
 
+		bool isThreadRead(string id)
+		{
+			auto posts = threadPostIndexCache(id, getThreadPostIndexes(id));
+			foreach (post; posts)
+				if (!user.isRead(post))
+					return false;
+			return true;
+		}
+
 		string summarizeThread(PostInfo* info)
 		{
 			if (info)
 				with (*info)
 					return
-						`<a class="forum-postsummary-subject" href="/discussion/thread/` ~ encodeEntities(encodeUrlParameter(id[1..$-1])) ~ `">` ~ truncateString(subject, 100) ~ `</a><br>` ~
+						`<a class="forum-postsummary-subject ` ~ (isThreadRead(id) ? "forum-read" : "forum-unread") ~ `" href="/discussion/thread/` ~ encodeEntities(encodeUrlParameter(id[1..$-1])) ~ `">` ~ truncateString(subject, 100) ~ `</a><br>` ~
 						`by <span class="forum-postsummary-author">` ~ truncateString(author, 100) ~ `</span><br>`;
 
 			return `<div class="forum-no-data">-</div>`;
@@ -307,6 +326,7 @@ class WebUI
 
 		string summarizeLastPost(PostInfo* info)
 		{
+			// TODO: link?
 			if (info)
 				with (*info)
 					return
@@ -381,8 +401,8 @@ class WebUI
 
 		// TODO: pages?
 		Rfc850Post[] posts;
-		foreach (string postID, string message; query("SELECT `ID`, `Message` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC").iterate(id))
-			posts ~= new Rfc850Post(message, postID);
+		foreach (int rowid, string postID, string message; query("SELECT `ROWID`, `ID`, `Message` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC").iterate(id))
+			posts ~= new Rfc850Post(message, postID, rowid);
 
 		Rfc850Post[string] knownPosts;
 		foreach (post; posts)
@@ -431,12 +451,14 @@ class WebUI
 					inReplyTo = ` in reply to <a href="` ~ encodeEntities(link) ~ `">` ~ encodeEntities(author) ~ `</a>`;
 			}
 
+			scope(success) user.setRead(post.rowid, true);
+
 			with (post)
 				return
 					`<table class="post forum-table` ~ (children ? ` with-children` : ``) ~ `" id="post-`~encodeAnchor(id[1..$-1])~`">` ~
 					`<tr class="post-header"><th colspan="2">` ~ 
 						`<div class="post-time">` ~ summarizeTime(time) ~ `</div>` ~
-						`<a title="Permanent link to this post" href="/discussion/post/` ~ encodeUrlParameter(id[1..$-1]) ~ `">` ~
+						`<a title="Permanent link to this post" href="/discussion/post/` ~ encodeUrlParameter(id[1..$-1]) ~ `" class="` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `">` ~
 							encodeEntities(realSubject) ~
 						`</a>` ~
 					`</th></tr>` ~
@@ -483,7 +505,7 @@ class WebUI
 		throw new Exception("Post not found");
 	}
 
-	struct PostInfo { string id, author, subject; SysTime time; }
+	struct PostInfo { int rowid; string id, author, subject; SysTime time; }
 	CachedSet!(string, PostInfo*) postInfoCache;
 
 	PostInfo* getPostInfo(string id)
@@ -494,8 +516,8 @@ class WebUI
 	PostInfo* retrievePostInfo(string id)
 	{
 		if (id.startsWith('<') && id.endsWith('>'))
-			foreach (string author, string subject, long stdTime; query("SELECT `Author`, `Subject`, `Time` FROM `Posts` WHERE `ID` = ?").iterate(id))
-				return [PostInfo(id, author, subject, SysTime(stdTime, UTC()))].ptr;
+			foreach (int rowid, string author, string subject, long stdTime; query("SELECT `ROWID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ID` = ?").iterate(id))
+				return [PostInfo(rowid, id, author, subject, SysTime(stdTime, UTC()))].ptr;
 		return null;
 	}
 
