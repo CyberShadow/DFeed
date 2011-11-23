@@ -110,6 +110,7 @@ function bodyLoad()
 </div>
 </div>
 <div id="content">
+<div id="forum-tools"><?tools?><br></div>
 <?content?>
 </div>
 

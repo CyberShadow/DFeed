@@ -87,7 +87,7 @@
 	float: right;
 }
 .disabled-link {
-	color: #666;
+	color: #666; /* the color of the beast */
 }
 
 .group-index-header > th {
@@ -207,4 +207,19 @@
 #breadcrumb2 {
 	margin-left: 40px;
 	font-variant: normal;
+}
+
+#content {
+	position: relative;
+}
+
+#forum-tools {
+	text-align: right;
+	font-size: 0.8em;
+	font-style: italic;
+	margin-top: -16px;
+	color: #666;
+}
+#forum-tools a {
+	color: inherit;
 }

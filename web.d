@@ -21,11 +21,13 @@ import common;
 import database;
 import cache;
 import rfc850;
+import user;
 
 class WebUI
 {
 	Logger log;
 	HttpServer server;
+	User user;
 
 	this()
 	{
@@ -45,7 +47,13 @@ class WebUI
 		responseTime.start();
 		scope(exit) log(format("%s - %dms - %s", from.remoteAddress, responseTime.peek().msecs, request.resource));
 		auto response = new HttpResponseEx();
+
+		user = User("Cookie" in request.headers ? request.headers["Cookie"] : null);
+		scope(success) foreach (cookie; user.getCookies()) response.headers.add("Set-Cookie", cookie);
+
 		string title, content, breadcrumb1, breadcrumb2;
+		string[] tools;
+
 		HttpStatusCode status = HttpStatusCode.OK;
 		try
 		{
@@ -93,11 +101,17 @@ class WebUI
 							title = subject;
 							breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group  )~`">` ~ encodeEntities(group  ) ~ `</a>`;
 							breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(path[2])~`">` ~ encodeEntities(subject) ~ `</a>`;
+							tools ~= viewModeTool(pathStr);
 							break;
 						}
 						case "post":
 							enforce(path.length > 2, "No post specified");
 							return response.redirect(resolvePostUrl(decodeUrlParameter(path[2])));
+						case "set":
+							foreach (name, value; parameters)
+								if (name != "url")
+									user[name] = value;
+							return response.redirect(parameters["url"]);
 						default:
 							return response.writeError(HttpStatusCode.NotFound);
 					}
@@ -132,6 +146,7 @@ class WebUI
 			"content" : content,
 			"breadcrumb1" : breadcrumb1,
 			"breadcrumb2" : breadcrumb2,
+			"tools" : tools.join(" &middot; "),
 		]));
 		response.setStatus(status);
 		return response;
@@ -573,6 +588,25 @@ class WebUI
 	string encodeAnchor(string s)
 	{
 		return encodeUrlParameter(s).replace("%", ".");
+	}
+
+	string viewModeTool(string currentPath)
+	{
+		enum modes = ["flat", "threaded"];
+		auto currentMode = user.get("viewmode", modes[0]);
+		return "View mode: " ~
+			array(map!((string mode) {
+				return mode == currentMode
+					? `<span class="viewmode-active" title="Viewing in ` ~ mode ~ ` mode">` ~ mode ~ `</span>`
+					: `<a title="Switch to ` ~ mode ~ ` view mode" href="` ~ encodeEntities(setOptionLink("viewmode", mode, currentPath)) ~ `">` ~ mode ~ `</a>`;
+			})(modes)).join(" / ");
+	}
+
+	/// Generate a link 
+	string setOptionLink(string name, string value, string currentPath)
+	{
+		// TODO: add XSRF security?
+		return "/discussion/set?" ~ encodeUrlParameters([name : value, "url" : currentPath]);
 	}
 }
 
