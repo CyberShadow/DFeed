@@ -406,8 +406,8 @@ string decodeEncodedText(string s, string textEncoding)
 {
 	try
 	{
-		import arsd.characterencodings;
-		return convertToUtf8(cast(immutable(ubyte)[])s, textEncoding);
+		import ae.utils.iconv;
+		return toUtf8(cast(immutable(ubyte)[])s, textEncoding, false);
 	}
 	catch (Exception e)
 	{
