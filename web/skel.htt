@@ -33,6 +33,14 @@ function bodyLoad()
 			break;
 		}
 	}
+
+	var placeholder = document.getElementById("group-view-mode-placeholder");
+	if (placeholder)
+		if (window.history.pushState)
+		{
+			placeholder.innerHTML = placeholder.title;
+			placeholder.title = "";
+		}
 }
 </script>
 </head>

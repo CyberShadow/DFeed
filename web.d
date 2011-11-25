@@ -94,7 +94,11 @@ class WebUI
 								content = discussionGroup(group, page);
 							else
 								content = discussionGroupThreaded(group, page);
-							tools ~= viewModeTool(request.resource, ["basic", "threaded"], "group");
+							//tools ~= viewModeTool(request.resource, ["basic", "threaded"], "group");
+							tools ~=
+								`<span id="group-view-mode-placeholder" title="` ~
+								encodeEntities(viewModeTool(request.resource, ["basic", "vertical-split"], "group")) ~
+								`"></span>`;
 							break;
 						}
 						case "thread":
@@ -110,7 +114,17 @@ class WebUI
 						}
 						case "post":
 							enforce(path.length > 2, "No post specified");
-							return response.redirect(resolvePostUrl('<' ~ decodeUrlParameter(path[2]) ~ '>'));
+							if (user.get("groupviewmode", "basic") == "threaded")
+							{
+								string group, subject;
+								content = discussionSinglePost('<' ~ decodeUrlParameter(path[2]) ~ '>', group, subject);
+								title = subject;
+								breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group  )~`">` ~ encodeEntities(group  ) ~ `</a>`;
+								breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(path[2])~`">` ~ encodeEntities(subject) ~ `</a> (view single post)`;
+								break;
+							}
+							else
+								return response.redirect(resolvePostUrl('<' ~ decodeUrlParameter(path[2]) ~ '>'));
 						case "raw":
 						{
 							enforce(path.length > 2, "Invalid URL");
@@ -523,6 +537,124 @@ class WebUI
 			`</table>`;
 	}
 
+	string formatPost(Rfc850Post post, Rfc850Post[string] knownPosts)
+	{
+		string replyButton =
+			`<form name="reply-form" method="get" action="/discussion/reply">` ~
+				`<div class="reply-button">` ~
+					`<input type="hidden" name="parent" value="`~encodeEntities(post.id)~`">` ~
+					`<input type="submit" value="Reply">` ~
+				`</div>` ~
+			`</form>`;
+
+		import std.md5;
+		string gravatarHash = toLower(getDigestString(strip(toLower(post.authorEmail))));
+
+		string[] infoBits;
+
+		if (post.parentID)
+		{
+			string author, link;
+			if (post.parentID in knownPosts)
+			{
+				auto parent = knownPosts[post.parentID];
+				author = parent.author;
+				link = '#' ~ idToFragment(parent.id);
+			}
+			else
+			{
+				auto parent = getPostInfo(post.parentID);
+				if (parent)
+				{
+					author = parent.author;
+					link = `` ~ idToUrl(parent.id);
+				}
+			}
+
+			if (author && link)
+				infoBits ~= `Posted in reply to <a href="` ~ encodeEntities(link) ~ `">` ~ encodeEntities(author) ~ `</a>`;
+		}
+
+		string[] partList;
+		void visitParts(Rfc850Post[] parts, int[] path)
+		{
+			foreach (i, part; parts)
+			{
+				if (part.content !is post.content)
+				{
+					string partUrl = ([idToUrl(post.id, "raw")] ~ array(map!text(path~i))).join("/");
+					with (part)
+						partList ~=
+							(name || fileName) ?
+								`<a href="` ~ encodeEntities(partUrl) ~ `" title="` ~ encodeEntities(mimeType) ~ `">` ~
+								encodeEntities(name) ~
+								(name && fileName ? " - " : "") ~
+								encodeEntities(fileName) ~
+								`</a>` ~
+								(description ? ` (` ~ encodeEntities(description) ~ `)` : "")
+							:
+								`<a href="` ~ encodeEntities(partUrl) ~ `">` ~
+								encodeEntities(mimeType) ~
+								`</a> part` ~
+								(description ? ` (` ~ encodeEntities(description) ~ `)` : "");
+				}
+				visitParts(part.parts, path~i);
+			}
+		}
+		visitParts(post.parts, null);
+		if (partList.length)
+			infoBits ~=
+				`Attachments:<ul class="post-info-parts"><li>` ~ partList.join(`</li><li>`) ~ `</li></ul>`;
+
+		if (knownPosts is null && post.threadID)
+			infoBits ~=
+				`<a href="` ~ encodeEntities(idToThreadUrl(post.id, post.threadID)) ~ `">View in thread</a>`;
+
+		string repliesTitle = `Replies to `~encodeEntities(post.author)~`'s post from `~encodeEntities(formatShortTime(post.time));
+
+		scope(success) user.setRead(post.rowid, true);
+
+		with (post)
+			return
+				`<div class="post-wrapper">`
+				`<table class="post forum-table` ~ (children ? ` with-children` : ``) ~ `" id="` ~ encodeEntities(idToFragment(id)) ~ `">` ~
+				`<tr class="post-header"><th colspan="2">` ~ 
+					`<div class="post-time">` ~ summarizeTime(time) ~ `</div>` ~
+					`<a title="Permanent link to this post" href="` ~ idToUrl(id) ~ `" class="` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `">` ~
+						encodeEntities(realSubject) ~
+					`</a>` ~
+				`</th></tr>` ~
+				`<tr>` ~
+					`<td class="post-info">` ~
+						`<div class="post-author">` ~ encodeEntities(author) ~ `</div>` ~
+						`<a href="http://www.gravatar.com/` ~ gravatarHash ~ `" title="` ~ encodeEntities(author) ~ `'s Gravatar profile">` ~
+							`<img alt="Gravatar" class="post-gravatar" width="80" height="80" src="http://www.gravatar.com/avatar/` ~ gravatarHash ~ `?d=identicon">` ~
+						`</a><br>` ~
+						(infoBits.length ?
+							`<hr>` ~
+							array(map!q{ `<div class="post-info-bit">` ~ a ~ `</div>` }(infoBits)).join()
+						: ``) ~
+						`<br><br>` ~ // guarantee space for the "toolbar"
+						`<div class="post-toolbar">` ~ replyButton ~ `</div>`
+					`</td>` ~
+					`<td class="post-body">` ~
+						`<div>` ~ formatBody(content) ~ `</div>` ~
+						(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``) ~
+					`</td>` ~
+				`</tr>` ~
+				`</table>` ~
+				`</div>` ~
+				(children ?
+					`<table class="post-nester"><tr>` ~
+					`<td class="post-nester-bar" title="` ~ /* for IE */ repliesTitle ~ `">` ~
+						`<a href="#` ~ encodeEntities(idToFragment(id)) ~ `" ` ~
+							`title="` ~ repliesTitle ~ `"></a>` ~
+					`</td>` ~
+					`<td>` ~ join(array(map!((Rfc850Post post) { return formatPost(post, knownPosts); })(children))) ~ `</td>`
+					`</tr></table>`
+				: ``);
+	}
+
 	string discussionThread(string id, out string group, out string title)
 	{
 		// TODO: pages?
@@ -540,133 +672,45 @@ class WebUI
 		title = posts[0].subject;
 		bool threaded = user.get("threadviewmode", "flat") == "threaded";
 
-		string formatPost(Rfc850Post post)
-		{
-			string replyButton =
-				`<form name="reply-form" method="get" action="/discussion/reply">` ~
-					`<div id="reply-button">` ~
-						`<input type="hidden" name="parent" value="`~encodeEntities(post.id)~`">` ~
-						`<input type="submit" value="Reply">` ~
-					`</div>` ~
-				`</form>`;
-
-			import std.md5;
-			string gravatarHash = toLower(getDigestString(strip(toLower(post.authorEmail))));
-
-			string inReplyTo;
-			if (post.parentID)
-			{
-				string author, link;
-				if (post.parentID in knownPosts)
-				{
-					auto parent = knownPosts[post.parentID];
-					author = parent.author;
-					link = '#' ~ idToFragment(parent.id);
-				}
-				else
-				{
-					auto parent = getPostInfo(post.parentID);
-					if (parent)
-					{
-						author = parent.author;
-						link = `` ~ idToUrl(parent.id);
-					}
-				}
-
-				if (author && link)
-					inReplyTo = ` in reply to <a href="` ~ encodeEntities(link) ~ `">` ~ encodeEntities(author) ~ `</a>`;
-			}
-
-			string[] partList;
-			void visitParts(Rfc850Post[] parts, int[] path)
-			{
-				foreach (i, part; parts)
-				{
-					if (part.content !is post.content)
-					{
-						string partUrl = ([idToUrl(post.id, "raw")] ~ array(map!text(path~i))).join("/");
-						with (part)
-							partList ~=
-								(name || fileName) ?
-									`<a href="` ~ encodeEntities(partUrl) ~ `" title="` ~ encodeEntities(mimeType) ~ `">` ~
-									encodeEntities(name) ~
-									(name && fileName ? " - " : "") ~
-									encodeEntities(fileName) ~
-									`</a>` ~
-									(description ? ` (` ~ encodeEntities(description) ~ `)` : "")
-								:
-									`<a href="` ~ encodeEntities(partUrl) ~ `">` ~
-									encodeEntities(mimeType) ~
-									`</a> part` ~
-									(description ? ` (` ~ encodeEntities(description) ~ `)` : "");
-					}
-					visitParts(part.parts, path~i);
-				}
-			}
-			visitParts(post.parts, null);
-
-			scope(success) user.setRead(post.rowid, true);
-
-			with (post)
-				return
-					`<table class="post forum-table` ~ (children ? ` with-children` : ``) ~ `" id="` ~ encodeEntities(idToFragment(id)) ~ `">` ~
-					`<tr class="post-header"><th colspan="2">` ~ 
-						`<div class="post-time">` ~ summarizeTime(time) ~ `</div>` ~
-						`<a title="Permanent link to this post" href="` ~ idToUrl(id) ~ `" class="` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `">` ~
-							encodeEntities(realSubject) ~
-						`</a>` ~
-					`</th></tr>` ~
-					`<tr>` ~
-						`<td class="post-info">` ~
-							`<div class="post-author">` ~ encodeEntities(author) ~ `</div>` ~
-							`<a href="http://www.gravatar.com/` ~ gravatarHash ~ `" title="` ~ encodeEntities(author) ~ `'s Gravatar profile">` ~
-								`<img alt="Gravatar" class="post-gravatar" width="80" height="80" src="http://www.gravatar.com/avatar/` ~ gravatarHash ~ `?d=identicon">` ~
-							`</a><br>` ~
-							(inReplyTo || partList ? `<hr>` : ``) ~
-							/*`<hr>` ~
-							`Posted on ` ~ formatLongTime(time) ~ inReplyTo ~ `<br>` ~*/
-							(inReplyTo ? `<div class="post-info-reply">Posted` ~ inReplyTo ~ `</div>` : ``) ~
-							(partList ? `<div class="post-info-parts">Attachments:<ul><li>` ~ partList.join(`</li><li>`) ~ `</li></ul></div>` : ``) ~
-							`<br><br>` ~ // guarantee space for the "toolbar"
-							`<div class="post-toolbar">` ~ replyButton ~ `</div>`
-						`</td>` ~
-						`<td class="post-body">` ~
-							`<div>` ~ formatBody(content) ~ `</div>` ~
-							(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``) ~
-						`</td>` ~
-					`</tr>` ~
-					`</table>` ~
-					(children ?
-						`<table class="post-nester"><tr>` ~
-						`<td class="post-nester-bar">` ~
-							`<a href="#` ~ encodeEntities(idToFragment(id)) ~ `" ` ~
-								`title="Replies to `~encodeEntities(author)~`'s post from `~encodeEntities(formatShortTime(time))~`"></a>` ~
-						`</td>` ~
-						`<td>` ~ join(array(map!formatPost(children))) ~ `</td>`
-						`</tr></table>`
-					: ``);
-		}
 		if (threaded)
 			posts = Rfc850Post.threadify(posts);
 		return
 			`<div id="forum-posts">` ~
-			join(array(map!formatPost(posts))) ~
+			join(array(map!((Rfc850Post post) { return formatPost(post, knownPosts); })(posts))) ~
+			`</div>`;
+	}
+
+	string discussionSinglePost(string id, out string group, out string title)
+	{
+		auto post = getPost(id);
+		enforce(post, "Post not found");
+		group = post.xref[0].group;
+		title = post.subject;
+
+		return
+			`<div id="forum-posts">` ~
+			formatPost(post, null) ~
 			`</div>`;
 	}
 
 	string resolvePostUrl(string id)
 	{
 		foreach (string threadID; query("SELECT `ThreadID` FROM `Posts` WHERE `ID` = ?").iterate(id))
-			return idToUrl(threadID, "thread") ~ "#" ~ idToFragment(id);
+			return idToThreadUrl(id, threadID);
 
 		throw new Exception("Post not found");
 	}
 
+	string idToThreadUrl(string id, string threadID)
+	{
+		return idToUrl(threadID, "thread") ~ "#" ~ idToFragment(id);
+	}
+
 	Rfc850Post getPost(string id, uint[] partPath = null)
 	{
-		foreach (string message; query("SELECT `Message` FROM `Posts` WHERE `ID` = ?").iterate(id))
+		foreach (int rowid, string message; query("SELECT `ROWID`, `Message` FROM `Posts` WHERE `ID` = ?").iterate(id))
 		{
-			auto post = new Rfc850Post(message);
+			auto post = new Rfc850Post(message, id, rowid);
 			while (partPath.length)
 			{
 				enforce(partPath[0] < post.parts.length, "Invalid attachment");
@@ -699,11 +743,11 @@ class WebUI
 		auto lines = text.strip().split("\n");
 		bool wasQuoted = false, inSignature = false;
 		text = null;
-		foreach (line; lines)
+		foreach (i, line; lines)
 		{
 			if (line == "-- ")
 				inSignature = true;
-			auto isQuoted = inSignature || line.startsWith(">");
+			auto isQuoted = (inSignature || line.startsWith(">")) && (i != lines.length-1);
 			if (isQuoted && !wasQuoted)
 				text ~= `<span class="forum-quote">`;
 			else
