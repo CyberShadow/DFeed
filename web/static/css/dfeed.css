@@ -108,7 +108,18 @@
 	margin: 0;
 }
 
-.group-threads > tbody > tr > td {
+.group-threads-cell {
+	padding-left: 0 !important;
+}
+.group-threads {
+	height: 500px;
+	overflow: auto;
+}
+
+.group-threads > table {
+	width: 100%;
+}
+.group-threads > table > tbody > tr > td {
 	border-bottom: none;
 	padding-bottom: 1px;
 }
@@ -130,10 +141,12 @@
 	text-align: right;
 }
 
+#content {
+}
+
 #forum-posts > .post-wrapper:first-child > .post {
 	margin-top: 0;
 }
-
 .post-wrapper {
 	position: relative;
 }

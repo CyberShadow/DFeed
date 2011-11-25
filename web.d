@@ -466,8 +466,20 @@ class WebUI
 		{
 			int rowid;
 			string id, parent, author, subject;
-			SysTime time;
+			SysTime time, maxTime;
 			Post*[] children;
+
+			void calcMaxTime()
+			{
+				maxTime = time;
+				foreach (child; children)
+				{
+					child.calcMaxTime();
+					if (maxTime < child.maxTime)
+						maxTime = child.maxTime;
+				}
+				//maxTime = reduce!max(time, map!"a.maxTime"(children));
+			}
 		}
 
 		Post[string] posts;
@@ -498,7 +510,14 @@ class WebUI
 			}
 
 		foreach (ref post; posts)
-			sort!"a.time < b.time"(post.children);
+			if (post.id)
+				sort!"a.time < b.time"(post.children);
+			else
+			{
+				// sort threads by last-update
+				post.calcMaxTime();
+				sort!"a.maxTime < b.maxTime"(post.children);
+			}
 
 		string formatPosts(Post*[] posts, int level, string parentSubject)
 		{
@@ -527,12 +546,12 @@ class WebUI
 		}
 
 		return
-			`<table id="group-index" class="forum-table group-threads">` ~
+			`<table id="group-index" class="forum-table group-wrapper viewmode-` ~ encodeEntities(user.get("groupviewmode", "basic")) ~ `">` ~
 			`<tr class="group-index-header"><th colspan="2"><div>` ~ newPostButton(group) ~ encodeEntities(group) ~ `</div></th></tr>` ~ newline ~
 			//`<tr class="group-index-captions"><th>Subject / Author</th><th>Time</th>` ~ newline ~
-			//`<tr><td colspan="2" id="group-threads">` ~
+			`<tr><td colspan="2" class="group-threads-cell"><div class="group-threads"><table>` ~
 			formatPosts(posts[null].children, 0, "Root post\n") ~ // hack: force subject header for new posts (\n can't appear in a subject)
-			//`</td></tr>` ~
+			`</table></div></td></tr>` ~
 			threadPager(group, page) ~
 			`</table>`;
 	}
