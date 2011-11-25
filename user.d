@@ -27,15 +27,6 @@ struct User
 		}
 	}
 
-	string opIndex(string name)
-	{
-		auto pNewCookie = name in newCookies;
-		if (pNewCookie)
-			return *pNewCookie;
-		else
-			return cookies[name];
-	}
-
 	string get(string name, string defaultValue)
 	{
 		auto pCookie = name in newCookies;

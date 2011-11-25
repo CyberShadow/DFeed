@@ -90,27 +90,31 @@ class WebUI
 							string pageStr = page==1 ? "" : format(" (page %d)", page);
 							title = group ~ " index" ~ pageStr;
 							breadcrumb1 = `<a href="/discussion/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
-							content = discussionGroup(group, page);
+							if (user.get("groupviewmode", "basic") == "basic")
+								content = discussionGroup(group, page);
+							else
+								content = discussionGroupThreaded(group, page);
+							tools ~= viewModeTool(pathStr, ["basic", "threaded"], "group");
 							break;
 						}
 						case "thread":
 						{
 							enforce(path.length > 2, "No thread specified");
 							string group, subject;
-							content = discussionThread(decodeUrlParameter(path[2]), group, subject);
+							content = discussionThread('<' ~ decodeUrlParameter(path[2]) ~ '>', group, subject);
 							title = subject;
 							breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group  )~`">` ~ encodeEntities(group  ) ~ `</a>`;
 							breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(path[2])~`">` ~ encodeEntities(subject) ~ `</a>`;
-							tools ~= viewModeTool(pathStr);
+							tools ~= viewModeTool(pathStr, ["flat", "threaded"], "thread");
 							break;
 						}
 						case "post":
 							enforce(path.length > 2, "No post specified");
-							return response.redirect(resolvePostUrl(decodeUrlParameter(path[2])));
+							return response.redirect(resolvePostUrl('<' ~ decodeUrlParameter(path[2]) ~ '>'));
 						case "raw":
 						{
-							enforce(path.length > 2, "Invalid attachment URL");
-							auto post = getPost(decodeUrlParameter(path[2]), array(map!(to!uint)(path[3..$])));
+							enforce(path.length > 2, "Invalid URL");
+							auto post = getPost('<' ~ decodeUrlParameter(path[2]) ~ '>', array(map!(to!uint)(path[3..$])));
 							enforce(post, "Post not found");
 							if (!post.data && post.error)
 								throw new Exception(post.error);
@@ -128,7 +132,7 @@ class WebUI
 							else
 								return response.serveText("OK");
 						default:
-							return response.writeError(HttpStatusCode.NotFound);
+							throw new NotFoundException();
 					}
 					break;
 				}
@@ -258,7 +262,7 @@ class WebUI
 			if (info)
 				with (*info)
 					return
-						`<a class="forum-postsummary-subject ` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `" href="/discussion/post/` ~ encodeEntities(encodeUrlParameter(id[1..$-1])) ~ `">` ~ truncateString(subject) ~ `</a><br>` ~
+						`<a class="forum-postsummary-subject ` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `" href="` ~ encodeEntities(idToUrl(id)) ~ `">` ~ truncateString(subject) ~ `</a><br>` ~
 						`by <span class="forum-postsummary-author">` ~ truncateString(author) ~ `</span><br>` ~
 						`<span class="forum-postsummary-time">` ~ summarizeTime(time) ~ `</span>`;
 
@@ -300,7 +304,6 @@ class WebUI
 	string discussionGroup(string group, int page)
 	{
 		enum THREADS_PER_PAGE = 25;
-
 		enforce(page >= 1, "Invalid page");
 
 		struct Thread
@@ -335,7 +338,7 @@ class WebUI
 			if (info)
 				with (*info)
 					return
-						`<a class="forum-postsummary-subject ` ~ (isRead ? "forum-read" : "forum-unread") ~ `" href="/discussion/thread/` ~ encodeEntities(encodeUrlParameter(id[1..$-1])) ~ `">` ~ truncateString(subject, 100) ~ `</a><br>` ~
+						`<a class="forum-postsummary-subject ` ~ (isRead ? "forum-read" : "forum-unread") ~ `" href="` ~ encodeEntities(idToUrl(id, "thread")) ~ `">` ~ truncateString(subject, 100) ~ `</a><br>` ~
 						`by <span class="forum-postsummary-author">` ~ truncateString(author, 100) ~ `</span><br>`;
 
 			return `<div class="forum-no-data">-</div>`;
@@ -362,8 +365,8 @@ class WebUI
 				return `<b>` ~ formatNumber(thread.postCount-1) ~ `</b>`;
 			else
 				return
-					formatNumber(thread.postCount-1) ~
-					`<br>(<b>` ~ formatNumber(thread.unreadPostCount) ~ `</b> new)`;
+					`<b>` ~ formatNumber(thread.postCount-1) ~ `</b>` ~
+					`<br>(` ~ formatNumber(thread.unreadPostCount) ~ ` new)`;
 		}
 
 		auto threadCounts = threadCountCache(getThreadCounts());
@@ -425,10 +428,89 @@ class WebUI
 			`</table>`;
 	}
 
+	string[][string] referenceCache; // invariant
+
+	string discussionGroupThreaded(string group, int page)
+	{
+		enum OFFSET_INIT = 4;
+		enum OFFSET_QTY = 8;
+		enum OFFSET_UNITS = "px";
+		
+		enum THREADS_PER_PAGE = 25;
+		enforce(page >= 1, "Invalid page");
+
+		struct Post
+		{
+			int rowid;
+			string id, parent, author, subject;
+			SysTime time;
+			Post*[] children;
+		}
+
+		Post[string] posts;
+		//foreach (string threadID; query("SELECT `ID` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?").iterate(group, THREADS_PER_PAGE, (page-1)*THREADS_PER_PAGE))
+		//	foreach (string id, string parent, string author, string subject, long stdTime; query("SELECT `ID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` = ?").iterate(threadID))
+		enum ViewSQL = "SELECT `ROWID`, `ID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` IN (SELECT `ID` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?)";
+		foreach (int rowid, string id, string parent, string author, string subject, long stdTime; query(ViewSQL).iterate(group, THREADS_PER_PAGE, (page-1)*THREADS_PER_PAGE))
+			posts[id] = Post(rowid, id, parent, author, subject, SysTime(stdTime, UTC()));
+
+		posts[null] = Post();
+		foreach (ref post; posts)
+			if (post.id)
+			{
+				auto parent = post.parent;
+				if (parent !in posts) // mailing-list users
+				{
+					if (post.id !in referenceCache)
+						referenceCache[post.id] = getPost(post.id).references;
+					parent = null;
+					foreach_reverse (reference; referenceCache[post.id])
+						if (reference in posts)
+						{
+							parent = reference;
+							break;
+						}
+				}
+				posts[parent].children ~= &post;
+			}
+
+		foreach (ref post; posts)
+			sort!"a.time < b.time"(post.children);
+
+		string formatPosts(Post*[] posts, int level, string parentSubject)
+		{
+			string formatPost(Post* post, int level)
+			{
+				return
+					`<tr><td style="padding-left: `~text(OFFSET_INIT + level * OFFSET_QTY)~OFFSET_UNITS~`">` ~
+						`<a class="` ~ (user.isRead(post.rowid) ? "forum-read" : "forum-unread" ) ~ `" href="` ~ idToUrl(post.id) ~ `">` ~ encodeEntities(post.author) ~ `</a>` ~
+					`</td><td>` ~ summarizeTime(post.time) ~ `</td></tr>` ~
+					formatPosts(post.children, level+1, post.subject);
+			}
+
+			return
+				array(map!((Post* post) {
+					if (post.subject != parentSubject)
+						return
+							`<tr><td colspan="2" style="padding-left: `~text(OFFSET_INIT + level * OFFSET_QTY)~OFFSET_UNITS~`">` ~
+							`<table class="thread-start">` ~
+								`<tr><th colspan="2">` ~ encodeEntities(post.subject) ~ `</th></tr>` ~
+								formatPost(post, 0) ~
+							`</table>` ~
+							`</td></tr>`;
+					else
+						return formatPost(post, level);
+				})(posts)).join();
+		}
+
+		return
+			`<table id="group-threads">` ~
+			formatPosts(posts[null].children, 0, "Root post\n") ~ // hack: force subject header for new posts (\n can't appear in a subject)
+			`</table>`;
+	}
+
 	string discussionThread(string id, out string group, out string title)
 	{
-		id = `<` ~ id ~ `>`;
-
 		// TODO: pages?
 		Rfc850Post[] posts;
 		foreach (int rowid, string postID, string message; query("SELECT `ROWID`, `ID`, `Message` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC").iterate(id))
@@ -442,7 +524,7 @@ class WebUI
 
 		group = posts[0].xref[0].group;
 		title = posts[0].subject;
-		bool threaded = user.get("viewmode", "flat") == "threaded";
+		bool threaded = user.get("threadviewmode", "flat") == "threaded";
 
 		string formatPost(Rfc850Post post)
 		{
@@ -465,7 +547,7 @@ class WebUI
 				{
 					auto parent = knownPosts[post.parentID];
 					author = parent.author;
-					link = `#post-` ~ encodeAnchor(parent.id[1..$-1]);
+					link = '#' ~ idToFragment(parent.id);
 				}
 				else
 				{
@@ -473,7 +555,7 @@ class WebUI
 					if (parent)
 					{
 						author = parent.author;
-						link = `/discussion/post/` ~ encodeUrlParameter(parent.id[1..$-1]);
+						link = `` ~ idToUrl(parent.id);
 					}
 				}
 
@@ -488,7 +570,7 @@ class WebUI
 				{
 					if (part.content !is post.content)
 					{
-						string partUrl = "/discussion/raw/" ~ encodeUrlParameter(post.id[1..$-1]) ~ "/" ~ array(map!text(path~i)).join("/");
+						string partUrl = ([idToUrl(post.id, "raw")] ~ array(map!text(path~i))).join("/");
 						with (part)
 							partList ~=
 								(name || fileName) ?
@@ -513,10 +595,10 @@ class WebUI
 
 			with (post)
 				return
-					`<table class="post forum-table` ~ (children ? ` with-children` : ``) ~ `" id="post-`~encodeAnchor(id[1..$-1])~`">` ~
+					`<table class="post forum-table` ~ (children ? ` with-children` : ``) ~ `" id="` ~ encodeEntities(idToFragment(id)) ~ `">` ~
 					`<tr class="post-header"><th colspan="2">` ~ 
 						`<div class="post-time">` ~ summarizeTime(time) ~ `</div>` ~
-						`<a title="Permanent link to this post" href="/discussion/post/` ~ encodeUrlParameter(id[1..$-1]) ~ `" class="` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `">` ~
+						`<a title="Permanent link to this post" href="` ~ idToUrl(id) ~ `" class="` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `">` ~
 							encodeEntities(realSubject) ~
 						`</a>` ~
 					`</th></tr>` ~
@@ -543,7 +625,7 @@ class WebUI
 					(children ?
 						`<table class="post-nester"><tr>` ~
 						`<td class="post-nester-bar">` ~
-							`<a href="#post-`~encodeAnchor(id[1..$-1])~`" ` ~
+							`<a href="#` ~ encodeEntities(idToFragment(id)) ~ `" ` ~
 								`title="Replies to `~encodeEntities(author)~`'s post from `~encodeEntities(formatShortTime(time))~`"></a>` ~
 						`</td>` ~
 						`<td>` ~ join(array(map!formatPost(children))) ~ `</td>`
@@ -560,16 +642,14 @@ class WebUI
 
 	string resolvePostUrl(string id)
 	{
-		foreach (string threadID; query("SELECT `ThreadID` FROM `Posts` WHERE `ID` = ?").iterate(`<` ~ id ~ `>`))
-			return "/discussion/thread/" ~ encodeUrlParameter(threadID[1..$-1]) ~ "#post-" ~ encodeAnchor(id);
+		foreach (string threadID; query("SELECT `ThreadID` FROM `Posts` WHERE `ID` = ?").iterate(id))
+			return idToUrl(threadID, "thread") ~ "#" ~ idToFragment(id);
 
 		throw new Exception("Post not found");
 	}
 
 	Rfc850Post getPost(string id, uint[] partPath = null)
 	{
-		id = `<` ~ id ~ `>`;
-
 		foreach (string message; query("SELECT `Message` FROM `Posts` WHERE `ID` = ?").iterate(id))
 		{
 			auto post = new Rfc850Post(message);
@@ -714,21 +794,54 @@ class WebUI
 		return ae.utils.xml.encodeEntities(s).replace("&apos;", "'");
 	}
 
+	private string urlEncode(string s, in char[] forbidden, char escape)
+	{
+		//  !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
+		// " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+		string result;
+		foreach (char c; s)
+			if (c < 0x20 || c >= 0x7F || forbidden.indexOf(c) >= 0 || c == escape)
+				result ~= format("%s%02X", escape, c);
+			else
+				result ~= c;
+		return result;
+	}
+
 	/// Encode a string to one suitable for an HTML anchor
 	string encodeAnchor(string s)
 	{
-		return encodeUrlParameter(s).replace("%", ".");
+		//return encodeUrlParameter(s).replace("%", ".");
+		// RFC 3986: " \"#%<>[\\]^`{|}"
+		return urlEncode(s, " !\"#$%&'()*+,/;<=>?@[\\]^`{|}~", ':');
 	}
 
-	string viewModeTool(string currentPath)
+	/// Get relative URL to a post ID.
+	string idToUrl(string id, string action = "post")
 	{
-		enum modes = ["flat", "threaded"];
-		auto currentMode = user.get("viewmode", modes[0]);
+		enforce(id.startsWith('<') && id.endsWith('>'));
+
+		// RFC 3986:
+		// pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
+		// sub-delims    = "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
+		// unreserved    = ALPHA / DIGIT / "-" / "." / "_" / "~"
+		return "/discussion/" ~ action ~ "/" ~ urlEncode(id[1..$-1], " \"#%/<>?[\\]^`{|}", '%');
+	}
+
+	/// Get URL fragment / anchor name for a post on the same page.
+	string idToFragment(string id)
+	{
+		enforce(id.startsWith('<') && id.endsWith('>'));
+		return "post-" ~ encodeAnchor(id[1..$-1]);
+	}
+
+	string viewModeTool(string currentPath, string[] modes, string what)
+	{
+		auto currentMode = user.get(what ~ "viewmode", modes[0]);
 		return "View mode: " ~
 			array(map!((string mode) {
 				return mode == currentMode
 					? `<span class="viewmode-active" title="Viewing in ` ~ mode ~ ` mode">` ~ mode ~ `</span>`
-					: `<a title="Switch to ` ~ mode ~ ` view mode" href="` ~ encodeEntities(setOptionLink("viewmode", mode, currentPath)) ~ `">` ~ mode ~ `</a>`;
+					: `<a title="Switch to ` ~ mode ~ ` ` ~ what ~ ` view mode" href="` ~ encodeEntities(setOptionLink(what ~ "viewmode", mode, currentPath)) ~ `">` ~ mode ~ `</a>`;
 			})(modes)).join(" / ");
 	}
 

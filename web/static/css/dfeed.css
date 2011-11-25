@@ -1,4 +1,4 @@
-.forum-table {
+.forum-table, .thread-start {
 	line-height: normal;
 	width: 100%;
 	border-spacing: 0;
@@ -40,7 +40,7 @@
 	text-align: right;
 }
 
-.forum-table {
+.forum-table, .thread-start {
 	border: 2px solid #D0D0D0;
 }
 
@@ -58,7 +58,8 @@
 .group-index-header,
 .group-index-pager,
 .post-header,
-.forum-error th {
+.forum-error th,
+.thread-start th {
 	background-color: #D0D0D0;
 }
 .forum-index-set-captions {
@@ -104,6 +105,27 @@
 }
 #new-post-button input[type=submit] {
 	margin: 0;
+}
+
+#group-threads, .thread-start {
+	width: 100%;
+}
+#group-threads > tbody > tr > td > .thread-start {
+	margin-bottom: 5px;
+}
+.thread-start td {
+	padding: 0 4px;
+}
+
+.thread-start > tbody > tr:nth-child(odd) {
+	background-color: #F6F6F6;
+}
+.thread-start > tbody > tr:nth-child(even) {
+	background-color: white;
+}
+
+.thread-start td:nth-child(2) {
+	text-align: right;
 }
 
 #forum-posts > .post:first-child {
@@ -234,11 +256,18 @@
 .forum-unread,
 .forum-unread:visited {
 	font-weight: bold;
-	color: #333;
 }
 .forum-read,
 .forum-read:visited {
 	font-weight: normal;
+}
+
+th .forum-unread,
+th .forum-unread:visited {
+	color: #333;
+}
+th .forum-read,
+th .forum-read:visited {
 	color: black;
 }
 
