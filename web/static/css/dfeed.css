@@ -6,7 +6,7 @@
 	text-align: left;
 }
 
-.forum-table th {
+.forum-table > tbody > tr > th {
 	text-align: center;
 }
 
@@ -40,12 +40,13 @@
 	text-align: right;
 }
 
-.forum-table, .thread-start {
+.forum-table,
+.thread-start {
 	border: 2px solid #D0D0D0;
 }
 
-.forum-table td,
-.forum-table th {
+.forum-table > tbody > tr > td,
+.forum-table > tbody > tr > th {
 	padding: 4px;
 	border-bottom: 1px solid #D0D0D0;
 	border-right: 1px solid #D0D0D0;
@@ -70,8 +71,8 @@
 	background-color: #e8e8e8 !important;
 }
 
-.forum-table td:nth-child(even), 
-.forum-table th:nth-child(even) {
+.forum-table > tbody > tr > td:nth-child(even), 
+.forum-table > tbody > tr > th:nth-child(even) {
 	background-color: #F0F0F0;
 }
 
@@ -92,7 +93,7 @@
 }
 
 .group-index-header > th {
-	padding: 0;
+	padding: 0 !important;
 }
 .group-index-header > th > div {
 	position: relative;
@@ -107,11 +108,12 @@
 	margin: 0;
 }
 
-#group-threads, .thread-start {
-	width: 100%;
+.group-threads > tbody > tr > td {
+	border-bottom: none;
+	padding-bottom: 1px;
 }
-#group-threads > tbody > tr > td > .thread-start {
-	margin-bottom: 5px;
+.thread-start {
+	margin-bottom: 1px;
 }
 .thread-start td {
 	padding: 0 4px;

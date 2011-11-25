@@ -94,7 +94,7 @@ class WebUI
 								content = discussionGroup(group, page);
 							else
 								content = discussionGroupThreaded(group, page);
-							tools ~= viewModeTool(pathStr, ["basic", "threaded"], "group");
+							tools ~= viewModeTool(request.resource, ["basic", "threaded"], "group");
 							break;
 						}
 						case "thread":
@@ -105,7 +105,7 @@ class WebUI
 							title = subject;
 							breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group  )~`">` ~ encodeEntities(group  ) ~ `</a>`;
 							breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(path[2])~`">` ~ encodeEntities(subject) ~ `</a>`;
-							tools ~= viewModeTool(pathStr, ["flat", "threaded"], "thread");
+							tools ~= viewModeTool(request.resource, ["flat", "threaded"], "thread");
 							break;
 						}
 						case "post":
@@ -301,9 +301,62 @@ class WebUI
 
 	CachedSet!(string, int[]) threadPostIndexCache;
 
+	string newPostButton(string group)
+	{
+		return 
+			`<form name="new-post-form" method="get" action="/discussion/compose">` ~
+				`<div id="new-post-button">` ~
+					`<input type="hidden" name="group" value="`~encodeEntities(group)~`">` ~
+					`<input type="submit" value="Create thread">` ~
+				`</div>` ~
+			`</form>`;
+	}
+
+	string linkOrNot(string text, string url, bool cond)
+	{
+		return (cond ? `<a href="`~encodeEntities(url)~`">` : `<span class="disabled-link">`) ~ text ~ (cond ? `</a>` : `</span>`);
+	}
+
+	string threadPager(string group, int page)
+	{
+		auto threadCounts = threadCountCache(getThreadCounts());
+		enforce(group in threadCounts, "Empty or unknown group");
+		auto threadCount = threadCounts[group];
+		auto pageCount = (threadCount + (THREADS_PER_PAGE-1)) / THREADS_PER_PAGE;
+		enum PAGER_RADIUS = 4;
+		int pagerStart = max(1, page - PAGER_RADIUS);
+		int pagerEnd = min(pageCount, page + PAGER_RADIUS);
+		string[] pager;
+		if (pagerStart > 1)
+			pager ~= "&hellip;";
+		foreach (pagerPage; pagerStart..pagerEnd+1)
+			if (pagerPage == page)
+				pager ~= `<b>` ~ text(pagerPage) ~ `</b>`;
+			else
+				pager ~= `<a href="?page=` ~ text(pagerPage) ~ `">` ~ text(pagerPage) ~ `</a>`;
+		if (pagerEnd < pageCount)
+			pager ~= "&hellip;";
+
+		return
+			`<tr class="group-index-pager"><th colspan="3">` ~ 
+				`<div class="pager-left">` ~
+					linkOrNot("&laquo; First", "?page=1", page!=1) ~
+					`&nbsp;&nbsp;&nbsp;` ~
+					linkOrNot("&lsaquo; Prev", "?page=" ~ text(page-1), page>1) ~
+				`</div>` ~
+				`<div class="pager-right">` ~
+					linkOrNot("Next &rsaquo;", "?page=" ~ text(page+1), page<pageCount) ~
+					`&nbsp;&nbsp;&nbsp;` ~
+					linkOrNot("Last &raquo; ", "?page=" ~ text(pageCount), page!=pageCount) ~
+				`</div>` ~
+				`<div class="pager-numbers">` ~ pager.join(` `) ~ `</div>` ~
+			`</th></tr>`;
+	}
+
+	enum THREADS_PER_PAGE = 15;
+
 	string discussionGroup(string group, int page)
 	{
-		enum THREADS_PER_PAGE = 25;
 		enforce(page >= 1, "Invalid page");
 
 		struct Thread
@@ -369,40 +422,9 @@ class WebUI
 					`<br>(` ~ formatNumber(thread.unreadPostCount) ~ ` new)`;
 		}
 
-		auto threadCounts = threadCountCache(getThreadCounts());
-		enforce(group in threadCounts, "Empty or unknown group");
-		auto threadCount = threadCounts[group];
-		auto pageCount = (threadCount + (THREADS_PER_PAGE-1)) / THREADS_PER_PAGE;
-		enum PAGER_RADIUS = 4;
-		int pagerStart = max(1, page - PAGER_RADIUS);
-		int pagerEnd = min(pageCount, page + PAGER_RADIUS);
-		string[] pager;
-		if (pagerStart > 1)
-			pager ~= "&hellip;";
-		foreach (pagerPage; pagerStart..pagerEnd+1)
-			if (pagerPage == page)
-				pager ~= `<b>` ~ text(pagerPage) ~ `</b>`;
-			else
-				pager ~= `<a href="?page=` ~ text(pagerPage) ~ `">` ~ text(pagerPage) ~ `</a>`;
-		if (pagerEnd < pageCount)
-			pager ~= "&hellip;";
-
-		string linkOrNot(string text, string url, bool cond)
-		{
-			return (cond ? `<a href="`~encodeEntities(url)~`">` : `<span class="disabled-link">`) ~ text ~ (cond ? `</a>` : `</span>`);
-		}
-
-		string newPostButton =
-			`<form name="new-post-form" method="get" action="/discussion/compose">` ~
-				`<div id="new-post-button">` ~
-					`<input type="hidden" name="group" value="`~encodeEntities(group)~`">` ~
-					`<input type="submit" value="Create thread">` ~
-				`</div>` ~
-			`</form>`;
-
 		return
 			`<table id="group-index" class="forum-table">` ~
-			`<tr class="group-index-header"><th colspan="3"><div>` ~ newPostButton ~ encodeEntities(group) ~ `</div></th></tr>` ~ newline ~
+			`<tr class="group-index-header"><th colspan="3"><div>` ~ newPostButton(group) ~ encodeEntities(group) ~ `</div></th></tr>` ~ newline ~
 			`<tr class="group-index-captions"><th>Thread / Thread Starter</th><th>Last Post</th><th>Replies</th>` ~ newline ~
 			join(array(map!(
 				(Thread thread) { return `<tr>` ~
@@ -412,19 +434,7 @@ class WebUI
 					`</tr>` ~ newline;
 				}
 			)(threads))) ~
-			`<tr class="group-index-pager"><th colspan="3">` ~ 
-				`<div class="pager-left">` ~
-					linkOrNot("&laquo; First", "?page=1", page!=1) ~
-					`&nbsp;&nbsp;&nbsp;` ~
-					linkOrNot("&lsaquo; Prev", "?page=" ~ text(page-1), page>1) ~
-				`</div>` ~
-				`<div class="pager-right">` ~
-					linkOrNot("Next &rsaquo;", "?page=" ~ text(page+1), page<pageCount) ~
-					`&nbsp;&nbsp;&nbsp;` ~
-					linkOrNot("Last &raquo; ", "?page=" ~ text(pageCount), page!=pageCount) ~
-				`</div>` ~
-				`<div class="pager-numbers">` ~ pager.join(` `) ~ `</div>` ~
-			`</th></tr>` ~ newline ~
+			threadPager(group, page) ~
 			`</table>`;
 	}
 
@@ -436,7 +446,6 @@ class WebUI
 		enum OFFSET_QTY = 8;
 		enum OFFSET_UNITS = "px";
 		
-		enum THREADS_PER_PAGE = 25;
 		enforce(page >= 1, "Invalid page");
 
 		struct Post
@@ -504,8 +513,13 @@ class WebUI
 		}
 
 		return
-			`<table id="group-threads">` ~
+			`<table id="group-index" class="forum-table group-threads">` ~
+			`<tr class="group-index-header"><th colspan="2"><div>` ~ newPostButton(group) ~ encodeEntities(group) ~ `</div></th></tr>` ~ newline ~
+			//`<tr class="group-index-captions"><th>Subject / Author</th><th>Time</th>` ~ newline ~
+			//`<tr><td colspan="2" id="group-threads">` ~
 			formatPosts(posts[null].children, 0, "Root post\n") ~ // hack: force subject header for new posts (\n can't appear in a subject)
+			//`</td></tr>` ~
+			threadPager(group, page) ~
 			`</table>`;
 	}
 
