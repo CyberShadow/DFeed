@@ -402,6 +402,9 @@ bool hasIntlCharacters(string s)
 	return false;
 }
 
+// http://d.puremagic.com/issues/show_bug.cgi?id=7016
+static import ae.sys.cmd, ae.utils.iconv;
+
 string decodeEncodedText(string s, string textEncoding)
 {
 	try
