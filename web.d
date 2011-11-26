@@ -62,7 +62,7 @@ class WebUI
 			string[string] parameters;
 			if (pathStr.indexOf('?') >= 0)
 			{
-				int p = pathStr.indexOf('?');
+				auto p = pathStr.indexOf('?');
 				parameters = decodeUrlParameters(pathStr[p+1..$]);
 				pathStr = pathStr[0..p];
 			}
@@ -597,7 +597,7 @@ class WebUI
 		string[] partList;
 		void visitParts(Rfc850Post[] parts, int[] path)
 		{
-			foreach (i, part; parts)
+			foreach (int i, part; parts)
 			{
 				if (part.content !is post.content)
 				{

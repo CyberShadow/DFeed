@@ -69,7 +69,7 @@ private:
 	GroupInfo[] queuedGroups;
 	GroupInfo currentGroup;
 	int[] queuedMessages;
-	uint messagesToDownload;
+	size_t messagesToDownload;
 
 	void onConnect()
 	{

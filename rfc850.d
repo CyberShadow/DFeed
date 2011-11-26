@@ -66,10 +66,10 @@ class Rfc850Post : Post
 			if (hasIntlCharacters(s))
 				s = decodeEncodedText(s, DEFAULT_ENCODING);
 
-			int p = s.indexOf(": ");
+			auto p = s.indexOf(": ");
 			if (p<0) continue;
 			//assert(p>0, "Bad header line: " ~ s);
-			headers[toupper(s[0..p])] = s[p+2..$];
+			headers[toUpper(s[0..p])] = s[p+2..$];
 		}
 
 		string rawContent = text[headerEnd+2..$]; // not UTF-8
@@ -339,7 +339,7 @@ string decodeRfc5335(string str)
 		{
 			string s = word[2..$-2];
 
-			int p = s.indexOf('?');
+			auto p = s.indexOf('?');
 			if (p<=0) continue;
 			auto textEncoding = s[0..p];
 			s = s[p+1..$];
@@ -349,7 +349,7 @@ string decodeRfc5335(string str)
 			auto contentEncoding = s[0..p];
 			s = s[p+1..$];
 
-			switch (toupper(contentEncoding))
+			switch (toUpper(contentEncoding))
 			{
 			case "Q":
 				s = decodeQuotedPrintable(s);
