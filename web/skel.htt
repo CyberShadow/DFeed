@@ -43,6 +43,7 @@ function bodyLoad()
 		}
 }
 </script>
+<?extraheaders?>
 </head>
 
 <body onLoad='bodyLoad()' class='hyphenate'>

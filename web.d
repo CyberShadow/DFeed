@@ -52,7 +52,8 @@ class WebUI
 		scope(success) foreach (cookie; user.getCookies()) response.headers.add("Set-Cookie", cookie);
 
 		string title, content, breadcrumb1, breadcrumb2;
-		string[] tools;
+		string[] tools, extraHeaders;
+		enum JQUERY_URL = "http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js";
 
 		HttpStatusCode status = HttpStatusCode.OK;
 		try
@@ -90,14 +91,24 @@ class WebUI
 							string pageStr = page==1 ? "" : format(" (page %d)", page);
 							title = group ~ " index" ~ pageStr;
 							breadcrumb1 = `<a href="/discussion/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
-							if (user.get("groupviewmode", "basic") == "basic")
+							auto viewMode = user.get("groupviewmode", "basic");
+							if (viewMode == "basic")
 								content = discussionGroup(group, page);
 							else
+							if (viewMode == "threaded")
 								content = discussionGroupThreaded(group, page);
+							else
+							{
+								content = discussionGroupSplit(group, page);
+								extraHeaders ~= [
+									`<script src="` ~ JQUERY_URL ~ `"></script>`,
+									`<script src="/js/dfeed-split.js"></script>`,
+								];
+							}
 							//tools ~= viewModeTool(request.resource, ["basic", "threaded"], "group");
 							tools ~=
 								`<span id="group-view-mode-placeholder" title="` ~
-								encodeEntities(viewModeTool(request.resource, ["basic", "vertical-split"], "group")) ~
+								encodeEntities(viewModeTool(request.resource, ["basic", "horizontal-split"], "group")) ~
 								`"></span>`;
 							break;
 						}
@@ -181,6 +192,7 @@ class WebUI
 			"content" : content,
 			"breadcrumb1" : breadcrumb1,
 			"breadcrumb2" : breadcrumb2,
+			"extraheaders" : extraHeaders.join("\n"),
 			"tools" : tools.join(" &middot; "),
 		]));
 		response.setStatus(status);
@@ -331,15 +343,14 @@ class WebUI
 		return (cond ? `<a href="`~encodeEntities(url)~`">` : `<span class="disabled-link">`) ~ text ~ (cond ? `</a>` : `</span>`);
 	}
 
-	string threadPager(string group, int page)
+	string threadPager(string group, int page, int radius = 4)
 	{
 		auto threadCounts = threadCountCache(getThreadCounts());
 		enforce(group in threadCounts, "Empty or unknown group");
 		auto threadCount = threadCounts[group];
 		auto pageCount = (threadCount + (THREADS_PER_PAGE-1)) / THREADS_PER_PAGE;
-		enum PAGER_RADIUS = 4;
-		int pagerStart = max(1, page - PAGER_RADIUS);
-		int pagerEnd = min(pageCount, page + PAGER_RADIUS);
+		int pagerStart = max(1, page - radius);
+		int pagerEnd = min(pageCount, page + radius);
 		string[] pager;
 		if (pagerStart > 1)
 			pager ~= "&hellip;";
@@ -454,9 +465,9 @@ class WebUI
 
 	string[][string] referenceCache; // invariant
 
-	string discussionGroupThreaded(string group, int page)
+	string discussionGroupThreaded(string group, int page, bool split = false)
 	{
-		enum OFFSET_INIT = 4;
+		enum OFFSET_INIT = 2;
 		enum OFFSET_QTY = 8;
 		enum OFFSET_UNITS = "px";
 		
@@ -525,8 +536,9 @@ class WebUI
 			{
 				return
 					`<tr><td style="padding-left: `~text(OFFSET_INIT + level * OFFSET_QTY)~OFFSET_UNITS~`">` ~
+						`<div class="thread-post-time">` ~ summarizeTime(post.time) ~ `</div>` ~
 						`<a class="` ~ (user.isRead(post.rowid) ? "forum-read" : "forum-unread" ) ~ `" href="` ~ idToUrl(post.id) ~ `">` ~ encodeEntities(post.author) ~ `</a>` ~
-					`</td><td>` ~ summarizeTime(post.time) ~ `</td></tr>` ~
+					`</td></tr>` ~
 					formatPosts(post.children, level+1, post.subject);
 			}
 
@@ -534,9 +546,9 @@ class WebUI
 				array(map!((Post* post) {
 					if (post.subject != parentSubject)
 						return
-							`<tr><td colspan="2" style="padding-left: `~text(OFFSET_INIT + level * OFFSET_QTY)~OFFSET_UNITS~`">` ~
+							`<tr><td style="padding-left: `~text(OFFSET_INIT + level * OFFSET_QTY)~OFFSET_UNITS~`">` ~
 							`<table class="thread-start">` ~
-								`<tr><th colspan="2">` ~ encodeEntities(post.subject) ~ `</th></tr>` ~
+								`<tr><th>` ~ encodeEntities(post.subject) ~ `</th></tr>` ~
 								formatPost(post, 0) ~
 							`</table>` ~
 							`</td></tr>`;
@@ -547,13 +559,22 @@ class WebUI
 
 		return
 			`<table id="group-index" class="forum-table group-wrapper viewmode-` ~ encodeEntities(user.get("groupviewmode", "basic")) ~ `">` ~
-			`<tr class="group-index-header"><th colspan="2"><div>` ~ newPostButton(group) ~ encodeEntities(group) ~ `</div></th></tr>` ~ newline ~
+			`<tr class="group-index-header"><th><div>` ~ newPostButton(group) ~ encodeEntities(group) ~ `</div></th></tr>` ~ newline ~
 			//`<tr class="group-index-captions"><th>Subject / Author</th><th>Time</th>` ~ newline ~
-			`<tr><td colspan="2" class="group-threads-cell"><div class="group-threads"><table>` ~
+			`<tr><td class="group-threads-cell"><div class="group-threads"><table>` ~
 			formatPosts(posts[null].children, 0, "Root post\n") ~ // hack: force subject header for new posts (\n can't appear in a subject)
 			`</table></div></td></tr>` ~
-			threadPager(group, page) ~
+			threadPager(group, page, split ? 1 : 4) ~
 			`</table>`;
+	}
+
+	string discussionGroupSplit(string group, int page)
+	{
+		return
+			`<table id="group-split"><tr>` ~
+			`<td id="group-split-list">` ~ discussionGroupThreaded(group, page, true) ~ `</td>` ~
+			`<td id="group-split-message">Message goes here</td>` ~
+			`</tr></table>`;
 	}
 
 	string formatPost(Rfc850Post post, Rfc850Post[string] knownPosts)
