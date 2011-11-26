@@ -19,7 +19,7 @@ class DatabaseSource : NewsSource
 	{
 		db.exec("BEGIN");
 		allowTransactions = false;
-		foreach (string message, string id; query("SELECT `Message`, `ID` FROM `OldPosts`").iterate())
+		foreach (string message, string id; query("SELECT `Message`, `ID` FROM old.Posts").iterate())
 		{
 			log("Announcing: " ~ id);
 			announcePost(new Rfc850Post(message, id));
@@ -37,7 +37,8 @@ void main(string[] args)
 
 	//db.exec("DROP TABLE IF EXISTS `OldPosts`");
 	//db.exec("ALTER TABLE `Posts` RENAME TO `OldPosts`");
-	db.exec("SELECT COUNT(*) FROM `OldPosts`"); // Make sure it exists
+	db.exec("ATTACH 'data/dfeed_old.s3db' AS old");
+	db.exec("SELECT COUNT(*) FROM old.Posts"); // Make sure it exists
 	db.exec("DELETE FROM `Posts`");
 	db.exec("DELETE FROM `Groups`");
 	db.exec("DELETE FROM `Threads`");
