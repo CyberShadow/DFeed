@@ -32,7 +32,7 @@ private:
 
 	void onMessage(string[] lines, string num, string id)
 	{
-		announcePost(new Rfc850Post(lines.join("\n")));
+		announcePost(new Rfc850Post(lines.join("\n"), id));
 	}
 }
 

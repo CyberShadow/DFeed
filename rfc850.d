@@ -46,11 +46,11 @@ class Rfc850Post : Post
 	string name, fileName, description, mimeType;
 	Rfc850Post[] parts;
 
-	this(string lines, string id=null, int rowid=0)
+	this(string _lines, string _id=null, int _rowid=0)
 	{
-		this.lines = lines;
-		this.id    = id;
-		this.rowid = rowid;
+		lines = _lines;
+		id    = _id;
+		rowid = _rowid;
 
 		// TODO: actually read RFC 850
 		// TODO: this breaks binary encodings, FIXME?
