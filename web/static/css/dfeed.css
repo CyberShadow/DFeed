@@ -1,4 +1,4 @@
-.forum-table, .thread-start {
+.forum-table, .thread-start, #group-split {
 	line-height: normal;
 	width: 100%;
 	border-spacing: 0;
@@ -108,10 +108,14 @@
 	margin: 0;
 }
 
+#group-split-list {
+	width: 400px;
+}
+
 .group-threads-cell {
 	padding-left: 0 !important;
 }
-.group-threads {
+.viewmode-horizontal-split .group-threads {
 	height: 500px;
 	overflow: auto;
 }
@@ -136,9 +140,11 @@
 .thread-start > tbody > tr:nth-child(even) {
 	background-color: white;
 }
-
-.thread-start td:nth-child(2) {
-	text-align: right;
+.thread-start td {
+	text-align: left;
+}
+.thread-post-time {
+	float: right;
 }
 
 #content {

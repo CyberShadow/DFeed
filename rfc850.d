@@ -381,7 +381,7 @@ string decodeQuotedPrintable(string s)
 	for (int i=0; i<s.length; )
 		if (s[i]=='=')
 		{
-			if (i+1 < s.length && s[i+1] == '\n')
+			if (i+1 >= s.length || s[i+1] == '\n')
 				i+=2; // escape newline
 			else
 				r.put(cast(char)parse!ubyte(s[i+1..i+3], 16)), i+=3;
