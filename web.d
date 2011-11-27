@@ -416,7 +416,7 @@ class WebUI
 			if (info)
 				with (*info)
 					return
-						`<a class="forum-postsummary-subject ` ~ (isRead ? "forum-read" : "forum-unread") ~ `" href="` ~ encodeEntities(idToUrl(id, "thread")) ~ `">` ~ truncateString(subject, 100) ~ `</a><br>` ~
+						`<a class="forum-postsummary-subject ` ~ (isRead ? "forum-read" : "forum-unread") ~ `" href="` ~ encodeEntities(idToUrl(threadID, "thread")) ~ `">` ~ truncateString(subject, 100) ~ `</a><br>` ~
 						`by <span class="forum-postsummary-author">` ~ truncateString(author, 100) ~ `</span><br>`;
 
 			return `<div class="forum-no-data">-</div>`;
@@ -762,7 +762,7 @@ class WebUI
 		return null;
 	}
 
-	struct PostInfo { int rowid; string id, author, subject; SysTime time; }
+	struct PostInfo { int rowid; string id, threadID, author, subject; SysTime time; }
 	CachedSet!(string, PostInfo*) postInfoCache;
 
 	PostInfo* getPostInfo(string id)
@@ -773,8 +773,8 @@ class WebUI
 	PostInfo* retrievePostInfo(string id)
 	{
 		if (id.startsWith('<') && id.endsWith('>'))
-			foreach (int rowid, string author, string subject, long stdTime; query("SELECT `ROWID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ID` = ?").iterate(id))
-				return [PostInfo(rowid, id, author, subject, SysTime(stdTime, UTC()))].ptr;
+			foreach (int rowid, string threadID, string author, string subject, long stdTime; query("SELECT `ROWID`, `ThreadID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ID` = ?").iterate(id))
+				return [PostInfo(rowid, id, threadID, author, subject, SysTime(stdTime, UTC()))].ptr;
 		return null;
 	}
 
