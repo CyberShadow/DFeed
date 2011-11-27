@@ -480,6 +480,8 @@ class WebUI
 			SysTime time, maxTime;
 			Post*[] children;
 
+			bool ghost; // dummy parent for orphans
+
 			void calcMaxTime()
 			{
 				maxTime = time;
@@ -507,21 +509,35 @@ class WebUI
 				auto parent = post.parent;
 				if (parent !in posts) // mailing-list users
 				{
-					if (post.id !in referenceCache)
-						referenceCache[post.id] = getPost(post.id).references;
+					string[] references;
+					if (post.id in referenceCache)
+						references = referenceCache[post.id];
+					else
+						references = referenceCache[post.id] = getPost(post.id).references;
+
 					parent = null;
-					foreach_reverse (reference; referenceCache[post.id])
+					foreach_reverse (reference; references)
 						if (reference in posts)
 						{
 							parent = reference;
 							break;
 						}
+
+					if (!parent)
+					{
+						Post dummy;
+						dummy.ghost = true;
+						dummy.subject = post.subject; // HACK
+						parent = references[0];
+						posts[parent] = dummy;
+						posts[null].children ~= parent in posts;
+					}
 				}
 				posts[parent].children ~= &post;
 			}
 
 		foreach (ref post; posts)
-			if (post.id)
+			if (post.id || post.ghost)
 				sort!"a.time < b.time"(post.children);
 			else
 			{
@@ -534,6 +550,8 @@ class WebUI
 		{
 			string formatPost(Post* post, int level)
 			{
+				if (post.ghost)
+					return formatPosts(post.children, level, post.subject);
 				return
 					`<tr><td style="padding-left: `~text(OFFSET_INIT + level * OFFSET_QTY)~OFFSET_UNITS~`">` ~
 						`<div class="thread-post-time">` ~ summarizeTime(post.time) ~ `</div>` ~
