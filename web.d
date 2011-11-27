@@ -468,7 +468,8 @@ class WebUI
 	string discussionGroupThreaded(string group, int page, bool split = false)
 	{
 		enum OFFSET_INIT = 2;
-		enum OFFSET_QTY = 8;
+		enum OFFSET_MAX = 8;
+		enum OFFSET_WIDTH = 160;
 		enum OFFSET_UNITS = "px";
 		
 		enforce(page >= 1, "Invalid page");
@@ -479,19 +480,25 @@ class WebUI
 			string id, parent, author, subject;
 			SysTime time, maxTime;
 			Post*[] children;
+			int maxDepth;
 
 			bool ghost; // dummy parent for orphans
 
-			void calcMaxTime()
+			void calcStats()
 			{
+				foreach (child; children)
+					child.calcStats();
+
 				maxTime = time;
 				foreach (child; children)
-				{
-					child.calcMaxTime();
 					if (maxTime < child.maxTime)
 						maxTime = child.maxTime;
-				}
 				//maxTime = reduce!max(time, map!"a.maxTime"(children));
+
+				maxDepth = 1;
+				foreach (child; children)
+					if (maxDepth < 1 + child.maxDepth)
+						maxDepth = 1 + child.maxDepth;
 			}
 		}
 
@@ -537,14 +544,17 @@ class WebUI
 			}
 
 		foreach (ref post; posts)
+		{
+			post.calcStats();
+
 			if (post.id || post.ghost)
 				sort!"a.time < b.time"(post.children);
-			else
-			{
-				// sort threads by last-update
-				post.calcMaxTime();
+			else // sort threads by last-update
 				sort!"a.maxTime < b.maxTime"(post.children);
-			}
+		}
+
+		// TODO: this should be per-toplevel-thread
+		int offsetIncrement = min(OFFSET_MAX, OFFSET_WIDTH / posts[null].maxDepth);
 
 		string formatPosts(Post*[] posts, int level, string parentSubject)
 		{
@@ -553,7 +563,7 @@ class WebUI
 				if (post.ghost)
 					return formatPosts(post.children, level, post.subject);
 				return
-					`<tr><td style="padding-left: `~text(OFFSET_INIT + level * OFFSET_QTY)~OFFSET_UNITS~`">` ~
+					`<tr><td style="padding-left: `~text(OFFSET_INIT + level * offsetIncrement)~OFFSET_UNITS~`">` ~
 						`<div class="thread-post-time">` ~ summarizeTime(post.time) ~ `</div>` ~
 						`<a class="` ~ (user.isRead(post.rowid) ? "forum-read" : "forum-unread" ) ~ `" href="` ~ idToUrl(post.id) ~ `">` ~ encodeEntities(post.author) ~ `</a>` ~
 					`</td></tr>` ~
@@ -564,7 +574,7 @@ class WebUI
 				array(map!((Post* post) {
 					if (post.subject != parentSubject)
 						return
-							`<tr><td style="padding-left: `~text(OFFSET_INIT + level * OFFSET_QTY)~OFFSET_UNITS~`">` ~
+							`<tr><td style="padding-left: `~text(OFFSET_INIT + level * offsetIncrement)~OFFSET_UNITS~`">` ~
 							`<table class="thread-start">` ~
 								`<tr><th>` ~ encodeEntities(post.subject) ~ `</th></tr>` ~
 								formatPost(post, 0) ~
