@@ -656,6 +656,9 @@ class WebUI
 		{
 			foreach (int i, part; parts)
 			{
+				if (part.parts.length)
+					visitParts(part.parts, path~i);
+				else
 				if (part.content !is post.content)
 				{
 					string partUrl = ([idToUrl(post.id, "raw")] ~ array(map!text(path~i))).join("/");
@@ -674,7 +677,6 @@ class WebUI
 								`</a> part` ~
 								(description ? ` (` ~ encodeEntities(description) ~ `)` : "");
 				}
-				visitParts(part.parts, path~i);
 			}
 		}
 		visitParts(post.parts, null);
