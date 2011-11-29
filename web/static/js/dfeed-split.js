@@ -41,11 +41,6 @@ var currentRequest = null;
 var currentID = null;
 
 function onPopState() {
-	if (currentRequest) {
-		currentRequest.abort();
-		currentRequest = null;
-	}
-
 	var path = window.location.pathname;
 	var id = idFromPath(path);
 	var row = findInTree(path);
@@ -53,6 +48,11 @@ function onPopState() {
 		return;
 	else
 	if (id && row) {
+		if (currentRequest) {
+			currentRequest.abort();
+			currentRequest = null;
+		}
+
 		$('.group-threads .thread-post-selected').removeClass('thread-post-selected');
 		row.addClass('thread-post-selected');
 		currentID = id;
@@ -68,6 +68,7 @@ function onPopState() {
 			showPost(result);
 		});
 		currentRequest.error(function(jqXHR, textStatus, errorThrown) {
+			currentRequest = null;
 			showText('XHR error: ' + textStatus);
 		});
 	} else {
