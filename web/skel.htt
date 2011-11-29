@@ -35,12 +35,9 @@ function bodyLoad()
 	}
 
 	var placeholder = document.getElementById("group-view-mode-placeholder");
-	if (placeholder)
+	if (placeholder && viewModeTemplate)
 		if (window.history.pushState)
-		{
-			placeholder.innerHTML = placeholder.title;
-			placeholder.title = "";
-		}
+			placeholder.innerHTML = viewModeTemplate.replace('__URL__', location.pathname);
 }
 </script>
 <?extraheaders?>
@@ -120,7 +117,7 @@ function bodyLoad()
 </div>
 <div id="content">
 <div id="forum-tools"><?tools?><br></div>
-<?content?>
+<div id="forum-content"><?content?></div>
 </div>
 
 

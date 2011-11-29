@@ -1,6 +1,8 @@
 body
 {
+/*
     text-align: justify;
+*/
 	margin: 0;
 	padding: 0;
 	border: 0;
@@ -114,7 +116,9 @@ table, tr, td, th
 
 td
 {
+/*
 	text-align: justify;
+*/
 }
 
 hr
@@ -379,13 +383,17 @@ div#content
 	border: 0.6em solid #ccd5d5;
 	background-color: #f6f6f6;
 	font-size: 0.875em;
+/*
 	line-height: 1.4em;
 	text-align: justify;
+*/
 }
 
 div#content li
 {
+/*
 	padding-bottom: .7ex;
+*/
 }
 
 
