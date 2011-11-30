@@ -119,7 +119,7 @@ class WebUI
 						{
 							enforce(path.length > 2, "No thread specified");
 							string group, subject;
-							content = discussionThread('<' ~ decodeUrlParameter(path[2]) ~ '>', group, subject);
+							content = discussionThread('<' ~ urlDecode(path[2]) ~ '>', group, subject);
 							title = subject;
 							breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group  )~`">` ~ encodeEntities(group  ) ~ `</a>`;
 							breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(path[2])~`">` ~ encodeEntities(subject) ~ `</a>`;
@@ -129,12 +129,12 @@ class WebUI
 						case "post":
 							enforce(path.length > 2, "No post specified");
 							if (user.get("groupviewmode", "basic") == "basic")
-								return response.redirect(resolvePostUrl('<' ~ decodeUrlParameter(path[2]) ~ '>'));
+								return response.redirect(resolvePostUrl('<' ~ urlDecode(path[2]) ~ '>'));
 							else
 							if (user.get("groupviewmode", "basic") == "threaded")
 							{
 								string group, subject;
-								content = discussionSinglePost('<' ~ decodeUrlParameter(path[2]) ~ '>', group, subject);
+								content = discussionSinglePost('<' ~ urlDecode(path[2]) ~ '>', group, subject);
 								title = subject;
 								breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group  )~`">` ~ encodeEntities(group  ) ~ `</a>`;
 								breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(path[2])~`">` ~ encodeEntities(subject) ~ `</a> (view single post)`;
@@ -144,7 +144,7 @@ class WebUI
 							{
 								string group;
 								int page;
-								content = discussionGroupSplitFromPost('<' ~ decodeUrlParameter(path[2]) ~ '>', group, page);
+								content = discussionGroupSplitFromPost('<' ~ urlDecode(path[2]) ~ '>', group, page);
 
 								string pageStr = page==1 ? "" : format(" (page %d)", page);
 								title = group ~ " index" ~ pageStr;
@@ -157,7 +157,7 @@ class WebUI
 						case "raw":
 						{
 							enforce(path.length > 2, "Invalid URL");
-							auto post = getPost('<' ~ decodeUrlParameter(path[2]) ~ '>', array(map!(to!uint)(path[3..$])));
+							auto post = getPost('<' ~ urlDecode(path[2]) ~ '>', array(map!(to!uint)(path[3..$])));
 							enforce(post, "Post not found");
 							if (!post.data && post.error)
 								throw new Exception(post.error);
@@ -168,7 +168,7 @@ class WebUI
 						}
 						case "split-post":
 							enforce(path.length > 2, "No post specified");
-							return response.serveData(discussionSplitPost('<' ~ decodeUrlParameter(path[2]) ~ '>'));
+							return response.serveData(discussionSplitPost('<' ~ urlDecode(path[2]) ~ '>'));
 						case "set":
 							foreach (name, value; parameters)
 								if (name != "url")
@@ -1049,6 +1049,20 @@ class WebUI
 			else
 				result ~= c;
 		return result;
+	}
+
+	private string urlDecode(string encoded)
+	{
+		string s;
+		for (int i=0; i<encoded.length; i++)
+			if (encoded[i] == '%')
+			{
+				s ~= cast(char)fromHex!ubyte(encoded[i+1..i+3]);
+				i += 2;
+			}
+			else
+				s ~= encoded[i];
+		return s;
 	}
 
 	/// Encode a string to one suitable for an HTML anchor
