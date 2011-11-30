@@ -765,7 +765,7 @@ class WebUI
 						`<div class="post-toolbar">` ~ replyButton ~ `</div>`
 					`</td>` ~
 					`<td class="post-body">` ~
-						`<div>` ~ formatBody(content) ~ `</div>` ~
+						`<div class="post-text">` ~ formatBody(content) ~ `</div>` ~
 						(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``) ~
 					`</td>` ~
 				`</tr>` ~
@@ -829,7 +829,7 @@ class WebUI
 					`</tr></table>` ~
 				`</td></tr>` ~
 				`<tr><td class="post-body">` ~
-					`<div>` ~ formatBody(content) ~ `</div>` ~
+					`<div class="post-text">` ~ formatBody(content) ~ `</div>` ~
 					(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``) ~
 				`</td></tr>` ~
 				`</table>` ~
@@ -927,11 +927,11 @@ class WebUI
 		auto lines = text.strip().split("\n");
 		bool wasQuoted = false, inSignature = false;
 		text = null;
-		foreach (i, line; lines)
+		foreach (line; lines)
 		{
 			if (line == "-- ")
 				inSignature = true;
-			auto isQuoted = (inSignature || line.startsWith(">")) && (i != lines.length-1);
+			auto isQuoted = inSignature || line.startsWith(">");
 			if (isQuoted && !wasQuoted)
 				text ~= `<span class="forum-quote">`;
 			else
@@ -940,6 +940,8 @@ class WebUI
 			wasQuoted = isQuoted;
 			text ~= encodeEntities(line) ~ "\n";
 		}
+		if (wasQuoted)
+			text ~= `</span>`;
 		return text.chomp();
 	}
 

@@ -239,7 +239,7 @@ ul.post-info-parts {
 .post-error {
 	color: red;
 }
-.post-body > div {
+.post-text {
 	font-family: Consolas, monospace;
 	font-size: 14px;
 	white-space: pre-wrap;
@@ -283,10 +283,6 @@ ul.post-info-parts {
 
 .forum-table > tbody > tr > td.group-threads-cell {
 	padding: 2px 0 0 0;
-}
-.viewmode-horizontal-split .group-threads {
-	height: 500px;
-	overflow: auto;
 }
 
 .group-threads > table {
@@ -353,6 +349,12 @@ ul.post-info-parts {
 #group-split-message {
 	padding-left: 4px;
 	vertical-align: top;
+	overflow: auto;
+}
+
+.viewmode-horizontal-split .group-threads {
+	height: 400px;
+	overflow: auto;
 }
 
 .split-post {
@@ -361,6 +363,13 @@ ul.post-info-parts {
 
 .split-post .post-body {
 	padding: 10px;
+}
+
+.split-post .post-text {
+	overflow: auto;
+}
+
+.split-post {
 }
 
 .split-post-avatar {
@@ -373,7 +382,7 @@ ul.post-info-parts {
 .split-post-info {
 	border-left: none !important;
 	background-color: #E8E8E8;
-	font-size: 10pt;
+	font-size: 0.9em;
 }
 
 .split-post-info-name {
@@ -397,6 +406,65 @@ ul.post-info-parts {
 	body.widedoc #content {
 		margin-left: 1.5em !important;
 	}
+}
+
+@media screen and (max-width: 1170px) {
+	body.widedoc .post-text {
+		font-size: 12px;
+	}
+	body.widedoc #content {
+		font-size: 0.8em;
+	}
+	body.widedoc #group-split-list {
+		width: 350px;
+	}
+}
+
+@media screen and (max-width: 1040px) {
+	body.widedoc .post-text {
+		font-size: 11px;
+	}
+	body.widedoc #content {
+		font-size: 0.7em;
+	}
+	body.widedoc #group-split-list {
+		width: 300px;
+	}
+}
+
+#keyboardhelp {
+	width: auto !important;
+	margin: 0 auto;
+}
+#keyboardhelp td {
+	padding-top: 10px;
+}
+#keyboardhelp td:first-child {
+	text-align: right;
+	padding-right: 10px;
+}
+#keyboardhelp td:last-child {
+	text-align: left;
+}
+kbd { /* stolen from http://en.wikipedia.org/wiki/Template:Key_press */
+	border: 1px solid;
+	border-color: #ddd #bbb #bbb #ddd;
+	border-bottom-width: 2px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+	background-color: #f9f9f9;
+	padding: 1px 3px;
+	font-family: inherit;
+	font-size: 0.9em;
+	white-space: nowrap;
+
+	display: inline-block;
+	text-align: center;
+	min-width: 1em;
+	margin: 0 1px;
+	background-color: white;
+	font-family: "Arial Unicode MS","Microsoft Sans Serif","Free Sans","Gentium Plus","Gentium Basic","Gentium","GentiumAlt","DejaVu Sans","DejaVu Serif","Free Serif","TITUS Cyberbit Basic","Bitstream Cyberbit","Bitstream CyberBase","Doulos SIL","Code2000","Code2001";
 }
 
 /*************** Misc views ***************/

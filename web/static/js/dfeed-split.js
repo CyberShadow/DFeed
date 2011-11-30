@@ -5,11 +5,19 @@ $(document).ready(function() {
 		var path = $(this).attr('href');
 		return !selectMessage(path);
 	});
-	$('tr.thread-post-row').live('mousedown', function() {
-		return $(this).find('a.postlink').click();
+	$('tr.thread-post-row').live('mousedown', function(e) {
+		if (e.which == 1)
+			return selectRow($(this));
+		return true;
 	}).css('cursor', 'default');
 
-	$(document).keypress(onKeyPress);
+	if ($.browser.webkit) {
+		// Chrome does not pass Ctrl+keys to keypress - but in many
+		// other browsers keydown does not repeat
+		$(document).keydown(onKeyPress);
+	} else {
+		$(document).keypress(onKeyPress);
+	}
 
 	$(window).resize(onResize);
 	updateSize();
@@ -77,7 +85,7 @@ function onPopState() {
 			showText('XHR error: ' + textStatus);
 		});
 	} else {
-		showText('No message selected.');
+		showHtml('No message selected.<br><br>' + keyboardHelp);
 	}
 
 	$('#group-view-mode-placeholder').html(viewModeTemplate.replace('__URL__', location.pathname));
@@ -87,11 +95,18 @@ function showPost(postHtml) {
 	$('#group-split-message')
 		.html(postHtml)
 		.removeClass('group-split-message-none');
+	updateSize();
 }
 
 function showText(text) {
 	$('#group-split-message')
 		.text(text)
+		.addClass('group-split-message-none');
+}
+
+function showHtml(text) {
+	$('#group-split-message')
+		.html(text)
 		.addClass('group-split-message-none');
 }
 
@@ -104,19 +119,27 @@ var resizeTimeout = null;
 function updateSize() {
 	resizeTimeout = null;
 
-	$('body').attr('style', ''); // WTF, Google Translate?!
+	// Google Translate seems to add this,
+	// but it conflicts with our code
+	$('body').attr('style', ''); 
 
-	var oldHeight = $('body').height();
-	var diff = $(window).height() - oldHeight;
-	if (diff != 0) {
-		var obj = $('.group-threads');
-		if (obj.height() + diff > 0) {
-			obj.css('height', obj.height() + diff);
-			var newHeight = $('body').height();
-			var changed = oldHeight - newHeight;
-			obj.css('height', obj.height() - (diff + changed));
-		}
+	var resizees = [
+		{ outer : $('#group-index'), inner : $('.group-threads')},
+		{ outer : $('.split-post') , inner : $('.split-post .post-text')},
+	];
+
+	for (var i in resizees)
+		resizees[i].inner.height(0);
+
+	var space = $('#content').height() + Math.max(0, $(window).height() - $('body').height() - 20);
+
+	for (var i in resizees) {
+		resizees[i].inner.height(space - resizees[i].outer.height());
 	}
+
+	var focused = $('.thread-post-focused');
+	if (focused.length)
+		focusRow(focused, true);
 }
 
 function onResize() {
@@ -162,6 +185,10 @@ function focusRow(row, withMargin) {
 	scrollIntoView(row[0], $('.group-threads')[0], withMargin);
 }
 
+function selectRow(row) {
+	return row.find('a.postlink').click();
+}
+
 function focusNext(offset, onlyUnread) {
 	if (typeof onlyUnread == 'undefined')
 		onlyUnread = false;
@@ -200,29 +227,57 @@ function focusNext(offset, onlyUnread) {
 function selectFocused() {
 	var focused = $('.thread-post-focused');
 	if (focused.length) {
-		focused.mousedown();
+		selectRow(focused);
 		return true;
 	}
 	return false;
 }
 
+function objToStr(o) {
+	var s = "";
+	for (var p in o)
+		s = s + 'o[' + p + ']=' + o[p] + '\n';
+	return s;
+}
+
+var keyboardHelp =
+	'<table id="keyboardhelp">' +
+		'<tr><td><kbd>j</kbd> / <kbd>Ctrl</kbd><kbd title="Down Arrow">&darr;</kbd></td><td>Focus next message</td></tr>' +
+		'<tr><td><kbd>k</kbd> / <kbd>Ctrl</kbd><kbd title="Up Arrow">&uarr;</kbd></td><td>Focus previous message</td></tr>' +
+		'<tr><td><kbd title="Enter / Return">&crarr;</kbd></td><td>Open selected message</td></tr>' +
+		'<tr><td><kbd title="Space Bar" style="width: 70px">&nbsp;</kbd></td><td>Scroll message / Open next unread message</td></tr>' +
+	'</table>';
+
 function onKeyPress(e) {
 	var c = String.fromCharCode(e.which);
+	if ($.browser.webkit) c = c.toLowerCase();
 	var pageSize = $('.group-threads').height() / $('.thread-post-row').eq(0).height();
 
-	switch (c) {
-		case 'j':
-			return !focusNext(+1);
-		case 'k':
-			return !focusNext(-1);
-		case '\x0D':
-			return !selectFocused();
-		case ' ':
-			return !(focusNext(+1, true) && selectFocused());
+	if (!e.ctrlKey && !e.shiftKey && !e.altKey) {
+		switch (c) {
+			case 'j':
+				return !focusNext(+1);
+			case 'k':
+				return !focusNext(-1);
+			case '\x0D':
+				return !selectFocused();
+			case ' ':
+			{
+				var p = $('.post-text');
+				var dest = p.scrollTop()+p.height();
+				if (dest < p[0].scrollHeight) {
+					p.animate({scrollTop : dest}, 200);
+					return false;
+				}
+				return !(focusNext(+1, true) && selectFocused());
+			}
+		}
 	}
 
-	if (e.ctrlKey) {
+	if (e.ctrlKey && !e.shiftKey && !e.altKey) {
 		switch (e.keyCode) {
+			case 13: // ctrl+enter == enter
+				return !selectFocused();
 			case 38: // up arrow
 				return !focusNext(-1);
 			case 40: // down arrow
