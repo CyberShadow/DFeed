@@ -44,6 +44,23 @@ class WebUI
 		log(format("Listening on port %d", port));
 	}
 
+	string staticPath(string path)
+	{
+		return "/static/" ~ text(timeLastModified("web/static" ~ path).stdTime) ~ path;
+	}
+
+	string optimizedPath(string base, string path)
+	{
+		auto origPath = base ~ path;
+		auto optiPath = base ~ path ~ "-opt";
+		if (exists(origPath) && exists(optiPath) && timeLastModified(optiPath) >= timeLastModified(origPath))
+			return path ~ "-opt";
+		else
+			return path;
+	}
+
+	enum JQUERY_URL = "http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js";
+
 	HttpResponse onRequest(HttpRequest request, ClientSocket from)
 	{
 		StopWatch responseTime;
@@ -51,15 +68,12 @@ class WebUI
 		scope(exit) log(format("%s - %dms - %s", from.remoteAddress, responseTime.peek().msecs, request.resource));
 		auto response = new HttpResponseEx();
 
-		string staticPath(string path) { return "/static/" ~ text(timeLastModified("web/static" ~ path).stdTime) ~ path; }
-
 		user = User("Cookie" in request.headers ? request.headers["Cookie"] : null);
 		scope(success) foreach (cookie; user.getCookies()) response.headers.add("Set-Cookie", cookie);
 
 		string title, content, breadcrumb1, breadcrumb2;
 		string[] tools, extraHeaders;
 
-		enum JQUERY_URL = "http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js";
 		auto splitViewHeaders = [
 			`<script src="` ~ JQUERY_URL ~ `"></script>`,
 			`<script src="` ~ staticPath("/js/dfeed-split.js") ~ `"></script>`,
@@ -189,13 +203,11 @@ class WebUI
 				case "css":
 				case "images":
 				case "favicon.ico":
-					response.cacheForever();
-					return response.serveFile(pathStr[1..$], "web/static/");
+					return serveFile(response, pathStr[1..$]);
 
 				case "static":
 					enforce(path.length > 2);
-					response.cacheForever();
-					return response.serveFile(path[2..$].join("/"), "web/static/");
+					return serveFile(response, path[2..$].join("/"));
 
 				default:
 					return response.writeError(HttpStatusCode.NotFound);
@@ -235,9 +247,15 @@ class WebUI
 				vars["static:" ~ path] = staticPath(path);
 			}
 		response.disableCache();
-		response.serveData(HttpResponseEx.loadTemplate("web/skel.htt", vars));
+		response.serveData(HttpResponseEx.loadTemplate(optimizedPath(null, "web/skel.htt"), vars));
 		response.setStatus(HttpStatusCode.OK);
 		return response;
+	}
+
+	HttpResponseEx serveFile(HttpResponseEx response, string path)
+	{
+		response.cacheForever();
+		return response.serveFile(optimizedPath("web/static/", path), "web/static/");
 	}
 
 	struct Group { string name, description; }

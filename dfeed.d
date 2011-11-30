@@ -33,7 +33,7 @@ void main(string[] args)
 	new Feed("Wikipedia", "http://en.wikipedia.org/w/api.php?action=feedwatchlist&allrev=allrev&hours=1&"~readText("data/wikipedia.txt")~"&feedformat=atom", "edited");
 	//new Feed("GitHub", "https://github.com/"~readText("data/github.txt"), null); // TODO: HTTPS
 	new Feed("GitHub", "http://thecybershadow.net/d/ghfeed.php", null);
-	new Reddit("programming", `(^|[^\w\d\-:*=])D([^\w\-:*=]|$)`);
+//	new Reddit("programming", `(^|[^\w\d\-:*=])D([^\w\-:*=]|$)`);
 	new Feed("Twitter1", "http://twitter.com/statuses/user_timeline/18061210.atom", null);
 	new Feed("Twitter2", "http://twitter.com/statuses/user_timeline/155425162.atom", null);
 

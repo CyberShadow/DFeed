@@ -10,6 +10,7 @@
 *.map
 *.mem
 *.suo
+*-opt
 
 # Logs and configuration
 /data/
