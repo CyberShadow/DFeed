@@ -51,6 +51,8 @@ class WebUI
 		scope(exit) log(format("%s - %dms - %s", from.remoteAddress, responseTime.peek().msecs, request.resource));
 		auto response = new HttpResponseEx();
 
+		string staticPath(string path) { return "/static/" ~ text(timeLastModified("web/static" ~ path).stdTime) ~ path; }
+
 		user = User("Cookie" in request.headers ? request.headers["Cookie"] : null);
 		scope(success) foreach (cookie; user.getCookies()) response.headers.add("Set-Cookie", cookie);
 
@@ -60,7 +62,7 @@ class WebUI
 		enum JQUERY_URL = "http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js";
 		auto splitViewHeaders = [
 			`<script src="` ~ JQUERY_URL ~ `"></script>`,
-			`<script src="/js/dfeed-split.js?` ~ text(timeLastModified("web/static/js/dfeed-split.js").stdTime) ~ `"></script>`,
+			`<script src="` ~ staticPath("/js/dfeed-split.js") ~ `"></script>`,
 		];
 		auto splitViewTool =
 			`<span id="group-view-mode-placeholder"></span>` ~
@@ -190,6 +192,11 @@ class WebUI
 					response.cacheForever();
 					return response.serveFile(pathStr[1..$], "web/static/");
 
+				case "static":
+					enforce(path.length > 2);
+					response.cacheForever();
+					return response.serveFile(path[2..$].join("/"), "web/static/");
+
 				default:
 					return response.writeError(HttpStatusCode.NotFound);
 			}
@@ -225,7 +232,7 @@ class WebUI
 			if (isFile(de.name))
 			{
 				auto path = de.name["web/static".length..$].replace(`\`, `/`);
-				vars["static:" ~ path] = path ~ '?' ~ text(de.timeLastModified.stdTime);
+				vars["static:" ~ path] = staticPath(path);
 			}
 		response.disableCache();
 		response.serveData(HttpResponseEx.loadTemplate("web/skel.htt", vars));

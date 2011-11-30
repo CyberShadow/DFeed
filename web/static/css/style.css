@@ -8,7 +8,7 @@ body
 	border: 0;
 	color: black;
 	background-color: #1f252b;
-	background-image: url(../images/gradient-red.jpg);
+	background-image: url(/images/gradient-red.jpg);
 	background-repeat: no-repeat;
 	font-size: 100%;
 	font-family: Verdana, "Deja Vu", "Bitstream Vera Sans", sans-serif;
@@ -272,7 +272,7 @@ div#search-box input#q
 {
 	border: 0px;
 	height: 22px;
-	background-image: url(../images/search-bg.gif);
+	background-image: url(/images/search-bg.gif);
 	color: black;
 }
 
