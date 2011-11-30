@@ -88,7 +88,7 @@ function onPopState() {
 		showHtml('No message selected.<br><br>' + keyboardHelp);
 	}
 
-	$('#group-view-mode-placeholder').html(viewModeTemplate.replace('__URL__', location.pathname));
+	$('#forum-tools').html(toolsTemplate.replace('__URL__', location.pathname));
 }
 
 function showPost(postHtml) {

@@ -78,9 +78,6 @@ class WebUI
 			`<script src="` ~ JQUERY_URL ~ `"></script>`,
 			`<script src="` ~ staticPath("/js/dfeed-split.js") ~ `"></script>`,
 		];
-		auto splitViewTool =
-			`<span id="group-view-mode-placeholder"></span>` ~
-			`<script type="text/javascript">var viewModeTemplate = ` ~ toJson(viewModeTool("__URL__", ["basic", "horizontal-split"], "group")) ~ `;</script>`;
 
 		try
 		{
@@ -128,8 +125,8 @@ class WebUI
 								content = discussionGroupSplit(group, page);
 								extraHeaders ~= splitViewHeaders;
 							}
-							//tools ~= viewModeTool(request.resource, ["basic", "threaded"], "group");
-							tools ~= splitViewTool;
+							//tools ~= viewModeTool(["basic", "threaded"], "group");
+							tools ~= viewModeTool(["basic", "horizontal-split"], "group");
 							break;
 						}
 						case "thread":
@@ -140,7 +137,7 @@ class WebUI
 							title = subject;
 							breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group  )~`">` ~ encodeEntities(group  ) ~ `</a>`;
 							breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(path[2])~`">` ~ encodeEntities(subject) ~ `</a>`;
-							tools ~= viewModeTool(request.resource, ["flat", "threaded"], "thread");
+							tools ~= viewModeTool(["flat", "threaded"], "thread");
 							break;
 						}
 						case "post":
@@ -167,7 +164,7 @@ class WebUI
 								title = group ~ " index" ~ pageStr;
 								breadcrumb1 = `<a href="/discussion/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
 								extraHeaders ~= splitViewHeaders;
-								tools ~= splitViewTool;
+								tools ~= viewModeTool(["basic", "horizontal-split"], "group");
 
 								break;
 							}
@@ -232,13 +229,19 @@ class WebUI
 		assert(title && content);
 		if (breadcrumb1) breadcrumb1 = "&rsaquo; " ~ breadcrumb1;
 		if (breadcrumb2) breadcrumb2 = "&raquo; " ~ breadcrumb2;
+
+		string toolStr = tools.join(" &middot; ");
+		toolStr =
+			toolStr.replace("__URL__",  request.resource) ~
+			`<script type="text/javascript">var toolsTemplate = ` ~ toJson(toolStr) ~ `;</script>`;
+
 		auto vars = [
 			"title" : encodeEntities(title),
 			"content" : content,
 			"breadcrumb1" : breadcrumb1,
 			"breadcrumb2" : breadcrumb2,
 			"extraheaders" : extraHeaders.join("\n"),
-			"tools" : tools.join(" &middot; "),
+			"tools" : toolStr,
 		];
 		foreach (DirEntry de; dirEntries("web/static", SpanMode.depth))
 			if (isFile(de.name))
@@ -1130,22 +1133,22 @@ class WebUI
 		return "post-" ~ encodeAnchor(id[1..$-1]);
 	}
 
-	string viewModeTool(string currentPath, string[] modes, string what)
+	string viewModeTool(string[] modes, string what)
 	{
 		auto currentMode = user.get(what ~ "viewmode", modes[0]);
 		return "View mode: " ~
 			array(map!((string mode) {
 				return mode == currentMode
 					? `<span class="viewmode-active" title="Viewing in ` ~ mode ~ ` mode">` ~ mode ~ `</span>`
-					: `<a title="Switch to ` ~ mode ~ ` ` ~ what ~ ` view mode" href="` ~ encodeEntities(setOptionLink(what ~ "viewmode", mode, currentPath)) ~ `">` ~ mode ~ `</a>`;
+					: `<a title="Switch to ` ~ mode ~ ` ` ~ what ~ ` view mode" href="` ~ encodeEntities(setOptionLink(what ~ "viewmode", mode)) ~ `">` ~ mode ~ `</a>`;
 			})(modes)).join(" / ");
 	}
 
 	/// Generate a link to set a user preference
-	string setOptionLink(string name, string value, string currentPath)
+	string setOptionLink(string name, string value)
 	{
 		// TODO: add XSRF security?
-		return "/discussion/set?" ~ encodeUrlParameters([name : value, "url" : currentPath]);
+		return "/discussion/set?" ~ encodeUrlParameters([name : value, "url" : "__URL__"]);
 	}
 }
 
