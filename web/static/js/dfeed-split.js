@@ -21,7 +21,7 @@ $(document).ready(function() {
 
 	$(window).resize(onResize);
 	updateSize();
-	$('.group-threads').scrollTop(1000000);
+	focusRow($('tr.thread-post-row').last());
 
 	$(window).bind('popstate', onPopState);
 	onPopState();
@@ -242,8 +242,8 @@ function objToStr(o) {
 
 var keyboardHelp =
 	'<table id="keyboardhelp">' +
-		'<tr><td><kbd>j</kbd> / <kbd>Ctrl</kbd><kbd title="Down Arrow">&darr;</kbd></td><td>Focus next message</td></tr>' +
-		'<tr><td><kbd>k</kbd> / <kbd>Ctrl</kbd><kbd title="Up Arrow">&uarr;</kbd></td><td>Focus previous message</td></tr>' +
+		'<tr><td><kbd>j</kbd> / <kbd>Ctrl</kbd><kbd title="Down Arrow">&darr;</kbd></td><td>Select next message</td></tr>' +
+		'<tr><td><kbd>k</kbd> / <kbd>Ctrl</kbd><kbd title="Up Arrow">&uarr;</kbd></td><td>Select previous message</td></tr>' +
 		'<tr><td><kbd title="Enter / Return">&crarr;</kbd></td><td>Open selected message</td></tr>' +
 		'<tr><td><kbd title="Space Bar" style="width: 70px">&nbsp;</kbd></td><td>Scroll message / Open next unread message</td></tr>' +
 	'</table>';

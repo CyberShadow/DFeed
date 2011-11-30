@@ -418,6 +418,9 @@ ul.post-info-parts {
 	body.widedoc #group-split-list {
 		width: 350px;
 	}
+	body.widedoc #forum-content input[type="submit"] {
+		font-size: 11px;
+	}
 }
 
 @media screen and (max-width: 1040px) {
