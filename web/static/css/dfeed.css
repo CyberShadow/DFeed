@@ -291,6 +291,8 @@ ul.post-info-parts {
 .group-threads > table > tbody > tr > td {
 	border-bottom: none;
 	padding-bottom: 1px;
+	padding-left: 2px !important;
+	padding-right: 2px;
 }
 .thread-start {
 	border: 2px solid #D0D0D0;

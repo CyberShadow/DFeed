@@ -501,7 +501,7 @@ class WebUI
 
 	string discussionGroupThreaded(string group, int page, bool split = false)
 	{
-		enum OFFSET_INIT = 2;
+		enum OFFSET_INIT = 1;
 		enum OFFSET_MAX = 8;
 		enum OFFSET_WIDTH = 160;
 		enum OFFSET_UNITS = "px";
