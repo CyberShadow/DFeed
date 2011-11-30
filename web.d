@@ -6,6 +6,7 @@ import std.conv;
 import std.exception;
 import std.array, std.algorithm;
 import std.datetime;
+debug import std.stdio;
 
 alias std.string.indexOf indexOf;
 
@@ -59,13 +60,12 @@ class WebUI
 		enum JQUERY_URL = "http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js";
 		auto splitViewHeaders = [
 			`<script src="` ~ JQUERY_URL ~ `"></script>`,
-			`<script src="/js/dfeed-split.js"></script>`,
+			`<script src="/js/dfeed-split.js?` ~ text(timeLastModified("web/static/js/dfeed-split.js").stdTime) ~ `"></script>`,
 		];
 		auto splitViewTool =
 			`<span id="group-view-mode-placeholder"></span>` ~
 			`<script type="text/javascript">var viewModeTemplate = ` ~ toJson(viewModeTool("__URL__", ["basic", "horizontal-split"], "group")) ~ `;</script>`;
 
-		HttpStatusCode status = HttpStatusCode.OK;
 		try
 		{
 			auto pathStr = request.resource;
@@ -183,10 +183,15 @@ class WebUI
 					}
 					break;
 				}
-				default:
-					//return response.writeError(HttpStatusCode.NotFound);
+				case "js":
+				case "css":
+				case "images":
+				case "favicon.ico":
 					response.cacheForever();
 					return response.serveFile(pathStr[1..$], "web/static/");
+
+				default:
+					return response.writeError(HttpStatusCode.NotFound);
 			}
 		}
 		catch (Exception e)
@@ -208,16 +213,23 @@ class WebUI
 		assert(title && content);
 		if (breadcrumb1) breadcrumb1 = "&rsaquo; " ~ breadcrumb1;
 		if (breadcrumb2) breadcrumb2 = "&raquo; " ~ breadcrumb2;
-		response.disableCache();
-		response.serveData(HttpResponseEx.loadTemplate("web/skel.htt", [
+		auto vars = [
 			"title" : encodeEntities(title),
 			"content" : content,
 			"breadcrumb1" : breadcrumb1,
 			"breadcrumb2" : breadcrumb2,
 			"extraheaders" : extraHeaders.join("\n"),
 			"tools" : tools.join(" &middot; "),
-		]));
-		response.setStatus(status);
+		];
+		foreach (DirEntry de; dirEntries("web/static", SpanMode.depth))
+			if (isFile(de.name))
+			{
+				auto path = de.name["web/static".length..$].replace(`\`, `/`);
+				vars["static:" ~ path] = path ~ '?' ~ text(de.timeLastModified.stdTime);
+			}
+		response.disableCache();
+		response.serveData(HttpResponseEx.loadTemplate("web/skel.htt", vars));
+		response.setStatus(HttpStatusCode.OK);
 		return response;
 	}
 
@@ -489,7 +501,7 @@ class WebUI
 
 	string discussionGroupThreaded(string group, int page, bool split = false)
 	{
-		enum OFFSET_INIT = 2;
+		enum OFFSET_INIT = 1;
 		enum OFFSET_MAX = 8;
 		enum OFFSET_WIDTH = 160;
 		enum OFFSET_UNITS = "px";
