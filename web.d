@@ -1038,11 +1038,11 @@ class WebUI
 			wasQuoted = isQuoted;
 
 			line = encodeEntities(line);
-			if (line.contains("http://"))
+			if (line.contains("://"))
 			{
 				auto segments = line.segmentByWhitespace();
 				foreach (ref segment; segments)
-					if (segment.startsWith("http://"))
+					if (segment.startsWith("http://") || segment.startsWith("https://") || segment.startsWith("ftp://"))
 						segment = `<a rel="nofollow" href="` ~ segment ~ `">` ~ segment ~ `</a>`;
 				line = segments.join();
 			}
