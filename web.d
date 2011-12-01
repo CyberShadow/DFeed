@@ -453,11 +453,12 @@ class WebUI
 
 		struct Thread
 		{
+			string id;
 			PostInfo* _firstPost, _lastPost;
 			int postCount, unreadPostCount;
 
 			/// Handle orphan posts
-			@property PostInfo* thread() { return _firstPost ? _firstPost : _lastPost; }
+			@property PostInfo* firstPost() { return _firstPost ? _firstPost : _lastPost; }
 			@property PostInfo* lastPost() { return _lastPost; }
 
 			@property bool isRead() { return unreadPostCount==0; }
@@ -476,14 +477,15 @@ class WebUI
 
 		foreach (string firstPostID, string lastPostID; query("SELECT `ID`, `LastPost` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?").iterate(group, THREADS_PER_PAGE, (page-1)*THREADS_PER_PAGE))
 			foreach (int count; query("SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ?").iterate(firstPostID))
-				threads ~= Thread(getPostInfo(firstPostID), getPostInfo(lastPostID), count, getUnreadPostCount(firstPostID));
+				threads ~= Thread(firstPostID, getPostInfo(firstPostID), getPostInfo(lastPostID), count, getUnreadPostCount(firstPostID));
 
-		string summarizeThread(PostInfo* info, bool isRead)
+		string summarizeThread(string tid, PostInfo* info, bool isRead)
 		{
 			if (info)
 				with (*info)
 					return
-						`<a class="forum-postsummary-subject ` ~ (isRead ? "forum-read" : "forum-unread") ~ `" href="` ~ encodeEntities(idToUrl(threadID, "thread")) ~ `">` ~ truncateString(subject, 100) ~ `</a><br>` ~
+					//	`<!-- Thread ID: ` ~ encodeEntities(threadID) ~ ` | First Post ID: ` ~ encodeEntities(id) ~ `-->` ~
+						`<a class="forum-postsummary-subject ` ~ (isRead ? "forum-read" : "forum-unread") ~ `" href="` ~ encodeEntities(idToUrl(tid, "thread")) ~ `">` ~ truncateString(subject, 100) ~ `</a><br>` ~
 						`by <span class="forum-postsummary-author">` ~ truncateString(author, 100) ~ `</span><br>`;
 
 			return `<div class="forum-no-data">-</div>`;
@@ -520,7 +522,7 @@ class WebUI
 			`<tr class="subheader"><th>Thread / Thread Starter</th><th>Last Post</th><th>Replies</th>` ~ newline ~
 			join(array(map!(
 				(Thread thread) { return `<tr>` ~
-					`<td class="group-index-col-first">` ~ summarizeThread(thread.thread, thread.isRead) ~ `</td>` ~
+					`<td class="group-index-col-first">` ~ summarizeThread(thread.id, thread.firstPost, thread.isRead) ~ `</td>` ~
 					`<td class="group-index-col-last">`  ~ summarizeLastPost(thread.lastPost) ~ `</td>` ~
 					`<td class="number-column">`  ~ summarizePostCount(thread) ~ `</td>` ~
 					`</tr>` ~ newline;
