@@ -27,4 +27,24 @@ enum DB_TRANSACTION = q{
 static this()
 {
 	db = new SQLite("data/dfeed.s3db");
+	dumpSchema();
+}
+
+private:
+
+import std.stdio, std.string, std.array;
+
+void dumpSchema()
+{
+	auto f = File("schema.sql", "w");
+	foreach (string type, string name, string tbl_name, string sql; query("SELECT `type`, `name`, `tbl_name`, `sql` FROM `sqlite_master`").iterate())
+		if (!name.startsWith("sqlite_"))
+		{
+			if (name == tbl_name)
+				f.writefln("-- %s `%s`", capitalize(type), name);
+			else
+				f.writefln("-- %s `%s` on table `%s`", capitalize(type), name, tbl_name);
+			f.writeln(sql.replace("\r\n", "\n") ~ ";");
+			f.writeln();
+		}
 }
