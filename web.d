@@ -979,7 +979,17 @@ class WebUI
 			if (!isQuoted && wasQuoted)
 				text ~= `</span>`;
 			wasQuoted = isQuoted;
-			text ~= encodeEntities(line) ~ "\n";
+
+			line = encodeEntities(line);
+			if (line.contains("http://"))
+			{
+				auto segments = line.segmentByWhitespace();
+				foreach (ref segment; segments)
+					if (segment.startsWith("http://"))
+						segment = `<a rel="nofollow" href="` ~ segment ~ `">` ~ segment ~ `</a>`;
+				line = segments.join();
+			}
+			text ~= line ~ "\n";
 		}
 		if (wasQuoted)
 			text ~= `</span>`;
