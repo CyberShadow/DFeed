@@ -529,10 +529,10 @@ class WebUI
 
 	string discussionGroupThreaded(string group, int page, bool split = false)
 	{
-		enum OFFSET_INIT = 1;
-		enum OFFSET_MAX = 8;
-		enum OFFSET_WIDTH = 160;
-		enum OFFSET_UNITS = "px";
+		enum OFFSET_INIT = 1f;
+		enum OFFSET_MAX = 2f;
+		enum OFFSET_WIDTH = 40f;
+		enum OFFSET_UNITS = "%";
 
 		enforce(page >= 1, "Invalid page");
 
@@ -615,26 +615,28 @@ class WebUI
 				sort!"a.maxTime < b.maxTime"(post.children);
 		}
 
-		// TODO: this should be per-toplevel-thread
-		int offsetIncrement = min(OFFSET_MAX, OFFSET_WIDTH / posts[null].maxDepth);
+		float offsetIncrement; // = max(1f, min(OFFSET_MAX, OFFSET_WIDTH / posts[null].maxDepth));
 
-		string formatPosts(Post*[] posts, int level, string parentSubject)
+		string formatPosts(Post*[] posts, int level, string parentSubject, bool topLevel)
 		{
 			string formatPost(Post* post, int level)
 			{
 				if (post.ghost)
-					return formatPosts(post.children, level, post.subject);
+					return formatPosts(post.children, level, post.subject, false);
 				return
-					`<tr class="thread-post-row"><td><div style="padding-left: `~text(OFFSET_INIT + level * offsetIncrement)~OFFSET_UNITS~`">` ~
+					`<tr class="thread-post-row"><td><div style="padding-left: `~format("%1.1f", OFFSET_INIT + level * offsetIncrement)~OFFSET_UNITS~`">` ~
 						`<div class="thread-post-time">` ~ summarizeTime(post.time) ~ `</div>` ~
 						`<a class="postlink ` ~ (user.isRead(post.rowid) ? "forum-read" : "forum-unread" ) ~ `" href="` ~ idToUrl(post.id) ~ `">` ~ encodeEntities(post.author) ~ `</a>` ~
 					`</div></td></tr>` ~
-					formatPosts(post.children, level+1, post.subject);
+					formatPosts(post.children, level+1, post.subject, false);
 			}
 
 			return
 				array(map!((Post* post) {
-					if (post.subject != parentSubject)
+					if (topLevel)
+						offsetIncrement = min(OFFSET_MAX, OFFSET_WIDTH / post.maxDepth);
+
+					if (post.subject != parentSubject || topLevel)
 						return
 							`<tr><td style="padding-left: `~text(OFFSET_INIT + level * offsetIncrement)~OFFSET_UNITS~`">` ~
 							`<table class="thread-start">` ~
@@ -652,7 +654,7 @@ class WebUI
 			`<tr class="group-index-header"><th><div>` ~ newPostButton(group) ~ encodeEntities(group) ~ `</div></th></tr>` ~ newline ~
 			//`<tr class="group-index-captions"><th>Subject / Author</th><th>Time</th>` ~ newline ~
 			`<tr><td class="group-threads-cell"><div class="group-threads"><table>` ~
-			formatPosts(posts[null].children, 0, "Root post\n") ~ // hack: force subject header for new posts (\n can't appear in a subject)
+			formatPosts(posts[null].children, 0, null, true) ~ 
 			`</table></div></td></tr>` ~
 			threadPager(group, page, split ? 1 : 4) ~
 			`</table>`;
@@ -838,7 +840,7 @@ class WebUI
 		{
 			auto parent = getPostInfo(post.parentID);
 			if (parent)
-				infoRows ~= InfoRow("Reply to", `<a class="postlink" href="` ~ encodeEntities(idToUrl(parent.id)) ~ `">` ~ encodeEntities(parent.author) ~ `</a>`);
+				infoRows ~= InfoRow("In reply to", `<a class="postlink" href="` ~ encodeEntities(idToUrl(parent.id)) ~ `">` ~ encodeEntities(parent.author) ~ `</a>`);
 		}
 
 		auto partList = formatPostParts(post);

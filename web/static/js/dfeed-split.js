@@ -30,7 +30,7 @@ $(document).ready(function() {
 function selectMessage(path) {
 	var id = idFromPath(path);
 	if (id && findInTree(path)) {
-		window.history.pushState(null, null, path);
+		window.history.pushState(null, id, path);
 		onPopState();
 		return true;
 	}
@@ -82,7 +82,7 @@ function onPopState() {
 		});
 		currentRequest.error(function(jqXHR, textStatus, errorThrown) {
 			currentRequest = null;
-			showText('XHR error: ' + textStatus);
+			showText('XHR ' + textStatus + (errorThrown ? ': ' + errorThrown : ''));
 		});
 	} else {
 		showHtml('No message selected.<br><br>' + keyboardHelp);

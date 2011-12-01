@@ -401,7 +401,11 @@ ul.post-info-parts {
 	white-space: pre;
 }
 
-@media screen and (max-width: 1250px) {
+body.widedoc #content {
+	max-width: 80em !important;
+}
+
+@media screen and (max-width: 1350px) {
 	body.widedoc #navigation {
 		display: none;
 	}
