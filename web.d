@@ -617,6 +617,41 @@ class WebUI
 
 		float offsetIncrement; // = max(1f, min(OFFSET_MAX, OFFSET_WIDTH / posts[null].maxDepth));
 
+		string normalizeSubject(string s)
+		{
+			return s.replace("New: ", ""); // Bugzilla hack
+		}
+
+		// Group replies under a ghost post when multiple replies have the same subject,
+		// but different from their parent (Bugzilla hack)
+		foreach (thread; posts[null].children)
+		{
+			for (int i=1; i<thread.children.length; )
+			{
+				auto child = thread.children[i];
+				auto prevChild = thread.children[i-1];
+				if (normalizeSubject(child.subject) != normalizeSubject(thread.subject) &&
+					normalizeSubject(child.subject) == normalizeSubject(prevChild.subject))
+				{
+					if (prevChild.ghost) // add to the existing ghost
+					{
+						prevChild.children ~= child;
+						thread.children = thread.children[0..i] ~ thread.children[i+1..$];
+					}
+					else // new ghost
+					{
+						auto dummy = new Post;
+						dummy.ghost = true;
+						dummy.subject = child.subject;
+						dummy.children = [prevChild, child];
+						thread.children = thread.children[0..i-1] ~ dummy ~ thread.children[i+1..$];
+					}
+				}
+				else
+					i++;
+			}
+		}
+
 		string formatPosts(Post*[] posts, int level, string parentSubject, bool topLevel)
 		{
 			string formatPost(Post* post, int level)
@@ -636,7 +671,7 @@ class WebUI
 					if (topLevel)
 						offsetIncrement = min(OFFSET_MAX, OFFSET_WIDTH / post.maxDepth);
 
-					if (post.subject != parentSubject || topLevel)
+					if (topLevel || normalizeSubject(post.subject) != normalizeSubject(parentSubject))
 						return
 							`<tr><td style="padding-left: `~text(OFFSET_INIT + level * offsetIncrement)~OFFSET_UNITS~`">` ~
 							`<table class="thread-start">` ~

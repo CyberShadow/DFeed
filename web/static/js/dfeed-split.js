@@ -51,11 +51,21 @@ function findInTree(path) {
 		return null;
 }
 
+function getPath() {
+	var path = window.location.pathname;
+
+	// Work around Opera bug?
+	if (path.substr(0, 17) == '/discussion/post/')
+		path = path.substr(0, 17) + path.substr(17).replace(/\//g, '%2F');
+
+	return path;
+}
+
 var currentRequest = null;
 var currentID = null;
 
 function onPopState() {
-	var path = window.location.pathname;
+	var path = getPath();
 	var id = idFromPath(path);
 	var row = findInTree(path);
 	if (id && id == currentID)
@@ -88,7 +98,7 @@ function onPopState() {
 		showHtml('No message selected.<br><br>' + keyboardHelp);
 	}
 
-	$('#forum-tools').html(toolsTemplate.replace('__URL__', location.pathname));
+	$('#forum-tools').html(toolsTemplate.replace(/__URL__/g, getPath()));
 }
 
 function showPost(postHtml) {
