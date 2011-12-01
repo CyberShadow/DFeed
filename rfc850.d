@@ -41,6 +41,7 @@ class Rfc850Post : Post
 	string content; /// text/plain only
 	ubyte[] data; /// can be anything
 	string error; /// Explanation for null content
+	bool flowed, delsp;
 
 	/// Multipart stuff
 	string name, fileName, description, mimeType;
@@ -91,6 +92,8 @@ class Rfc850Post : Post
 		if ("CONTENT-DISPOSITION" in headers)
 			contentDisposition = decodeTokenHeader(headers["CONTENT-DISPOSITION"]);
 		mimeType = toLower(contentType.value);
+		flowed = aaGet(contentType.properties, "format", "fixed") == "flowed";
+		delsp = aaGet(contentType.properties, "delsp", "no") == "yes";
 
 		if (rawContent)
 		{
