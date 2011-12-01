@@ -65,8 +65,13 @@ class WebUI
 	{
 		StopWatch responseTime;
 		responseTime.start();
-		scope(exit) log(format("%s - %dms - %s", from.remoteAddress, responseTime.peek().msecs, request.resource));
 		auto response = new HttpResponseEx();
+
+		string ip = from.remoteAddress;
+		ip = ip[0..ip.lastIndexOf(':')];
+		if ("X-Forwarded-For" in request.headers)
+			ip = request.headers["X-Forwarded-For"];
+		scope(exit) log(format("%s - %dms - %s", ip, responseTime.peek().msecs, request.resource));
 
 		user = User("Cookie" in request.headers ? request.headers["Cookie"] : null);
 		scope(success) foreach (cookie; user.getCookies()) response.headers.add("Set-Cookie", cookie);
