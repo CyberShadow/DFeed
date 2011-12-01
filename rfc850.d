@@ -5,10 +5,13 @@ import std.conv;
 import std.array;
 import std.uri;
 import std.base64;
+debug import std.stdio;
 
 import ae.net.http.client;
 import ae.utils.array;
 import ae.utils.time;
+import ae.utils.text;
+import ae.utils.mime;
 
 import common;
 import bitly;
@@ -137,6 +140,46 @@ class Rfc850Post : Post
 				error = "Don't know how parse " ~ mimeType ~ " message";
 		}
 
+		if (content.contains("\nbegin "))
+		{
+			import std.regex;
+			auto r = regex(`^begin [0-7]+ \S+$`);
+			auto lines = content.split("\n");
+			size_t start;
+			bool started;
+			string fn;
+
+			for (size_t i=0; i<lines.length; i++)
+				if (!started && !match(lines[i], r).empty)
+				{
+					start = i;
+					fn = lines[i].split(" ")[2];
+					started = true;
+				}
+				else
+				if (started && lines[i] == "end" && lines[i-1]=="`")
+				{
+					started = false;
+					try
+					{
+						auto data = uudecode(lines[start+1..i]);
+
+						auto part = new Rfc850Post();
+						part.fileName = fn;
+						part.mimeType = guessMime(fn);
+						part.data = data;
+						parts ~= part;
+
+						lines = lines[0..start] ~ lines[i+1..$];
+						i = start-1;
+					}
+					catch (Exception e)
+						debug writeln(e);
+				}
+
+			content = lines.join("\n");
+		}
+
 		name = aaGet(contentType.properties, "name", string.init);
 		fileName = aaGet(contentDisposition.properties, "filename", string.init);
 		description = aaGet(headers, "CONTENT-DESCRIPTION", string.init);
@@ -243,6 +286,10 @@ class Rfc850Post : Post
 			catch (Exception e)
 			{ /* fall-back to default (class creation time) */ }
 		}
+	}
+
+	private this() // for attachments
+	{
 	}
 
 	override void formatForIRC(void delegate(string) handler)
@@ -483,4 +530,41 @@ string decodeTransferEncoding(string data, string encoding)
     default:
     	return data;
     }
+}
+
+ubyte[] uudecode(string[] lines)
+{
+	//auto data = appender!(ubyte[]);  // OPTLINK says no
+	ubyte[] data;
+	foreach (line; lines)
+	{
+		if (!line.length || line.startsWith("`"))
+			continue;
+		ubyte len = to!ubyte(line[0] - 32);
+		line = line[1..$];
+		while (line.length % 4)
+			line ~= 32;
+		ubyte[] lineData;
+		while (line.length)
+		{
+			uint v = 0;
+			foreach (c; line[0..4])
+				if (c == '`') // same as space
+					v <<= 6;
+				else
+				{
+					enforce(c >= 32 && c < 96, [c]);
+					v = (v<<6) | (c - 32);
+				}
+
+			auto a = cast(ubyte[])((&v)[0..1]);
+			lineData ~= a[2];
+			lineData ~= a[1];
+			lineData ~= a[0];
+
+			line = line[4..$];
+		}
+		data ~= lineData[0..len];
+	}
+	return data;
 }
