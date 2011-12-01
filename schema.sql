@@ -51,3 +51,6 @@ CREATE UNIQUE INDEX [PostID] ON "Posts"(
 -- Index `ThreadID` on table `Threads`
 CREATE INDEX "ThreadID" ON "Threads" ( ID );
 
+-- Index `PostParentID` on table `Posts`
+CREATE INDEX PostParentID ON Posts ( ParentID );
+

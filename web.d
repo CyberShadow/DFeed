@@ -878,12 +878,25 @@ class WebUI
 		infoRows ~= InfoRow("From", post.author);
 		infoRows ~= InfoRow("Date", format("%s (%s)", formatLongTime(post.time), formatShortTime(post.time)));
 
+		string postLink(int rowid, string id, string author)
+		{
+			return
+				`<a class="postlink ` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `" ` ~
+					`href="`~ encodeEntities(idToUrl(id)) ~ `">` ~ encodeEntities(author) ~ `</a>`;
+		}
+
 		if (post.parentID)
 		{
 			auto parent = getPostInfo(post.parentID);
 			if (parent)
-				infoRows ~= InfoRow("In reply to", `<a class="postlink" href="` ~ encodeEntities(idToUrl(parent.id)) ~ `">` ~ encodeEntities(parent.author) ~ `</a>`);
+				infoRows ~= InfoRow("In reply to", postLink(parent.rowid, parent.id, parent.author));
 		}
+
+		string[] replies;
+		foreach (int rowid, string id, string author; query("SELECT `ROWID`, `ID`, `Author` FROM `Posts` WHERE ParentID = ?").iterate(post.id))
+			replies ~= postLink(rowid, id, author);
+		if (replies.length)
+			infoRows ~= InfoRow("Replies", replies.join(", "));
 
 		auto partList = formatPostParts(post);
 		if (partList.length)
