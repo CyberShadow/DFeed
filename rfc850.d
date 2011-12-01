@@ -90,11 +90,11 @@ class Rfc850Post : Post
 			contentType = decodeTokenHeader(headers["CONTENT-TYPE"]);
 		if ("CONTENT-DISPOSITION" in headers)
 			contentDisposition = decodeTokenHeader(headers["CONTENT-DISPOSITION"]);
-		mimeType = contentType.value;
+		mimeType = toLower(contentType.value);
 
 		if (rawContent)
 		{
-			if (!contentType.value || contentType.value == "text/plain")
+			if (!mimeType || mimeType == "text/plain")
 			{
 				if ("charset" in contentType.properties)
 					content = decodeEncodedText(rawContent, contentType.properties["charset"]);
@@ -105,7 +105,7 @@ class Rfc850Post : Post
 					content = rawContent;
 			}
 			else
-			if (contentType.value.startsWith("multipart/") && "boundary" in contentType.properties)
+			if (mimeType.startsWith("multipart/") && "boundary" in contentType.properties)
 			{
 				string boundary = contentType.properties["boundary"];
 				auto end = rawContent.indexOf("--" ~ boundary ~ "--");
@@ -127,11 +127,11 @@ class Rfc850Post : Post
 					if (rawParts.length && rawParts[0].strip().length)
 						content = rawParts[0]; // default content to multipart stub
 					else
-						error = "Couldn't find text part in this " ~ contentType.value ~ " message";
+						error = "Couldn't find text part in this " ~ mimeType ~ " message";
 				}
 			}
 			else
-				error = "Don't know how parse " ~ contentType.value ~ " message";
+				error = "Don't know how parse " ~ mimeType ~ " message";
 		}
 
 		name = aaGet(contentType.properties, "name", string.init);
