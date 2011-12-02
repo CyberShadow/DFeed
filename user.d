@@ -103,7 +103,12 @@ struct User
 		needReadPosts();
 		auto pos = post/8;
 		if (pos >= readPosts.length)
-			readPosts.length = pos+1;
+		{
+			if (value)
+				readPosts.length = pos+1;
+			else
+				return;
+		}
 		ubyte mask = cast(ubyte)(1 << (post % 8));
 		assert(pos < readPosts.length);
 		auto pbyte = (cast(ubyte*)readPosts.ptr) + pos;

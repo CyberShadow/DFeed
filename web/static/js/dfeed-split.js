@@ -243,11 +243,17 @@ function selectFocused() {
 	return false;
 }
 
-function objToStr(o) {
-	var s = "";
-	for (var p in o)
-		s = s + 'o[' + p + ']=' + o[p] + '\n';
-	return s;
+function markUnread() {
+	var focused = $('.thread-post-focused');
+	if (focused.length && focused.find('.forum-read').length > 0) {
+		var path = focused.find('a.postlink').attr('href').replace("/post/", "/mark-unread/");
+		$.get(path, function(result) {
+			if (result == "OK")
+				focused.find('.forum-read').removeClass('forum-read').addClass('forum-unread');
+		});
+		return true;
+	}
+	return false;
 }
 
 var keyboardHelp =
@@ -255,6 +261,7 @@ var keyboardHelp =
 		'<tr><td><kbd>j</kbd> / <kbd>Ctrl</kbd><kbd title="Down Arrow">&darr;</kbd></td><td>Select next message</td></tr>' +
 		'<tr><td><kbd>k</kbd> / <kbd>Ctrl</kbd><kbd title="Up Arrow">&uarr;</kbd></td><td>Select previous message</td></tr>' +
 		'<tr><td><kbd title="Enter / Return">&crarr;</kbd></td><td>Open selected message</td></tr>' +
+		'<tr><td><kbd>u</kbd></td><td>Mark as unread</td></tr>' +
 		'<tr><td><kbd title="Space Bar" style="width: 70px">&nbsp;</kbd></td><td>Scroll message / Open next unread message</td></tr>' +
 	'</table>';
 
@@ -281,6 +288,8 @@ function onKeyPress(e) {
 				}
 				return !(focusNext(+1, true) && selectFocused());
 			}
+			case 'u':
+				return !markUnread();
 		}
 	}
 

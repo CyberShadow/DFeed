@@ -196,6 +196,14 @@ class WebUI
 								return response.redirect(parameters["url"]);
 							else
 								return response.serveText("OK");
+						case "mark-unread":
+						{
+							enforce(path.length > 2, "No post specified");
+							auto post = getPostInfo('<' ~ urlDecode(path[2]) ~ '>');
+							enforce(post, "Post not found");
+							user.setRead(post.rowid, false);
+							return response.serveText("OK");
+						}
 						default:
 							throw new NotFoundException();
 					}
