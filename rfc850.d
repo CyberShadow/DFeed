@@ -58,13 +58,13 @@ class Rfc850Post : Post
 
 		// TODO: actually read RFC 850
 		// TODO: this breaks binary encodings, FIXME?
-		auto text = lines.replace("\r\n", "\n");
+		auto text = lines.fastReplace("\r\n", "\n");
 		auto headerEnd = text.indexOf("\n\n");
 		if (headerEnd < 0) headerEnd = text.length;
 		auto header = text[0..headerEnd];
-		header = header.replace("\n\t", " ").replace("\n ", " ");
+		header = header.fastReplace("\n\t", " ").fastReplace("\n ", " ");
 
-		foreach (s; header.split("\n"))
+		foreach (s; header.fastSplit('\n'))
 		{
 			if (s == "") break;
 			if (hasIntlCharacters(s))
@@ -105,10 +105,7 @@ class Rfc850Post : Post
 				if ("charset" in contentType.properties)
 					content = decodeEncodedText(rawContent, contentType.properties["charset"]);
 				else
-				if (hasIntlCharacters(rawContent))
 					content = decodeEncodedText(rawContent, DEFAULT_ENCODING);
-				else
-					content = rawContent;
 			}
 			else
 			if (mimeType.startsWith("multipart/") && "boundary" in contentType.properties)
@@ -514,22 +511,22 @@ TokenHeader decodeTokenHeader(string s)
 
 string decodeTransferEncoding(string data, string encoding)
 {
-    switch (toLower(encoding))
-    {
-    case "7bit":
-    	return data;
-    case "quoted-printable":
-    	return decodeQuotedPrintable(data);
-    case "base64":
-    	//return cast(string)Base64.decode(data.replace("\n", ""));
-    {
-    	auto s = data.replace("\n", "");
-    	scope(failure) std.stdio.writeln(s);
-    	return cast(string)Base64.decode(s);
-    }
-    default:
-    	return data;
-    }
+	switch (toLower(encoding))
+	{
+	case "7bit":
+		return data;
+	case "quoted-printable":
+		return decodeQuotedPrintable(data);
+	case "base64":
+		//return cast(string)Base64.decode(data.replace("\n", ""));
+	{
+		auto s = data.fastReplace("\n", "");
+		scope(failure) std.stdio.writeln(s);
+		return cast(string)Base64.decode(s);
+	}
+	default:
+		return data;
+	}
 }
 
 ubyte[] uudecode(string[] lines)

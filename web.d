@@ -30,6 +30,7 @@ class WebUI
 	Logger log;
 	HttpServer server;
 	User user;
+	StringBuilder html;
 
 	this()
 	{
@@ -75,7 +76,8 @@ class WebUI
 		user = User("Cookie" in request.headers ? request.headers["Cookie"] : null);
 		scope(success) foreach (cookie; user.getCookies()) response.headers.add("Set-Cookie", cookie);
 
-		string title, content, breadcrumb1, breadcrumb2;
+		string title, breadcrumb1, breadcrumb2;
+		html.clear();
 		string[] tools, extraHeaders;
 
 		auto splitViewHeaders = [
@@ -108,7 +110,7 @@ class WebUI
 						case "":
 							title = "Index";
 							breadcrumb1 = `<a href="/discussion/">Forum Index</a>`;
-							content = discussionIndex();
+							discussionIndex();
 							break;
 						case "group":
 						{
@@ -120,13 +122,13 @@ class WebUI
 							breadcrumb1 = `<a href="/discussion/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
 							auto viewMode = user.get("groupviewmode", "basic");
 							if (viewMode == "basic")
-								content = discussionGroup(group, page);
+								discussionGroup(group, page);
 							else
 							if (viewMode == "threaded")
-								content = discussionGroupThreaded(group, page);
+								discussionGroupThreaded(group, page);
 							else
 							{
-								content = discussionGroupSplit(group, page);
+								discussionGroupSplit(group, page);
 								extraHeaders ~= splitViewHeaders;
 							}
 							//tools ~= viewModeTool(["basic", "threaded"], "group");
@@ -137,7 +139,7 @@ class WebUI
 						{
 							enforce(path.length > 2, "No thread specified");
 							string group, subject;
-							content = discussionThread('<' ~ urlDecode(path[2]) ~ '>', group, subject);
+							discussionThread('<' ~ urlDecode(path[2]) ~ '>', group, subject);
 							title = subject;
 							breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group  )~`">` ~ encodeEntities(group  ) ~ `</a>`;
 							breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(path[2])~`">` ~ encodeEntities(subject) ~ `</a>`;
@@ -152,7 +154,7 @@ class WebUI
 							if (user.get("groupviewmode", "basic") == "threaded")
 							{
 								string group, subject;
-								content = discussionSinglePost('<' ~ urlDecode(path[2]) ~ '>', group, subject);
+								discussionSinglePost('<' ~ urlDecode(path[2]) ~ '>', group, subject);
 								title = subject;
 								breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group  )~`">` ~ encodeEntities(group  ) ~ `</a>`;
 								breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(path[2])~`">` ~ encodeEntities(subject) ~ `</a> (view single post)`;
@@ -162,7 +164,7 @@ class WebUI
 							{
 								string group;
 								int page;
-								content = discussionGroupSplitFromPost('<' ~ urlDecode(path[2]) ~ '>', group, page);
+								discussionGroupSplitFromPost('<' ~ urlDecode(path[2]) ~ '>', group, page);
 
 								string pageStr = page==1 ? "" : format(" (page %d)", page);
 								title = group ~ " index" ~ pageStr;
@@ -186,7 +188,8 @@ class WebUI
 						}
 						case "split-post":
 							enforce(path.length > 2, "No post specified");
-							return response.serveData(discussionSplitPost('<' ~ urlDecode(path[2]) ~ '>'));
+							discussionSplitPost('<' ~ urlDecode(path[2]) ~ '>');
+							return response.serveData(html.getString());
 						case "set":
 							foreach (name, value; parameters)
 								if (name != "url")
@@ -231,14 +234,15 @@ class WebUI
 				breadcrumb1 = title = "Error";
 			auto text = encodeEntities(e.msg);
 			debug text ~= `<pre>` ~ encodeEntities(e.toString()) ~ `</pre>`;
-			content =
+			html =
 				`<table class="forum-table forum-error">` ~
 					`<tr><th>` ~ encodeEntities(title) ~ `</th></tr>` ~
 					`<tr><td class="forum-table-message">` ~ text ~ `</th></tr>` ~
 				`</table>`;
 		}
 
-		assert(title && content);
+		assert(title, "No title");
+		assert(html.length, "No HTML");
 		if (breadcrumb1) breadcrumb1 = "&rsaquo; " ~ breadcrumb1;
 		if (breadcrumb2) breadcrumb2 = "&raquo; " ~ breadcrumb2;
 
@@ -247,9 +251,9 @@ class WebUI
 			toolStr.replace("__URL__",  request.resource) ~
 			`<script type="text/javascript">var toolsTemplate = ` ~ toJson(toolStr) ~ `;</script>`;
 
-		auto vars = [
+		string[string] vars = [
 			"title" : encodeEntities(title),
-			"content" : content,
+			"content" : cast(string) html.data, // html contents will be overwritten on next request
 			"breadcrumb1" : breadcrumb1,
 			"breadcrumb2" : breadcrumb2,
 			"extraheaders" : extraHeaders.join("\n"),
@@ -350,7 +354,7 @@ class WebUI
 	Cached!(int[string]) threadCountCache, postCountCache;
 	Cached!(string[string]) lastPostCache;
 
-	string discussionIndex()
+	void discussionIndex()
 	{
 		auto threadCounts = threadCountCache(getThreadCounts());
 		auto postCounts = postCountCache(getPostCounts());
@@ -369,26 +373,27 @@ class WebUI
 			return `<div class="forum-no-data">-</div>`;
 		}
 
-		return
-			`<table id="forum-index" class="forum-table">` ~
-			join(array(map!(
-				(GroupSet set) { return
-					`<tr><th colspan="4">` ~ encodeEntities(set.name) ~ `</th></tr>` ~ newline ~
-					`<tr class="subheader"><th>Forum</th><th>Last Post</th><th>Threads</th><th>Posts</th>` ~ newline ~
-					join(array(map!(
-						(Group group) { return `<tr>` ~
-							`<td class="forum-index-col-forum"><a href="/discussion/group/` ~ encodeEntities(group.name) ~ `">` ~ encodeEntities(group.name) ~ `</a>` ~
-								`<div class="forum-index-description">` ~ encodeEntities(group.description) ~ `</div>` ~
-							`</td>` ~
-							`<td class="forum-index-col-lastpost">`    ~ (group.name in lastPosts    ? summarizePost(lastPosts[group.name]) : `<div class="forum-no-data">-</div>`) ~ `</td>` ~
-							`<td class="number-column">` ~ (group.name in threadCounts ? formatNumber(threadCounts[group.name]) : `-`) ~ `</td>` ~
-							`<td class="number-column">`   ~ (group.name in postCounts   ? formatNumber(postCounts[group.name]) : `-`)  ~ `</td>` ~
-							`</tr>` ~ newline;
-						}
-					)(set.groups)));
-				}
-			)(groupHierarchy))) ~
-			`</table>`;
+		html.put(`<table id="forum-index" class="forum-table">`);
+		foreach (set; groupHierarchy)
+		{
+			html.put(
+				`<tr><th colspan="4">`, encodeEntities(set.name), `</th></tr>`
+				`<tr class="subheader"><th>Forum</th><th>Last Post</th><th>Threads</th><th>Posts</th>`);
+			foreach (group; set.groups)
+			{
+				html.put(
+					`<tr>`
+						`<td class="forum-index-col-forum"><a href="/discussion/group/`, encodeEntities(group.name), `">`, encodeEntities(group.name), `</a>`
+							`<div class="forum-index-description">`, encodeEntities(group.description), `</div>`
+						`</td>`
+						`<td class="forum-index-col-lastpost">`   , (group.name in lastPosts    ? summarizePost(lastPosts[group.name]) : `<div class="forum-no-data">-</div>`), `</td>`
+						`<td class="number-column">`, (group.name in threadCounts ? formatNumber(threadCounts[group.name]) : `-`), `</td>`
+						`<td class="number-column">`  , (group.name in postCounts   ? formatNumber(postCounts[group.name]) : `-`) , `</td>`
+					`</tr>`,
+				);
+			}
+		}
+		html.put(`</table>`);
 	}
 
 	int[] getThreadPostIndexes(string id)
@@ -401,22 +406,25 @@ class WebUI
 
 	CachedSet!(string, int[]) threadPostIndexCache;
 
-	string newPostButton(string group)
+	void newPostButton(string group)
 	{
-		return
-			`<form name="new-post-form" method="get" action="/discussion/compose">` ~
-				`<div class="header-tools">` ~
-					`<input type="hidden" name="group" value="`~encodeEntities(group)~`">` ~
-					`<input type="submit" value="Create thread">` ~
-				`</div>` ~
-			`</form>`;
+		html.put(
+			`<form name="new-post-form" method="get" action="/discussion/compose">`
+				`<div class="header-tools">`
+					`<input type="hidden" name="group" value="`, encodeEntities(group), `">`
+					`<input type="submit" value="Create thread">`
+				`</div>`
+			`</form>`);
 	}
 
-	string threadPager(string group, int page, int radius = 4)
+	void threadPager(string group, int page, int radius = 4)
 	{
 		string linkOrNot(string text, int page, bool cond)
 		{
-			return (cond ? `<a href="/discussion/group/`~encodeEntities(group)~`?page=`~.text(page)~`">` : `<span class="disabled-link">`) ~ text ~ (cond ? `</a>` : `</span>`);
+			if (cond)
+				return `<a href="/discussion/group/` ~ encodeEntities(group) ~ `?page=` ~ .text(page) ~ `">` ~ text ~ `</a>`;
+			else
+				return `<span class="disabled-link">` ~ text ~ `</span>`;
 		}
 
 		auto threadCounts = threadCountCache(getThreadCounts());
@@ -436,25 +444,25 @@ class WebUI
 		if (pagerEnd < pageCount)
 			pager ~= "&hellip;";
 
-		return
-			`<tr class="group-index-pager"><th colspan="3">` ~
-				`<div class="pager-left">` ~
-					linkOrNot("&laquo; First", 1, page!=1) ~
-					`&nbsp;&nbsp;&nbsp;` ~
-					linkOrNot("&lsaquo; Prev", page-1, page>1) ~
-				`</div>` ~
-				`<div class="pager-right">` ~
-					linkOrNot("Next &rsaquo;", page+1, page<pageCount) ~
-					`&nbsp;&nbsp;&nbsp;` ~
-					linkOrNot("Last &raquo; ", pageCount, page!=pageCount) ~
-				`</div>` ~
-				`<div class="pager-numbers">` ~ pager.join(` `) ~ `</div>` ~
-			`</th></tr>`;
+		html.put(
+			`<tr class="group-index-pager"><th colspan="3">`
+				`<div class="pager-left">`,
+					linkOrNot("&laquo; First", 1, page!=1),
+					`&nbsp;&nbsp;&nbsp;`,
+					linkOrNot("&lsaquo; Prev", page-1, page>1),
+				`</div>`
+				`<div class="pager-right">`,
+					linkOrNot("Next &rsaquo;", page+1, page<pageCount),
+					`&nbsp;&nbsp;&nbsp;`,
+					linkOrNot("Last &raquo; ", pageCount, page!=pageCount),
+				`</div>`
+				`<div class="pager-numbers">`, pager.join(` `), `</div>`
+			`</th></tr>`);
 	}
 
 	enum THREADS_PER_PAGE = 15;
 
-	string discussionGroup(string group, int page)
+	void discussionGroup(string group, int page)
 	{
 		enforce(page >= 1, "Invalid page");
 
@@ -486,62 +494,63 @@ class WebUI
 			foreach (int count; query("SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ?").iterate(firstPostID))
 				threads ~= Thread(firstPostID, getPostInfo(firstPostID), getPostInfo(lastPostID), count, getUnreadPostCount(firstPostID));
 
-		string summarizeThread(string tid, PostInfo* info, bool isRead)
+		void summarizeThread(string tid, PostInfo* info, bool isRead)
 		{
 			if (info)
 				with (*info)
-					return
+					return html.put(
 					//	`<!-- Thread ID: ` ~ encodeEntities(threadID) ~ ` | First Post ID: ` ~ encodeEntities(id) ~ `-->` ~
-						`<a class="forum-postsummary-subject ` ~ (isRead ? "forum-read" : "forum-unread") ~ `" href="` ~ encodeEntities(idToUrl(tid, "thread")) ~ `">` ~ truncateString(subject, 100) ~ `</a><br>` ~
-						`by <span class="forum-postsummary-author">` ~ truncateString(author, 100) ~ `</span><br>`;
+						`<a class="forum-postsummary-subject `, (isRead ? "forum-read" : "forum-unread"), `" href="`, encodeEntities(idToUrl(tid, "thread")), `">`, truncateString(subject, 100), `</a><br>`
+						`by <span class="forum-postsummary-author">`, truncateString(author, 100), `</span><br>`);
 
-			return `<div class="forum-no-data">-</div>`;
+			html.put(`<div class="forum-no-data">-</div>`);
 		}
 
-		string summarizeLastPost(PostInfo* info)
+		void summarizeLastPost(PostInfo* info)
 		{
 			// TODO: link?
 			if (info)
 				with (*info)
-					return
-						`<span class="forum-postsummary-time">` ~ summarizeTime(time) ~ `</span>` ~
-						`by <span class="forum-postsummary-author">` ~ truncateString(author) ~ `</span><br>`;
+					return html.put(
+						`<span class="forum-postsummary-time">`, summarizeTime(time), `</span>`
+						`by <span class="forum-postsummary-author">`, truncateString(author), `</span><br>`);
 
-			return `<div class="forum-no-data">-</div>`;
+			html.put(`<div class="forum-no-data">-</div>`);
 		}
 
-		string summarizePostCount(ref Thread thread)
+		void summarizePostCount(ref Thread thread)
 		{
 			if (thread.unreadPostCount == 0)
-				return formatNumber(thread.postCount-1);
+				html ~= formatNumber(thread.postCount-1);
 			else
 			if (thread.unreadPostCount == thread.postCount)
-				return `<b>` ~ formatNumber(thread.postCount-1) ~ `</b>`;
+				html.put(`<b>`, formatNumber(thread.postCount-1), `</b>`);
 			else
-				return
-					`<b>` ~ formatNumber(thread.postCount-1) ~ `</b>` ~
-					`<br>(` ~ formatNumber(thread.unreadPostCount) ~ ` new)`;
+				html.put(
+					`<b>`, formatNumber(thread.postCount-1), `</b>`
+					`<br>(`, formatNumber(thread.unreadPostCount), ` new)`);
 		}
 
-		return
-			`<table id="group-index" class="forum-table">` ~
-			`<tr class="group-index-header"><th colspan="3"><div class="header-with-tools">` ~ newPostButton(group) ~ encodeEntities(group) ~ `</div></th></tr>` ~ newline ~
-			`<tr class="subheader"><th>Thread / Thread Starter</th><th>Last Post</th><th>Replies</th>` ~ newline ~
-			join(array(map!(
-				(Thread thread) { return `<tr>` ~
-					`<td class="group-index-col-first">` ~ summarizeThread(thread.id, thread.firstPost, thread.isRead) ~ `</td>` ~
-					`<td class="group-index-col-last">`  ~ summarizeLastPost(thread.lastPost) ~ `</td>` ~
-					`<td class="number-column">`  ~ summarizePostCount(thread) ~ `</td>` ~
-					`</tr>` ~ newline;
-				}
-			)(threads))) ~
-			threadPager(group, page) ~
-			`</table>`;
+		html.put(
+			`<table id="group-index" class="forum-table">`
+			`<tr class="group-index-header"><th colspan="3"><div class="header-with-tools">`), newPostButton(group), html.put(encodeEntities(group), `</div></th></tr>`
+			`<tr class="subheader"><th>Thread / Thread Starter</th><th>Last Post</th><th>Replies</th>`);
+		foreach (thread; threads)
+			html.put(
+				`<tr>`
+					`<td class="group-index-col-first">`), summarizeThread(thread.id, thread.firstPost, thread.isRead), html.put(`</td>`
+					`<td class="group-index-col-last">`), summarizeLastPost(thread.lastPost), html.put(`</td>`
+					`<td class="number-column">`), summarizePostCount(thread), html.put(`</td>`
+				`</tr>`);
+		threadPager(group, page);
+		html.put(
+			`</table>`
+		);
 	}
 
 	string[][string] referenceCache; // invariant
 
-	string discussionGroupThreaded(string group, int page, bool split = false)
+	void discussionGroupThreaded(string group, int page, bool split = false)
 	{
 		enum OFFSET_INIT = 1f;
 		enum OFFSET_MAX = 2f;
@@ -675,9 +684,9 @@ class WebUI
 				if (post.ghost)
 					return formatPosts(post.children, level, post.subject, false);
 				html.put(
-					`<tr class="thread-post-row"><td><div style="padding-left: `, format("%1.1f", OFFSET_INIT + level * offsetIncrement), OFFSET_UNITS, `">`,
-						`<div class="thread-post-time">`, summarizeTime(post.time), `</div>`,
-						`<a class="postlink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread" ), `" href="`, idToUrl(post.id), `">`, encodeEntities(post.author), `</a>`,
+					`<tr class="thread-post-row"><td><div style="padding-left: `, format("%1.1f", OFFSET_INIT + level * offsetIncrement), OFFSET_UNITS, `">`
+						`<div class="thread-post-time">`, summarizeTime(post.time), `</div>`
+						`<a class="postlink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread" ), `" href="`, idToUrl(post.id), `">`, encodeEntities(post.author), `</a>`
 					`</div></td></tr>`);
 				formatPosts(post.children, level+1, post.subject, false);
 			}
@@ -691,12 +700,12 @@ class WebUI
 				if (topLevel || normalizeSubject(post.subject) != normalizeSubject(parentSubject))
 				{
 					html.put(
-						`<tr><td style="padding-left: `, offsetStr, `">`,
-						`<table class="thread-start">`,
+						`<tr><td style="padding-left: `, offsetStr, `">`
+						`<table class="thread-start">`
 							`<tr><th>`, encodeEntities(post.subject), `</th></tr>`);
                     formatPost(post, 0);
 					html.put(
-						`</table>`,
+						`</table>`
 						`</td></tr>`);
 				}
 				else
@@ -706,27 +715,28 @@ class WebUI
 
 		html.put(
 			`<table id="group-index" class="forum-table group-wrapper viewmode-`, encodeEntities(user.get("groupviewmode", "basic")), `">`
-			`<tr class="group-index-header"><th><div>`, newPostButton(group), encodeEntities(group), `</div></th></tr>`, newline,
+			`<tr class="group-index-header"><th><div>`), newPostButton(group), html.put(encodeEntities(group), `</div></th></tr>`, newline,
 		//	`<tr class="group-index-captions"><th>Subject / Author</th><th>Time</th>`, newline,
 			`<tr><td class="group-threads-cell"><div class="group-threads"><table>`);
 		formatPosts(posts[null].children, 0, null, true);
-		html.put(
-			`</table></div></td></tr>`,
-			threadPager(group, page, split ? 1 : 4),
-			`</table>`);
-		return html.data;
+		html.put(`</table></div></td></tr>`);
+		threadPager(group, page, split ? 1 : 4);
+		html.put(`</table>`);
 	}
 
-	string discussionGroupSplit(string group, int page)
+	void discussionGroupSplit(string group, int page)
 	{
-		return
-			`<table id="group-split"><tr>` ~
-			`<td id="group-split-list"><div>` ~ discussionGroupThreaded(group, page, true) ~ `</div></td>` ~
-			`<td id="group-split-message" class="group-split-message-none">Loading...</td>` ~
-			`</tr></table>`;
+		html.put(
+			`<table id="group-split"><tr>`
+			`<td id="group-split-list"><div>`);
+		discussionGroupThreaded(group, page, true);
+		html.put(
+			`</div></td>`
+			`<td id="group-split-message" class="group-split-message-none">Loading...</td>`
+			`</tr></table>`);
 	}
 
-	string discussionGroupSplitFromPost(string id, out string group, out int page)
+	void discussionGroupSplitFromPost(string id, out string group, out int page)
 	{
 		auto post = getPost(id);
 		enforce(post, "Post not found");
@@ -734,7 +744,7 @@ class WebUI
 		group = post.xref[0].group;
 		page = getThreadPage(group, post.threadID);
 
-		return discussionGroupSplit(group, page);
+		discussionGroupSplit(group, page);
 	}
 
 	int getThreadPage(string group, string thread)
@@ -789,15 +799,18 @@ class WebUI
 		return toLower(getDigestString(strip(toLower(email))));
 	}
 
-	string formatPost(Rfc850Post post, Rfc850Post[string] knownPosts)
+	void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts)
 	{
-		string replyButton =
-			`<form name="reply-form" method="get" action="/discussion/reply">` ~
-				`<div class="reply-button">` ~
-					`<input type="hidden" name="parent" value="`~encodeEntities(post.id)~`">` ~
-					`<input type="submit" value="Reply">` ~
-				`</div>` ~
-			`</form>`;
+		void replyButton()
+		{
+			html.put(
+				`<form name="reply-form" method="get" action="/discussion/reply">`
+					`<div class="reply-button">`
+						`<input type="hidden" name="parent" value="`, encodeEntities(post.id), `">`
+						`<input type="submit" value="Reply">`
+					`</div>`
+				`</form>`);
+		}
 
 		string gravatarHash = getGravatarHash(post.authorEmail);
 
@@ -840,50 +853,62 @@ class WebUI
 		scope(success) user.setRead(post.rowid, true);
 
 		with (post)
-			return
+		{
+
+			html.put(
 				`<div class="post-wrapper">`
-				`<table class="post forum-table` ~ (children ? ` with-children` : ``) ~ `" id="` ~ encodeEntities(idToFragment(id)) ~ `">` ~
-				`<tr class="post-header"><th colspan="2">` ~
-					`<div class="post-time">` ~ summarizeTime(time) ~ `</div>` ~
-					`<a title="Permanent link to this post" href="` ~ idToUrl(id) ~ `" class="` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `">` ~
-						encodeEntities(realSubject) ~
-					`</a>` ~
-				`</th></tr>` ~
-				`<tr>` ~
-					`<td class="post-info">` ~
-						`<div class="post-author">` ~ encodeEntities(author) ~ `</div>` ~
-						`<a href="http://www.gravatar.com/` ~ gravatarHash ~ `" title="` ~ encodeEntities(author) ~ `'s Gravatar profile">` ~
-							`<img alt="Gravatar" class="post-gravatar" width="80" height="80" src="http://www.gravatar.com/avatar/` ~ gravatarHash ~ `?d=identicon">` ~
-						`</a><br>` ~
-						(infoBits.length ?
-							`<hr>` ~
-							array(map!q{ `<div class="post-info-bit">` ~ a ~ `</div>` }(infoBits)).join()
-						:
-							`<br>`
-						) ~
-						`<br>` ~ // guarantee space for the "toolbar"
-						`<div class="post-toolbar">` ~ replyButton ~ `</div>`
-					`</td>` ~
-					`<td class="post-body">` ~
-						`<div class="post-text">` ~ formatBody(content) ~ `</div>` ~
-						(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``) ~
-					`</td>` ~
-				`</tr>` ~
-				`</table>` ~
-				`</div>` ~
-				(children ?
-					`<table class="post-nester"><tr>` ~
-					`<td class="post-nester-bar" title="` ~ /* for IE */ repliesTitle ~ `">` ~
-						`<a href="#` ~ encodeEntities(idToFragment(id)) ~ `" ` ~
-							`title="` ~ repliesTitle ~ `"></a>` ~
-					`</td>` ~
-					`<td>` ~ join(array(map!((Rfc850Post post) { return formatPost(post, knownPosts); })(children))) ~ `</td>`
-					`</tr></table>`
-				: ``);
+				`<table class="post forum-table`, (children ? ` with-children` : ``), `" id="`, encodeEntities(idToFragment(id)), `">`
+				`<tr class="post-header"><th colspan="2">`
+					`<div class="post-time">`, summarizeTime(time), `</div>`
+					`<a title="Permanent link to this post" href="`, idToUrl(id), `" class="`, (user.isRead(rowid) ? "forum-read" : "forum-unread"), `">`,
+						encodeEntities(realSubject),
+					`</a>`
+				`</th></tr>`
+				`<tr>`
+					`<td class="post-info">`
+						`<div class="post-author">`, encodeEntities(author), `</div>`
+						`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`, encodeEntities(author), `'s Gravatar profile">`
+							`<img alt="Gravatar" class="post-gravatar" width="80" height="80" src="http://www.gravatar.com/avatar/`, gravatarHash, `?d=identicon">`
+						`</a><br>`);
+			if (infoBits.length)
+			{
+				html.put(`<hr>`);
+				foreach (b; infoBits)
+					html.put(`<div class="post-info-bit">`, b, `</div>`);
+			}
+			else
+				html.put(`<br>`);
+			html.put(
+						`<br>` // guarantee space for the "toolbar"
+						`<div class="post-toolbar">`), replyButton(), html.put(`</div>`
+					`</td>`
+					`<td class="post-body">`
+						`<div class="post-text">`), formatBody(content), html.put(`</div>`,
+						(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``),
+					`</td>`
+				`</tr>`
+				`</table>`
+				`</div>`);
+
+			if (children)
+			{
+				html.put(
+					`<table class="post-nester"><tr>`
+					`<td class="post-nester-bar" title="`, /* for IE */ repliesTitle, `">`
+						`<a href="#`, encodeEntities(idToFragment(id)), `" `
+							`title="`, repliesTitle, `"></a>`
+					`</td>`
+					`<td>`);
+				foreach (child; children)
+					formatPost(child, knownPosts);
+				html.put(`</td>`
+					`</tr></table>`);
+			}
+		}
 	}
 
 	/// Alternative post formatting, with the meta-data header on top
-	string formatSplitPost(Rfc850Post post)
+	void formatSplitPost(Rfc850Post post)
 	{
 		scope(success) user.setRead(post.rowid, true);
 
@@ -920,44 +945,48 @@ class WebUI
 		string gravatarHash = getGravatarHash(post.authorEmail);
 
 		with (post)
-			return
+		{
+			html.put(
 				`<div class="post-wrapper">`
-				`<table class="split-post forum-table" id="` ~ encodeEntities(idToFragment(id)) ~ `">` ~
-				`<tr class="post-header"><th>` ~
-					`<div class="post-time">` ~ summarizeTime(time) ~ `</div>` ~
-					`<a title="Permanent link to this post" href="` ~ idToUrl(id) ~ `" class="` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `">` ~
-						encodeEntities(realSubject) ~
-					`</a>` ~
-				`</th></tr>` ~
-				`<tr><td class="split-post-info">` ~
-					`<table><tr>` ~ // yay 4x nested table layouts
-						`<td class="split-post-avatar" rowspan="` ~ text(infoRows.length) ~ `">` ~
-							`<a href="http://www.gravatar.com/` ~ gravatarHash ~ `" title="` ~ encodeEntities(author) ~ `'s Gravatar profile">` ~
-								`<img alt="Gravatar" class="post-gravatar" width="48" height="48" src="http://www.gravatar.com/avatar/` ~ gravatarHash ~ `?d=identicon&s=48">` ~
-							`</a>` ~
-						`</td>` ~
-						`<td><table>` ~
-							array(map!q{`<tr><td class="split-post-info-name">` ~ a.name ~ `</td><td class="split-post-info-value">` ~ a.value ~ `</td></tr>`}(infoRows)).join() ~
+				`<table class="split-post forum-table" id="`, encodeEntities(idToFragment(id)), `">`
+				`<tr class="post-header"><th>`
+					`<div class="post-time">`, summarizeTime(time), `</div>`
+					`<a title="Permanent link to this post" href="`, idToUrl(id), `" class="`, (user.isRead(rowid) ? "forum-read" : "forum-unread"), `">`,
+						encodeEntities(realSubject),
+					`</a>`
+				`</th></tr>`
+				`<tr><td class="split-post-info">`
+					`<table><tr>`, // yay 4x nested table layouts
+						`<td class="split-post-avatar" rowspan="`, text(infoRows.length), `">`
+							`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`, encodeEntities(author), `'s Gravatar profile">`
+								`<img alt="Gravatar" class="post-gravatar" width="48" height="48" src="http://www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&s=48">`
+							`</a>`
+						`</td>`
+						`<td><table>`);
+			foreach (a; infoRows)
+				html.put(`<tr><td class="split-post-info-name">`, a.name, `</td><td class="split-post-info-value">`, a.value, `</td></tr>`);
+			html.put(
 						`</table></td>`
-					`</tr></table>` ~
-				`</td></tr>` ~
-				`<tr><td class="post-body">` ~
-					`<div class="post-text">` ~ formatBody(content) ~ `</div>` ~
-					(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``) ~
-				`</td></tr>` ~
-				`</table>` ~
-				`</div>`;
+					`</tr></table>`
+				`</td></tr>`
+				`<tr><td class="post-body">`
+					`<div class="post-text">`), formatBody(content), html.put(`</div>`,
+					(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``),
+				`</td></tr>`
+				`</table>`
+				`</div>`);
+		}
 	}
 
-	string discussionSplitPost(string id)
+	void discussionSplitPost(string id)
 	{
 		auto post = getPost(id);
 		enforce(post, "Post not found");
 
-		return formatSplitPost(post);
+		formatSplitPost(post);
 	}
 
-	string discussionThread(string id, out string group, out string title)
+	void discussionThread(string id, out string group, out string title)
 	{
 		// TODO: pages?
 		Rfc850Post[] posts;
@@ -977,17 +1006,18 @@ class WebUI
 		if (threaded)
 			posts = Rfc850Post.threadify(posts);
 
-		return join(array(map!((Rfc850Post post) { return formatPost(post, knownPosts); })(posts)));
+		foreach (post; posts)
+			formatPost(post, knownPosts);
 	}
 
-	string discussionSinglePost(string id, out string group, out string title)
+	void discussionSinglePost(string id, out string group, out string title)
 	{
 		auto post = getPost(id);
 		enforce(post, "Post not found");
 		group = post.xref[0].group;
 		title = post.subject;
 
-		return formatPost(post, null);
+		formatPost(post, null);
 	}
 
 	string resolvePostUrl(string id)
@@ -1035,21 +1065,20 @@ class WebUI
 		return null;
 	}
 
-	string formatBody(string text)
+	void formatBody(string s)
 	{
-		auto lines = text.strip().split("\n");
+		auto lines = s.strip().fastSplit('\n');
 		bool wasQuoted = false, inSignature = false;
-		text = null;
 		foreach (line; lines)
 		{
 			if (line == "-- ")
 				inSignature = true;
 			auto isQuoted = inSignature || line.startsWith(">");
 			if (isQuoted && !wasQuoted)
-				text ~= `<span class="forum-quote">`;
+				html ~= `<span class="forum-quote">`;
 			else
 			if (!isQuoted && wasQuoted)
-				text ~= `</span>`;
+				html ~= `</span>`;
 			wasQuoted = isQuoted;
 
 			line = encodeEntities(line);
@@ -1061,11 +1090,10 @@ class WebUI
 						segment = `<a rel="nofollow" href="` ~ segment ~ `">` ~ segment ~ `</a>`;
 				line = segments.join();
 			}
-			text ~= line ~ "\n";
+			html.put(line, '\n');
 		}
 		if (wasQuoted)
-			text ~= `</span>`;
-		return text.chomp();
+			html ~= `</span>`;
 	}
 
 	string summarizeTime(SysTime time)
@@ -1184,7 +1212,7 @@ class WebUI
 			return s;
 
 		result.put(s[start..$]);
-		return result.data;
+		return result.getString();
 	}
 
 	private string urlEncode(string s, in char[] forbidden, char escape)
