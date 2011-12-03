@@ -25,6 +25,7 @@ private:
 	string lastTime;
 	Logger log;
 	bool[string] oldMessages;
+	TimerTask pollTimer;
 
 	void reconnect()
 	{
@@ -38,7 +39,11 @@ private:
 	{
 		log("* Disconnected (" ~ reason ~ ")");
 		if (polling && type != DisconnectType.Requested)
+		{
+			if (pollTimer)
+				mainTimer.remove(pollTimer);
 			setTimeout(&reconnect, TickDuration.from!"seconds"(10));
+		}
 	}
 
 	void onReadLine(LineBufferedSocket s, string line)
@@ -85,7 +90,7 @@ private:
 					auto time = firstLine[1];
 					enforce(time.length == 14, "DATE format");
 					if (lastTime is null)
-						setTimeout(&poll, TickDuration.from!"seconds"(POLL_PERIOD));
+						pollTimer = setTimeout(&poll, TickDuration.from!"seconds"(POLL_PERIOD));
 					lastTime = time;
 				}
 				break;
@@ -107,7 +112,7 @@ private:
 					}
 				oldMessages = messages;
 				if (queued==0)
-					setTimeout(&poll, TickDuration.from!"seconds"(POLL_PERIOD));
+					pollTimer = setTimeout(&poll, TickDuration.from!"seconds"(POLL_PERIOD));
 				break;
 			}
 			case "220": // ARTICLE reply
@@ -121,7 +126,7 @@ private:
 				{
 					queued--;
 					if (queued==0)
-						setTimeout(&poll, TickDuration.from!"seconds"(POLL_PERIOD));
+						pollTimer = setTimeout(&poll, TickDuration.from!"seconds"(POLL_PERIOD));
 				}
 				break;
 			}
@@ -152,6 +157,7 @@ private:
 
 	void poll()
 	{
+		pollTimer = null;
 		send("DATE");
 		send("NEWNEWS * "~ lastTime[0..8] ~ " " ~ lastTime[8..14] ~ " GMT");
 	}
