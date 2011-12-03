@@ -675,8 +675,6 @@ class WebUI
 			}
 		}
 
-		StringBuilder html;
-
 		void formatPosts(Post*[] posts, int level, string parentSubject, bool topLevel)
 		{
 			void formatPost(Post* post, int level)
