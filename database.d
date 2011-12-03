@@ -32,19 +32,19 @@ static this()
 
 private:
 
-import std.stdio, std.string, std.array;
+import std.file, std.string, std.array;
 
 void dumpSchema()
 {
-	auto f = File("schema.sql", "w");
+	string schema;
 	foreach (string type, string name, string tbl_name, string sql; query("SELECT `type`, `name`, `tbl_name`, `sql` FROM `sqlite_master`").iterate())
 		if (!name.startsWith("sqlite_"))
 		{
 			if (name == tbl_name)
-				f.writefln("-- %s `%s`", capitalize(type), name);
+				schema ~= format("-- %s `%s`\n", capitalize(type), name);
 			else
-				f.writefln("-- %s `%s` on table `%s`", capitalize(type), name, tbl_name);
-			f.writeln(sql.replace("\r\n", "\n") ~ ";");
-			f.writeln();
+				schema ~= format("-- %s `%s` on table `%s`\n", capitalize(type), name, tbl_name);
+			schema ~= sql.replace("\r\n", "\n") ~ ";\n\n";
 		}
+	write("schema.sql", schema);
 }
