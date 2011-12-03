@@ -249,12 +249,15 @@ class Rfc850Post : Post
 		if (subject.startsWith("[Issue "))
 			url = "http://d.puremagic.com/issues/show_bug.cgi?id=" ~ subject.split(" ")[1][0..$-1];
 		else
+		if (id.length)
+			url = format("http://%s/discussion/post/%s", std.file.readText("data/web.txt").splitLines()[1], encodeComponent(id[1..$-1]));
+/+		else
 		if (xref.length)
 		{
 			auto group = xref[0].group;
 			auto num = xref[0].num;
 			//url = format("http://www.digitalmars.com/pnews/read.php?server=news.digitalmars.com&group=%s&artnum=%s", encodeUrlParameter(group), num);
-			url = format("http://digitalmars.com/webnews/newsgroups.php?art_group=%s&article_id=%s", encodeComponent(group), num);
+			//url = format("http://digitalmars.com/webnews/newsgroups.php?art_group=%s&article_id=%s", encodeComponent(group), num);
 		}
 		else
 		if ("LIST-ID" in headers && id)
@@ -262,6 +265,7 @@ class Rfc850Post : Post
 			if (id.startsWith("<") && id.endsWith(">"))
 				url = "http://mid.gmane.org/" ~ id[1..$-1];
 		}
++/
 
 		//if ("MESSAGE-ID" in headers)
 		//	url = "news://news.digitalmars.com/" ~ headers["MESSAGE-ID"][1..$-1];

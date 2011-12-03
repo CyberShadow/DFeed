@@ -36,7 +36,7 @@ class WebUI
 	{
 		log = createLogger("Web");
 
-		auto port = to!ushort(readText("data/web.txt"));
+		auto port = to!ushort(readText("data/web.txt").splitLines()[0]);
 
 		server = new HttpServer();
 		server.handleRequest = &onRequest;
