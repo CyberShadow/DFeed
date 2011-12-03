@@ -14,7 +14,6 @@ import ae.net.asockets;
 import ae.net.http.server;
 import ae.net.http.responseex;
 import ae.sys.log;
-import ae.utils.xml;
 import ae.utils.json;
 import ae.utils.array;
 import ae.utils.time;
@@ -667,47 +666,55 @@ class WebUI
 			}
 		}
 
-		string formatPosts(Post*[] posts, int level, string parentSubject, bool topLevel)
+		StringBuilder html;
+
+		void formatPosts(Post*[] posts, int level, string parentSubject, bool topLevel)
 		{
-			string formatPost(Post* post, int level)
+			void formatPost(Post* post, int level)
 			{
 				if (post.ghost)
 					return formatPosts(post.children, level, post.subject, false);
-				return
-					`<tr class="thread-post-row"><td><div style="padding-left: `~format("%1.1f", OFFSET_INIT + level * offsetIncrement)~OFFSET_UNITS~`">` ~
-						`<div class="thread-post-time">` ~ summarizeTime(post.time) ~ `</div>` ~
-						`<a class="postlink ` ~ (user.isRead(post.rowid) ? "forum-read" : "forum-unread" ) ~ `" href="` ~ idToUrl(post.id) ~ `">` ~ encodeEntities(post.author) ~ `</a>` ~
-					`</div></td></tr>` ~
-					formatPosts(post.children, level+1, post.subject, false);
+				html.put(
+					`<tr class="thread-post-row"><td><div style="padding-left: `, format("%1.1f", OFFSET_INIT + level * offsetIncrement), OFFSET_UNITS, `">`,
+						`<div class="thread-post-time">`, summarizeTime(post.time), `</div>`,
+						`<a class="postlink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread" ), `" href="`, idToUrl(post.id), `">`, encodeEntities(post.author), `</a>`,
+					`</div></td></tr>`);
+				formatPosts(post.children, level+1, post.subject, false);
 			}
 
-			return
-				array(map!((Post* post) {
-					if (topLevel)
-						offsetIncrement = min(OFFSET_MAX, OFFSET_WIDTH / post.maxDepth);
+			auto offsetStr = format("%1.1f", OFFSET_INIT + level * offsetIncrement) ~ OFFSET_UNITS; // OPTLINK
+			foreach (post; posts)
+			{
+				if (topLevel)
+					offsetIncrement = min(OFFSET_MAX, OFFSET_WIDTH / post.maxDepth);
 
-					if (topLevel || normalizeSubject(post.subject) != normalizeSubject(parentSubject))
-						return
-							`<tr><td style="padding-left: `~text(OFFSET_INIT + level * offsetIncrement)~OFFSET_UNITS~`">` ~
-							`<table class="thread-start">` ~
-								`<tr><th>` ~ encodeEntities(post.subject) ~ `</th></tr>` ~
-								formatPost(post, 0) ~
-							`</table>` ~
-							`</td></tr>`;
-					else
-						return formatPost(post, level);
-				})(posts)).join();
+				if (topLevel || normalizeSubject(post.subject) != normalizeSubject(parentSubject))
+				{
+					html.put(
+						`<tr><td style="padding-left: `, offsetStr, `">`,
+						`<table class="thread-start">`,
+							`<tr><th>`, encodeEntities(post.subject), `</th></tr>`);
+                    formatPost(post, 0);
+					html.put(
+						`</table>`,
+						`</td></tr>`);
+				}
+				else
+					formatPost(post, level);
+			}
 		}
 
-		return
-			`<table id="group-index" class="forum-table group-wrapper viewmode-` ~ encodeEntities(user.get("groupviewmode", "basic")) ~ `">` ~
-			`<tr class="group-index-header"><th><div>` ~ newPostButton(group) ~ encodeEntities(group) ~ `</div></th></tr>` ~ newline ~
-			//`<tr class="group-index-captions"><th>Subject / Author</th><th>Time</th>` ~ newline ~
-			`<tr><td class="group-threads-cell"><div class="group-threads"><table>` ~
-			formatPosts(posts[null].children, 0, null, true) ~ 
-			`</table></div></td></tr>` ~
-			threadPager(group, page, split ? 1 : 4) ~
-			`</table>`;
+		html.put(
+			`<table id="group-index" class="forum-table group-wrapper viewmode-`, encodeEntities(user.get("groupviewmode", "basic")), `">`
+			`<tr class="group-index-header"><th><div>`, newPostButton(group), encodeEntities(group), `</div></th></tr>`, newline,
+		//	`<tr class="group-index-captions"><th>Subject / Author</th><th>Time</th>`, newline,
+			`<tr><td class="group-threads-cell"><div class="group-threads"><table>`);
+		formatPosts(posts[null].children, 0, null, true);
+		html.put(
+			`</table></div></td></tr>`,
+			threadPager(group, page, split ? 1 : 4),
+			`</table>`);
+		return html.data;
 	}
 
 	string discussionGroupSplit(string group, int page)
@@ -1082,7 +1089,6 @@ class WebUI
 
 		auto now = Clock.currTime();
 		auto duration = now - time;
-		auto diffMonths = now.diffMonths(time);
 
 		if (duration < dur!"seconds"(0))
 			return "from the future";
@@ -1108,11 +1114,15 @@ class WebUI
 		if (duration < dur!"days"(30))
 			return ago(duration.total!"days", "day");
 		else
-		if (diffMonths < 12)
-			return ago(diffMonths, "month");
-		else
-			return ago(diffMonths / 12, "year");
-			//return time.toSimpleString();
+		{
+			auto diffMonths = now.diffMonths(time);
+
+			if (diffMonths < 12)
+				return ago(diffMonths, "month");
+			else
+				return ago(diffMonths / 12, "year");
+				//return time.toSimpleString();
+		}
 	}
 
 	string formatLongTime(SysTime time)
@@ -1148,10 +1158,33 @@ class WebUI
 		return `<span title="`~encodeEntities(s)~`">` ~ encodeEntities(s[0..end] ~ "\&hellip;") ~ `</span>`;
 	}
 
-	/// &apos; is not a recognized entity in HTML 4 (even though it is in XML and XHTML).
-	string encodeEntities(string s)
+	static string encodeEntities(string s)
 	{
-		return ae.utils.xml.encodeEntities(s).replace("&apos;", "'");
+		StringBuilder result;
+		size_t start = 0;
+
+		foreach (i, c; s)
+			if (c=='<')
+				result.put(s[start..i], "&lt;"),
+				start = i+1;
+			else
+			if (c=='>')
+				result.put(s[start..i], "&gt;"),
+				start = i+1;
+			else
+			if (c=='&')
+				result.put(s[start..i], "&amp;"),
+				start = i+1;
+			else
+			if (c=='"')
+				result.put(s[start..i], "&quot;"),
+				start = i+1;
+
+		if (!start)
+			return s;
+
+		result.put(s[start..$]);
+		return result.data;
 	}
 
 	private string urlEncode(string s, in char[] forbidden, char escape)
