@@ -1,5 +1,5 @@
 $(document).ready(function() {
-	$('body').addClass('widedoc');
+	$('body').removeClass('narrowdoc').addClass('widedoc');
 
 	$('.postlink').live('click', function() {
 		var path = $(this).attr('href');
