@@ -145,7 +145,7 @@ class WebUI
 							title = subject;
 							breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group  )~`">` ~ encodeEntities(group  ) ~ `</a>`;
 							breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(path[2])~`">` ~ encodeEntities(subject) ~ `</a>`;
-							tools ~= viewModeTool(["flat", "threaded"], "thread");
+							tools ~= viewModeTool(["flat", "nested"], "thread");
 							break;
 						}
 						case "post":
@@ -1032,9 +1032,10 @@ class WebUI
 
 		group = posts[0].xref[0].group;
 		title = posts[0].subject;
-		bool threaded = user.get("threadviewmode", "flat") == "threaded";
+		auto viewMode = user.get("threadviewmode", "flat");
+		bool nested = viewMode == "nested" || viewMode == "threaded" /*legacy*/;
 
-		if (threaded)
+		if (nested)
 			posts = Rfc850Post.threadify(posts);
 
 		foreach (post; posts)
