@@ -833,11 +833,9 @@ class WebUI
 		void replyButton()
 		{
 			html.put(
-				`<form name="reply-form" method="get" action="/discussion/reply/`, encodeEntities(post.id[1..$-1]), `">`
-					`<div class="reply-button">`
-						`<input type="submit" value="Reply">`
-					`</div>`
-				`</form>`);
+				`<a class="replylink" href="/discussion/reply/`, encodeEntities(post.id[1..$-1]), `">`
+					`<img src="`, staticPath("/images/reply.png"), `">Reply`
+				`</a>`);
 		}
 
 		string gravatarHash = getGravatarHash(post.authorEmail);

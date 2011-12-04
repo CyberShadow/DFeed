@@ -233,6 +233,10 @@ ul.post-info-parts {
 	position: absolute;
 	bottom: 12px;
 }
+.replylink img {
+	vertical-align: middle;
+	margin-right: 5px;
+}
 
 /* Body */
 
