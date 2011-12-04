@@ -395,6 +395,11 @@ ul.post-info-parts {
 	width: 60px;
 }
 
+.split-post .forum-unread {
+	/* this just looks confusing and distracting */
+	font-weight: inherit;
+}
+
 .group-split-message-none {
 	text-align: center;
 	vertical-align: middle !important;
