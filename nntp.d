@@ -26,6 +26,7 @@ private:
 	Logger log;
 	bool[string] oldMessages;
 	TimerTask pollTimer;
+	bool[] expectingGroupList;
 
 	void reconnect()
 	{
@@ -44,6 +45,7 @@ private:
 				mainTimer.remove(pollTimer);
 			setTimeout(&reconnect, TickDuration.from!"seconds"(10));
 		}
+		expectingGroupList = null;
 	}
 
 	void onReadLine(LineBufferedSocket s, string line)
@@ -60,7 +62,7 @@ private:
 		if (line.length && line[0] == '.')
 			line = line[1..$];
 
-		if (reply.length==0 && (line.startsWith("200") || line.startsWith("111")))
+		if (reply.length==0 && (line.startsWith("200") || line.startsWith("111") || (line.startsWith("211") && !expectingGroupList[0])))
 			onReply([line]);
 		else
 			reply ~= line;
@@ -144,10 +146,21 @@ private:
 					handleGroups(groups);
 				break;
 			}
-			case "211": // LISTGROUP reply
+			case "211": // GROUP / LISTGROUP reply
 			{
+				if (expectingGroupList[0])
+					if (handleListGroup)
+						handleListGroup(reply[1..$]);
+				expectingGroupList = expectingGroupList[1..$];
+				break;
+			}
+			case "224": // LISTGROUP reply
+			{
+				auto messages = new string[reply.length-1];
+				foreach (i, line; reply[1..$])
+					messages[i] = line.split("\t")[0];
 				if (handleListGroup)
-					handleListGroup(reply[1..$]);
+					handleListGroup(messages);
 				break;
 			}
 			default:
@@ -192,15 +205,26 @@ public:
 
 	void selectGroup(string name)
 	{
+		expectingGroupList = false ~ expectingGroupList;
 		send("GROUP " ~ name);
 	}
 
 	void listGroup(string name, int from = 1)
 	{
+		expectingGroupList = true ~ expectingGroupList;
 		if (from > 1)
 			send(format("LISTGROUP %s %d-", name, from));
 		else
 			send(format("LISTGROUP %s", name));
+	}
+
+	void listGroupXover(string name, int from = 1)
+	{
+		selectGroup(name);
+		if (from > 1)
+			send(format("XOVER %d-", from));
+		else
+			send("XOVER");
 	}
 
 	void getMessage(string numOrID)

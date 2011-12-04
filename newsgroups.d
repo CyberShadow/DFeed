@@ -99,12 +99,11 @@ private:
 			foreach (int num; query("SELECT MAX(`ArtNum`) FROM `Groups` WHERE `Group` = ?").iterate(currentGroup.name))
 				maxNum = num;
 
-			log(format("Highest article number is database: %d", maxNum));
+			log(format("Highest article number in database: %d", maxNum));
 			if (currentGroup.high > maxNum)
 			{
-				// news.digitalmars.com doesn't seem to support LISTGROUP ranges :(
-				//client.listGroup(currentGroup.name, maxNum+1);
-				client.listGroup(currentGroup.name);
+				// news.digitalmars.com doesn't support LISTGROUP ranges, use XOVER
+				client.listGroupXover(currentGroup.name, maxNum+1);
 			}
 			else
 				nextGroup();
