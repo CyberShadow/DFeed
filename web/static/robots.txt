@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /discussion/set
+Disallow: /discussion/newpost
+Disallow: /discussion/reply

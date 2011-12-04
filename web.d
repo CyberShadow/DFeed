@@ -241,6 +241,7 @@ class WebUI
 				case "css":
 				case "images":
 				case "favicon.ico":
+				case "robots.txt":
 					return serveFile(response, pathStr[1..$]);
 
 				case "static":
