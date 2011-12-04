@@ -248,7 +248,7 @@ class WebUI
 
 		string toolStr = tools.join(" &middot; ");
 		toolStr =
-			toolStr.replace("__URL__",  request.resource) ~
+			toolStr.replace("__URL__",  encodeUrlParameter(request.resource)) ~
 			`<script type="text/javascript">var toolsTemplate = ` ~ toJson(toolStr) ~ `;</script>`;
 
 		string[string] vars = [

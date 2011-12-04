@@ -98,7 +98,7 @@ function onPopState() {
 		showHtml(keyboardHelp);
 	}
 
-	$('#forum-tools').html(toolsTemplate.replace(/__URL__/g, document.location.href));
+	$('#forum-tools').html(toolsTemplate.replace(/__URL__/g, encodeURIComponent(document.location.href)));
 }
 
 function showPost(postHtml) {
