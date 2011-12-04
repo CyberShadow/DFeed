@@ -338,7 +338,7 @@ class WebUI
 		{ "c++.rtl",	"C++ Runtime Library" },
 		{ "c++.stl",	"Standard Template Library" },
 		{ "c++.stl.hp",	"HP's Standard Template Library" },
-		{ "c++.stl.port",	"STLPort Standard Template Librar" },
+		{ "c++.stl.port",	"STLPort Standard Template Library" },
 		{ "c++.stl.sgi",	"SGI's Standard Template Library" },
 		{ "c++.stlsoft",	"Stlsoft products" },
 		{ "c++.windows",	"Writing C++ code for Microsoft Windows" },
