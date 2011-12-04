@@ -16,6 +16,7 @@ import ae.utils.mime;
 import common;
 import bitly;
 import database;
+import wrap;
 
 struct Xref
 {
@@ -289,8 +290,38 @@ class Rfc850Post : Post
 		}
 	}
 
-	private this() // for attachments
+	private this() {} // for attachments and templates
+
+	static Rfc850Post newPostTemplate(string group)
 	{
+		auto post = new Rfc850Post();
+		post.xref = [Xref(group)];
+		return post;
+	}
+
+	Rfc850Post replyTemplate()
+	{
+		auto post = new Rfc850Post();
+		post.reply = true;
+		post.xref = this.xref;
+		post.references = this.references ~ this.id;
+		post.subject = post.realSubject = this.realSubject;
+		if (!post.realSubject.startsWith("Re:"))
+			post.realSubject = "Re: " ~ post.realSubject;
+
+		auto paragraphs = unwrapText(this.content, this.delsp);
+		foreach (ref paragraph; paragraphs)
+			if (paragraph.quotePrefix.length)
+				paragraph.quotePrefix = ">" ~ paragraph.quotePrefix;
+			else
+				paragraph.quotePrefix = "> ";
+		post.content =
+			"On " ~ this.time.toString() ~ ", " ~ this.author ~ " wrote:\n" ~
+			wrapText(paragraphs);
+		post.flowed = true;
+		post.delsp = false;
+
+		return post;
 	}
 
 	override void formatForIRC(void delegate(string) handler)

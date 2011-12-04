@@ -42,3 +42,32 @@ Paragraph[] unwrapText(string text, bool delsp)
 
 	return paragraphs;
 }
+
+string wrapText(Paragraph[] paragraphs, int margin = 66)
+{
+	string[] lines;
+
+	foreach (paragraph; paragraphs)
+	{
+		string line = paragraph.text;
+		auto cutPoint = margin - paragraph.quotePrefix.length;
+
+		while (line.length > cutPoint)
+		{
+			int i = line[0..cutPoint].lastIndexOf(' ');
+			if (i < 0)
+				i = line[cutPoint..$].indexOf(' ');
+			if (i < 0)
+				break;
+
+			i++;
+			lines ~= paragraph.quotePrefix ~ line[0..i];
+			line = line[i..$];
+		}
+
+		if (line.length)
+			lines ~= paragraph.quotePrefix ~ line;
+	}
+
+	return lines.join("\n");
+}

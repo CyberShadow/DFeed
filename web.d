@@ -24,12 +24,14 @@ import database;
 import cache;
 import rfc850;
 import user;
+import recaptcha;
 
 class WebUI
 {
 	Logger log;
 	HttpServer server;
 	User user;
+	string ip;
 	StringBuilder html;
 
 	this()
@@ -67,7 +69,7 @@ class WebUI
 		responseTime.start();
 		auto response = new HttpResponseEx();
 
-		string ip = from.remoteAddress;
+		ip = from.remoteAddress;
 		ip = ip[0..ip.lastIndexOf(':')];
 		if ("X-Forwarded-For" in request.headers)
 			ip = request.headers["X-Forwarded-For"];
@@ -205,6 +207,27 @@ class WebUI
 							enforce(post, "Post not found");
 							user.setRead(post.rowid, false);
 							return response.serveText("OK");
+						}
+						case "newpost":
+						{
+							enforce(path.length > 2, "No group specified");
+							string group = path[2];
+							title = "Posting to " ~ group;
+							breadcrumb1 = `<a href="/discussion/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>`;
+							breadcrumb2 = `<a href="/discussion/newpost/`~encodeEntities(group)~`">New thread</a>`;
+							discussionPostForm(Rfc850Post.newPostTemplate(group));
+							break;
+						}
+						case "reply":
+						{
+							enforce(path.length > 2, "No post specified");
+							auto post = getPost('<' ~ urlDecode(path[2]) ~ '>');
+							enforce(post, "Post not found");
+							title = `Replying to "` ~ post.subject ~ `"`;
+							breadcrumb1 = `<a href="` ~ encodeEntities(idToUrl(post.id)) ~ `">` ~ encodeEntities(post.subject) ~ `</a>`;
+							breadcrumb2 = `<a href="/discussion/reply/`~path[2]~`">Post reply</a>`;
+							discussionPostForm(post.replyTemplate());
+							break;
 						}
 						default:
 							throw new NotFoundException();
@@ -409,9 +432,8 @@ class WebUI
 	void newPostButton(string group)
 	{
 		html.put(
-			`<form name="new-post-form" method="get" action="/discussion/compose">`
+			`<form name="new-post-form" method="get" action="/discussion/newpost/`, encodeEntities(group), `">`
 				`<div class="header-tools">`
-					`<input type="hidden" name="group" value="`, encodeEntities(group), `">`
 					`<input type="submit" value="Create thread">`
 				`</div>`
 			`</form>`);
@@ -686,7 +708,7 @@ class WebUI
 					return formatPosts(post.children, level, post.subject, false);
 				html.put(
 					`<tr class="thread-post-row"><td><div style="padding-left: `, format("%1.1f", OFFSET_INIT + level * offsetIncrement), OFFSET_UNITS, `">`
-						`<div class="thread-post-time">`, summarizeTime(post.time), `</div>`
+						`<div class="thread-post-time">`, summarizeTime(post.time), `</div>`,
 						`<a class="postlink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread" ), `" href="`, idToUrl(post.id), `">`, encodeEntities(post.author), `</a>`
 					`</div></td></tr>`);
 				formatPosts(post.children, level+1, post.subject, false);
@@ -800,14 +822,19 @@ class WebUI
 		return toLower(getDigestString(strip(toLower(email))));
 	}
 
+	string getIPHash()
+	{
+		import std.md5;
+		return toLower(getDigestString(ip ~ readText("data/salt.txt")));
+	}
+
 	void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts)
 	{
 		void replyButton()
 		{
 			html.put(
-				`<form name="reply-form" method="get" action="/discussion/reply">`
+				`<form name="reply-form" method="get" action="/discussion/reply/`, encodeEntities(post.id[1..$-1]), `">`
 					`<div class="reply-button">`
-						`<input type="hidden" name="parent" value="`, encodeEntities(post.id), `">`
 						`<input type="submit" value="Reply">`
 					`</div>`
 				`</form>`);
@@ -908,6 +935,18 @@ class WebUI
 		}
 	}
 
+	string postLink(int rowid, string id, string author)
+	{
+		return
+			`<a class="postlink ` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `" ` ~
+				`href="`~ encodeEntities(idToUrl(id)) ~ `">` ~ encodeEntities(author) ~ `</a>`;
+	}
+
+	string postLink(PostInfo* info)
+	{
+		return postLink(info.rowid, info.id, info.author);
+	}
+
 	/// Alternative post formatting, with the meta-data header on top
 	void formatSplitPost(Rfc850Post post)
 	{
@@ -918,13 +957,6 @@ class WebUI
 
 		infoRows ~= InfoRow("From", post.author);
 		infoRows ~= InfoRow("Date", format("%s (%s)", formatLongTime(post.time), formatShortTime(post.time)));
-
-		string postLink(int rowid, string id, string author)
-		{
-			return
-				`<a class="postlink ` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `" ` ~
-					`href="`~ encodeEntities(idToUrl(id)) ~ `">` ~ encodeEntities(author) ~ `</a>`;
-		}
 
 		if (post.parentID)
 		{
@@ -1021,6 +1053,36 @@ class WebUI
 		formatPost(post, null);
 	}
 
+	void discussionPostForm(Rfc850Post postTemplate, bool showCaptcha=false, string errorMessage=null)
+	{
+		html.put(`<form action="/discussion/send" method="post" id="postform">`);
+
+		if (errorMessage)
+			html.put(`<div id="postform-error">` ~ encodeEntities(errorMessage) ~ `</div>`);
+
+		if (showCaptcha)
+			html.put(recaptchaChallengeHtml());
+
+		html.put(
+			`<div id="postform-info">`
+				`Posting to <b>`, encodeEntities(postTemplate.where), `</b>`, 
+				(postTemplate.reply ? ` in reply to ` ~ postLink(getPostInfo(postTemplate.parentID)) : ``),
+			`</div>`
+			`<input type="hidden" name="iphash" value="`, getIPHash(), `">`
+			`<label for="postform-name">Your name:</label>`
+			`<input id="postform-name" name="name" size="40" value="`, encodeEntities(user.get("name", "")), `">`
+			`<label for="postform-email">Your e-mail address:</label>`
+			`<input id="postform-email" name="email" size="40" value="`, encodeEntities(user.get("email", "anonymous@localhost")), `">`
+			`<label for="postform-subject">Subject:</label>`
+			`<input id="postform-subject" name="subject" size="80" value="`, encodeEntities(postTemplate.subject), `">`
+			`<label for="postform-text">Message:</label>`
+			`<textarea id="postform-text" name="text" rows="25" cols="80">`, encodeEntities(postTemplate.content), `</textarea>`
+			`<input type="submit" value="Send">`
+		`</form>`);
+	}
+
+	// ***********************************************************************
+
 	string resolvePostUrl(string id)
 	{
 		foreach (string threadID; query("SELECT `ThreadID` FROM `Posts` WHERE `ID` = ?").iterate(id))
@@ -1065,6 +1127,8 @@ class WebUI
 				return [PostInfo(rowid, id, threadID, author, subject, SysTime(stdTime, UTC()))].ptr;
 		return null;
 	}
+
+	// ***********************************************************************
 
 	void formatBody(string s)
 	{
