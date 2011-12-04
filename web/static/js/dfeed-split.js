@@ -95,7 +95,7 @@ function onPopState() {
 			showText('XHR ' + textStatus + (errorThrown ? ': ' + errorThrown : ''));
 		});
 	} else {
-		showHtml('No message selected.<br><br>' + keyboardHelp);
+		showHtml(keyboardHelp);
 	}
 
 	$('#forum-tools').html(toolsTemplate.replace(/__URL__/g, document.location.href));
