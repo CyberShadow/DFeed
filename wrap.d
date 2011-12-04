@@ -54,7 +54,7 @@ string wrapText(Paragraph[] paragraphs, int margin = 66)
 
 		while (line.length > cutPoint)
 		{
-			int i = line[0..cutPoint].lastIndexOf(' ');
+			auto i = line[0..cutPoint].lastIndexOf(' ');
 			if (i < 0)
 				i = line[cutPoint..$].indexOf(' ');
 			if (i < 0)
