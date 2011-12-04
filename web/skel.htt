@@ -43,7 +43,7 @@ function bodyLoad()
 <?extraheaders?>
 </head>
 
-<body onLoad='bodyLoad()' class='hyphenate narrowdoc'>
+<body onLoad='bodyLoad()' class='hyphenate <?bodyclass?>'>
 
 <div id="top">
 	<div id="search-box">

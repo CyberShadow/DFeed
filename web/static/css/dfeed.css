@@ -512,6 +512,11 @@ kbd { /* stolen from http://en.wikipedia.org/wiki/Template:Key_press */
 #postform #postform-subject {
 }
 
+.formdoc #content {
+	display: inline-block;
+	margin-left: 0 !important;
+}
+
 /*************** Misc views ***************/
 
 .forum-no-data {

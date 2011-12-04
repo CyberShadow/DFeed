@@ -79,6 +79,7 @@ class WebUI
 		scope(success) foreach (cookie; user.getCookies()) response.headers.add("Set-Cookie", cookie);
 
 		string title, breadcrumb1, breadcrumb2;
+		string bodyClass = "narrowdoc";
 		html.clear();
 		string[] tools, extraHeaders;
 
@@ -215,6 +216,7 @@ class WebUI
 							title = "Posting to " ~ group;
 							breadcrumb1 = `<a href="/discussion/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>`;
 							breadcrumb2 = `<a href="/discussion/newpost/`~encodeEntities(group)~`">New thread</a>`;
+							bodyClass ~= " formdoc";
 							discussionPostForm(Rfc850Post.newPostTemplate(group));
 							break;
 						}
@@ -226,6 +228,7 @@ class WebUI
 							title = `Replying to "` ~ post.subject ~ `"`;
 							breadcrumb1 = `<a href="` ~ encodeEntities(idToUrl(post.id)) ~ `">` ~ encodeEntities(post.subject) ~ `</a>`;
 							breadcrumb2 = `<a href="/discussion/reply/`~path[2]~`">Post reply</a>`;
+							bodyClass ~= " formdoc";
 							discussionPostForm(post.replyTemplate());
 							break;
 						}
@@ -280,6 +283,7 @@ class WebUI
 			"breadcrumb1" : breadcrumb1,
 			"breadcrumb2" : breadcrumb2,
 			"extraheaders" : extraHeaders.join("\n"),
+			"bodyclass" : bodyClass,
 			"tools" : toolStr,
 		];
 		foreach (DirEntry de; dirEntries("web/static", SpanMode.depth))
@@ -1071,7 +1075,7 @@ class WebUI
 			`<label for="postform-name">Your name:</label>`
 			`<input id="postform-name" name="name" size="40" value="`, encodeEntities(user.get("name", "")), `">`
 			`<label for="postform-email">Your e-mail address:</label>`
-			`<input id="postform-email" name="email" size="40" value="`, encodeEntities(user.get("email", "anonymous@localhost")), `">`
+			`<input id="postform-email" name="email" size="40" value="`, encodeEntities(user.get("email", "")), `">`
 			`<label for="postform-subject">Subject:</label>`
 			`<input id="postform-subject" name="subject" size="80" value="`, encodeEntities(postTemplate.subject), `">`
 			`<label for="postform-text">Message:</label>`
