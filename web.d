@@ -642,7 +642,10 @@ class WebUI
 
 		string normalizeSubject(string s)
 		{
-			return s.replace("New: ", ""); // Bugzilla hack
+			return s
+				.replace("New: ", "") // Bugzilla hack
+				.replace("\t", " ")   // Apple Mail hack
+			;
 		}
 
 		// Group replies under a ghost post when multiple replies have the same subject,
