@@ -495,18 +495,23 @@ kbd { /* stolen from http://en.wikipedia.org/wiki/Template:Key_press */
 
 /*************** Posting ***************/
 
+#postform-error {
+	border: 2px dotted red;
+	color: red;
+	padding: 10px;
+	margin-bottom: 10px;
+}
+
 #postform input,
 #postform textarea {
 	font-size: inherit;
 }
 
 #postform label,
-#postform input[type=submit] {
+#postform input[type=submit],
+#postform-captcha {
 	margin-top: 10px;
 	display: block;
-}
-#postform br {
-	display: none;
 }
 
 #postform #postform-subject {

@@ -38,6 +38,20 @@ struct User
 		return defaultValue;
 	}
 
+	bool opIn_r(string name)
+	{
+		return (name in newCookies) || (name in cookies);
+	}
+
+	string opIndex(string name)
+	{
+		auto pNewCookie = name in newCookies;
+		if (pNewCookie)
+			return *pNewCookie;
+		else
+			return cookies[name];
+	}
+
 	string opIndexAssign(string value, string name)
 	{
 		return newCookies[name] = value;

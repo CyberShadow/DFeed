@@ -30,7 +30,12 @@ Paragraph[] unwrapText(string text, bool delsp)
 			line = line[l..$];
 		}
 
-		if (paragraphs.length>0 && paragraphs[$-1].quotePrefix==quotePrefix && paragraphs[$-1].text.endsWith(" ") && !line.startsWith(" "))
+		if (paragraphs.length>0
+		 && paragraphs[$-1].quotePrefix==quotePrefix
+		 && paragraphs[$-1].text.endsWith(" ")
+		 && !line.startsWith(" ")
+		 && line != "-- "
+		 && paragraphs[$-1].text != "-- ")
 		{
 			if (delsp)
 				paragraphs[$-1].text = paragraphs[$-1].text[0..$-1];
@@ -56,8 +61,8 @@ string wrapText(Paragraph[] paragraphs, int margin = 66)
 		{
 			auto i = line[0..cutPoint].lastIndexOf(' ');
 			if (i < 0)
-				i = line[cutPoint..$].indexOf(' ');
-			if (i < 0)
+				i = cutPoint + line[cutPoint..$].indexOf(' ');
+			if (i < cutPoint)
 				break;
 
 			i++;

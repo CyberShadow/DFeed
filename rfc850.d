@@ -8,6 +8,7 @@ import std.base64;
 debug import std.stdio;
 
 import ae.net.http.client;
+import ae.net.ietf.headers;
 import ae.utils.array;
 import ae.utils.time;
 import ae.utils.text;
@@ -28,7 +29,7 @@ enum DEFAULT_ENCODING = "windows1252";
 
 class Rfc850Post : Post
 {
-	string lines, id;
+	string message, id;
 	Xref[] xref;
 
 	string subject, realSubject, author, authorEmail, url, shortURL;
@@ -41,7 +42,7 @@ class Rfc850Post : Post
 	/// Internal database index
 	int rowid;
 
-	string[string] headers;
+	Headers headers;
 	string content; /// text/plain only
 	ubyte[] data; /// can be anything
 	string error; /// Explanation for null content
@@ -51,15 +52,15 @@ class Rfc850Post : Post
 	string name, fileName, description, mimeType;
 	Rfc850Post[] parts;
 
-	this(string _lines, string _id=null, int _rowid=0)
+	this(string _message, string _id=null, int _rowid=0)
 	{
-		lines = _lines;
+		message = _message;
 		id    = _id;
 		rowid = _rowid;
 
 		// TODO: actually read RFC 850
 		// TODO: this breaks binary encodings, FIXME?
-		auto text = lines.fastReplace("\r\n", "\n");
+		auto text = message.fastReplace("\r\n", "\n");
 		auto headerEnd = text.indexOf("\n\n");
 		if (headerEnd < 0) headerEnd = text.length;
 		auto header = text[0..headerEnd];
@@ -79,22 +80,22 @@ class Rfc850Post : Post
 
 		string rawContent = text[headerEnd+2..$]; // not UTF-8
 
-		if ("CONTENT-TRANSFER-ENCODING" in headers)
+		if ("Content-Transfer-Encoding" in headers)
 			try
-				rawContent = decodeTransferEncoding(rawContent, headers["CONTENT-TRANSFER-ENCODING"]);
+				rawContent = decodeTransferEncoding(rawContent, headers["Content-Transfer-Encoding"]);
 			catch (Exception e)
 			{
 				rawContent = null;
-				error = "Error decoding " ~ headers["CONTENT-TRANSFER-ENCODING"] ~ " message: " ~ e.msg;
+				error = "Error decoding " ~ headers["Content-Transfer-Encoding"] ~ " message: " ~ e.msg;
 			}
 
 		data = cast(ubyte[])rawContent;
 
 		TokenHeader contentType, contentDisposition;
-		if ("CONTENT-TYPE" in headers)
-			contentType = decodeTokenHeader(headers["CONTENT-TYPE"]);
-		if ("CONTENT-DISPOSITION" in headers)
-			contentDisposition = decodeTokenHeader(headers["CONTENT-DISPOSITION"]);
+		if ("Content-Type" in headers)
+			contentType = decodeTokenHeader(headers["Content-Type"]);
+		if ("Content-Disposition" in headers)
+			contentDisposition = decodeTokenHeader(headers["Content-Disposition"]);
 		mimeType = toLower(contentType.value);
 		flowed = aaGet(contentType.properties, "format", "fixed") == "flowed";
 		delsp = aaGet(contentType.properties, "delsp", "no") == "yes";
@@ -180,14 +181,14 @@ class Rfc850Post : Post
 
 		name = aaGet(contentType.properties, "name", string.init);
 		fileName = aaGet(contentDisposition.properties, "filename", string.init);
-		description = aaGet(headers, "CONTENT-DESCRIPTION", string.init);
+		description = aaGet(headers, "Content-Description", string.init);
 		if (name == fileName)
 			name = null;
 
-		if ("REFERENCES" in headers)
+		if ("References" in headers)
 		{
 			reply = true;
-			auto refs = strip(headers["REFERENCES"]);
+			auto refs = strip(headers["References"]);
 			while (refs.startsWith("<"))
 			{
 				auto p = refs.indexOf(">");
@@ -198,17 +199,17 @@ class Rfc850Post : Post
 			}
 		}
 
-		subject = realSubject = "SUBJECT" in headers ? decodeRfc5335(headers["SUBJECT"]) : null;
+		subject = realSubject = "Subject" in headers ? decodeRfc5335(headers["Subject"]) : null;
 		if (subject.startsWith("Re: "))
 		{
 			subject = subject[4..$];
 			reply = true;
 		}
 
-		author = authorEmail = "FROM" in headers ? decodeRfc5335(headers["FROM"]) : null;
-		if ("X-BUGZILLA-WHO" in headers)
+		author = authorEmail = "From" in headers ? decodeRfc5335(headers["From"]) : null;
+		if ("X-Bugzilla-Who" in headers)
 		{
-			author = authorEmail = headers["X-BUGZILLA-WHO"];
+			author = authorEmail = headers["X-Bugzilla-Who"];
 
 			foreach (line; content.split("\n"))
 				if (line.endsWith("> changed:"))
@@ -226,10 +227,10 @@ class Rfc850Post : Post
 		if (author.length>2 && author[0]=='"' && author[$-1]=='"')
 			author = decodeRfc5335(strip(author[1..$-1]));
 
-		//where = "NEWSGROUPS" in headers ? headers["NEWSGROUPS"] : null;
-		if ("XREF" in headers)
+		//where = "Newsgroups" in headers ? headers["Newsgroups"] : null;
+		if ("Xref" in headers)
 		{
-			auto xrefStrings = split(headers["XREF"], " ")[1..$];
+			auto xrefStrings = split(headers["Xref"], " ")[1..$];
 			foreach (str; xrefStrings)
 			{
 				auto segs = str.split(":");
@@ -237,15 +238,15 @@ class Rfc850Post : Post
 			}
 		}
 
-		if ("LIST-ID" in headers && subject.startsWith("[") && !xref.length)
+		if ("List-ID" in headers && subject.startsWith("[") && !xref.length)
 		{
 			auto p = subject.indexOf("] ");
 			xref = [Xref(subject[1..p])];
 			subject = subject[p+2..$];
 		}
 
-		if ("MESSAGE-ID" in headers && !id)
-			id = headers["MESSAGE-ID"];
+		if ("Message-ID" in headers && !id)
+			id = headers["Message-ID"];
 
 		if (subject.startsWith("[Issue "))
 			url = "http://d.puremagic.com/issues/show_bug.cgi?id=" ~ subject.split(" ")[1][0..$-1];
@@ -271,12 +272,12 @@ class Rfc850Post : Post
 		//if ("MESSAGE-ID" in headers)
 		//	url = "news://news.digitalmars.com/" ~ headers["MESSAGE-ID"][1..$-1];
 
-		if ("NNTP-POSTING-DATE" in headers)
-			time = parseTime("D, j M Y H:i:s O", headers["NNTP-POSTING-DATE"]);
+		if ("NNTP-Posting-Date" in headers)
+			time = parseTime("D, j M Y H:i:s O", headers["NNTP-Posting-Date"]);
 		else
-		if ("DATE" in headers)
+		if ("Date" in headers)
 		{
-			auto str = headers["DATE"];
+			auto str = headers["Date"];
 			try
 				time = parseTime(TimeFormats.RFC850, str);
 			catch (Exception e)
@@ -310,18 +311,84 @@ class Rfc850Post : Post
 			post.realSubject = "Re: " ~ post.realSubject;
 
 		auto paragraphs = unwrapText(this.content, this.delsp);
-		foreach (ref paragraph; paragraphs)
+		foreach (i, ref paragraph; paragraphs)
 			if (paragraph.quotePrefix.length)
 				paragraph.quotePrefix = ">" ~ paragraph.quotePrefix;
 			else
+			{
+				if (paragraph.text == "-- ")
+				{
+					paragraphs = paragraphs[0..i];
+					break;
+				}
 				paragraph.quotePrefix = "> ";
+			}
 		post.content =
 			"On " ~ this.time.toString() ~ ", " ~ this.author ~ " wrote:\n" ~
-			wrapText(paragraphs);
+			wrapText(paragraphs) ~
+			"\n\n";
 		post.flowed = true;
 		post.delsp = false;
 
 		return post;
+	}
+
+	// Rewrap
+	void setText(string text)
+	{
+		this.content = wrapText(unwrapText(text, false));
+		this.flowed = true;
+		this.delsp = false;
+	}
+
+	/// Set headers and message.
+	void compile()
+	{
+		assert(id);
+
+		headers["Message-ID"] = id;
+		headers["From"] = format(`"%s" <%s>`, author, authorEmail);
+		headers["Subject"] = subject;
+		headers["Newsgroups"] = where; // TODO: what is the separator for cross-posting?
+		headers["Content-Type"] = format("text/plain; charset=utf-8; format=%s; delsp=%s", flowed ? "flowed" : "fixed", delsp ? "yes" : "no");
+		headers["Content-Transfer-Encoding"] = "8bit";
+		if (references.length)
+		{
+			headers["References"] = references.join(" ");
+			headers["In-Reply-To"] = references[$-1];
+		}
+		headers["Date"] = formatTime(TimeFormats.RFC2822, time);
+		headers["User-Agent"] = "DFeed";
+
+		string[] lines;
+		foreach (name, value; headers)
+		{
+			auto line = name ~ ": " ~ value;
+			auto lineStart = name.length + 2;
+
+			foreach (c; line)
+				enforce(c >= 32, "Control characters in headers? I call shenanigans");
+
+			while (line.length >= 80)
+			{
+				auto p = line[0..80].lastIndexOf(' ');
+				if (p < lineStart)
+				{
+					p = 80 + line[80..$].indexOf(' ');
+					if (p < 80)
+						break;
+				}
+				lines ~= line[0..p];
+				line = line[p..$];
+				lineStart = 1;
+			}
+			lines ~= line;
+		}
+
+		message =
+			lines.join("\r\n") ~
+			"\r\n\r\n" ~
+			splitAsciiLines(content).join("\r\n");
 	}
 
 	override void formatForIRC(void delegate(string) handler)

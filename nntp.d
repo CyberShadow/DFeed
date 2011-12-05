@@ -27,6 +27,7 @@ private:
 	bool[string] oldMessages;
 	TimerTask pollTimer;
 	bool[] expectingGroupList;
+	string[] postQueue;
 
 	void reconnect()
 	{
@@ -39,6 +40,8 @@ private:
 	void onDisconnect(ClientSocket sender, string reason, DisconnectType type)
 	{
 		log("* Disconnected (" ~ reason ~ ")");
+		if (handleDisconnect)
+			handleDisconnect(reason);
 		if (polling && type != DisconnectType.Requested)
 		{
 			if (pollTimer)
@@ -62,10 +65,19 @@ private:
 		if (line.length && line[0] == '.')
 			line = line[1..$];
 
-		if (reply.length==0 && (line.startsWith("200") || line.startsWith("111") || (line.startsWith("211") && !expectingGroupList[0])))
+		if (reply.length==0 && isSingleLineReply(line))
 			onReply([line]);
 		else
 			reply ~= line;
+	}
+
+	bool isSingleLineReply(string line)
+	{
+		return line.startsWith("200")
+			|| line.startsWith("111")
+			||(line.startsWith("211") && !expectingGroupList[0])
+			|| line.startsWith("240")
+			|| line.startsWith("340");
 	}
 
 	void send(string line)
@@ -163,8 +175,31 @@ private:
 					handleListGroup(messages);
 				break;
 			}
+			case "340": // POST reply
+			{
+				assert(postQueue.length);
+
+				foreach (line; postQueue)
+					if (line.startsWith("."))
+						send("." ~ line);
+					else
+						send(line);
+				send(".");
+				postQueue = null;
+				break;
+			}
+			case "240": // Successful post reply
+			{
+				if (handlePosted)
+					handlePosted();
+				break;
+			}
 			default:
-				throw new Exception("Unknown reply: " ~ reply[0]);
+				if (handleError)
+					handleError(reply[0]);
+				else
+					throw new Exception("Unknown reply: " ~ reply[0]);
+				break;
 		}
 	}
 
@@ -205,13 +240,13 @@ public:
 
 	void selectGroup(string name)
 	{
-		expectingGroupList = false ~ expectingGroupList;
+		expectingGroupList ~= false;
 		send("GROUP " ~ name);
 	}
 
 	void listGroup(string name, int from = 1)
 	{
-		expectingGroupList = true ~ expectingGroupList;
+		expectingGroupList ~= true;
 		if (from > 1)
 			send(format("LISTGROUP %s %d-", name, from));
 		else
@@ -232,8 +267,17 @@ public:
 		send("ARTICLE " ~ numOrID);
 	}
 
+	void postMessage(string[] lines)
+	{
+		postQueue = lines;
+		send("POST");
+	}
+
 	void delegate() handleConnect;
+	void delegate(string reason) handleDisconnect;
+	void delegate(string error) handleError;
 	void delegate(GroupInfo[] groups) handleGroups;
 	void delegate(string[] messages) handleListGroup;
 	void delegate(string[] lines, string num, string id) handleMessage;
+	void delegate() handlePosted;
 }

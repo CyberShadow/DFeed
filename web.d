@@ -25,6 +25,7 @@ import cache;
 import rfc850;
 import user;
 import recaptcha;
+import posting;
 
 class WebUI
 {
@@ -230,6 +231,35 @@ class WebUI
 							breadcrumb2 = `<a href="/discussion/reply/`~path[2]~`">Post reply</a>`;
 							bodyClass ~= " formdoc";
 							discussionPostForm(post.replyTemplate());
+							break;
+						}
+						case "send":
+						{
+							auto postVars = request.decodePostData();
+							auto process = discussionSend(postVars, cast(string[string])request.headers);
+							if (process)
+								return response.redirect("/discussion/poststatus/" ~ process.pid);
+
+							title = breadcrumb1 = `Posting error`;
+							bodyClass ~= " formdoc";
+							break;
+						}
+						case "poststatus":
+						{
+							enforce(path.length > 2, "No PID specified");
+							auto pid = path[2];
+							enforce(pid in postProcesses, "Sorry, this is not a post I know of.");
+							bool refresh, form;
+							discussionPostStatus(postProcesses[pid], refresh, form);
+							if (refresh)
+								response.setRefresh(1);
+							if (form)
+							{
+								title = breadcrumb1 = `Posting error`;
+								bodyClass ~= " formdoc";
+							}
+							else
+								title = breadcrumb1 = `Posting status`;
 							break;
 						}
 						default:
@@ -714,7 +744,7 @@ class WebUI
 				html.put(
 					`<tr class="thread-post-row"><td><div style="padding-left: `, format("%1.1f", OFFSET_INIT + level * offsetIncrement), OFFSET_UNITS, `">`
 						`<div class="thread-post-time">`, summarizeTime(post.time), `</div>`,
-						`<a class="postlink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread" ), `" href="`, idToUrl(post.id), `">`, encodeEntities(post.author), `</a>`
+						`<a class="postlink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread" ), `" href="`, encodeEntities(idToUrl(post.id)), `">`, encodeEntities(post.author), `</a>`
 					`</div></td></tr>`);
 				formatPosts(post.children, level+1, post.subject, false);
 			}
@@ -827,10 +857,11 @@ class WebUI
 		return toLower(getDigestString(strip(toLower(email))));
 	}
 
-	string getIPHash()
+	string getUserSecret()
 	{
-		import std.md5;
-		return toLower(getDigestString(ip ~ readText("data/salt.txt")));
+		if ("secret" !in user)
+			user["secret"] = randomString();
+		return user["secret"];
 	}
 
 	void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts)
@@ -891,7 +922,7 @@ class WebUI
 				`<table class="post forum-table`, (children ? ` with-children` : ``), `" id="`, encodeEntities(idToFragment(id)), `">`
 				`<tr class="post-header"><th colspan="2">`
 					`<div class="post-time">`, summarizeTime(time), `</div>`
-					`<a title="Permanent link to this post" href="`, idToUrl(id), `" class="`, (user.isRead(rowid) ? "forum-read" : "forum-unread"), `">`,
+					`<a title="Permanent link to this post" href="`, encodeEntities(idToUrl(id)), `" class="`, (user.isRead(rowid) ? "forum-read" : "forum-unread"), `">`,
 						encodeEntities(realSubject),
 					`</a>`
 				`</th></tr>`
@@ -987,7 +1018,7 @@ class WebUI
 				`<table class="split-post forum-table" id="`, encodeEntities(idToFragment(id)), `">`
 				`<tr class="post-header"><th>`
 					`<div class="post-time">`, summarizeTime(time), `</div>`
-					`<a title="Permanent link to this post" href="`, idToUrl(id), `" class="`, (user.isRead(rowid) ? "forum-read" : "forum-unread"), `">`,
+					`<a title="Permanent link to this post" href="`, encodeEntities(idToUrl(id)), `" class="`, (user.isRead(rowid) ? "forum-read" : "forum-unread"), `">`,
 						encodeEntities(realSubject),
 					`</a>`
 				`</th></tr>`
@@ -1057,22 +1088,33 @@ class WebUI
 		formatPost(post, null);
 	}
 
+	// ***********************************************************************
+
 	void discussionPostForm(Rfc850Post postTemplate, bool showCaptcha=false, string errorMessage=null)
 	{
 		html.put(`<form action="/discussion/send" method="post" id="postform">`);
 
+		string recaptchaError;
+		if (errorMessage.startsWith(RecaptchaErrorPrefix))
+		{
+			recaptchaError = errorMessage[RecaptchaErrorPrefix.length..$];
+			errorMessage = "reCAPTCHA error";
+		}
+
 		if (errorMessage)
 			html.put(`<div id="postform-error">` ~ encodeEntities(errorMessage) ~ `</div>`);
 
-		if (showCaptcha)
-			html.put(recaptchaChallengeHtml());
+		if (postTemplate.reply)
+			html.put(`<input type="hidden" name="parent" value="`, encodeEntities(postTemplate.parentID), `">`);
+		else
+			html.put(`<input type="hidden" name="where" value="`, encodeEntities(postTemplate.where), `">`);
 
 		html.put(
 			`<div id="postform-info">`
 				`Posting to <b>`, encodeEntities(postTemplate.where), `</b>`, 
 				(postTemplate.reply ? ` in reply to ` ~ postLink(getPostInfo(postTemplate.parentID)) : ``),
 			`</div>`
-			`<input type="hidden" name="iphash" value="`, getIPHash(), `">`
+			`<input type="hidden" name="secret" value="`, getUserSecret(), `">`
 			`<label for="postform-name">Your name:</label>`
 			`<input id="postform-name" name="name" size="40" value="`, encodeEntities(user.get("name", "")), `">`
 			`<label for="postform-email">Your e-mail address:</label>`
@@ -1080,9 +1122,129 @@ class WebUI
 			`<label for="postform-subject">Subject:</label>`
 			`<input id="postform-subject" name="subject" size="80" value="`, encodeEntities(postTemplate.subject), `">`
 			`<label for="postform-text">Message:</label>`
-			`<textarea id="postform-text" name="text" rows="25" cols="80">`, encodeEntities(postTemplate.content), `</textarea>`
+			`<textarea id="postform-text" name="text" rows="25" cols="80">`, encodeEntities(postTemplate.content), `</textarea>`);
+
+		if (showCaptcha)
+			html.put(`<div id="postform-captcha">`, recaptchaChallengeHtml(recaptchaError), `</div>`);
+
+		html.put(
 			`<input type="submit" value="Send">`
 		`</form>`);
+	}
+
+	SysTime[string] lastPostAttempt;
+
+	PostProcess discussionSend(string[string] vars, string[string] headers)
+	{
+		Rfc850Post post;
+		if ("parent" in vars)
+		{
+			auto parent = getPost(vars["parent"]);
+			enforce(parent, "Can't find post to reply to.");
+			post = parent.replyTemplate();
+		}
+		else
+		if ("where" in vars)
+			post = Rfc850Post.newPostTemplate(aaGet(vars, "where"));
+		else
+			throw new Exception("Sorry, were you saying something?");
+
+		post.author = aaGet(vars, "name");
+		post.authorEmail = aaGet(vars, "email");
+		post.subject = aaGet(vars, "subject");
+		post.setText(aaGet(vars, "text"));
+
+		post.headers["X-Web-User-Agent"] = aaGet(headers, "User-Agent");
+		post.headers["X-Web-Originating-IP"] = ip;
+
+		try
+		{
+			if (aaGet(vars, "secret", "") != getUserSecret())
+				throw new Exception("XSRF secret verification failed. Are your cookies enabled?");
+
+			user["name"] = aaGet(vars, "name");
+			user["email"] = aaGet(vars, "email");
+
+			bool captchaPresent = recaptchaPresent(vars);
+
+			auto now = Clock.currTime();
+			if (!captchaPresent)
+			{
+				if (ip in lastPostAttempt && now - lastPostAttempt[ip] < dur!"minutes"(1))
+				{
+					discussionPostForm(post, true, "Your last post was less than a minute ago. Please solve a CAPTCHA to continue.");
+					return null;
+				}
+			}
+
+			auto process = new PostProcess(post, vars, ip, headers);
+			lastPostAttempt[ip] = Clock.currTime();
+			return process;
+		}
+		catch (Exception e)
+		{
+			discussionPostForm(post, false, e.msg);
+			return null;
+		}
+	}
+
+	void discussionPostStatusMessage(string messageHtml)
+	{
+		html.put(
+			`<table class="forum-table">`
+				`<tr><th>Posting status</th></tr>`
+				`<tr><td class="forum-table-message">`, messageHtml, `</th></tr>`
+			`</table>`);
+	}
+
+	void discussionPostStatus(PostProcess process, out bool refresh, out bool form)
+	{
+		refresh = form = false;
+		switch (process.status)
+		{
+			case PostingStatus.SpamCheck:
+				discussionPostStatusMessage("Checking for spam...");
+				refresh = true;
+				return;
+			case PostingStatus.Captcha:
+				discussionPostStatusMessage("Verifying reCAPTCHA...");
+				refresh = true;
+				return;
+			case PostingStatus.Connecting:
+				discussionPostStatusMessage("Connecting to NNTP server...");
+				refresh = true;
+				return;
+			case PostingStatus.Posting:
+				discussionPostStatusMessage("Sending message to NNTP server...");
+				refresh = true;
+				return;
+			case PostingStatus.Waiting:
+				discussionPostStatusMessage("Message sent.<br>Waiting for message announcement...");
+				refresh = true;
+				return;
+
+			case PostingStatus.Posted:
+				discussionPostStatusMessage(`Message posted!<br><br><a class="forum-unread" href="` ~ encodeEntities(idToUrl(process.post.id)) ~ `">View message</a>`);
+				return;
+
+			case PostingStatus.CaptchaFailed:
+				discussionPostForm(process.post, true, process.errorMessage);
+				form = true;
+				return;
+			case PostingStatus.SpamCheckFailed:
+				discussionPostForm(process.post, true, format("%s. Please solve a CAPTCHA to continue.", process.errorMessage));
+				form = true;
+				return;
+			case PostingStatus.NntpError:
+				discussionPostForm(process.post, false, process.errorMessage);
+				form = true;
+				return;
+
+			default:
+				discussionPostStatusMessage("???");
+				refresh = true;
+				return;
+		}
 	}
 
 	// ***********************************************************************
