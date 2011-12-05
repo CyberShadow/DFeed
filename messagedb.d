@@ -29,7 +29,7 @@ protected:
 		mixin(DB_TRANSACTION);
 
 		query("INSERT OR IGNORE INTO `Posts` (`ID`, `Message`, `Author`, `Subject`, `Time`, `ParentID`, `ThreadID`) VALUES (?, ?, ?, ?, ?, ?, ?)")
-			.exec(message.id, message.lines, message.author, message.subject, message.time.stdTime, message.parentID, message.threadID);
+			.exec(message.id, message.message, message.author, message.subject, message.time.stdTime, message.parentID, message.threadID);
 
 		foreach (xref; message.xref)
 		{
