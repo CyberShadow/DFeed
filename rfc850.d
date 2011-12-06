@@ -293,10 +293,11 @@ class Rfc850Post : Post
 
 	private this() {} // for attachments and templates
 
-	static Rfc850Post newPostTemplate(string group)
+	static Rfc850Post newPostTemplate(string groups)
 	{
 		auto post = new Rfc850Post();
-		post.xref = [Xref(group)];
+		foreach (group; groups.split(","))
+			post.xref ~= Xref(group);
 		return post;
 	}
 
@@ -349,7 +350,7 @@ class Rfc850Post : Post
 		headers["Message-ID"] = id;
 		headers["From"] = format(`"%s" <%s>`, author, authorEmail);
 		headers["Subject"] = subject;
-		headers["Newsgroups"] = where; // TODO: what is the separator for cross-posting?
+		headers["Newsgroups"] = where;
 		headers["Content-Type"] = format("text/plain; charset=utf-8; format=%s; delsp=%s", flowed ? "flowed" : "fixed", delsp ? "yes" : "no");
 		headers["Content-Transfer-Encoding"] = "8bit";
 		if (references.length)

@@ -217,8 +217,8 @@ class WebUI
 							title = "Posting to " ~ group;
 							breadcrumb1 = `<a href="/discussion/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>`;
 							breadcrumb2 = `<a href="/discussion/newpost/`~encodeEntities(group)~`">New thread</a>`;
-							bodyClass ~= " formdoc";
-							discussionPostForm(Rfc850Post.newPostTemplate(group));
+							if (discussionPostForm(Rfc850Post.newPostTemplate(group)))
+								bodyClass ~= " formdoc";
 							break;
 						}
 						case "reply":
@@ -229,8 +229,8 @@ class WebUI
 							title = `Replying to "` ~ post.subject ~ `"`;
 							breadcrumb1 = `<a href="` ~ encodeEntities(idToUrl(post.id)) ~ `">` ~ encodeEntities(post.subject) ~ `</a>`;
 							breadcrumb2 = `<a href="/discussion/reply/`~path[2]~`">Post reply</a>`;
-							bodyClass ~= " formdoc";
-							discussionPostForm(post.replyTemplate());
+							if (discussionPostForm(post.replyTemplate()))
+								bodyClass ~= " formdoc";
 							break;
 						}
 						case "send":
@@ -289,12 +289,12 @@ class WebUI
 				breadcrumb1 = title = "Not Found";
 			else
 				breadcrumb1 = title = "Error";
-			auto text = encodeEntities(e.msg);
+			auto text = encodeEntities(e.msg).replace("\n", "<br>");
 			debug text ~= `<pre>` ~ encodeEntities(e.toString()) ~ `</pre>`;
 			html =
 				`<table class="forum-table forum-error">` ~
 					`<tr><th>` ~ encodeEntities(title) ~ `</th></tr>` ~
-					`<tr><td class="forum-table-message">` ~ text ~ `</th></tr>` ~
+					`<tr><td class="forum-table-message">` ~ text ~ `</td></tr>` ~
 				`</table>`;
 		}
 
@@ -335,53 +335,63 @@ class WebUI
 		return response.serveFile(optimizedPath("web/static/", path), "web/static/");
 	}
 
-	struct Group { string name, description; }
-	struct GroupSet { string name; Group[] groups; }
+	struct GroupInfo { bool isML; string name, description; }
+	struct GroupSet { string name; GroupInfo[] groups; }
 
 	/*const*/ GroupSet[] groupHierarchy = [
 	{ "D Programming Language", [
-		{ "digitalmars.D",	"General discussion of the D programming language." },
-		{ "digitalmars.D.announce",	"Announcements for anything D related" },
-		{ "digitalmars.D.bugs",	"Bug reports for D compiler and library" },
-		{ "digitalmars.D.debugger",	"Debuggers for D" },
-		{ "digitalmars.D.dwt",	"Developing the D Widget Toolkit" },
-		{ "digitalmars.D.dtl",	"Developing the D Template Library" },
-		{ "digitalmars.D.ide",	"Integrated Debugging Environments for D" },
-		{ "digitalmars.D.learn",	"Questions about learning D" },
-		{ "D.gnu",	"GDC, the Gnu D Compiler " },
-		{ "dmd-beta",	"Notify of and discuss beta versions" },
-		{ "dmd-concurrency",	"Design of concurrency features in D and library" },
-		{ "dmd-internals",	"dmd compiler internal design and implementation" },
-		{ "phobos",	"Phobos runtime library design and implementation" },
+		{ false,	"digitalmars.D",			"General discussion of the D programming language." },
+		{ false,	"digitalmars.D.announce",	"Announcements for anything D related" },
+		{ false,	"digitalmars.D.bugs",		"Bug reports for D compiler and library" },
+		{ false,	"digitalmars.D.debugger",	"Debuggers for D" },
+		{ false,	"digitalmars.D.dwt",		"Developing the D Widget Toolkit" },
+		{ false,	"digitalmars.D.dtl",		"Developing the D Template Library" },
+		{ false,	"digitalmars.D.ide",		"Integrated Debugging Environments for D" },
+		{ false,	"digitalmars.D.learn",		"Questions about learning D" },
+		{ false,	"D.gnu",					"GDC, the Gnu D Compiler " },
+		{ true,		"dmd-beta",					"Notify of and discuss beta versions" },
+		{ true,		"dmd-concurrency",			"Design of concurrency features in D and library" },
+		{ true,		"dmd-internals",			"dmd compiler internal design and implementation" },
+		{ true,		"phobos",					"Phobos standard library design and implementation" },
+		{ true,		"D-runtime",				"Runtime library design and implementation" },
 	]},
 	{ "C and C++", [
-		{ "c++",	"General discussion of DMC++ compiler" },
-		{ "c++.announce",	"Announcements about C++" },
-		{ "c++.atl",	"Microsoft's Advanced Template Library" },
-		{ "c++.beta",	"Test versions of various C++ products" },
-		{ "c++.chat",	"Off topic discussions" },
-		{ "c++.command-line",	"Command line tools" },
-		{ "c++.dos",	"DMC++ and DOS" },
-		{ "c++.dos.16-bits",	"16 bit DOS topics" },
-		{ "c++.dos.32-bits",	"32 bit extended DOS topics" },
-		{ "c++.idde",	"The Digital Mars Integrated Development and Debugging Environment" },
-		{ "c++.mfc",	"Microsoft Foundation Classes" },
-		{ "c++.rtl",	"C++ Runtime Library" },
-		{ "c++.stl",	"Standard Template Library" },
-		{ "c++.stl.hp",	"HP's Standard Template Library" },
-		{ "c++.stl.port",	"STLPort Standard Template Library" },
-		{ "c++.stl.sgi",	"SGI's Standard Template Library" },
-		{ "c++.stlsoft",	"Stlsoft products" },
-		{ "c++.windows",	"Writing C++ code for Microsoft Windows" },
-		{ "c++.windows.16-bits",	"16 bit Windows topics" },
-		{ "c++.windows.32-bits",	"32 bit Windows topics" },
-		{ "c++.wxwindows",	"wxWindows" },
+		{ false,	"c++",						"General discussion of DMC++ compiler" },
+		{ false,	"c++.announce",				"Announcements about C++" },
+		{ false,	"c++.atl",					"Microsoft's Advanced Template Library" },
+		{ false,	"c++.beta",					"Test versions of various C++ products" },
+		{ false,	"c++.chat",					"Off topic discussions" },
+		{ false,	"c++.command-line",			"Command line tools" },
+		{ false,	"c++.dos",					"DMC++ and DOS" },
+		{ false,	"c++.dos.16-bits",			"16 bit DOS topics" },
+		{ false,	"c++.dos.32-bits",			"32 bit extended DOS topics" },
+		{ false,	"c++.idde",					"The Digital Mars Integrated Development and Debugging Environment" },
+		{ false,	"c++.mfc",					"Microsoft Foundation Classes" },
+		{ false,	"c++.rtl",					"C++ Runtime Library" },
+		{ false,	"c++.stl",					"Standard Template Library" },
+		{ false,	"c++.stl.hp",				"HP's Standard Template Library" },
+		{ false,	"c++.stl.port",				"STLPort Standard Template Library" },
+		{ false,	"c++.stl.sgi",				"SGI's Standard Template Library" },
+		{ false,	"c++.stlsoft",				"Stlsoft products" },
+		{ false,	"c++.windows",				"Writing C++ code for Microsoft Windows" },
+		{ false,	"c++.windows.16-bits",		"16 bit Windows topics" },
+		{ false,	"c++.windows.32-bits",		"32 bit Windows topics" },
+		{ false,	"c++.wxwindows",			"wxWindows" },
 	]},
 	{ "Other", [
-		{ "DMDScript",	"General discussion of DMDScript" },
-		{ "digitalmars.empire",	"General discussion of Empire, the Wargame of the Century " },
-		{ "D",	"Retired, use digitalmars.D instead" },
+		{ false,	"DMDScript",				"General discussion of DMDScript" },
+		{ false,	"digitalmars.empire",		"General discussion of Empire, the Wargame of the Century" },
+		{ false,	"D",						"Retired, use digitalmars.D instead" },
 	]}];
+
+	GroupInfo* getGroupInfo(string name)
+	{
+		foreach (set; groupHierarchy)
+			foreach (ref group; set.groups)
+				if (group.name == name)
+					return &group;
+		return null;
+	}
 
 	int[string] getThreadCounts()
 	{
@@ -1091,8 +1101,25 @@ class WebUI
 
 	// ***********************************************************************
 
-	void discussionPostForm(Rfc850Post postTemplate, bool showCaptcha=false, string errorMessage=null)
+	bool discussionPostForm(Rfc850Post postTemplate, bool showCaptcha=false, string errorMessage=null)
 	{
+	    auto info = getGroupInfo(postTemplate.xref[0].group);
+	    if (!info)
+	    	throw new Exception("Unknown group");
+	    if (info.isML)
+	    {
+			html.put(
+				`<table class="forum-table forum-error">`
+					`<tr><th>Reply to mailing list</th></tr>`
+					`<tr><td class="forum-table-message">`
+						`You are viewing a mailing list archive.<br>`
+						`For information about posting, visit `
+							`<a href="http://lists.puremagic.com/cgi-bin/mailman/listinfo/` ~ info.name ~ `">` ~ info.name ~ `'s Mailman page</a>.`
+					`</td></tr>`
+				`</table>`);
+	    	return false;
+	    }
+		
 		html.put(`<form action="/discussion/send" method="post" id="postform">`);
 
 		string recaptchaError;
@@ -1131,6 +1158,7 @@ class WebUI
 		html.put(
 			`<input type="submit" value="Send">`
 		`</form>`);
+		return true;
 	}
 
 	SysTime[string] lastPostAttempt;
