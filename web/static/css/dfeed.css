@@ -175,6 +175,26 @@ th .forum-read:visited {
 	color: #666;
 }
 
+/* Forms */
+
+.forum-form input,
+.forum-form textarea {
+	font-size: inherit;
+}
+
+.forum-form label,
+.forum-form input[type=submit] {
+	margin-top: 10px !important;
+	display: block;
+}
+
+.form-error {
+	border: 2px dotted red;
+	color: red;
+	padding: 10px;
+	margin-bottom: 10px;
+}
+
 /*************** Discussion index ***************/
 
 #forum-index > tbody > tr > td:nth-child(even) {
@@ -504,31 +524,32 @@ kbd { /* stolen from http://en.wikipedia.org/wiki/Template:Key_press */
 
 /*************** Posting ***************/
 
-#postform-error {
-	border: 2px dotted red;
-	color: red;
-	padding: 10px;
-	margin-bottom: 10px;
-}
-
-#postform input,
-#postform textarea {
-	font-size: inherit;
-}
-
-#postform label,
-#postform input[type=submit],
 #postform-captcha {
 	margin-top: 10px;
-	display: block;
-}
-
-#postform #postform-subject {
 }
 
 .formdoc #content {
 	display: inline-block;
 	margin-left: 0 !important;
+}
+
+/*************** Login ***************/
+
+.loginform {
+	width: 320px;
+	margin: 70px auto 0 auto;
+}
+
+.loginform-error {
+	margin: 0 !important;
+}
+
+.loginform-cell {
+	padding: 30px 80px !important;
+}
+
+.loginform-info {
+	text-align: center;
 }
 
 /*************** Misc views ***************/

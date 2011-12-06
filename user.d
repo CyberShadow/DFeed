@@ -4,80 +4,54 @@ import std.string;
 import std.exception;
 import std.base64;
 import ae.sys.data;
+import ae.utils.text;
 import ae.utils.zlib;
 
-struct User
+abstract class User
 {
-	// TODO: database backing for registered users
+	abstract string get(string name, string defaultValue);
+	abstract void set(string name, string value);
+	abstract string[] save();
 
-	string[string] cookies, newCookies;
+	abstract void logIn(string username, string password);
+	abstract void logOut();
+	abstract void register(string username, string password);
+	abstract bool isLoggedIn();
 
-	this(string cookieHeader)
+	string getName() { return null; }
+
+	final bool opIn_r(string name)
 	{
-		auto segments = cookieHeader.split("; ");
-		foreach (segment; segments)
-		{
-			auto p = segment.indexOf('=');
-			if (p > 0)
-			{
-			    string name = segment[0..p];
-			    if (name.startsWith("dfeed_"))
-					cookies[name[6..$]] = segment[p+1..$];
-			}
-		}
+		return get(name, null) !is null;
 	}
 
-	string get(string name, string defaultValue)
+	final string opIndex(string name)
 	{
-		auto pCookie = name in newCookies;
-		if (pCookie)
-			return *pCookie;
-		pCookie = name in cookies;
-		if (pCookie)
-			return *pCookie;
-		return defaultValue;
+		auto result = get(name, null);
+		enforce(result, "No such user setting: " ~ name);
+		return result;
 	}
 
-	bool opIn_r(string name)
+	final string opIndexAssign(string value, string name)
 	{
-		return (name in newCookies) || (name in cookies);
+		set(name, value);
+		return value;
 	}
 
-	string opIndex(string name)
-	{
-		auto pNewCookie = name in newCookies;
-		if (pNewCookie)
-			return *pNewCookie;
-		else
-			return cookies[name];
-	}
-
-	string opIndexAssign(string value, string name)
-	{
-		return newCookies[name] = value;
-	}
-
-	string[] getCookies()
+protected:
+	/// Save misc data to string settings
+	final void finalize()
 	{
 		encodeReadPosts();
-
-		string[] result;
-		foreach (name, value; newCookies)
-		{
-			if (name in cookies && cookies[name] == value)
-				continue;
-
-			// TODO Expires
-			result ~= "dfeed_" ~ name ~ "=" ~ value ~ "; Expires=Wed, 09 Jun 2021 10:18:14 GMT; Path=/";
-		}
-		return result;
 	}
 
 	// ***********************************************************************
 
+private:
 	Data* readPosts;
 	bool readPostsDirty;
 
+final:
 	void needReadPosts()
 	{
 		if (!readPosts)
@@ -98,11 +72,11 @@ struct User
 		if (readPosts && readPosts.length && readPostsDirty)
 		{
 			auto b64 = Base64.encode(cast(ubyte[])compress(*readPosts, 1).contents);
-			newCookies["readposts"] = assumeUnique(b64);
+			set("readposts", assumeUnique(b64));
 		}
 	}
 
-	bool isRead(size_t post)
+	public bool isRead(size_t post)
 	{
 		needReadPosts();
 		auto pos = post/8;
@@ -112,7 +86,7 @@ struct User
 			return ((cast(ubyte[])readPosts.contents)[pos] & (1 << (post % 8))) != 0;
 	}
 
-	void setRead(size_t post, bool value)
+	public void setRead(size_t post, bool value)
 	{
 		needReadPosts();
 		auto pos = post/8;
@@ -132,4 +106,166 @@ struct User
 			*pbyte = *pbyte & ~mask;
 		readPostsDirty = true;
 	}
+}
+
+final class GuestUser : User
+{
+	string[string] cookies, newCookies;
+
+	this(string cookieHeader)
+	{
+		auto segments = cookieHeader.split("; ");
+		foreach (segment; segments)
+		{
+			auto p = segment.indexOf('=');
+			if (p > 0)
+			{
+			    string name = segment[0..p];
+			    if (name.startsWith("dfeed_"))
+					cookies[name[6..$]] = segment[p+1..$];
+			}
+		}
+	}
+
+	override string get(string name, string defaultValue)
+	{
+		auto pCookie = name in newCookies;
+		if (pCookie)
+			return *pCookie;
+		pCookie = name in cookies;
+		if (pCookie)
+			return *pCookie;
+		return defaultValue;
+	}
+
+	override void set(string name, string value)
+	{
+		newCookies[name] = value;
+	}
+
+	override string[] save()
+	{
+		finalize();
+
+		string[] result;
+		foreach (name, value; newCookies)
+		{
+			if (name in cookies && cookies[name] == value)
+				continue;
+
+			// TODO Expires
+			result ~= "dfeed_" ~ name ~ "=" ~ value ~ "; Expires=Wed, 09 Jun 2021 10:18:14 GMT; Path=/";
+		}
+		return result;
+	}
+
+	static string encryptPassword(string password)
+	{
+		// TODO: use bcrypt()
+		import std.md5, std.file;
+		return toLower(getDigestString(password ~ readText("data/salt.txt")));
+	}
+
+	override void logIn(string username, string password)
+	{
+		foreach (string session; query("SELECT `Session` FROM `Users` WHERE `Username` = ? AND `Password` = ?").iterate(username, encryptPassword(password)))
+		{
+			set("session", session);
+			return;
+		}
+		throw new Exception("No such username/password combination");
+	}
+
+	override void register(string username, string password)
+	{
+		// Create user
+		auto session = randomString();
+		query("INSERT INTO `Users` (`Username`, `Password`, `Session`) VALUES (?, ?, ?)").exec(username, encryptPassword(password), session);
+
+		// Copy cookies to database
+		auto user = new RegisteredUser(username);
+		foreach (name, value; cookies)
+			user.set(name, value);
+		user.save();
+
+		// Log them in
+		this.set("session", session);
+	}
+
+	override void logOut() { throw new Exception("Not logged in"); }
+	override bool isLoggedIn() { return false; }
+}
+
+import database;
+
+final class RegisteredUser : User
+{
+	string[string] settings, newSettings;
+	string username;
+
+	this(string username)
+	{
+		this.username = username;
+	}
+
+	override string get(string name, string defaultValue)
+	{
+		auto pSetting = name in newSettings;
+		if (pSetting)
+			return *pSetting;
+
+		pSetting = name in settings;
+		string value;
+		if (pSetting)
+			value = *pSetting;
+		else
+		{
+			foreach (string v; query("SELECT `Value` FROM `UserSettings` WHERE `User` = ? AND `Name` = ?").iterate(username, name))
+				value = v;
+			settings[name] = value;
+		}
+
+		return value ? value : defaultValue;
+	}
+
+	override void set(string name, string value)
+	{
+		newSettings[name] = value;
+	}
+
+	override string[] save()
+	{
+		finalize();
+
+		foreach (name, value; newSettings)
+		{
+			if (name in settings && settings[name] == value)
+				continue;
+
+			query("INSERT OR REPLACE INTO `UserSettings` (`User`, `Name`, `Value`) VALUES (?, ?, ?)").exec(username, name, value);
+		}
+
+		return null;
+	}
+
+	override void logIn(string username, string password) { throw new Exception("Already logged in"); }
+	override bool isLoggedIn() { return true; }
+	override void register(string username, string password) { throw new Exception("Already registered"); }
+	override string getName() { return username; }
+
+	override void logOut()
+	{
+		query("UPDATE `Users` SET `Session` = ? WHERE `Username` = ?").exec(randomString(), username);
+	}
+}
+
+User getUser(string cookieHeader)
+{
+	auto guest = new GuestUser(cookieHeader);
+	if ("session" in guest.cookies)
+	{
+		foreach (string username; query("SELECT `Username` FROM `Users` WHERE `Session` = ?").iterate(guest.cookies["session"]))
+			return new RegisteredUser(username);
+	}
+	return guest;
 }

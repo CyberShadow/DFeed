@@ -1,5 +1,7 @@
 module database;
 
+import std.exception;
+
 import ae.sys.sqlite3;
 public import ae.sys.sqlite3 : SQLiteException;
 
@@ -13,7 +15,9 @@ SQLite.PreparedStatement query(string sql)
 	if (pstatement)
 		return *pstatement;
 
-	return cache[sql.ptr] = db.prepare(sql);
+	auto statement = db.prepare(sql);
+	enforce(statement, "Statement compilation failed: " ~ sql);
+	return cache[sql.ptr] = statement;
 }
 
 bool allowTransactions = true;

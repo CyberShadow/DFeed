@@ -76,8 +76,8 @@ class WebUI
 			ip = request.headers["X-Forwarded-For"];
 		scope(exit) log(format("%s - %dms - %s", ip, responseTime.peek().msecs, request.resource));
 
-		user = User("Cookie" in request.headers ? request.headers["Cookie"] : null);
-		scope(success) foreach (cookie; user.getCookies()) response.headers.add("Set-Cookie", cookie);
+		user = getUser("Cookie" in request.headers ? request.headers["Cookie"] : null);
+		scope(success) foreach (cookie; user.save()) response.headers.add("Set-Cookie", cookie);
 
 		string title, breadcrumb1, breadcrumb2;
 		string bodyClass = "narrowdoc";
@@ -262,6 +262,63 @@ class WebUI
 								title = breadcrumb1 = `Posting status`;
 							break;
 						}
+						case "loginform":
+						{
+							discussionLoginForm(parameters);
+							title = breadcrumb1 = `Log in`;
+							break;
+						}
+						case "registerform":
+						{
+							discussionRegisterForm(parameters);
+							title = breadcrumb1 = `Registration`;
+							break;
+						}
+						case "login":
+						{
+							try
+							{
+								parameters = request.decodePostData();
+								discussionLogin(parameters);
+								if ("url" in parameters)
+									return response.redirect(parameters["url"]);
+								else
+									return response.serveText("OK");
+							}
+							catch (Exception e)
+							{
+								discussionLoginForm(parameters, e.msg);
+								title = breadcrumb1 = `Login error`;
+								break;
+							}
+						}
+						case "register":
+						{
+							try
+							{
+								parameters = request.decodePostData();
+								discussionRegister(parameters);
+								if ("url" in parameters)
+									return response.redirect(parameters["url"]);
+								else
+									return response.serveText("OK");
+							}
+							catch (Exception e)
+							{
+								discussionRegisterForm(parameters, e.msg);
+								title = breadcrumb1 = `Registration error`;
+								break;
+							}
+						}
+						case "logout":
+						{
+							enforce(user.isLoggedIn(), "Not logged in");
+							user.logOut();
+							if ("url" in parameters)
+								return response.redirect(parameters["url"]);
+							else
+								return response.serveText("OK");
+						}
 						default:
 							throw new NotFoundException();
 					}
@@ -291,17 +348,23 @@ class WebUI
 				breadcrumb1 = title = "Error";
 			auto text = encodeEntities(e.msg).replace("\n", "<br>");
 			debug text ~= `<pre>` ~ encodeEntities(e.toString()) ~ `</pre>`;
-			html =
-				`<table class="forum-table forum-error">` ~
-					`<tr><th>` ~ encodeEntities(title) ~ `</th></tr>` ~
-					`<tr><td class="forum-table-message">` ~ text ~ `</td></tr>` ~
-				`</table>`;
+			html.clear();
+			html.put(
+				`<table class="forum-table forum-error">`
+					`<tr><th>`, encodeEntities(title), `</th></tr>`
+					`<tr><td class="forum-table-message">`, text, `</td></tr>`
+				`</table>`);
 		}
 
 		assert(title, "No title");
 		assert(html.length, "No HTML");
 		if (breadcrumb1) breadcrumb1 = "&rsaquo; " ~ breadcrumb1;
 		if (breadcrumb2) breadcrumb2 = "&raquo; " ~ breadcrumb2;
+
+		if (user.isLoggedIn())
+			tools ~= `<a href="/discussion/logout?url=__URL__">Log out ` ~ encodeEntities(user.getName()) ~ `</a>`;
+		else
+			tools ~= `<a href="/discussion/loginform?url=__URL__">Log in</a>`;
 
 		string toolStr = tools.join(" &middot; ");
 		toolStr =
@@ -1120,7 +1183,7 @@ class WebUI
 	    	return false;
 	    }
 		
-		html.put(`<form action="/discussion/send" method="post" id="postform">`);
+		html.put(`<form action="/discussion/send" method="post" class="forum-form" id="postform">`);
 
 		string recaptchaError;
 		if (errorMessage.startsWith(RecaptchaErrorPrefix))
@@ -1130,7 +1193,7 @@ class WebUI
 		}
 
 		if (errorMessage)
-			html.put(`<div id="postform-error">` ~ encodeEntities(errorMessage) ~ `</div>`);
+			html.put(`<div class="form-error">` ~ encodeEntities(errorMessage) ~ `</div>`);
 
 		if (postTemplate.reply)
 			html.put(`<input type="hidden" name="parent" value="`, encodeEntities(postTemplate.parentID), `">`);
@@ -1274,6 +1337,76 @@ class WebUI
 				refresh = true;
 				return;
 		}
+	}
+
+	// ***********************************************************************
+
+	void discussionLoginForm(string[string] parameters, string errorMessage = null)
+	{
+
+		html.put(`<form action="/discussion/login" method="post" id="loginform" class="forum-form loginform">`
+			`<table class="forum-table">`
+				`<tr><th>Log in</th></tr>`
+				`<tr><td class="loginform-cell">`);
+
+		if ("url" in parameters)
+			html.put(`<input type="hidden" name="url" value="`, encodeEntities(parameters["url"]), `">`);
+
+		html.put(
+				`<label for="loginform-username">Username:</label>`
+				`<input id="loginform-username" name="username" value="`, encodeEntities(aaGet(parameters, "username", "")), `">`
+				`<label for="loginform-password">Password:</label>`
+				`<input id="loginform-password" type="password" name="password" value="`, encodeEntities(aaGet(parameters, "password", "")), `">`
+				`<input type="submit" value="Log in">`
+			`</td></tr>`
+			`<tr><td class="loginform-info">`);
+		if (errorMessage)
+			html.put(`<div class="form-error loginform-error">`, encodeEntities(errorMessage), `</div>`);
+		else
+			html.put(
+				`<a href="/discussion/registerform`, 
+					("url" in parameters ? `?url=` ~ encodeUrlParameter(parameters["url"]) : ``),
+					`">Register</a> to keep your preferences<br>and read post history on the server.`);
+		html.put(
+			`</td></tr>`
+		`</table></form>`);
+	}
+
+	void discussionLogin(string[string] parameters)
+	{
+		user.logIn(aaGet(parameters, "username"), aaGet(parameters, "password"));
+	}
+
+	void discussionRegisterForm(string[string] parameters, string errorMessage = null)
+	{
+		html.put(`<form action="/discussion/register" method="post" id="registerform" class="forum-form loginform">`
+			`<table class="forum-table">`
+				`<tr><th>Register</th></tr>`
+				`<tr><td class="loginform-cell">`);
+
+		if ("url" in parameters)
+			html.put(`<input type="hidden" name="url" value="`, encodeEntities(parameters["url"]), `">`);
+
+		html.put(
+			`<label for="loginform-username">Username:</label>`
+			`<input id="loginform-username" name="username" value="`, encodeEntities(aaGet(parameters, "username", "")), `">`
+			`<label for="loginform-password">Password:</label>`
+			`<input id="loginform-password" name="password" value="`, encodeEntities(aaGet(parameters, "password", "")), `">`
+			`<input type="submit" value="Register">`
+			`</td></tr>`
+			`<tr><td class="loginform-info">`);
+		if (errorMessage)
+			html.put(`<div class="form-error loginform-error">`, encodeEntities(errorMessage), `</div>`);
+		else
+			html.put(`Please pick your password carefully.<br>There are no password recovery options.`);
+		html.put(
+			`</td></tr>`
+		`</table></form>`);
+	}
+
+	void discussionRegister(string[string] parameters)
+	{
+		user.register(aaGet(parameters, "username"), aaGet(parameters, "password"));
 	}
 
 	// ***********************************************************************

@@ -54,3 +54,15 @@ CREATE INDEX "ThreadID" ON "Threads" ( ID );
 -- Index `PostParentID` on table `Posts`
 CREATE INDEX PostParentID ON Posts ( ParentID );
 
+-- Table `Users`
+CREATE TABLE [Users] ( [Username] VARCHAR(50), [Password] VARCHAR(50), [Session] VARCHAR(50) );
+
+-- Index `UserName` on table `Users`
+CREATE UNIQUE INDEX [UserName] ON [Users] ( [Username] );
+
+-- Table `UserSettings`
+CREATE TABLE [UserSettings] ( [User] VARCHAR(50), [Name] VARCHAR(50), [Value] TEXT );
+
+-- Index `UserSetting` on table `UserSettings`
+CREATE UNIQUE INDEX [UserSetting] on [UserSettings] ( [User], [Name] );
+
