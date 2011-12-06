@@ -864,16 +864,16 @@ class WebUI
 		return user["secret"];
 	}
 
+	void replyButton(string id)
+	{
+		html.put(
+			`<a class="replylink" href="`, encodeEntities(idToUrl(id, "reply")), `">`
+				`<img src="`, staticPath("/images/reply.png"), `">Reply`
+			`</a>`);
+	}
+
 	void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts)
 	{
-		void replyButton()
-		{
-			html.put(
-				`<a class="replylink" href="/discussion/reply/`, encodeEntities(post.id[1..$-1]), `">`
-					`<img src="`, staticPath("/images/reply.png"), `">Reply`
-				`</a>`);
-		}
-
 		string gravatarHash = getGravatarHash(post.authorEmail);
 
 		string[] infoBits;
@@ -942,7 +942,7 @@ class WebUI
 				html.put(`<br>`);
 			html.put(
 						`<br>` // guarantee space for the "toolbar"
-						`<div class="post-toolbar">`), replyButton(), html.put(`</div>`
+						`<div class="post-toolbar">`), replyButton(id), html.put(`</div>`
 					`</td>`
 					`<td class="post-body">`
 						`<div class="post-text">`), formatBody(content), html.put(`</div>`,
@@ -1034,6 +1034,7 @@ class WebUI
 				html.put(`<tr><td class="split-post-info-name">`, a.name, `</td><td class="split-post-info-value">`, a.value, `</td></tr>`);
 			html.put(
 						`</table></td>`
+						`<td class="split-post-reply">`), replyButton(id), html.put(`</td>`
 					`</tr></table>`
 				`</td></tr>`
 				`<tr><td class="post-body">`
@@ -1145,7 +1146,7 @@ class WebUI
 		}
 		else
 		if ("where" in vars)
-			post = Rfc850Post.newPostTemplate(aaGet(vars, "where"));
+			post = Rfc850Post.newPostTemplate(vars["where"]);
 		else
 			throw new Exception("Sorry, were you saying something?");
 
