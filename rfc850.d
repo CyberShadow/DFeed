@@ -218,6 +218,22 @@ class Rfc850Post : Post
 				if (line.startsWith("--- Comment #") && line.indexOf(" from ")>0 && line.indexOf(" <")>0 && line.endsWith(" ---"))
 					author = line[line.indexOf(" from ")+6 .. line.indexOf(" <")];
 		}
+		else
+		if (author.indexOf('@') < 0 && author.indexOf(" at ") >= 0)
+		{
+			// Mailing list archive format
+			assert(author == authorEmail);
+			if (author.indexOf(" (") > 0 && author.endsWith(")"))
+			{
+				authorEmail = author[0 .. author.lastIndexOf(" (")].replace(" at ", "@");
+				author      = author[author.lastIndexOf(" (")+2 .. $-1];
+			}
+			else
+			{
+				authorEmail = author.replace(" at ", "@");
+				author = author[0 .. author.lastIndexOf(" at ")];
+			}
+		}
 		if (author.indexOf('<')>=0 && author.endsWith('>'))
 		{
 			auto p = author.indexOf('<');
@@ -226,6 +242,8 @@ class Rfc850Post : Post
 		}
 		if (author.length>2 && author[0]=='"' && author[$-1]=='"')
 			author = decodeRfc5335(strip(author[1..$-1]));
+		//if (author == authorEmail && author.indexOf("@") > 0)
+		//	author = author[0..author.indexOf("@")];
 
 		//where = "Newsgroups" in headers ? headers["Newsgroups"] : null;
 		if ("Xref" in headers)
