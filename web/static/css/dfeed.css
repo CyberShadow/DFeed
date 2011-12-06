@@ -277,6 +277,10 @@ ul.post-info-parts {
 	position: absolute;
 	bottom: 12px;
 }
+.replylink {
+	display: block;
+	white-space: pre;
+}
 .replylink img {
 	vertical-align: middle;
 	margin-right: 5px;
