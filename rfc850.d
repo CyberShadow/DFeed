@@ -206,6 +206,7 @@ class Rfc850Post : Post
 			reply = true;
 		}
 
+		int bugzillaCommentNumber;
 		author = authorEmail = "From" in headers ? decodeRfc5335(headers["From"]) : null;
 		if ("X-Bugzilla-Who" in headers)
 		{
@@ -216,7 +217,10 @@ class Rfc850Post : Post
 					author = line[0..line.indexOf(" <")];
 				else
 				if (line.startsWith("--- Comment #") && line.indexOf(" from ")>0 && line.indexOf(" <")>0 && line.endsWith(" ---"))
+				{
 					author = line[line.indexOf(" from ")+6 .. line.indexOf(" <")];
+					bugzillaCommentNumber = to!int(line["--- Comment #".length .. line.indexOf(" from ")]);
+				}
 		}
 		else
 		if (author.indexOf('@') < 0 && author.indexOf(" at ") >= 0)
@@ -267,7 +271,11 @@ class Rfc850Post : Post
 			id = headers["Message-ID"];
 
 		if (subject.startsWith("[Issue "))
+		{
 			url = "http://d.puremagic.com/issues/show_bug.cgi?id=" ~ subject.split(" ")[1][0..$-1];
+			if (bugzillaCommentNumber > 0)
+				url ~= "#c" ~ .text(bugzillaCommentNumber);
+		}
 		else
 		if (id.length)
 			url = format("http://%s/discussion/post/%s", std.file.readText("data/web.txt").splitLines()[1], encodeComponent(id[1..$-1]));
