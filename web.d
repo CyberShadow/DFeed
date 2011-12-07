@@ -266,12 +266,14 @@ class WebUI
 						{
 							discussionLoginForm(parameters);
 							title = breadcrumb1 = `Log in`;
+							tools ~= `<a href="/discussion/registerform?url=__URL__">Register</a>`;
 							break;
 						}
 						case "registerform":
 						{
 							discussionRegisterForm(parameters);
 							title = breadcrumb1 = `Registration`;
+							tools ~= `<a href="/discussion/registerform?url=__URL__">Register</a>`;
 							break;
 						}
 						case "login":
@@ -289,6 +291,7 @@ class WebUI
 							{
 								discussionLoginForm(parameters, e.msg);
 								title = breadcrumb1 = `Login error`;
+								tools ~= `<a href="/discussion/registerform?url=__URL__">Register</a>`;
 								break;
 							}
 						}
@@ -307,6 +310,7 @@ class WebUI
 							{
 								discussionRegisterForm(parameters, e.msg);
 								title = breadcrumb1 = `Registration error`;
+								tools ~= `<a href="/discussion/registerform?url=__URL__">Register</a>`;
 								break;
 							}
 						}
@@ -1358,18 +1362,17 @@ class WebUI
 				`<label for="loginform-password">Password:</label>`
 				`<input id="loginform-password" type="password" name="password" value="`, encodeEntities(aaGet(parameters, "password", "")), `">`
 				`<input type="submit" value="Log in">`
-			`</td></tr>`
-			`<tr><td class="loginform-info">`);
+			`</td></tr>`);
 		if (errorMessage)
-			html.put(`<div class="form-error loginform-error">`, encodeEntities(errorMessage), `</div>`);
+			html.put(`<tr><td class="loginform-info"><div class="form-error loginform-error">`, encodeEntities(errorMessage), `</div></td></tr>`);
 		else
 			html.put(
-				`<a href="/discussion/registerform`, 
-					("url" in parameters ? `?url=` ~ encodeUrlParameter(parameters["url"]) : ``),
-					`">Register</a> to keep your preferences<br>and read post history on the server.`);
-		html.put(
-			`</td></tr>`
-		`</table></form>`);
+				`<tr><td class="loginform-info">`
+					`<a href="/discussion/registerform`,
+						("url" in parameters ? `?url=` ~ encodeUrlParameter(parameters["url"]) : ``),
+						`">Register</a> to keep your preferences<br>and read post history on the server.`
+				`</td></tr>`);
+		html.put(`</table></form>`);
 	}
 
 	void discussionLogin(string[string] parameters)
@@ -1396,12 +1399,13 @@ class WebUI
 			`</td></tr>`
 			`<tr><td class="loginform-info">`);
 		if (errorMessage)
-			html.put(`<div class="form-error loginform-error">`, encodeEntities(errorMessage), `</div>`);
+			html.put(`<tr><td class="loginform-info"><div class="form-error loginform-error">`, encodeEntities(errorMessage), `</div></td></tr>`);
 		else
-			html.put(`Please pick your password carefully.<br>There are no password recovery options.`);
-		html.put(
-			`</td></tr>`
-		`</table></form>`);
+			html.put(
+				`<tr><td class="loginform-info">`
+					`Please pick your password carefully.<br>There are no password recovery options.`
+				`</td></tr>`);
+		html.put(`</table></form>`);
 	}
 
 	void discussionRegister(string[string] parameters)
