@@ -1040,7 +1040,7 @@ class WebUI
 			infoBits ~=
 				`<a href="` ~ encodeEntities(idToThreadUrl(post.id, post.threadID)) ~ `">View in thread</a>`;
 
-		string repliesTitle = `Replies to `~encodeEntities(post.author)~`'s post from `~encodeEntities(formatShortTime(post.time));
+		string repliesTitle = `Replies to `~encodeEntities(post.author)~`'s post from `~encodeEntities(formatShortTime(post.time, false));
 
 		with (post)
 		{
@@ -1119,7 +1119,7 @@ class WebUI
 		InfoRow[] infoRows;
 
 		infoRows ~= InfoRow("From", post.author);
-		infoRows ~= InfoRow("Date", format("%s (%s)", formatLongTime(post.time), formatShortTime(post.time)));
+		infoRows ~= InfoRow("Date", format("%s (%s)", formatLongTime(post.time), formatShortTime(post.time, false)));
 
 		if (post.parentID)
 		{
@@ -1639,10 +1639,11 @@ class WebUI
 			style ~= format("color: #%02X%02X%02X;", c, c, c);
 		}
 
-		return `<span style="` ~ style ~ `" title="` ~ encodeEntities(formatLongTime(time)) ~ `">` ~ encodeEntities(formatShortTime(time)) ~ `</span>`;
+		bool shorter = colorize; // hack
+		return `<span style="` ~ style ~ `" title="` ~ encodeEntities(formatLongTime(time)) ~ `">` ~ encodeEntities(formatShortTime(time, shorter)) ~ `</span>`;
 	}
 
-	string formatShortTime(SysTime time)
+	string formatShortTime(SysTime time, bool shorter)
 	{
 		if (!time.stdTime)
 			return "-";
@@ -1680,7 +1681,10 @@ class WebUI
 		if (duration < dur!"days"(7))
 			return ago(duration.total!"days", "day");
 		else
-			return formatTime("F Y", time);
+		if (duration < dur!"days"(300))
+			return formatTime(shorter ? "M d" : "F d", time);
+		else
+			return formatTime(shorter ? "M Y" : "F Y", time);
 	}
 
 	string formatLongTime(SysTime time)
