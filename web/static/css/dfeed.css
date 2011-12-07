@@ -407,6 +407,10 @@ ul.post-info-parts {
 	color: inherit;
 }
 
+#thread-index {
+	margin-top: 20px;
+}
+
 /*************** Split view ***************/
 
 #group-split {
@@ -424,6 +428,10 @@ ul.post-info-parts {
 	padding-left: 4px;
 	vertical-align: top;
 	overflow: auto;
+}
+
+#group-split-message .nojs {
+	margin-top: 10px;
 }
 
 .viewmode-horizontal-split .group-threads {

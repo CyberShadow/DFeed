@@ -136,7 +136,7 @@ class WebUI
 								extraHeaders ~= splitViewHeaders;
 							}
 							//tools ~= viewModeTool(["basic", "threaded"], "group");
-							tools ~= viewModeTool(["basic", "horizontal-split"], "group");
+							tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
 							break;
 						}
 						case "thread":
@@ -147,7 +147,8 @@ class WebUI
 							title = subject;
 							breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group  )~`">` ~ encodeEntities(group  ) ~ `</a>`;
 							breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(path[2])~`">` ~ encodeEntities(subject) ~ `</a>`;
-							tools ~= viewModeTool(["flat", "nested"], "thread");
+							//tools ~= viewModeTool(["flat", "nested"], "thread");
+							tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
 							break;
 						}
 						case "post":
@@ -162,6 +163,7 @@ class WebUI
 								title = subject;
 								breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group  )~`">` ~ encodeEntities(group  ) ~ `</a>`;
 								breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(path[2])~`">` ~ encodeEntities(subject) ~ `</a> (view single post)`;
+								tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
 								break;
 							}
 							else
@@ -174,7 +176,7 @@ class WebUI
 								title = group ~ " index" ~ pageStr;
 								breadcrumb1 = `<a href="/discussion/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
 								extraHeaders ~= splitViewHeaders;
-								tools ~= viewModeTool(["basic", "horizontal-split"], "group");
+								tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
 
 								break;
 							}
@@ -694,31 +696,34 @@ class WebUI
 
 	string[][string] referenceCache; // invariant
 
-	void discussionGroupThreaded(string group, int page, bool split = false)
+	void formatThreadedPosts(PostInfo*[] postInfos, string selectedID = null)
 	{
 		enum OFFSET_INIT = 1f;
 		enum OFFSET_MAX = 2f;
 		enum OFFSET_WIDTH = 40f;
 		enum OFFSET_UNITS = "%";
 
-		enforce(page >= 1, "Invalid page");
-
 		struct Post
 		{
-			int rowid;
-			string id, parent, author, subject;
-			SysTime time, maxTime;
+			PostInfo* info;
+			alias info this;
+
+			SysTime maxTime;
 			Post*[] children;
 			int maxDepth;
 
 			bool ghost; // dummy parent for orphans
+			string ghostSubject;
+
+			@property string subject() { return ghostSubject ? ghostSubject : info.subject; }
 
 			void calcStats()
 			{
 				foreach (child; children)
 					child.calcStats();
 
-				maxTime = time;
+				if (info)
+					maxTime = time;
 				foreach (child; children)
 					if (maxTime < child.maxTime)
 						maxTime = child.maxTime;
@@ -732,17 +737,14 @@ class WebUI
 		}
 
 		Post[string] posts;
-		//foreach (string threadID; query("SELECT `ID` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?").iterate(group, THREADS_PER_PAGE, (page-1)*THREADS_PER_PAGE))
-		//	foreach (string id, string parent, string author, string subject, long stdTime; query("SELECT `ID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` = ?").iterate(threadID))
-		enum ViewSQL = "SELECT `ROWID`, `ID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` IN (SELECT `ID` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?)";
-		foreach (int rowid, string id, string parent, string author, string subject, long stdTime; query(ViewSQL).iterate(group, THREADS_PER_PAGE, (page-1)*THREADS_PER_PAGE))
-			posts[id] = Post(rowid, id, parent, author, subject, SysTime(stdTime, UTC()));
+		foreach (info; postInfos)
+			posts[info.id] = Post(info);
 
 		posts[null] = Post();
 		foreach (ref post; posts)
-			if (post.id)
+			if (post.info)
 			{
-				auto parent = post.parent;
+				auto parent = post.parentID;
 				if (parent !in posts) // mailing-list users
 				{
 					string[] references;
@@ -763,7 +765,7 @@ class WebUI
 					{
 						Post dummy;
 						dummy.ghost = true;
-						dummy.subject = post.subject; // HACK
+						dummy.ghostSubject = post.subject; // HACK
 						parent = references[0];
 						posts[parent] = dummy;
 						posts[null].children ~= parent in posts;
@@ -776,7 +778,7 @@ class WebUI
 		{
 			post.calcStats();
 
-			if (post.id || post.ghost)
+			if (post.info || post.ghost)
 				sort!"a.time < b.time"(post.children);
 			else // sort threads by last-update
 				sort!"a.maxTime < b.maxTime"(post.children);
@@ -812,7 +814,7 @@ class WebUI
 					{
 						auto dummy = new Post;
 						dummy.ghost = true;
-						dummy.subject = child.subject;
+						dummy.ghostSubject = child.subject;
 						dummy.children = [prevChild, child];
 						thread.children = thread.children[0..i-1] ~ dummy ~ thread.children[i+1..$];
 					}
@@ -829,10 +831,14 @@ class WebUI
 				if (post.ghost)
 					return formatPosts(post.children, level, post.subject, false);
 				html.put(
-					`<tr class="thread-post-row"><td><div style="padding-left: `, format("%1.1f", OFFSET_INIT + level * offsetIncrement), OFFSET_UNITS, `">`
-						`<div class="thread-post-time">`, summarizeTime(post.time), `</div>`,
-						`<a class="postlink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread" ), `" href="`, encodeEntities(idToUrl(post.id)), `">`, encodeEntities(post.author), `</a>`
-					`</div></td></tr>`);
+					`<tr class="thread-post-row`, (post.info && post.id==selectedID ? ` thread-post-focused thread-post-selected` : ``), `">`
+						`<td>`
+							`<div style="padding-left: `, format("%1.1f", OFFSET_INIT + level * offsetIncrement), OFFSET_UNITS, `">`
+								`<div class="thread-post-time">`, summarizeTime(post.time), `</div>`,
+								`<a class="postlink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread" ), `" href="`, encodeEntities(idToUrl(post.id)), `">`, encodeEntities(post.author), `</a>`
+							`</div>`
+						`</td>`
+					`</tr>`);
 				formatPosts(post.children, level+1, post.subject, false);
 			}
 
@@ -858,14 +864,28 @@ class WebUI
 			}
 		}
 
+		formatPosts(posts[null].children, 0, null, true);
+	}
+
+	void discussionGroupThreaded(string group, int page, bool narrow = false)
+	{
+		enforce(page >= 1, "Invalid page");
+
+		//foreach (string threadID; query("SELECT `ID` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?").iterate(group, THREADS_PER_PAGE, (page-1)*THREADS_PER_PAGE))
+		//	foreach (string id, string parent, string author, string subject, long stdTime; query("SELECT `ID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` = ?").iterate(threadID))
+		PostInfo*[] posts;
+		enum ViewSQL = "SELECT `ROWID`, `ID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` IN (SELECT `ID` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?)";
+		foreach (int rowid, string id, string parent, string author, string subject, long stdTime; query(ViewSQL).iterate(group, THREADS_PER_PAGE, (page-1)*THREADS_PER_PAGE))
+			posts ~= [PostInfo(rowid, id, null, parent, author, subject, SysTime(stdTime, UTC()))].ptr; // TODO: optimize?
+
 		html.put(
 			`<table id="group-index" class="forum-table group-wrapper viewmode-`, encodeEntities(user.get("groupviewmode", "basic")), `">`
 			`<tr class="group-index-header"><th><div>`), newPostButton(group), html.put(encodeEntities(group), `</div></th></tr>`, newline,
 		//	`<tr class="group-index-captions"><th>Subject / Author</th><th>Time</th>`, newline,
 			`<tr><td class="group-threads-cell"><div class="group-threads"><table>`);
-		formatPosts(posts[null].children, 0, null, true);
+		formatThreadedPosts(posts);
 		html.put(`</table></div></td></tr>`);
-		threadPager(group, page, split ? 1 : 4);
+		threadPager(group, page, narrow ? 1 : 4);
 		html.put(`</table>`);
 	}
 
@@ -877,7 +897,10 @@ class WebUI
 		discussionGroupThreaded(group, page, true);
 		html.put(
 			`</div></td>`
-			`<td id="group-split-message" class="group-split-message-none">Loading...</td>`
+			`<td id="group-split-message" class="group-split-message-none">`
+				`Loading...`
+				`<div class="nojs">Sorry, this view requires JavaScript.</div>`
+			`</td>`
 			`</tr></table>`);
 	}
 
@@ -1166,6 +1189,21 @@ class WebUI
 			formatPost(post, knownPosts);
 	}
 
+	void discussionThreadOverview(string threadID, string selectedID)
+	{
+		PostInfo*[] posts;
+		enum ViewSQL = "SELECT `ROWID`, `ID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` = ?";
+		foreach (int rowid, string id, string parent, string author, string subject, long stdTime; query(ViewSQL).iterate(threadID))
+			posts ~= [PostInfo(rowid, id, null, parent, author, subject, SysTime(stdTime, UTC()))].ptr;
+
+		html.put(
+			`<table id="thread-index" class="forum-table group-wrapper viewmode-`, encodeEntities(user.get("groupviewmode", "basic")), `">`
+			`<tr class="group-index-header"><th><div>Thread overview</div></th></tr>`,
+			`<tr><td class="group-threads-cell"><div class="group-threads"><table>`);
+		formatThreadedPosts(posts, selectedID);
+		html.put(`</table></div></td></tr></table>`);
+	}
+
 	void discussionSinglePost(string id, out string group, out string title)
 	{
 		auto post = getPost(id);
@@ -1173,7 +1211,8 @@ class WebUI
 		group = post.xref[0].group;
 		title = post.subject;
 
-		formatPost(post, null);
+		formatSplitPost(post);
+		discussionThreadOverview(post.threadID, id);
 	}
 
 	string discussionFirstUnread(string threadID)
@@ -1462,7 +1501,7 @@ class WebUI
 		return null;
 	}
 
-	struct PostInfo { int rowid; string id, threadID, author, subject; SysTime time; }
+	struct PostInfo { int rowid; string id, threadID, parentID, author, subject; SysTime time; }
 	CachedSet!(string, PostInfo*) postInfoCache;
 
 	PostInfo* getPostInfo(string id)
@@ -1473,8 +1512,8 @@ class WebUI
 	PostInfo* retrievePostInfo(string id)
 	{
 		if (id.startsWith('<') && id.endsWith('>'))
-			foreach (int rowid, string threadID, string author, string subject, long stdTime; query("SELECT `ROWID`, `ThreadID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ID` = ?").iterate(id))
-				return [PostInfo(rowid, id, threadID, author, subject, SysTime(stdTime, UTC()))].ptr;
+			foreach (int rowid, string threadID, string parentID, string author, string subject, long stdTime; query("SELECT `ROWID`, `ThreadID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ID` = ?").iterate(id))
+				return [PostInfo(rowid, id, threadID, parentID, author, subject, SysTime(stdTime, UTC()))].ptr;
 		return null;
 	}
 
