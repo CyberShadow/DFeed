@@ -1661,18 +1661,10 @@ class WebUI
 		if (duration < dur!"days"(6))
 			return formatTime("l", time);
 		else*/
-		if (duration < dur!"days"(30))
+		if (duration < dur!"days"(7))
 			return ago(duration.total!"days", "day");
 		else
-		{
-			auto diffMonths = now.diffMonths(time);
-
-			if (diffMonths < 12)
-				return ago(diffMonths, "month");
-			else
-				return ago(diffMonths / 12, "year");
-				//return time.toSimpleString();
-		}
+			return formatTime("F Y", time);
 	}
 
 	string formatLongTime(SysTime time)
