@@ -7,6 +7,7 @@ import std.exception;
 import ae.net.asockets;
 import ae.sys.timing;
 import ae.sys.log;
+import ae.utils.array;
 
 alias core.time.TickDuration TickDuration;
 
@@ -75,7 +76,7 @@ private:
 	{
 		return line.startsWith("200")
 			|| line.startsWith("111")
-			||(line.startsWith("211") && !expectingGroupList[0])
+			||(line.startsWith("211") && !expectingGroupList.queuePeek())
 			|| line.startsWith("240")
 			|| line.startsWith("340");
 	}
@@ -160,10 +161,9 @@ private:
 			}
 			case "211": // GROUP / LISTGROUP reply
 			{
-				if (expectingGroupList[0])
+				if (expectingGroupList.queuePop())
 					if (handleListGroup)
 						handleListGroup(reply[1..$]);
-				expectingGroupList = expectingGroupList[1..$];
 				break;
 			}
 			case "224": // LISTGROUP reply
@@ -240,13 +240,13 @@ public:
 
 	void selectGroup(string name)
 	{
-		expectingGroupList ~= false;
+		expectingGroupList.queuePush(false);
 		send("GROUP " ~ name);
 	}
 
 	void listGroup(string name, int from = 1)
 	{
-		expectingGroupList ~= true;
+		expectingGroupList.queuePush(true);
 		if (from > 1)
 			send(format("LISTGROUP %s %d-", name, from));
 		else
