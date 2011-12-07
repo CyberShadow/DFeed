@@ -210,6 +210,11 @@ class WebUI
 							user.setRead(post.rowid, false);
 							return response.serveText("OK");
 						}
+						case "first-unread":
+						{
+							enforce(path.length > 2, "No thread specified");
+							return response.redirect(discussionFirstUnread('<' ~ urlDecode(path[2]) ~ '>'));
+						}
 						case "newpost":
 						{
 							enforce(path.length > 2, "No group specified");
@@ -652,7 +657,7 @@ class WebUI
 				with (*info)
 					return html.put(
 						`<span class="forum-postsummary-time">`, summarizeTime(time), `</span>`
-						`by <span class="forum-postsummary-author">`, truncateString(author), `</span><br>`);
+						`by <span class="forum-postsummary-author">`, truncateString(author, 25), `</span><br>`);
 
 			html.put(`<div class="forum-no-data">-</div>`);
 		}
@@ -667,7 +672,7 @@ class WebUI
 			else
 				html.put(
 					`<b>`, formatNumber(thread.postCount-1), `</b>`
-					`<br>(`, formatNumber(thread.unreadPostCount), ` new)`);
+					`<br>(<a href="`, idToUrl(thread.id, "first-unread"), `">`, formatNumber(thread.unreadPostCount), ` new</a>)`);
 		}
 
 		html.put(
@@ -1169,6 +1174,14 @@ class WebUI
 		title = post.subject;
 
 		formatPost(post, null);
+	}
+
+	string discussionFirstUnread(string threadID)
+	{
+		foreach (int rowid, string id; query("SELECT `ROWID`, `ID` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC").iterate(threadID))
+			if (!user.isRead(rowid))
+				return idToUrl(id);
+		return idToUrl(threadID, "thread");
 	}
 
 	// ***********************************************************************
