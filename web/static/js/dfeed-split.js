@@ -95,7 +95,10 @@ function onPopState() {
 			showText('XHR ' + textStatus + (errorThrown ? ': ' + errorThrown : ''));
 		});
 	} else {
-		showHtml(keyboardHelp);
+		if (window.history.pushState)
+			showHtml(keyboardHelp);
+		else
+			showHtml('Your browser does not support HTML5 pushState.');
 	}
 
 	$('#forum-tools').html(toolsTemplate.replace(/__URL__/g, encodeURIComponent(document.location.href)));

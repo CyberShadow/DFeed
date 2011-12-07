@@ -132,6 +132,10 @@
 	color: #444;
 }
 
+#forum-content a img {
+	border: none;
+}
+
 /* Read/unread messages */
 
 .forum-unread,
