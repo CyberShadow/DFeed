@@ -483,8 +483,9 @@ ul.post-info-parts {
 	white-space: pre;
 }
 
-body.widedoc #content {
-	max-width: 80em !important;
+body.widedoc #content,
+body.widedoc #top {
+	max-width: none !important;
 }
 
 #keyboardhelp {
