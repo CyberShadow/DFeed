@@ -323,6 +323,10 @@ class WebUI
 							else
 								return response.serveText("OK");
 						}
+						case "help":
+							title = breadcrumb1 = "Help";
+							html.put(readText(optimizedPath(null, "web/help.htt")));
+							break;
 						default:
 							throw new NotFoundException();
 					}
@@ -369,6 +373,7 @@ class WebUI
 			tools ~= `<a href="/discussion/logout?url=__URL__">Log out ` ~ encodeEntities(user.getName()) ~ `</a>`;
 		else
 			tools ~= `<a href="/discussion/loginform?url=__URL__">Log in</a>`;
+		tools ~= `<a href="/discussion/help">Help</a>`;
 
 		string toolStr = tools.join(" &middot; ");
 		toolStr =

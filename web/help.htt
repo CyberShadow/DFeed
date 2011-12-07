@@ -1,0 +1,37 @@
+<h2>View modes</h2>
+
+<p>
+  You can browse the discussions using one of several view modes:
+  <ul>
+    <li><b>Basic</b> - A forum-like view with paged linear threads.</li>
+    <li><b>Threaded</b> - Threaded group overview with single post display, similar to mailing list archives.</li>
+    <li><b>Horizontal-split</b> - JavaScript-powered interface with a split view and keyboard shortcuts, similar to a mail or newsgroup client.</li>
+  </ul>
+</p>
+
+<h2>Read post history</h2>
+
+<p>
+  The posts you've viewed are saved to a compressed cookie, or on the server if you're logged in.
+  Viewing a thread in basic view will mark all displayed posts as "read".
+  The horizontal-split view allows marking individual posts as "unread".
+</p>
+<p>
+  To avoid losing read post history, consider registering an account to avoid cookie limitations / expiration / accidental deletion.
+</p>
+
+<h2>Accounts</h2>
+
+<p>
+  Preferences and read post history are stored in cookies for unregistered users.
+  Registering an account will transfer all variables from cookies to the database.
+</p>
+
+<h2>About</h2>
+
+<p>
+  This discussion board is the web interface part of DFeed, which is also a D news aggregator and IRC bot.
+  It was written mostly by Vladimir &ldquo;CyberShadow&rdquo; Panteleev.
+  The source code is available on GitHub: <a href="https://github.com/CyberShadow/DFeed">https://github.com/CyberShadow/DFeed</a>
+</p>
+
