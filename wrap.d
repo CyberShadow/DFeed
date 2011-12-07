@@ -61,14 +61,17 @@ string wrapText(Paragraph[] paragraphs, int margin = 66)
 		{
 			auto i = line[0..cutPoint].lastIndexOf(' ');
 			if (i < 0)
+			{
 				i = cutPoint + line[cutPoint..$].indexOf(' ');
-			if (i < cutPoint)
-				break;
+				if (i < cutPoint)
+					break;
+			}
 
 			i++;
 			lines ~= paragraph.quotePrefix ~ line[0..i];
 			line = line[i..$];
 		}
+
 
 		if (line.length)
 			lines ~= paragraph.quotePrefix ~ line;
