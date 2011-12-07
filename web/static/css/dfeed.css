@@ -413,6 +413,10 @@ ul.post-info-parts {
 	color: inherit;
 }
 
+.thread-post-selected .thread-post-time span {
+	color: inherit !important;
+}
+
 #thread-index {
 	margin-top: 20px;
 }

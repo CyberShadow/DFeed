@@ -854,7 +854,7 @@ class WebUI
 					`<tr class="thread-post-row`, (post.info && post.id==selectedID ? ` thread-post-focused thread-post-selected` : ``), `">`
 						`<td>`
 							`<div style="padding-left: `, format("%1.1f", OFFSET_INIT + level * offsetIncrement), OFFSET_UNITS, `">`
-								`<div class="thread-post-time">`, summarizeTime(post.time), `</div>`,
+								`<div class="thread-post-time">`, summarizeTime(post.time, true), `</div>`,
 								`<a class="postlink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread" ), `" href="`, encodeEntities(idToUrl(post.id)), `">`, encodeEntities(post.author), `</a>`
 							`</div>`
 						`</td>`
@@ -1618,12 +1618,28 @@ class WebUI
 			html ~= `</span>`;
 	}
 
-	string summarizeTime(SysTime time)
+	string summarizeTime(SysTime time, bool colorize = false)
 	{
 		if (!time.stdTime)
 			return "-";
 
-		return `<span title="` ~ encodeEntities(formatLongTime(time)) ~ `">` ~ encodeEntities(formatShortTime(time)) ~ `</span>`;
+		string style;
+		if (colorize)
+		{
+			import std.math;
+			auto diff = Clock.currTime() - time;
+			auto diffLog = log2(diff.total!"seconds");
+			enum LOG_MIN = 10; // 1 hour-ish
+			enum LOG_MAX = 18; // 3 days-ish
+			enum COLOR_MAX = 0xA0;
+			auto f = (diffLog - LOG_MIN) / (LOG_MAX - LOG_MIN);
+			f = min(1, max(0, f));
+			auto c = cast(int)(f * COLOR_MAX);
+
+			style ~= format("color: #%02X%02X%02X;", c, c, c);
+		}
+
+		return `<span style="` ~ style ~ `" title="` ~ encodeEntities(formatLongTime(time)) ~ `">` ~ encodeEntities(formatShortTime(time)) ~ `</span>`;
 	}
 
 	string formatShortTime(SysTime time)
