@@ -143,14 +143,21 @@ class WebUI
 						{
 							enforce(path.length > 2, "No thread specified");
 							int page = to!int(aaGet(parameters, "page", "1"));
-							string pageStr = page==1 ? "" : format(" (page %d)", page);
-							string group, subject;
-							discussionThread('<' ~ urlDecode(path[2]) ~ '>', page, group, subject);
-							title = subject ~ pageStr;
-							breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group  )~`">` ~ encodeEntities(group  ) ~ `</a>`;
-							breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(path[2])~`">` ~ encodeEntities(subject) ~ `</a>` ~ pageStr;
-							//tools ~= viewModeTool(["flat", "nested"], "thread");
-							tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
+							string threadID = '<' ~ urlDecode(path[2]) ~ '>';
+
+							if (user.get("groupviewmode", "basic") == "basic")
+							{
+								string pageStr = page==1 ? "" : format(" (page %d)", page);
+								string group, subject;
+								discussionThread(threadID, page, group, subject);
+								title = subject ~ pageStr;
+								breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group  )~`">` ~ encodeEntities(group  ) ~ `</a>`;
+								breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(path[2])~`">` ~ encodeEntities(subject) ~ `</a>` ~ pageStr;
+								//tools ~= viewModeTool(["flat", "nested"], "thread");
+								tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
+							}
+							else
+								return response.redirect(idToUrl(getPostAtThreadIndex(threadID, getPageOffset(page, POSTS_PER_PAGE))));
 							break;
 						}
 						case "post":
@@ -1198,7 +1205,15 @@ class WebUI
 	int getPostThreadIndex(string postID)
 	{
 		auto post = getPostInfo(postID);
+		enforce(post, "No such post: " ~ postID);
 		return getPostThreadIndex(post.threadID, post.time);
+	}
+
+	string getPostAtThreadIndex(string threadID, int index)
+	{
+		foreach (string id; query("SELECT `ID` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC LIMIT 1 OFFSET ?").iterate(threadID, index))
+			return id;
+		throw new Exception(format("Post #%d of thread %s not found", index, threadID));
 	}
 
 	void discussionThread(string id, int page, out string group, out string title)
