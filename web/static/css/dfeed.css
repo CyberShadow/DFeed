@@ -162,7 +162,7 @@ th .forum-read:visited {
 
 /* Pager */
 
-.group-index-pager th {
+.pager th {
 	font-weight: normal;
 }
 .pager-left {
@@ -349,6 +349,12 @@ ul.post-info-parts {
 	top: 0;
 	bottom: 0;
 	border-bottom: 1px solid #D0D0D0;
+}
+
+/* Pager */
+
+.post-pager {
+	margin-top: 10px;
 }
 
 /*************** Threaded group view ***************/

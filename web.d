@@ -142,11 +142,13 @@ class WebUI
 						case "thread":
 						{
 							enforce(path.length > 2, "No thread specified");
+							int page = to!int(aaGet(parameters, "page", "1"));
+							string pageStr = page==1 ? "" : format(" (page %d)", page);
 							string group, subject;
-							discussionThread('<' ~ urlDecode(path[2]) ~ '>', group, subject);
-							title = subject;
+							discussionThread('<' ~ urlDecode(path[2]) ~ '>', page, group, subject);
+							title = subject ~ pageStr;
 							breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group  )~`">` ~ encodeEntities(group  ) ~ `</a>`;
-							breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(path[2])~`">` ~ encodeEntities(subject) ~ `</a>`;
+							breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(path[2])~`">` ~ encodeEntities(subject) ~ `</a>` ~ pageStr;
 							//tools ~= viewModeTool(["flat", "nested"], "thread");
 							tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
 							break;
@@ -563,20 +565,16 @@ class WebUI
 			`</form>`);
 	}
 
-	void threadPager(string group, int page, int radius = 4)
+	void pager(string base, int page, int pageCount, int radius = 4)
 	{
 		string linkOrNot(string text, int page, bool cond)
 		{
 			if (cond)
-				return `<a href="/discussion/group/` ~ encodeEntities(group) ~ `?page=` ~ .text(page) ~ `">` ~ text ~ `</a>`;
+				return `<a href="` ~ encodeEntities(base) ~ `?page=` ~ .text(page) ~ `">` ~ text ~ `</a>`;
 			else
 				return `<span class="disabled-link">` ~ text ~ `</span>`;
 		}
 
-		auto threadCounts = threadCountCache(getThreadCounts());
-		enforce(group in threadCounts, "Empty or unknown group");
-		auto threadCount = threadCounts[group];
-		auto pageCount = (threadCount + (THREADS_PER_PAGE-1)) / THREADS_PER_PAGE;
 		int pagerStart = max(1, page - radius);
 		int pagerEnd = min(pageCount, page + radius);
 		string[] pager;
@@ -591,7 +589,7 @@ class WebUI
 			pager ~= "&hellip;";
 
 		html.put(
-			`<tr class="group-index-pager"><th colspan="3">`
+			`<tr class="pager"><th colspan="3">`
 				`<div class="pager-left">`,
 					linkOrNot("&laquo; First", 1, page!=1),
 					`&nbsp;&nbsp;&nbsp;`,
@@ -607,6 +605,21 @@ class WebUI
 	}
 
 	enum THREADS_PER_PAGE = 15;
+	enum POSTS_PER_PAGE = 10;
+
+	static int indexToPage(int index, int perPage)  { return index / perPage + 1; } // Return value is 1-based, index is 0-based
+	static int getPageCount(int count, int perPage) { return indexToPage(count-1, perPage); }
+	static int getPageOffset(int page, int perPage) { return (page-1) * perPage; }
+
+	void threadPager(string group, int page, int radius = 4)
+	{
+		auto threadCounts = threadCountCache(getThreadCounts());
+		enforce(group in threadCounts, "Empty or unknown group");
+		auto threadCount = threadCounts[group];
+		auto pageCount = getPageCount(threadCount, THREADS_PER_PAGE);
+
+		pager(`/discussion/group/` ~ group, page, pageCount, radius);
+	}
 
 	void discussionGroup(string group, int page)
 	{
@@ -636,7 +649,7 @@ class WebUI
 			return count;
 		}
 
-		foreach (string firstPostID, string lastPostID; query("SELECT `ID`, `LastPost` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?").iterate(group, THREADS_PER_PAGE, (page-1)*THREADS_PER_PAGE))
+		foreach (string firstPostID, string lastPostID; query("SELECT `ID`, `LastPost` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?").iterate(group, THREADS_PER_PAGE, getPageOffset(page, THREADS_PER_PAGE)))
 			foreach (int count; query("SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ?").iterate(firstPostID))
 				threads ~= Thread(firstPostID, getPostInfo(firstPostID), getPostInfo(lastPostID), count, getUnreadPostCount(firstPostID));
 
@@ -875,7 +888,7 @@ class WebUI
 		//	foreach (string id, string parent, string author, string subject, long stdTime; query("SELECT `ID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` = ?").iterate(threadID))
 		PostInfo*[] posts;
 		enum ViewSQL = "SELECT `ROWID`, `ID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` IN (SELECT `ID` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?)";
-		foreach (int rowid, string id, string parent, string author, string subject, long stdTime; query(ViewSQL).iterate(group, THREADS_PER_PAGE, (page-1)*THREADS_PER_PAGE))
+		foreach (int rowid, string id, string parent, string author, string subject, long stdTime; query(ViewSQL).iterate(group, THREADS_PER_PAGE, getPageOffset(page, THREADS_PER_PAGE)))
 			posts ~= [PostInfo(rowid, id, null, parent, author, subject, SysTime(stdTime, UTC()))].ptr; // TODO: optimize?
 
 		html.put(
@@ -921,7 +934,7 @@ class WebUI
 
 		foreach (long time; query("SELECT `LastUpdated` FROM `Threads` WHERE `ID` = ? LIMIT 1").iterate(thread))
 			foreach (int threadIndex; query("SELECT COUNT(*) FROM `Threads` WHERE `Group` = ? AND `LastUpdated` > ? ORDER BY `LastUpdated` DESC").iterate(group, time))
-				page = threadIndex / THREADS_PER_PAGE + 1;
+				page = indexToPage(threadIndex, THREADS_PER_PAGE);
 
 		enforce(page > 0, "Can't find thread's page");
 		return page;
@@ -1022,11 +1035,8 @@ class WebUI
 
 		string repliesTitle = `Replies to `~encodeEntities(post.author)~`'s post from `~encodeEntities(formatShortTime(post.time));
 
-		scope(success) user.setRead(post.rowid, true);
-
 		with (post)
 		{
-
 			html.put(
 				`<div class="post-wrapper">`
 				`<table class="post forum-table`, (children ? ` with-children` : ``), `" id="`, encodeEntities(idToFragment(id)), `">`
@@ -1077,6 +1087,8 @@ class WebUI
 					`</tr></table>`);
 			}
 		}
+
+		user.setRead(post.rowid, true);
 	}
 
 	string postLink(int rowid, string id, string author)
@@ -1164,11 +1176,42 @@ class WebUI
 		formatSplitPost(post);
 	}
 
-	void discussionThread(string id, out string group, out string title)
+	void postPager(string threadID, int page, int postCount)
 	{
-		// TODO: pages?
+		pager(idToUrl(threadID, "thread"), page, getPageCount(postCount, POSTS_PER_PAGE));
+	}
+
+	int getPostCount(string threadID)
+	{
+		foreach (int count; query("SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ?").iterate(threadID))
+			return count;
+		assert(0);
+	}
+
+	int getPostThreadIndex(string threadID, SysTime postTime)
+	{
+		foreach (int index; query("SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ? AND `Time` < ? ORDER BY `Time` ASC").iterate(threadID, postTime.stdTime))
+			return index;
+		assert(0);
+	}
+
+	int getPostThreadIndex(string postID)
+	{
+		auto post = getPostInfo(postID);
+		return getPostThreadIndex(post.threadID, post.time);
+	}
+
+	void discussionThread(string id, int page, out string group, out string title)
+	{
+		auto viewMode = user.get("threadviewmode", "flat"); // legacy
+		bool nested = viewMode == "nested" || viewMode == "threaded";
+
+		enforce(page >= 1, "Invalid page");
+		auto postsPerPage = nested ? int.max : POSTS_PER_PAGE;
+		if (nested) page = 1;
+
 		Rfc850Post[] posts;
-		foreach (int rowid, string postID, string message; query("SELECT `ROWID`, `ID`, `Message` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC").iterate(id))
+		foreach (int rowid, string postID, string message; query("SELECT `ROWID`, `ID`, `Message` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC LIMIT ? OFFSET ?").iterate(id, postsPerPage, (page-1)*postsPerPage))
 			posts ~= new Rfc850Post(message, postID, rowid);
 
 		Rfc850Post[string] knownPosts;
@@ -1179,14 +1222,24 @@ class WebUI
 
 		group = posts[0].xref[0].group;
 		title = posts[0].subject;
-		auto viewMode = user.get("threadviewmode", "flat");
-		bool nested = viewMode == "nested" || viewMode == "threaded" /*legacy*/;
 
 		if (nested)
 			posts = Rfc850Post.threadify(posts);
 
 		foreach (post; posts)
 			formatPost(post, knownPosts);
+
+		if (!nested)
+		{
+			auto postCount = getPostCount(id);
+
+			if (page > 1 || postCount > POSTS_PER_PAGE)
+			{
+				html.put(`<table class="forum-table post-pager">`);
+				postPager(id, page, postCount);
+				html.put(`</table>`);
+			}
+		}
 	}
 
 	void discussionThreadOverview(string threadID, string selectedID)
@@ -1220,7 +1273,7 @@ class WebUI
 		foreach (int rowid, string id; query("SELECT `ROWID`, `ID` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC").iterate(threadID))
 			if (!user.isRead(rowid))
 				return idToUrl(id);
-		return idToUrl(threadID, "thread");
+		return idToUrl(threadID, "thread", getPageCount(getPostCount(threadID), POSTS_PER_PAGE));
 	}
 
 	// ***********************************************************************
@@ -1482,7 +1535,7 @@ class WebUI
 
 	string idToThreadUrl(string id, string threadID)
 	{
-		return idToUrl(threadID, "thread") ~ "#" ~ idToFragment(id);
+		return idToUrl(threadID, "thread", indexToPage(getPostThreadIndex(id), POSTS_PER_PAGE)) ~ "#" ~ idToFragment(id);
 	}
 
 	Rfc850Post getPost(string id, uint[] partPath = null)
@@ -1705,7 +1758,7 @@ class WebUI
 	}
 
 	/// Get relative URL to a post ID.
-	string idToUrl(string id, string action = "post")
+	string idToUrl(string id, string action = "post", int page = 1)
 	{
 		enforce(id.startsWith('<') && id.endsWith('>'));
 
@@ -1713,7 +1766,13 @@ class WebUI
 		// pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
 		// sub-delims    = "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
 		// unreserved    = ALPHA / DIGIT / "-" / "." / "_" / "~"
-		return "/discussion/" ~ action ~ "/" ~ urlEncode(id[1..$-1], " \"#%/<>?[\\]^`{|}", '%');
+		string path = "/discussion/" ~ action ~ "/" ~ urlEncode(id[1..$-1], " \"#%/<>?[\\]^`{|}", '%');
+
+		assert(page >= 1);
+		if (page > 1)
+			path ~= "?page=" ~ text(page);
+
+		return path;
 	}
 
 	/// Get URL fragment / anchor name for a post on the same page.
