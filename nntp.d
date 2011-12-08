@@ -94,7 +94,8 @@ private:
 			|| line.startsWith("111")
 			||(line.startsWith("211") && !expectingGroupList.queuePeek())
 			|| line.startsWith("240")
-			|| line.startsWith("340");
+			|| line.startsWith("340")
+			|| line.startsWith("400");
 	}
 
 	void send(string line)
@@ -214,7 +215,7 @@ private:
 				if (handleError)
 					handleError(reply[0]);
 				else
-					throw new Exception("Unknown reply: " ~ reply[0]);
+					conn.disconnect("Unknown reply: " ~ reply[0], DisconnectType.Error);
 				break;
 		}
 	}
