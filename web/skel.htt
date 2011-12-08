@@ -40,7 +40,9 @@ function bodyLoad()
 			placeholder.innerHTML = viewModeTemplate.replace('__URL__', location.pathname);
 }
 </script>
-<script type="text/javascript">document.write('<st'+'yle type="text/css">.nojs { dis'+'play: none; }</st'+'yle>');</script>
+<script type="text/javascript">
+document.write('\x3Cstyle type="text/css"\x3E.nojs { display: none; }\x3C/style\x3E');
+</script>
 <?extraheaders?>
 </head>
 
