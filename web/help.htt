@@ -1,4 +1,5 @@
-<h2>View modes</h2>
+<!-- HTML -->
+<h2 id="view-modes">View modes</h2>
 
 <p>
   You can browse the discussions using one of several view modes:
@@ -9,7 +10,7 @@
   </ul>
 </p>
 
-<h2>Read post history</h2>
+<h2 id="read-post-history">Read post history</h2>
 
 <p>
   The posts you've viewed are saved to a compressed cookie, or on the server if you're logged in.
@@ -20,18 +21,23 @@
   To avoid losing read post history, consider registering an account to avoid cookie limitations / expiration / accidental deletion.
 </p>
 
-<h2>Accounts</h2>
+<h2 id="accounts">Accounts</h2>
 
 <p>
   Preferences and read post history are stored in cookies for unregistered users.
   Registering an account will transfer all variables from cookies to the database.
 </p>
 
-<h2>About</h2>
+<h2 id="about">About</h2>
 
 <p>
-  This discussion board is the web interface part of DFeed, which is also a D news aggregator and IRC bot.
-  It was written mostly by Vladimir &ldquo;CyberShadow&rdquo; Panteleev.
-  The source code is available on GitHub: <a href="https://github.com/CyberShadow/DFeed">https://github.com/CyberShadow/DFeed</a>
+  This discussion board is a web frontend to the DigitalMars NNTP server and mailing lists.
+  It is part of DFeed, which is also a D news aggregator and IRC bot.
+</p>
+<p>
+  DFeed was written mostly by <a href="http://thecybershadow.net/">Vladimir &ldquo;CyberShadow&rdquo; Panteleev</a>.
+  Portions (including style and graphics) are Copyright © by Digital Mars.
+  The source code is available under the <a href="http://www.gnu.org/licenses/agpl-3.0.html">GNU Affero General Public License</a>
+    on GitHub: <a href="https://github.com/CyberShadow/DFeed">https://github.com/CyberShadow/DFeed</a>
 </p>
 
