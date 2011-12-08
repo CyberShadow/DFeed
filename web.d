@@ -1521,8 +1521,7 @@ class WebUI
 			`<label for="loginform-password">Password:</label>`
 			`<input id="loginform-password" name="password" value="`, encodeEntities(aaGet(parameters, "password", "")), `">`
 			`<input type="submit" value="Register">`
-			`</td></tr>`
-			`<tr><td class="loginform-info">`);
+			`</td></tr>`);
 		if (errorMessage)
 			html.put(`<tr><td class="loginform-info"><div class="form-error loginform-error">`, encodeEntities(errorMessage), `</div></td></tr>`);
 		else
