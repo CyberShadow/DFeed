@@ -21,6 +21,7 @@ import std.conv;
 import std.array;
 import std.uri;
 import std.base64;
+import std.datetime;
 debug import std.stdio;
 
 import ae.net.http.client;
@@ -369,8 +370,10 @@ class Rfc850Post : Post
 		while (paragraphs.length && paragraphs[$-1].text.length==0)
 			paragraphs = paragraphs[0..$-1];
 
+		auto replyTime = time;
+		replyTime.timezone = UTC();
 		post.content =
-			"On " ~ this.time.toString() ~ ", " ~ this.author ~ " wrote:\n" ~
+			"On " ~ formatTime(`l, j F Y \a\t H:i:s e`, replyTime) ~ ", " ~ this.author ~ " wrote:\n" ~
 			wrapText(paragraphs) ~
 			"\n\n";
 		post.flowed = true;
