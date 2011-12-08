@@ -349,9 +349,9 @@ class Rfc850Post : Post
 		post.reply = true;
 		post.xref = this.xref;
 		post.references = this.references ~ this.id;
-		post.subject = post.realSubject = this.realSubject;
-		if (!post.realSubject.startsWith("Re:"))
-			post.realSubject = "Re: " ~ post.realSubject;
+		post.subject = this.realSubject;
+		if (!post.subject.startsWith("Re:"))
+			post.subject = "Re: " ~ post.subject;
 
 		auto paragraphs = unwrapText(this.content, this.delsp);
 		foreach (i, ref paragraph; paragraphs)
