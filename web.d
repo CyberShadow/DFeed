@@ -223,13 +223,19 @@ class WebUI
 							discussionSplitPost('<' ~ urlDecode(pathX) ~ '>');
 							return response.serveData(html.getString());
 						case "set":
+						{
+							if (aaGet(parameters, "secret", "") != getUserSecret())
+								throw new Exception("XSRF secret verification failed. Are your cookies enabled?");
+
 							foreach (name, value; parameters)
-								if (name != "url")
+								if (name != "url" && name != "secret")
 									user[name] = value; // TODO: is this a good idea?
+
 							if ("url" in parameters)
 								return response.redirect(parameters["url"]);
 							else
 								return response.serveText("OK");
+						}
 						case "mark-unread":
 						{
 							enforce(path.length > 2, "No post specified");
@@ -1839,8 +1845,7 @@ class WebUI
 	/// Generate a link to set a user preference
 	string setOptionLink(string name, string value)
 	{
-		// TODO: add XSRF security?
-		return "/discussion/set?" ~ encodeUrlParameters([name : value, "url" : "__URL__"]);
+		return "/discussion/set?" ~ encodeUrlParameters([name : value, "url" : "__URL__", "secret" : getUserSecret()]);
 	}
 }
 
