@@ -817,6 +817,7 @@ class WebUI
 				posts[parent].children ~= &post;
 			}
 
+		bool reversed = user.get("groupviewmode", "basic") == "threaded";
 		foreach (ref post; posts)
 		{
 			post.calcStats();
@@ -824,6 +825,9 @@ class WebUI
 			if (post.info || post.ghost)
 				sort!"a.time < b.time"(post.children);
 			else // sort threads by last-update
+			if (reversed)
+				sort!"a.maxTime > b.maxTime"(post.children);
+			else
 				sort!"a.maxTime < b.maxTime"(post.children);
 		}
 
