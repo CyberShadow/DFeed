@@ -247,7 +247,7 @@ class Rfc850Post : Post
 			if (author.indexOf(" (") > 0 && author.endsWith(")"))
 			{
 				authorEmail = author[0 .. author.lastIndexOf(" (")].replace(" at ", "@");
-				author      = author[author.lastIndexOf(" (")+2 .. $-1];
+				author      = author[author.lastIndexOf(" (")+2 .. $-1].decodeRfc5335();
 			}
 			else
 			{
