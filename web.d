@@ -125,6 +125,7 @@ class WebUI
 				{
 					if (path.length == 1)
 						return response.redirect("/dicussion/");
+					auto pathX = path[2..$].join("%2F"); // work around Apache bug
 					switch (path[1])
 					{
 						case "":
@@ -159,7 +160,7 @@ class WebUI
 						{
 							enforce(path.length > 2, "No thread specified");
 							int page = to!int(aaGet(parameters, "page", "1"));
-							string threadID = '<' ~ urlDecode(path[2]) ~ '>';
+							string threadID = '<' ~ urlDecode(pathX) ~ '>';
 
 							if (user.get("groupviewmode", "basic") == "basic")
 							{
@@ -167,8 +168,8 @@ class WebUI
 								string group, subject;
 								discussionThread(threadID, page, group, subject);
 								title = subject ~ pageStr;
-								breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group  )~`">` ~ encodeEntities(group  ) ~ `</a>`;
-								breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(path[2])~`">` ~ encodeEntities(subject) ~ `</a>` ~ pageStr;
+								breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group)~`">` ~ encodeEntities(group  ) ~ `</a>`;
+								breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a>` ~ pageStr;
 								//tools ~= viewModeTool(["flat", "nested"], "thread");
 								tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
 							}
@@ -179,15 +180,15 @@ class WebUI
 						case "post":
 							enforce(path.length > 2, "No post specified");
 							if (user.get("groupviewmode", "basic") == "basic")
-								return response.redirect(resolvePostUrl('<' ~ urlDecode(path[2]) ~ '>'));
+								return response.redirect(resolvePostUrl('<' ~ urlDecode(pathX) ~ '>'));
 							else
 							if (user.get("groupviewmode", "basic") == "threaded")
 							{
 								string group, subject;
-								discussionSinglePost('<' ~ urlDecode(path[2]) ~ '>', group, subject);
+								discussionSinglePost('<' ~ urlDecode(pathX) ~ '>', group, subject);
 								title = subject;
-								breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group  )~`">` ~ encodeEntities(group  ) ~ `</a>`;
-								breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(path[2])~`">` ~ encodeEntities(subject) ~ `</a> (view single post)`;
+								breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group)~`">` ~ encodeEntities(group  ) ~ `</a>`;
+								breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a> (view single post)`;
 								tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
 								break;
 							}
@@ -195,7 +196,7 @@ class WebUI
 							{
 								string group;
 								int page;
-								discussionGroupSplitFromPost('<' ~ urlDecode(path[2]) ~ '>', group, page);
+								discussionGroupSplitFromPost('<' ~ urlDecode(pathX) ~ '>', group, page);
 
 								string pageStr = page==1 ? "" : format(" (page %d)", page);
 								title = group ~ " index" ~ pageStr;
@@ -219,7 +220,7 @@ class WebUI
 						}
 						case "split-post":
 							enforce(path.length > 2, "No post specified");
-							discussionSplitPost('<' ~ urlDecode(path[2]) ~ '>');
+							discussionSplitPost('<' ~ urlDecode(pathX) ~ '>');
 							return response.serveData(html.getString());
 						case "set":
 							foreach (name, value; parameters)
@@ -232,7 +233,7 @@ class WebUI
 						case "mark-unread":
 						{
 							enforce(path.length > 2, "No post specified");
-							auto post = getPostInfo('<' ~ urlDecode(path[2]) ~ '>');
+							auto post = getPostInfo('<' ~ urlDecode(pathX) ~ '>');
 							enforce(post, "Post not found");
 							user.setRead(post.rowid, false);
 							return response.serveText("OK");
@@ -240,7 +241,7 @@ class WebUI
 						case "first-unread":
 						{
 							enforce(path.length > 2, "No thread specified");
-							return response.redirect(discussionFirstUnread('<' ~ urlDecode(path[2]) ~ '>'));
+							return response.redirect(discussionFirstUnread('<' ~ urlDecode(pathX) ~ '>'));
 						}
 						case "newpost":
 						{
@@ -256,11 +257,11 @@ class WebUI
 						case "reply":
 						{
 							enforce(path.length > 2, "No post specified");
-							auto post = getPost('<' ~ urlDecode(path[2]) ~ '>');
+							auto post = getPost('<' ~ urlDecode(pathX) ~ '>');
 							enforce(post, "Post not found");
 							title = `Replying to "` ~ post.subject ~ `"`;
 							breadcrumb1 = `<a href="` ~ encodeEntities(idToUrl(post.id)) ~ `">` ~ encodeEntities(post.subject) ~ `</a>`;
-							breadcrumb2 = `<a href="/discussion/reply/`~path[2]~`">Post reply</a>`;
+							breadcrumb2 = `<a href="/discussion/reply/`~pathX~`">Post reply</a>`;
 							if (discussionPostForm(post.replyTemplate()))
 								bodyClass ~= " formdoc";
 							break;
@@ -279,7 +280,7 @@ class WebUI
 						case "poststatus":
 						{
 							enforce(path.length > 2, "No PID specified");
-							auto pid = path[2];
+							auto pid = pathX;
 							enforce(pid in postProcesses, "Sorry, this is not a post I know of.");
 							bool refresh, form;
 							discussionPostStatus(postProcesses[pid], refresh, form);
