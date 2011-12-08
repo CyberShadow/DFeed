@@ -13,7 +13,6 @@
 <meta name="description" content="D Programming Language">
 <title><?title?> - D Programming Language Discussion</title>
 <link rel="stylesheet" type="text/css" href="<?static:/css/style.css?>">
-<link rel="stylesheet" type="text/css" href="<?static:/css/print.css?>" media="print">
 <link rel="stylesheet" type="text/css" href="<?static:/css/dfeed.css?>">
 <link rel="shortcut icon" href="/favicon.ico">
 
