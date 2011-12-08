@@ -218,6 +218,13 @@ class WebUI
 							// TODO: is allowing text/html (others?) OK here?
 							return response.serveData(Data(post.data), post.mimeType ? post.mimeType : "application/octet-stream");
 						}
+						case "source":
+						{
+							enforce(path.length > 2, "Invalid URL");
+							auto post = getPost('<' ~ urlDecode(path[2]) ~ '>', array(map!(to!uint)(path[3..$])));
+							enforce(post, "Post not found");
+							return response.serveData(Data(post.message), "text/plain");
+						}
 						case "split-post":
 							enforce(path.length > 2, "No post specified");
 							discussionSplitPost('<' ~ urlDecode(pathX) ~ '>');
