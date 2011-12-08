@@ -364,7 +364,7 @@ class Rfc850Post : Post
 					paragraphs = paragraphs[0..i];
 					break;
 				}
-				paragraph.quotePrefix = "> ";
+				paragraph.quotePrefix = paragraph.text.length ? "> " : ">";
 			}
 		while (paragraphs.length && paragraphs[$-1].text.length==0)
 			paragraphs = paragraphs[0..$-1];
