@@ -90,6 +90,12 @@ string wrapText(Paragraph[] paragraphs, int margin = 66)
 		string line = paragraph.text;
 		auto cutPoint = margin - paragraph.quotePrefix.length;
 
+		if (!line.length)
+		{
+			addLine(paragraph.quotePrefix, null);
+			continue;
+		}
+
 		while (line.length > cutPoint)
 		{
 			auto i = line[0..cutPoint].lastIndexOf(' ');
