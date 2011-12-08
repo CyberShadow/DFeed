@@ -366,6 +366,9 @@ class Rfc850Post : Post
 				}
 				paragraph.quotePrefix = "> ";
 			}
+		while (paragraphs.length && paragraphs[$-1].text.length==0)
+			paragraphs = paragraphs[0..$-1];
+
 		post.content =
 			"On " ~ this.time.toString() ~ ", " ~ this.author ~ " wrote:\n" ~
 			wrapText(paragraphs) ~
