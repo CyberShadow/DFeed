@@ -1625,6 +1625,10 @@ class WebUI
 				html ~= `</span>`;
 			wasQuoted = isQuoted;
 
+			// Remove space-stuffing
+			if (line.startsWith(" "))
+				line = line[1..$];
+
 			line = encodeEntities(line);
 			if (line.contains("://"))
 			{

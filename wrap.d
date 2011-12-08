@@ -46,6 +46,10 @@ Paragraph[] unwrapText(string text, bool delsp)
 			line = line[l..$];
 		}
 
+		// Remove space-stuffing
+		if (line.startsWith(" "))
+			line = line[1..$];
+
 		if (paragraphs.length>0
 		 && paragraphs[$-1].quotePrefix==quotePrefix
 		 && paragraphs[$-1].text.endsWith(" ")
@@ -68,6 +72,19 @@ string wrapText(Paragraph[] paragraphs, int margin = 66)
 {
 	string[] lines;
 
+	void addLine(string quotePrefix, string line)
+	{
+		line = quotePrefix ~ line;
+		// Add space-stuffing
+		if (line.startsWith(" ") ||
+			line.startsWith("From ") ||
+			(line.startsWith(">") && quotePrefix.length==0))
+		{
+			line = " " ~ line;
+		}
+		lines ~= line;
+	}
+
 	foreach (paragraph; paragraphs)
 	{
 		string line = paragraph.text;
@@ -84,13 +101,12 @@ string wrapText(Paragraph[] paragraphs, int margin = 66)
 			}
 
 			i++;
-			lines ~= paragraph.quotePrefix ~ line[0..i];
+			addLine(paragraph.quotePrefix, line[0..i]);
 			line = line[i..$];
 		}
 
-
 		if (line.length)
-			lines ~= paragraph.quotePrefix ~ line;
+			addLine(paragraph.quotePrefix, line);
 	}
 
 	return lines.join("\n");
