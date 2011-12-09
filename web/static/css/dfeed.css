@@ -140,7 +140,7 @@
 
 .forum-unread,
 .forum-unread:visited {
-	font-weight: bold;
+	font-weight: 600;
 }
 .forum-read,
 .forum-read:visited {
