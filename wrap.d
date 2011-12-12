@@ -54,6 +54,7 @@ Paragraph[] unwrapText(string text, bool delsp)
 		 && paragraphs[$-1].quotePrefix==quotePrefix
 		 && paragraphs[$-1].text.endsWith(" ")
 		 && !line.startsWith(" ")
+		 && line.length
 		 && line != "-- "
 		 && paragraphs[$-1].text != "-- ")
 		{
