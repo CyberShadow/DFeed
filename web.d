@@ -889,7 +889,7 @@ class WebUI
 						`<td>`
 							`<div style="padding-left: `, format("%1.1f", OFFSET_INIT + level * offsetIncrement), OFFSET_UNITS, `">`
 								`<div class="thread-post-time">`, summarizeTime(post.time, true), `</div>`,
-								`<a class="postlink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread" ), `" href="`, encodeEntities(idToUrl(post.id)), `">`, encodeEntities(post.author), `</a>`
+								`<a class="postlink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread" ), `" href="`, encodeEntities(idToUrl(post.id)), `">`, truncateString(post.author, 20), `</a>`
 							`</div>`
 						`</td>`
 					`</tr>`);
