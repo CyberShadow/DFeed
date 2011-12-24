@@ -61,7 +61,7 @@ private:
 			handleDisconnect(reason);
 		if (polling && type != DisconnectType.Requested)
 		{
-			if (pollTimer)
+			if (pollTimer && pollTimer.isWaiting)
 				mainTimer.remove(pollTimer);
 			setTimeout(&reconnect, TickDuration.from!"seconds"(10));
 		}
