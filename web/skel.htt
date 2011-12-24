@@ -65,7 +65,7 @@ document.write('\x3Cstyle type="text/css"\x3E.nojs { display: none; }\x3C/style\
 		</form>
 	</div>
 	<div id="header">
-		<a href="/"><img id="logo" width="125" height="95" alt="D Logo" src="/images/dlogo.png"></a>
+		<a href="/"><img id="logo" width="143" height="105" alt="D Logo" src="/images/dlogo.png"></a>
 		<div id="breadcrumbs">
 			<a href="/discussion/">D Programming Language Discussion</a>
 			<div id="breadcrumb1"><?breadcrumb1?></div>
