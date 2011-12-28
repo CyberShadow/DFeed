@@ -34,6 +34,7 @@ import ae.utils.json;
 import ae.utils.array;
 import ae.utils.time;
 import ae.utils.text;
+import ae.utils.textout;
 
 import common;
 import database;
@@ -49,7 +50,7 @@ class WebUI
 	HttpServer server;
 	User user;
 	string ip;
-	StringBuilder html;
+	StringBuffer html;
 
 	this()
 	{
@@ -228,7 +229,7 @@ class WebUI
 						case "split-post":
 							enforce(path.length > 2, "No post specified");
 							discussionSplitPost('<' ~ urlDecode(pathX) ~ '>');
-							return response.serveData(html.getString());
+							return response.serveData(cast(string)html.get());
 						case "set":
 						{
 							if (aaGet(parameters, "secret", "") != getUserSecret())
@@ -428,7 +429,7 @@ class WebUI
 
 		string[string] vars = [
 			"title" : encodeEntities(title),
-			"content" : cast(string) html.data, // html contents will be overwritten on next request
+			"content" : cast(string) html.get(), // html contents will be overwritten on next request
 			"breadcrumb1" : breadcrumb1,
 			"breadcrumb2" : breadcrumb2,
 			"extraheaders" : extraHeaders.join("\n"),
@@ -1783,7 +1784,7 @@ class WebUI
 			return s;
 
 		result.put(s[start..$]);
-		return result.getString();
+		return result.get();
 	}
 
 	private string urlEncode(string s, in char[] forbidden, char escape)
