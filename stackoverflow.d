@@ -87,6 +87,7 @@ protected:
 				int bounty_closes_date, bounty_amount;
 				string question_timeline_url, question_comments_url, question_answers_url;
 				int question_id;
+				int locked_date;
 				JsonQuestionOwner owner;
 				int creation_date, last_edit_date, last_activity_date;
 				int up_vote_count, down_vote_count, view_count, score;
