@@ -38,8 +38,8 @@ function selectMessage(path) {
 }
 
 function idFromPath(path) {
-	if (path.substr(0, 17) == '/discussion/post/')
-		return path.substr(17);
+	if (path.substr(0, 6) == '/post/')
+		return path.substr(6);
 	return null;
 }
 
@@ -55,8 +55,8 @@ function getPath() {
 	var path = window.location.pathname;
 
 	// Work around Opera bug?
-	if (path.substr(0, 17) == '/discussion/post/')
-		path = path.substr(0, 17) + path.substr(17).replace(/\//g, '%2F');
+	if (path.substr(0, 6) == '/post/')
+		path = path.substr(0, 6) + path.substr(17).replace(/\//g, '%2F');
 
 	return path;
 }
@@ -84,7 +84,7 @@ function onPopState() {
 
 		showText('Loading message\n<'+id+'> ...');
 
-		currentRequest = $.get('/discussion/split-post/' + id, function(result) {
+		currentRequest = $.get('/split-post/' + id, function(result) {
 			currentRequest = null;
 			row.find('.forum-unread').removeClass('forum-unread').addClass('forum-read');
 
