@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -22,6 +22,7 @@ import std.datetime;
 import ae.net.asockets;
 import ae.net.irc.client;
 import ae.sys.timing;
+import ae.utils.text;
 
 import common;
 
@@ -64,6 +65,7 @@ protected:
 			post.formatForIRC((string summary) {
 				if (connected)
 				{
+					summary = summary.newlinesToSpaces();
 					conn.sendRaw(format(FORMAT, CHANNEL2, summary));
 					if (important)
 						conn.sendRaw(format(FORMAT, CHANNEL, summary));

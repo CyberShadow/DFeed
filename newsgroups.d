@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -18,6 +18,8 @@ module newsgroups;
 
 import std.string;
 import std.conv;
+
+import ae.utils.array : queuePop;
 
 import common;
 import nntp;
@@ -83,6 +85,7 @@ private:
 	string server;
 	bool fullCheck;
 	GroupInfo[] queuedGroups;
+	int[] groupMaxNums;
 	GroupInfo currentGroup;
 	int[] queuedMessages;
 	size_t messagesToDownload;
@@ -97,6 +100,19 @@ private:
 	{
 		log(format("Got %d groups.", groups.length));
 		queuedGroups = groups;
+
+		// Save maximum article numbers before fetching messages -
+		// a cross-posted message might change a queued group's
+		// "maximum article number in database".
+		groupMaxNums = new int[groups.length];
+		foreach (i, ref group; groups)
+		{
+			int maxNum = 0;
+			foreach (int num; query("SELECT MAX(`ArtNum`) FROM `Groups` WHERE `Group` = ?").iterate(group.name))
+				maxNum = num;
+			groupMaxNums[i] = maxNum;
+		}
+
 		nextGroup();
 	}
 
@@ -104,17 +120,14 @@ private:
 	{
 		if (queuedGroups.length == 0)
 			return done();
-		currentGroup = queuedGroups[0];
-		queuedGroups = queuedGroups[1..$];
+		currentGroup = queuedGroups.queuePop();
+		int maxNum   = groupMaxNums.queuePop();
+
 		log(format("Listing group: %s", currentGroup.name));
 		if (fullCheck)
 			client.listGroup(currentGroup.name);
 		else
 		{
-			int maxNum = 0;
-			foreach (int num; query("SELECT MAX(`ArtNum`) FROM `Groups` WHERE `Group` = ?").iterate(currentGroup.name))
-				maxNum = num;
-
 			log(format("Highest article number in database: %d", maxNum));
 			if (currentGroup.high > maxNum)
 			{

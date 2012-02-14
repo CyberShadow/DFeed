@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -109,7 +109,7 @@ class WebUI
 		try
 		{
 			auto pathStr = request.resource;
-			enforce(pathStr.length > 1 && pathStr[0] == '/', "Invalid path");
+			enforce(pathStr.startsWith('/'), "Invalid path");
 			string[string] parameters;
 			if (pathStr.indexOf('?') >= 0)
 			{
@@ -118,267 +118,262 @@ class WebUI
 				pathStr = pathStr[0..p];
 			}
 			auto path = pathStr[1..$].split("/");
-			assert(path.length);
+			if (!path.length) path = [""];
+			auto pathX = path[1..$].join("%2F"); // work around Apache bug
 
 			switch (path[0])
 			{
+				// Obsolete "/discussion/" prefix
 				case "discussion":
+					return response.redirect("/" ~ path[1..$].join("/"), HttpStatusCode.MovedPermanently);
+
+				case "":
+					title = "Index";
+					breadcrumb1 = `<a href="/discussion/">Forum Index</a>`;
+					discussionIndex();
+					break;
+				case "group":
 				{
-					if (path.length == 1)
-						return response.redirect("/dicussion/");
-					auto pathX = path[2..$].join("%2F"); // work around Apache bug
-					switch (path[1])
+					enforce(path.length > 1, "No group specified");
+					string group = path[1];
+					int page = to!int(aaGet(parameters, "page", "1"));
+					string pageStr = page==1 ? "" : format(" (page %d)", page);
+					title = group ~ " index" ~ pageStr;
+					breadcrumb1 = `<a href="/discussion/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
+					auto viewMode = user.get("groupviewmode", "basic");
+					if (viewMode == "basic")
+						discussionGroup(group, page);
+					else
+					if (viewMode == "threaded")
+						discussionGroupThreaded(group, page);
+					else
 					{
-						case "":
-							title = "Index";
-							breadcrumb1 = `<a href="/discussion/">Forum Index</a>`;
-							discussionIndex();
-							break;
-						case "group":
-						{
-							enforce(path.length > 2, "No group specified");
-							string group = path[2];
-							int page = to!int(aaGet(parameters, "page", "1"));
-							string pageStr = page==1 ? "" : format(" (page %d)", page);
-							title = group ~ " index" ~ pageStr;
-							breadcrumb1 = `<a href="/discussion/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
-							auto viewMode = user.get("groupviewmode", "basic");
-							if (viewMode == "basic")
-								discussionGroup(group, page);
-							else
-							if (viewMode == "threaded")
-								discussionGroupThreaded(group, page);
-							else
-							{
-								discussionGroupSplit(group, page);
-								extraHeaders ~= splitViewHeaders;
-							}
-							//tools ~= viewModeTool(["basic", "threaded"], "group");
-							tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
-							break;
-						}
-						case "thread":
-						{
-							enforce(path.length > 2, "No thread specified");
-							int page = to!int(aaGet(parameters, "page", "1"));
-							string threadID = '<' ~ urlDecode(pathX) ~ '>';
-
-							if (user.get("groupviewmode", "basic") == "basic")
-							{
-								string pageStr = page==1 ? "" : format(" (page %d)", page);
-								string group, subject;
-								discussionThread(threadID, page, group, subject);
-								title = subject ~ pageStr;
-								breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group)~`">` ~ encodeEntities(group  ) ~ `</a>`;
-								breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a>` ~ pageStr;
-								//tools ~= viewModeTool(["flat", "nested"], "thread");
-								tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
-							}
-							else
-								return response.redirect(idToUrl(getPostAtThreadIndex(threadID, getPageOffset(page, POSTS_PER_PAGE))));
-							break;
-						}
-						case "post":
-							enforce(path.length > 2, "No post specified");
-							if (user.get("groupviewmode", "basic") == "basic")
-								return response.redirect(resolvePostUrl('<' ~ urlDecode(pathX) ~ '>'));
-							else
-							if (user.get("groupviewmode", "basic") == "threaded")
-							{
-								string group, subject;
-								discussionSinglePost('<' ~ urlDecode(pathX) ~ '>', group, subject);
-								title = subject;
-								breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group)~`">` ~ encodeEntities(group  ) ~ `</a>`;
-								breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a> (view single post)`;
-								tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
-								break;
-							}
-							else
-							{
-								string group;
-								int page;
-								discussionGroupSplitFromPost('<' ~ urlDecode(pathX) ~ '>', group, page);
-
-								string pageStr = page==1 ? "" : format(" (page %d)", page);
-								title = group ~ " index" ~ pageStr;
-								breadcrumb1 = `<a href="/discussion/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
-								extraHeaders ~= splitViewHeaders;
-								tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
-
-								break;
-							}
-						case "raw":
-						{
-							enforce(path.length > 2, "Invalid URL");
-							auto post = getPost('<' ~ urlDecode(path[2]) ~ '>', array(map!(to!uint)(path[3..$])));
-							enforce(post, "Post not found");
-							if (!post.data && post.error)
-								throw new Exception(post.error);
-							if (post.fileName)
-								response.headers["Content-Disposition"] = `inline; filename="` ~ post.fileName ~ `"`;
-							// TODO: is allowing text/html (others?) OK here?
-							return response.serveData(Data(post.data), post.mimeType ? post.mimeType : "application/octet-stream");
-						}
-						case "source":
-						{
-							enforce(path.length > 2, "Invalid URL");
-							auto post = getPost('<' ~ urlDecode(path[2]) ~ '>', array(map!(to!uint)(path[3..$])));
-							enforce(post, "Post not found");
-							return response.serveData(Data(post.message), "text/plain");
-						}
-						case "split-post":
-							enforce(path.length > 2, "No post specified");
-							discussionSplitPost('<' ~ urlDecode(pathX) ~ '>');
-							return response.serveData(cast(string)html.get());
-						case "set":
-						{
-							if (aaGet(parameters, "secret", "") != getUserSecret())
-								throw new Exception("XSRF secret verification failed. Are your cookies enabled?");
-
-							foreach (name, value; parameters)
-								if (name != "url" && name != "secret")
-									user[name] = value; // TODO: is this a good idea?
-
-							if ("url" in parameters)
-								return response.redirect(parameters["url"]);
-							else
-								return response.serveText("OK");
-						}
-						case "mark-unread":
-						{
-							enforce(path.length > 2, "No post specified");
-							auto post = getPostInfo('<' ~ urlDecode(pathX) ~ '>');
-							enforce(post, "Post not found");
-							user.setRead(post.rowid, false);
-							return response.serveText("OK");
-						}
-						case "first-unread":
-						{
-							enforce(path.length > 2, "No thread specified");
-							return response.redirect(discussionFirstUnread('<' ~ urlDecode(pathX) ~ '>'));
-						}
-						case "newpost":
-						{
-							enforce(path.length > 2, "No group specified");
-							string group = path[2];
-							title = "Posting to " ~ group;
-							breadcrumb1 = `<a href="/discussion/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>`;
-							breadcrumb2 = `<a href="/discussion/newpost/`~encodeEntities(group)~`">New thread</a>`;
-							if (discussionPostForm(Rfc850Post.newPostTemplate(group)))
-								bodyClass ~= " formdoc";
-							break;
-						}
-						case "reply":
-						{
-							enforce(path.length > 2, "No post specified");
-							auto post = getPost('<' ~ urlDecode(pathX) ~ '>');
-							enforce(post, "Post not found");
-							title = `Replying to "` ~ post.subject ~ `"`;
-							breadcrumb1 = `<a href="` ~ encodeEntities(idToUrl(post.id)) ~ `">` ~ encodeEntities(post.subject) ~ `</a>`;
-							breadcrumb2 = `<a href="/discussion/reply/`~pathX~`">Post reply</a>`;
-							if (discussionPostForm(post.replyTemplate()))
-								bodyClass ~= " formdoc";
-							break;
-						}
-						case "send":
-						{
-							auto postVars = request.decodePostData();
-							auto process = discussionSend(postVars, cast(string[string])request.headers);
-							if (process)
-								return response.redirect("/discussion/poststatus/" ~ process.pid);
-
-							title = breadcrumb1 = `Posting error`;
-							bodyClass ~= " formdoc";
-							break;
-						}
-						case "poststatus":
-						{
-							enforce(path.length > 2, "No PID specified");
-							auto pid = pathX;
-							enforce(pid in postProcesses, "Sorry, this is not a post I know of.");
-							bool refresh, form;
-							discussionPostStatus(postProcesses[pid], refresh, form);
-							if (refresh)
-								response.setRefresh(1);
-							if (form)
-							{
-								title = breadcrumb1 = `Posting error`;
-								bodyClass ~= " formdoc";
-							}
-							else
-								title = breadcrumb1 = `Posting status`;
-							break;
-						}
-						case "loginform":
-						{
-							discussionLoginForm(parameters);
-							title = breadcrumb1 = `Log in`;
-							tools ~= `<a href="/discussion/registerform?url=__URL__">Register</a>`;
-							break;
-						}
-						case "registerform":
-						{
-							discussionRegisterForm(parameters);
-							title = breadcrumb1 = `Registration`;
-							tools ~= `<a href="/discussion/registerform?url=__URL__">Register</a>`;
-							break;
-						}
-						case "login":
-						{
-							try
-							{
-								parameters = request.decodePostData();
-								discussionLogin(parameters);
-								if ("url" in parameters)
-									return response.redirect(parameters["url"]);
-								else
-									return response.serveText("OK");
-							}
-							catch (Exception e)
-							{
-								discussionLoginForm(parameters, e.msg);
-								title = breadcrumb1 = `Login error`;
-								tools ~= `<a href="/discussion/registerform?url=__URL__">Register</a>`;
-								break;
-							}
-						}
-						case "register":
-						{
-							try
-							{
-								parameters = request.decodePostData();
-								discussionRegister(parameters);
-								if ("url" in parameters)
-									return response.redirect(parameters["url"]);
-								else
-									return response.serveText("OK");
-							}
-							catch (Exception e)
-							{
-								discussionRegisterForm(parameters, e.msg);
-								title = breadcrumb1 = `Registration error`;
-								tools ~= `<a href="/discussion/registerform?url=__URL__">Register</a>`;
-								break;
-							}
-						}
-						case "logout":
-						{
-							enforce(user.isLoggedIn(), "Not logged in");
-							user.logOut();
-							if ("url" in parameters)
-								return response.redirect(parameters["url"]);
-							else
-								return response.serveText("OK");
-						}
-						case "help":
-							title = breadcrumb1 = "Help";
-							html.put(readText(optimizedPath(null, "web/help.htt")));
-							break;
-						default:
-							throw new NotFoundException();
+						discussionGroupSplit(group, page);
+						extraHeaders ~= splitViewHeaders;
 					}
+					//tools ~= viewModeTool(["basic", "threaded"], "group");
+					tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
 					break;
 				}
+				case "thread":
+				{
+					enforce(path.length > 1, "No thread specified");
+					int page = to!int(aaGet(parameters, "page", "1"));
+					string threadID = '<' ~ urlDecode(pathX) ~ '>';
+
+					if (user.get("groupviewmode", "basic") == "basic")
+					{
+						string pageStr = page==1 ? "" : format(" (page %d)", page);
+						string group, subject;
+						discussionThread(threadID, page, group, subject);
+						title = subject ~ pageStr;
+						breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group)~`">` ~ encodeEntities(group  ) ~ `</a>`;
+						breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a>` ~ pageStr;
+						//tools ~= viewModeTool(["flat", "nested"], "thread");
+						tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
+					}
+					else
+						return response.redirect(idToUrl(getPostAtThreadIndex(threadID, getPageOffset(page, POSTS_PER_PAGE))));
+					break;
+				}
+				case "post":
+					enforce(path.length > 1, "No post specified");
+					if (user.get("groupviewmode", "basic") == "basic")
+						return response.redirect(resolvePostUrl('<' ~ urlDecode(pathX) ~ '>'));
+					else
+					if (user.get("groupviewmode", "basic") == "threaded")
+					{
+						string group, subject;
+						discussionSinglePost('<' ~ urlDecode(pathX) ~ '>', group, subject);
+						title = subject;
+						breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group)~`">` ~ encodeEntities(group  ) ~ `</a>`;
+						breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a> (view single post)`;
+						tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
+						break;
+					}
+					else
+					{
+						string group;
+						int page;
+						discussionGroupSplitFromPost('<' ~ urlDecode(pathX) ~ '>', group, page);
+
+						string pageStr = page==1 ? "" : format(" (page %d)", page);
+						title = group ~ " index" ~ pageStr;
+						breadcrumb1 = `<a href="/discussion/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
+						extraHeaders ~= splitViewHeaders;
+						tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
+
+						break;
+					}
+				case "raw":
+				{
+					enforce(path.length > 1, "Invalid URL");
+					auto post = getPost('<' ~ urlDecode(path[1]) ~ '>', array(map!(to!uint)(path[2..$])));
+					enforce(post, "Post not found");
+					if (!post.data && post.error)
+						throw new Exception(post.error);
+					if (post.fileName)
+						//response.headers["Content-Disposition"] = `inline; filename="` ~ post.fileName ~ `"`;
+						response.headers["Content-Disposition"] = `attachment; filename="` ~ post.fileName ~ `"`;
+					// TODO: is allowing text/html (others?) OK here?
+					return response.serveData(Data(post.data), post.mimeType ? post.mimeType : "application/octet-stream");
+				}
+				case "source":
+				{
+					enforce(path.length > 1, "Invalid URL");
+					auto post = getPost('<' ~ urlDecode(path[1]) ~ '>', array(map!(to!uint)(path[2..$])));
+					enforce(post, "Post not found");
+					return response.serveData(Data(post.message), "text/plain");
+				}
+				case "split-post":
+					enforce(path.length > 1, "No post specified");
+					discussionSplitPost('<' ~ urlDecode(pathX) ~ '>');
+					return response.serveData(cast(string)html.get());
+				case "set":
+				{
+					if (aaGet(parameters, "secret", "") != getUserSecret())
+						throw new Exception("XSRF secret verification failed. Are your cookies enabled?");
+
+					foreach (name, value; parameters)
+						if (name != "url" && name != "secret")
+							user[name] = value; // TODO: is this a good idea?
+
+					if ("url" in parameters)
+						return response.redirect(parameters["url"]);
+					else
+						return response.serveText("OK");
+				}
+				case "mark-unread":
+				{
+					enforce(path.length > 1, "No post specified");
+					auto post = getPostInfo('<' ~ urlDecode(pathX) ~ '>');
+					enforce(post, "Post not found");
+					user.setRead(post.rowid, false);
+					return response.serveText("OK");
+				}
+				case "first-unread":
+				{
+					enforce(path.length > 1, "No thread specified");
+					return response.redirect(discussionFirstUnread('<' ~ urlDecode(pathX) ~ '>'));
+				}
+				case "newpost":
+				{
+					enforce(path.length > 1, "No group specified");
+					string group = path[1];
+					title = "Posting to " ~ group;
+					breadcrumb1 = `<a href="/discussion/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>`;
+					breadcrumb2 = `<a href="/discussion/newpost/`~encodeEntities(group)~`">New thread</a>`;
+					if (discussionPostForm(Rfc850Post.newPostTemplate(group)))
+						bodyClass ~= " formdoc";
+					break;
+				}
+				case "reply":
+				{
+					enforce(path.length > 1, "No post specified");
+					auto post = getPost('<' ~ urlDecode(pathX) ~ '>');
+					enforce(post, "Post not found");
+					title = `Replying to "` ~ post.subject ~ `"`;
+					breadcrumb1 = `<a href="` ~ encodeEntities(idToUrl(post.id)) ~ `">` ~ encodeEntities(post.subject) ~ `</a>`;
+					breadcrumb2 = `<a href="/discussion/reply/`~pathX~`">Post reply</a>`;
+					if (discussionPostForm(post.replyTemplate()))
+						bodyClass ~= " formdoc";
+					break;
+				}
+				case "send":
+				{
+					auto postVars = request.decodePostData();
+					auto process = discussionSend(postVars, cast(string[string])request.headers);
+					if (process)
+						return response.redirect("/discussion/poststatus/" ~ process.pid);
+
+					title = breadcrumb1 = `Posting error`;
+					bodyClass ~= " formdoc";
+					break;
+				}
+				case "poststatus":
+				{
+					enforce(path.length > 1, "No PID specified");
+					auto pid = pathX;
+					enforce(pid in postProcesses, "Sorry, this is not a post I know of.");
+					bool refresh, form;
+					discussionPostStatus(postProcesses[pid], refresh, form);
+					if (refresh)
+						response.setRefresh(1);
+					if (form)
+					{
+						title = breadcrumb1 = `Posting error`;
+						bodyClass ~= " formdoc";
+					}
+					else
+						title = breadcrumb1 = `Posting status`;
+					break;
+				}
+				case "loginform":
+				{
+					discussionLoginForm(parameters);
+					title = breadcrumb1 = `Log in`;
+					tools ~= `<a href="/discussion/registerform?url=__URL__">Register</a>`;
+					break;
+				}
+				case "registerform":
+				{
+					discussionRegisterForm(parameters);
+					title = breadcrumb1 = `Registration`;
+					tools ~= `<a href="/discussion/registerform?url=__URL__">Register</a>`;
+					break;
+				}
+				case "login":
+				{
+					try
+					{
+						parameters = request.decodePostData();
+						discussionLogin(parameters);
+						if ("url" in parameters)
+							return response.redirect(parameters["url"]);
+						else
+							return response.serveText("OK");
+					}
+					catch (Exception e)
+					{
+						discussionLoginForm(parameters, e.msg);
+						title = breadcrumb1 = `Login error`;
+						tools ~= `<a href="/discussion/registerform?url=__URL__">Register</a>`;
+						break;
+					}
+				}
+				case "register":
+				{
+					try
+					{
+						parameters = request.decodePostData();
+						discussionRegister(parameters);
+						if ("url" in parameters)
+							return response.redirect(parameters["url"]);
+						else
+							return response.serveText("OK");
+					}
+					catch (Exception e)
+					{
+						discussionRegisterForm(parameters, e.msg);
+						title = breadcrumb1 = `Registration error`;
+						tools ~= `<a href="/discussion/registerform?url=__URL__">Register</a>`;
+						break;
+					}
+				}
+				case "logout":
+				{
+					enforce(user.isLoggedIn(), "Not logged in");
+					user.logOut();
+					if ("url" in parameters)
+						return response.redirect(parameters["url"]);
+					else
+						return response.serveText("OK");
+				}
+				case "help":
+					title = breadcrumb1 = "Help";
+					html.put(readText(optimizedPath(null, "web/help.htt")));
+					break;
+
 				case "js":
 				case "css":
 				case "images":
@@ -846,6 +841,7 @@ class WebUI
 			return s
 				.replace("New: ", "") // Bugzilla hack
 				.replace("\t", " ")   // Apple Mail hack
+				.replace("  ", " ")
 			;
 		}
 
@@ -935,8 +931,8 @@ class WebUI
 
 		html.put(
 			`<table id="group-index" class="forum-table group-wrapper viewmode-`, encodeEntities(user.get("groupviewmode", "basic")), `">`
-			`<tr class="group-index-header"><th><div>`), newPostButton(group), html.put(encodeEntities(group), `</div></th></tr>`, newline,
-		//	`<tr class="group-index-captions"><th>Subject / Author</th><th>Time</th>`, newline,
+			`<tr class="group-index-header"><th><div>`), newPostButton(group), html.put(encodeEntities(group), `</div></th></tr>`,
+		//	`<tr class="group-index-captions"><th>Subject / Author</th><th>Time</th>`,
 			`<tr><td class="group-threads-cell"><div class="group-threads"><table>`);
 		formatThreadedPosts(posts);
 		html.put(`</table></div></td></tr>`);
@@ -1621,6 +1617,10 @@ class WebUI
 
 	// ***********************************************************************
 
+	import std.regex;
+	static Regex!char reUrl;
+	static this() { reUrl = regex(`\w+://[^<>\s]+[\w/]`); }
+
 	void formatBody(string s)
 	{
 		auto lines = s.strip().fastSplit('\n');
@@ -1647,7 +1647,10 @@ class WebUI
 				auto segments = line.segmentByWhitespace();
 				foreach (ref segment; segments)
 					if (segment.startsWith("http://") || segment.startsWith("https://") || segment.startsWith("ftp://"))
-						segment = `<a rel="nofollow" href="` ~ segment ~ `">` ~ segment ~ `</a>`;
+					{
+						//segment = `<a rel="nofollow" href="` ~ segment ~ `">` ~ segment ~ `</a>`;
+						segment = replace(segment, reUrl, `<a rel="nofollow" href="$0">$0</a>`);
+					}
 				line = segments.join();
 			}
 			html.put(line, '\n');

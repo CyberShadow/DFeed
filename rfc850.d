@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -42,8 +42,6 @@ struct Xref
 	int num;
 }
 
-enum DEFAULT_ENCODING = "windows1252";
-
 class Rfc850Post : Post
 {
 	string message, id;
@@ -86,14 +84,20 @@ class Rfc850Post : Post
 		foreach (s; header.fastSplit('\n'))
 		{
 			if (s == "") break;
-			if (hasIntlCharacters(s))
-				s = decodeEncodedText(s, DEFAULT_ENCODING);
 
 			auto p = s.indexOf(": ");
 			if (p<0) continue;
 			//assert(p>0, "Bad header line: " ~ s);
-			headers[toUpper(s[0..p])] = s[p+2..$];
+			headers[s[0..p]] = s[p+2..$];
 		}
+
+		string defaultEncoding = "windows1252";
+		if (aaGet(headers, "User-Agent", null) == "DFeed")
+			defaultEncoding = "utf8"; // Hack...
+
+		foreach (string key, ref string value; headers)
+			if (hasIntlCharacters(value))
+				value = decodeEncodedText(value, defaultEncoding);
 
 		string rawContent = text[headerEnd+2..$]; // not UTF-8
 
@@ -124,7 +128,7 @@ class Rfc850Post : Post
 				if ("charset" in contentType.properties)
 					content = decodeEncodedText(rawContent, contentType.properties["charset"]);
 				else
-					content = decodeEncodedText(rawContent, DEFAULT_ENCODING);
+					content = decodeEncodedText(rawContent, defaultEncoding);
 			}
 			else
 			if (mimeType.startsWith("multipart/") && "boundary" in contentType.properties)
@@ -216,7 +220,7 @@ class Rfc850Post : Post
 			}
 		}
 
-		subject = realSubject = "Subject" in headers ? decodeRfc5335(headers["Subject"]) : null;
+		subject = realSubject = "Subject" in headers ? decodeRfc1522(headers["Subject"]) : null;
 		if (subject.startsWith("Re: "))
 		{
 			subject = subject[4..$];
@@ -224,7 +228,7 @@ class Rfc850Post : Post
 		}
 
 		int bugzillaCommentNumber;
-		author = authorEmail = "From" in headers ? decodeRfc5335(headers["From"]) : null;
+		author = authorEmail = "From" in headers ? decodeRfc1522(headers["From"]) : null;
 		if ("X-Bugzilla-Who" in headers)
 		{
 			author = authorEmail = headers["X-Bugzilla-Who"];
@@ -247,7 +251,7 @@ class Rfc850Post : Post
 			if (author.indexOf(" (") > 0 && author.endsWith(")"))
 			{
 				authorEmail = author[0 .. author.lastIndexOf(" (")].replace(" at ", "@");
-				author      = author[author.lastIndexOf(" (")+2 .. $-1].decodeRfc5335();
+				author      = author[author.lastIndexOf(" (")+2 .. $-1].decodeRfc1522();
 			}
 			else
 			{
@@ -259,10 +263,10 @@ class Rfc850Post : Post
 		{
 			auto p = author.indexOf('<');
 			authorEmail = author[p+1..$-1];
-			author = decodeRfc5335(strip(author[0..p]));
+			author = decodeRfc1522(strip(author[0..p]));
 		}
 		if (author.length>2 && author[0]=='"' && author[$-1]=='"')
-			author = decodeRfc5335(strip(author[1..$-1]));
+			author = decodeRfc1522(strip(author[1..$-1]));
 		//if (author == authorEmail && author.indexOf("@") > 0)
 		//	author = author[0..author.indexOf("@")];
 
@@ -295,7 +299,7 @@ class Rfc850Post : Post
 		}
 		else
 		if (id.length)
-			url = format("http://%s/discussion/post/%s", std.file.readText("data/web.txt").splitLines()[1], encodeComponent(id[1..$-1]));
+			url = format("http://%s/post/%s", std.file.readText("data/web.txt").splitLines()[1], encodeComponent(id[1..$-1]));
 /+		else
 		if (xref.length)
 		{
@@ -460,7 +464,7 @@ class Rfc850Post : Post
 	override bool isImportant()
 	{
 		// GitHub notifications are already grabbed from RSS
-		if (author == "noreply@github.com")
+		if (authorEmail == "noreply@github.com")
 			return false;
 
 		if (where == "")
@@ -525,9 +529,9 @@ private:
 
 private:
 
-string decodeRfc5335(string str)
+string decodeRfc1522(string str)
 {
-	// TODO: find the actual RFC this is described in and implement it according to standard
+	// TODO: actually read RFC
 
 	auto words = str.split(" ");
 	bool[] encoded = new bool[words.length];
@@ -550,7 +554,7 @@ string decodeRfc5335(string str)
 			switch (toUpper(contentEncoding))
 			{
 			case "Q":
-				s = decodeQuotedPrintable(s);
+				s = decodeQuotedPrintable(s, true);
 				break;
 			case "B":
 				s = cast(string)Base64.decode(s);
@@ -573,7 +577,7 @@ string decodeRfc5335(string str)
 	return result;
 }
 
-string decodeQuotedPrintable(string s)
+string decodeQuotedPrintable(string s, bool inHeaders)
 {
 	auto r = appender!string();
 	for (int i=0; i<s.length; )
@@ -585,7 +589,7 @@ string decodeQuotedPrintable(string s)
 				r.put(cast(char)parse!ubyte(s[i+1..i+3], 16)), i+=3;
 		}
 		else
-		if (s[i]=='_')
+		if (s[i]=='_' && inHeaders)
 			r.put(' '), i++;
 		else
 			r.put(s[i++]);
@@ -667,7 +671,7 @@ string decodeTransferEncoding(string data, string encoding)
 	case "7bit":
 		return data;
 	case "quoted-printable":
-		return decodeQuotedPrintable(data);
+		return decodeQuotedPrintable(data, false);
 	case "base64":
 		//return cast(string)Base64.decode(data.replace("\n", ""));
 	{

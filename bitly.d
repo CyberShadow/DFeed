@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -19,6 +19,7 @@ module bitly;
 import std.uri;
 import std.file;
 import std.string;
+import std.exception;
 
 import ae.net.http.client;
 
@@ -31,7 +32,9 @@ void shortenURL(string url, void delegate(string) handler)
 				readText("data/bitly.txt"),
 				std.uri.encodeComponent(url)
 			), (string shortened) {
-				handler(strip(shortened));
+				shortened = shortened.strip();
+				enforce(shortened.startsWith("http://"), "Unexpected bit.ly output: " ~ shortened);
+				handler(shortened);
 			}, (string error) {
 				handler(url);
 			});

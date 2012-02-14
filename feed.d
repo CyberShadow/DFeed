@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -70,7 +70,9 @@ protected:
 	override void getPosts()
 	{
 		httpGet(url, (string result) {
-			auto data = new XmlDocument(new MemoryStream(cast(char[])result));
+			auto content = cast(char[])result;
+			scope(failure) std.file.write("feed-error.xml", content);
+			auto data = new XmlDocument(new MemoryStream(content));
 			Post[string] r;
 			auto feed = data["feed"];
 
