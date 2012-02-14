@@ -19,6 +19,7 @@ module bitly;
 import std.uri;
 import std.file;
 import std.string;
+import std.exception;
 
 import ae.net.http.client;
 
