@@ -70,7 +70,9 @@ protected:
 	override void getPosts()
 	{
 		httpGet(url, (string result) {
-			auto data = new XmlDocument(new MemoryStream(cast(char[])result));
+			auto content = cast(char[])result;
+			scope(failure) std.file.write("feed-error.xml", content);
+			auto data = new XmlDocument(new MemoryStream(content));
 			Post[string] r;
 			auto feed = data["feed"];
 
