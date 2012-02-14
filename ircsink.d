@@ -22,6 +22,7 @@ import std.datetime;
 import ae.net.asockets;
 import ae.net.irc.client;
 import ae.sys.timing;
+import ae.utils.text;
 
 import common;
 
@@ -64,6 +65,7 @@ protected:
 			post.formatForIRC((string summary) {
 				if (connected)
 				{
+					summary = summary.newlinesToSpaces();
 					conn.sendRaw(format(FORMAT, CHANNEL2, summary));
 					if (important)
 						conn.sendRaw(format(FORMAT, CHANNEL, summary));
