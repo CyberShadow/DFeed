@@ -56,7 +56,7 @@ function getPath() {
 
 	// Work around Opera bug?
 	if (path.substr(0, 6) == '/post/')
-		path = path.substr(0, 6) + path.substr(17).replace(/\//g, '%2F');
+		path = path.substr(0, 6) + path.substr(6).replace(/\//g, '%2F');
 
 	return path;
 }
