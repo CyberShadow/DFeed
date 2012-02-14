@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -1622,6 +1622,10 @@ class WebUI
 
 	// ***********************************************************************
 
+	import std.regex;
+	static Regex!char reUrl;
+	static this() { reUrl = regex(`\w+://[^<>\s]+[\w/]`); }
+
 	void formatBody(string s)
 	{
 		auto lines = s.strip().fastSplit('\n');
@@ -1648,7 +1652,10 @@ class WebUI
 				auto segments = line.segmentByWhitespace();
 				foreach (ref segment; segments)
 					if (segment.startsWith("http://") || segment.startsWith("https://") || segment.startsWith("ftp://"))
-						segment = `<a rel="nofollow" href="` ~ segment ~ `">` ~ segment ~ `</a>`;
+					{
+						//segment = `<a rel="nofollow" href="` ~ segment ~ `">` ~ segment ~ `</a>`;
+						segment = replace(segment, reUrl, `<a rel="nofollow" href="$0">$0</a>`);
+					}
 				line = segments.join();
 			}
 			html.put(line, '\n');
