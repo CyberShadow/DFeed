@@ -935,8 +935,8 @@ class WebUI
 
 		html.put(
 			`<table id="group-index" class="forum-table group-wrapper viewmode-`, encodeEntities(user.get("groupviewmode", "basic")), `">`
-			`<tr class="group-index-header"><th><div>`), newPostButton(group), html.put(encodeEntities(group), `</div></th></tr>`, newline,
-		//	`<tr class="group-index-captions"><th>Subject / Author</th><th>Time</th>`, newline,
+			`<tr class="group-index-header"><th><div>`), newPostButton(group), html.put(encodeEntities(group), `</div></th></tr>`,
+		//	`<tr class="group-index-captions"><th>Subject / Author</th><th>Time</th>`,
 			`<tr><td class="group-threads-cell"><div class="group-threads"><table>`);
 		formatThreadedPosts(posts);
 		html.put(`</table></div></td></tr>`);
