@@ -215,7 +215,8 @@ class WebUI
 							if (!post.data && post.error)
 								throw new Exception(post.error);
 							if (post.fileName)
-								response.headers["Content-Disposition"] = `inline; filename="` ~ post.fileName ~ `"`;
+								//response.headers["Content-Disposition"] = `inline; filename="` ~ post.fileName ~ `"`;
+								response.headers["Content-Disposition"] = `attachment; filename="` ~ post.fileName ~ `"`;
 							// TODO: is allowing text/html (others?) OK here?
 							return response.serveData(Data(post.data), post.mimeType ? post.mimeType : "application/octet-stream");
 						}
