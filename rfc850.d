@@ -42,8 +42,6 @@ struct Xref
 	int num;
 }
 
-enum DEFAULT_ENCODING = "windows1252";
-
 class Rfc850Post : Post
 {
 	string message, id;
@@ -86,14 +84,20 @@ class Rfc850Post : Post
 		foreach (s; header.fastSplit('\n'))
 		{
 			if (s == "") break;
-			if (hasIntlCharacters(s))
-				s = decodeEncodedText(s, DEFAULT_ENCODING);
 
 			auto p = s.indexOf(": ");
 			if (p<0) continue;
 			//assert(p>0, "Bad header line: " ~ s);
-			headers[toUpper(s[0..p])] = s[p+2..$];
+			headers[s[0..p]] = s[p+2..$];
 		}
+
+		string defaultEncoding = "windows1252";
+		if (aaGet(headers, "User-Agent", null) == "DFeed")
+			defaultEncoding = "utf8"; // Hack...
+
+		foreach (string key, ref string value; headers)
+			if (hasIntlCharacters(value))
+				value = decodeEncodedText(value, defaultEncoding);
 
 		string rawContent = text[headerEnd+2..$]; // not UTF-8
 
@@ -124,7 +128,7 @@ class Rfc850Post : Post
 				if ("charset" in contentType.properties)
 					content = decodeEncodedText(rawContent, contentType.properties["charset"]);
 				else
-					content = decodeEncodedText(rawContent, DEFAULT_ENCODING);
+					content = decodeEncodedText(rawContent, defaultEncoding);
 			}
 			else
 			if (mimeType.startsWith("multipart/") && "boundary" in contentType.properties)
@@ -460,7 +464,7 @@ class Rfc850Post : Post
 	override bool isImportant()
 	{
 		// GitHub notifications are already grabbed from RSS
-		if (author == "noreply@github.com")
+		if (authorEmail == "noreply@github.com")
 			return false;
 
 		if (where == "")
