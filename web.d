@@ -129,7 +129,7 @@ class WebUI
 
 				case "":
 					title = "Index";
-					breadcrumb1 = `<a href="/discussion/">Forum Index</a>`;
+					breadcrumb1 = `<a href="/">Forum Index</a>`;
 					discussionIndex();
 					break;
 				case "group":
@@ -139,7 +139,7 @@ class WebUI
 					int page = to!int(aaGet(parameters, "page", "1"));
 					string pageStr = page==1 ? "" : format(" (page %d)", page);
 					title = group ~ " index" ~ pageStr;
-					breadcrumb1 = `<a href="/discussion/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
+					breadcrumb1 = `<a href="/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
 					auto viewMode = user.get("groupviewmode", "basic");
 					if (viewMode == "basic")
 						discussionGroup(group, page);
@@ -167,8 +167,8 @@ class WebUI
 						string group, subject;
 						discussionThread(threadID, page, group, subject);
 						title = subject ~ pageStr;
-						breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group)~`">` ~ encodeEntities(group  ) ~ `</a>`;
-						breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a>` ~ pageStr;
+						breadcrumb1 = `<a href="/group/` ~encodeEntities(group)~`">` ~ encodeEntities(group  ) ~ `</a>`;
+						breadcrumb2 = `<a href="/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a>` ~ pageStr;
 						//tools ~= viewModeTool(["flat", "nested"], "thread");
 						tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
 					}
@@ -186,8 +186,8 @@ class WebUI
 						string group, subject;
 						discussionSinglePost('<' ~ urlDecode(pathX) ~ '>', group, subject);
 						title = subject;
-						breadcrumb1 = `<a href="/discussion/group/` ~encodeEntities(group)~`">` ~ encodeEntities(group  ) ~ `</a>`;
-						breadcrumb2 = `<a href="/discussion/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a> (view single post)`;
+						breadcrumb1 = `<a href="/group/` ~encodeEntities(group)~`">` ~ encodeEntities(group  ) ~ `</a>`;
+						breadcrumb2 = `<a href="/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a> (view single post)`;
 						tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
 						break;
 					}
@@ -199,7 +199,7 @@ class WebUI
 
 						string pageStr = page==1 ? "" : format(" (page %d)", page);
 						title = group ~ " index" ~ pageStr;
-						breadcrumb1 = `<a href="/discussion/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
+						breadcrumb1 = `<a href="/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
 						extraHeaders ~= splitViewHeaders;
 						tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
 
@@ -261,8 +261,8 @@ class WebUI
 					enforce(path.length > 1, "No group specified");
 					string group = path[1];
 					title = "Posting to " ~ group;
-					breadcrumb1 = `<a href="/discussion/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>`;
-					breadcrumb2 = `<a href="/discussion/newpost/`~encodeEntities(group)~`">New thread</a>`;
+					breadcrumb1 = `<a href="/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>`;
+					breadcrumb2 = `<a href="/newpost/`~encodeEntities(group)~`">New thread</a>`;
 					if (discussionPostForm(Rfc850Post.newPostTemplate(group)))
 						bodyClass ~= " formdoc";
 					break;
@@ -274,7 +274,7 @@ class WebUI
 					enforce(post, "Post not found");
 					title = `Replying to "` ~ post.subject ~ `"`;
 					breadcrumb1 = `<a href="` ~ encodeEntities(idToUrl(post.id)) ~ `">` ~ encodeEntities(post.subject) ~ `</a>`;
-					breadcrumb2 = `<a href="/discussion/reply/`~pathX~`">Post reply</a>`;
+					breadcrumb2 = `<a href="/reply/`~pathX~`">Post reply</a>`;
 					if (discussionPostForm(post.replyTemplate()))
 						bodyClass ~= " formdoc";
 					break;
@@ -284,7 +284,7 @@ class WebUI
 					auto postVars = request.decodePostData();
 					auto process = discussionSend(postVars, cast(string[string])request.headers);
 					if (process)
-						return response.redirect("/discussion/poststatus/" ~ process.pid);
+						return response.redirect("/poststatus/" ~ process.pid);
 
 					title = breadcrumb1 = `Posting error`;
 					bodyClass ~= " formdoc";
@@ -312,14 +312,14 @@ class WebUI
 				{
 					discussionLoginForm(parameters);
 					title = breadcrumb1 = `Log in`;
-					tools ~= `<a href="/discussion/registerform?url=__URL__">Register</a>`;
+					tools ~= `<a href="/registerform?url=__URL__">Register</a>`;
 					break;
 				}
 				case "registerform":
 				{
 					discussionRegisterForm(parameters);
 					title = breadcrumb1 = `Registration`;
-					tools ~= `<a href="/discussion/registerform?url=__URL__">Register</a>`;
+					tools ~= `<a href="/registerform?url=__URL__">Register</a>`;
 					break;
 				}
 				case "login":
@@ -337,7 +337,7 @@ class WebUI
 					{
 						discussionLoginForm(parameters, e.msg);
 						title = breadcrumb1 = `Login error`;
-						tools ~= `<a href="/discussion/registerform?url=__URL__">Register</a>`;
+						tools ~= `<a href="/registerform?url=__URL__">Register</a>`;
 						break;
 					}
 				}
@@ -356,7 +356,7 @@ class WebUI
 					{
 						discussionRegisterForm(parameters, e.msg);
 						title = breadcrumb1 = `Registration error`;
-						tools ~= `<a href="/discussion/registerform?url=__URL__">Register</a>`;
+						tools ~= `<a href="/registerform?url=__URL__">Register</a>`;
 						break;
 					}
 				}
@@ -412,10 +412,10 @@ class WebUI
 		if (breadcrumb2) breadcrumb2 = "&raquo; " ~ breadcrumb2;
 
 		if (user.isLoggedIn())
-			tools ~= `<a href="/discussion/logout?url=__URL__">Log out ` ~ encodeEntities(user.getName()) ~ `</a>`;
+			tools ~= `<a href="/logout?url=__URL__">Log out ` ~ encodeEntities(user.getName()) ~ `</a>`;
 		else
-			tools ~= `<a href="/discussion/loginform?url=__URL__">Log in</a>`;
-		tools ~= `<a href="/discussion/help">Help</a>`;
+			tools ~= `<a href="/loginform?url=__URL__">Log in</a>`;
+		tools ~= `<a href="/help">Help</a>`;
 
 		string toolStr = tools.join(" &middot; ");
 		toolStr =
@@ -565,7 +565,7 @@ class WebUI
 			{
 				html.put(
 					`<tr>`
-						`<td class="forum-index-col-forum"><a href="/discussion/group/`, encodeEntities(group.name), `">`, encodeEntities(group.name), `</a>`
+						`<td class="forum-index-col-forum"><a href="/group/`, encodeEntities(group.name), `">`, encodeEntities(group.name), `</a>`
 							`<div class="forum-index-description">`, encodeEntities(group.description), `</div>`
 						`</td>`
 						`<td class="forum-index-col-lastpost">`   , (group.name in lastPosts    ? summarizePost(lastPosts[group.name]) : `<div class="forum-no-data">-</div>`), `</td>`
@@ -591,7 +591,7 @@ class WebUI
 	void newPostButton(string group)
 	{
 		html.put(
-			`<form name="new-post-form" method="get" action="/discussion/newpost/`, encodeEntities(group), `">`
+			`<form name="new-post-form" method="get" action="/newpost/`, encodeEntities(group), `">`
 				`<div class="header-tools">`
 					`<input type="submit" value="Create thread">`
 				`</div>`
@@ -651,7 +651,7 @@ class WebUI
 		auto threadCount = threadCounts[group];
 		auto pageCount = getPageCount(threadCount, THREADS_PER_PAGE);
 
-		pager(`/discussion/group/` ~ group, page, pageCount, radius);
+		pager(`/group/` ~ group, page, pageCount, radius);
 	}
 
 	void discussionGroup(string group, int page)
@@ -1343,7 +1343,7 @@ class WebUI
 	    	return false;
 	    }
 		
-		html.put(`<form action="/discussion/send" method="post" class="forum-form" id="postform">`);
+		html.put(`<form action="/send" method="post" class="forum-form" id="postform">`);
 
 		string recaptchaError;
 		if (errorMessage.startsWith(RecaptchaErrorPrefix))
@@ -1504,7 +1504,7 @@ class WebUI
 	void discussionLoginForm(string[string] parameters, string errorMessage = null)
 	{
 
-		html.put(`<form action="/discussion/login" method="post" id="loginform" class="forum-form loginform">`
+		html.put(`<form action="/login" method="post" id="loginform" class="forum-form loginform">`
 			`<table class="forum-table">`
 				`<tr><th>Log in</th></tr>`
 				`<tr><td class="loginform-cell">`);
@@ -1524,7 +1524,7 @@ class WebUI
 		else
 			html.put(
 				`<tr><td class="loginform-info">`
-					`<a href="/discussion/registerform`,
+					`<a href="/registerform`,
 						("url" in parameters ? `?url=` ~ encodeUrlParameter(parameters["url"]) : ``),
 						`">Register</a> to keep your preferences<br>and read post history on the server.`
 				`</td></tr>`);
@@ -1538,7 +1538,7 @@ class WebUI
 
 	void discussionRegisterForm(string[string] parameters, string errorMessage = null)
 	{
-		html.put(`<form action="/discussion/register" method="post" id="registerform" class="forum-form loginform">`
+		html.put(`<form action="/register" method="post" id="registerform" class="forum-form loginform">`
 			`<table class="forum-table">`
 				`<tr><th>Register</th></tr>`
 				`<tr><td class="loginform-cell">`);
@@ -1834,7 +1834,7 @@ class WebUI
 		// pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
 		// sub-delims    = "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
 		// unreserved    = ALPHA / DIGIT / "-" / "." / "_" / "~"
-		string path = "/discussion/" ~ action ~ "/" ~ urlEncode(id[1..$-1], " \"#%/<>?[\\]^`{|}", '%');
+		string path = "/" ~ action ~ "/" ~ urlEncode(id[1..$-1], " \"#%/<>?[\\]^`{|}", '%');
 
 		assert(page >= 1);
 		if (page > 1)
@@ -1864,7 +1864,7 @@ class WebUI
 	/// Generate a link to set a user preference
 	string setOptionLink(string name, string value)
 	{
-		return "/discussion/set?" ~ encodeUrlParameters([name : value, "url" : "__URL__", "secret" : getUserSecret()]);
+		return "/set?" ~ encodeUrlParameters([name : value, "url" : "__URL__", "secret" : getUserSecret()]);
 	}
 }
 

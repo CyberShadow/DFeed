@@ -67,7 +67,7 @@ document.write('\x3Cstyle type="text/css"\x3E.nojs { display: none; }\x3C/style\
 	<div id="header">
 		<a href="/"><img id="logo" width="125" height="95" alt="D Logo" src="/images/dlogo.png"></a>
 		<div id="breadcrumbs">
-			<a href="/discussion/">D Programming Language Discussion (beta)</a>
+			<a href="/">D Programming Language Discussion (beta)</a>
 			<div id="breadcrumb1"><?breadcrumb1?></div>
 			<div id="breadcrumb2"><?breadcrumb2?></div>
 		</div>
@@ -104,7 +104,7 @@ document.write('\x3Cstyle type="text/css"\x3E.nojs { display: none; }\x3C/style\
 
 <div class="navblock">
 <h2>Community</h2>
-<ul><li><a href="/discussion/" title="User forums">Forums</a></li>
+<ul><li><a href="/" title="User forums">Forums</a></li>
 	<li><a href="http://github.com/D-Programming-Language" title="D on github">Github</a></li>
 	<li><a href="http://prowiki.org/wiki4d/wiki.cgi?FrontPage" title="Wiki for the D Programming Language">Wiki</a></li>
 	<li><a href="http://dsource.org/" title="D projects and libraries at dsource.org">Projects &amp; Libraries</a></li>
@@ -125,7 +125,7 @@ document.write('\x3Cstyle type="text/css"\x3E.nojs { display: none; }\x3C/style\
 
 
 <div id="footernav">
-<a href="/discussion/" title="User Forums">Forums</a> |
+<a href="/" title="User Forums">Forums</a> |
 <a href="http://www.prowiki.org/wiki4d/wiki.cgi?DocComments/Intro" title="Read/write comments and feedback">Comments</a> |
 <a href="http://d-p-l.org/index.html" title="D Programming Language" class="dlink">&nbsp;D&nbsp;</a> |
 <a href="http://www.digitalmars.com/advancedsearch.html" title="Search Digital Mars web site">Search</a> |
