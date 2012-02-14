@@ -220,7 +220,7 @@ class Rfc850Post : Post
 			}
 		}
 
-		subject = realSubject = "Subject" in headers ? decodeRfc5335(headers["Subject"]) : null;
+		subject = realSubject = "Subject" in headers ? decodeRfc1522(headers["Subject"]) : null;
 		if (subject.startsWith("Re: "))
 		{
 			subject = subject[4..$];
@@ -228,7 +228,7 @@ class Rfc850Post : Post
 		}
 
 		int bugzillaCommentNumber;
-		author = authorEmail = "From" in headers ? decodeRfc5335(headers["From"]) : null;
+		author = authorEmail = "From" in headers ? decodeRfc1522(headers["From"]) : null;
 		if ("X-Bugzilla-Who" in headers)
 		{
 			author = authorEmail = headers["X-Bugzilla-Who"];
@@ -251,7 +251,7 @@ class Rfc850Post : Post
 			if (author.indexOf(" (") > 0 && author.endsWith(")"))
 			{
 				authorEmail = author[0 .. author.lastIndexOf(" (")].replace(" at ", "@");
-				author      = author[author.lastIndexOf(" (")+2 .. $-1].decodeRfc5335();
+				author      = author[author.lastIndexOf(" (")+2 .. $-1].decodeRfc1522();
 			}
 			else
 			{
@@ -263,10 +263,10 @@ class Rfc850Post : Post
 		{
 			auto p = author.indexOf('<');
 			authorEmail = author[p+1..$-1];
-			author = decodeRfc5335(strip(author[0..p]));
+			author = decodeRfc1522(strip(author[0..p]));
 		}
 		if (author.length>2 && author[0]=='"' && author[$-1]=='"')
-			author = decodeRfc5335(strip(author[1..$-1]));
+			author = decodeRfc1522(strip(author[1..$-1]));
 		//if (author == authorEmail && author.indexOf("@") > 0)
 		//	author = author[0..author.indexOf("@")];
 
@@ -529,9 +529,9 @@ private:
 
 private:
 
-string decodeRfc5335(string str)
+string decodeRfc1522(string str)
 {
-	// TODO: find the actual RFC this is described in and implement it according to standard
+	// TODO: actually read RFC
 
 	auto words = str.split(" ");
 	bool[] encoded = new bool[words.length];
