@@ -554,7 +554,7 @@ string decodeRfc5335(string str)
 			switch (toUpper(contentEncoding))
 			{
 			case "Q":
-				s = decodeQuotedPrintable(s);
+				s = decodeQuotedPrintable(s, true);
 				break;
 			case "B":
 				s = cast(string)Base64.decode(s);
@@ -577,7 +577,7 @@ string decodeRfc5335(string str)
 	return result;
 }
 
-string decodeQuotedPrintable(string s)
+string decodeQuotedPrintable(string s, bool inHeaders)
 {
 	auto r = appender!string();
 	for (int i=0; i<s.length; )
@@ -589,7 +589,7 @@ string decodeQuotedPrintable(string s)
 				r.put(cast(char)parse!ubyte(s[i+1..i+3], 16)), i+=3;
 		}
 		else
-		if (s[i]=='_')
+		if (s[i]=='_' && inHeaders)
 			r.put(' '), i++;
 		else
 			r.put(s[i++]);
@@ -671,7 +671,7 @@ string decodeTransferEncoding(string data, string encoding)
 	case "7bit":
 		return data;
 	case "quoted-printable":
-		return decodeQuotedPrintable(data);
+		return decodeQuotedPrintable(data, false);
 	case "base64":
 		//return cast(string)Base64.decode(data.replace("\n", ""));
 	{
