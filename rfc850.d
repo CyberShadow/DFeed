@@ -72,6 +72,7 @@ class Rfc850Post : Post
 		message = _message;
 		id    = _id;
 		rowid = _rowid;
+		debug scope(failure) writeln("Failure while parsing message: ", _id);
 
 		// TODO: actually read RFC 850
 		// TODO: this breaks binary encodings, FIXME?
@@ -686,6 +687,7 @@ string decodeTransferEncoding(string data, string encoding)
 
 ubyte[] uudecode(string[] lines)
 {
+	// TODO: optimize
 	//auto data = appender!(ubyte[]);  // OPTLINK says no
 	ubyte[] data;
 	foreach (line; lines)
@@ -716,6 +718,8 @@ ubyte[] uudecode(string[] lines)
 
 			line = line[4..$];
 		}
+		while (len > lineData.length)
+			lineData ~= 0;
 		data ~= lineData[0..len];
 	}
 	return data;
