@@ -1706,7 +1706,7 @@ class WebUI
 			return format("%s %s%s ago", amount, units, amount==1 ? "" : "s");
 		}
 
-		auto now = Clock.currTime();
+		auto now = Clock.currTime(UTC());
 		auto duration = now - time;
 
 		if (duration < dur!"seconds"(0))
@@ -1734,9 +1734,9 @@ class WebUI
 			return ago(duration.total!"days", "day");
 		else
 		if (duration < dur!"days"(300))
-			return formatTime(shorter ? "M d" : "F d", time);
+			return formatTime(shorter ? "M d"    : "F d"   , time);
 		else
-			return formatTime(shorter ? "M Y" : "F Y", time);
+			return formatTime(shorter ? "M d, Y" : "F d, Y", time);
 	}
 
 	string formatLongTime(SysTime time)
