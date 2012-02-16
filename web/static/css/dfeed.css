@@ -327,6 +327,10 @@ ul.post-info-parts {
 	color: #706666;
 }
 
+.forcewrap {
+	word-break: break-all;
+}
+
 /* Threading */
 
 .post-nester {

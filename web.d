@@ -1641,18 +1641,29 @@ class WebUI
 			if (line.startsWith(" "))
 				line = line[1..$];
 
+			auto lineLength = line.length;
 			line = encodeEntities(line);
+
+			if (lineLength > 70)
+			{
+				auto segments = line.segmentByWhitespace();
+				foreach (ref segment; segments)
+					if (segment.length > 50)
+						segment = `<span class="forcewrap">` ~ segment ~ `</span>`;
+				line = segments.join();
+			}
+
 			if (line.contains("://"))
 			{
 				auto segments = line.segmentByWhitespace();
 				foreach (ref segment; segments)
-					if (segment.startsWith("http://") || segment.startsWith("https://") || segment.startsWith("ftp://"))
-					{
-						//segment = `<a rel="nofollow" href="` ~ segment ~ `">` ~ segment ~ `</a>`;
-						segment = replace(segment, reUrl, `<a rel="nofollow" href="$0">$0</a>`);
-					}
+				{
+					//segment = `<a rel="nofollow" href="` ~ segment ~ `">` ~ segment ~ `</a>`;
+					segment = replace(segment, reUrl, `<a rel="nofollow" href="$0">$0</a>`);
+				}
 				line = segments.join();
 			}
+
 			html.put(line, '\n');
 		}
 		if (wasQuoted)
