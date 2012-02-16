@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -25,7 +25,7 @@ struct Paragraph
 	string quotePrefix, text;
 }
 
-Paragraph[] unwrapText(string text, bool delsp)
+Paragraph[] unwrapText(string text, bool flowed, bool delsp)
 {
 	auto lines = splitAsciiLines(text);
 
@@ -47,7 +47,7 @@ Paragraph[] unwrapText(string text, bool delsp)
 		}
 
 		// Remove space-stuffing
-		if (line.startsWith(" "))
+		if (flowed && line.startsWith(" "))
 			line = line[1..$];
 
 		if (paragraphs.length>0
@@ -120,4 +120,10 @@ string wrapText(Paragraph[] paragraphs, int margin = 66)
 	}
 
 	return lines.join("\n");
+}
+
+unittest
+{
+	// Space-stuffing
+	assert(wrapText(unwrapText(" Hello", false, false)) == "  Hello");
 }

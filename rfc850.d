@@ -359,7 +359,7 @@ class Rfc850Post : Post
 		if (!post.subject.startsWith("Re:"))
 			post.subject = "Re: " ~ post.subject;
 
-		auto paragraphs = unwrapText(this.content, this.delsp);
+		auto paragraphs = unwrapText(this.content, this.flowed, this.delsp);
 		foreach (i, ref paragraph; paragraphs)
 			if (paragraph.quotePrefix.length)
 				paragraph.quotePrefix = ">" ~ paragraph.quotePrefix;
@@ -390,7 +390,7 @@ class Rfc850Post : Post
 	// Rewrap
 	void setText(string text)
 	{
-		this.content = wrapText(unwrapText(text, false));
+		this.content = wrapText(unwrapText(text, false, false));
 		this.flowed = true;
 		this.delsp = false;
 	}
