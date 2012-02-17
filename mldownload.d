@@ -25,6 +25,7 @@ import ae.net.http.client;
 import ae.utils.gzip;
 import ae.sys.data;
 import ae.sys.log;
+import ae.sys.timing;
 
 import common;
 import database;
@@ -59,37 +60,49 @@ class MLDownloader : NewsSource
 				{
 					auto m = match(line, re);
 					if (!m.empty)
-					{
-						auto fn = m.captures[1];
-						auto url = "http://lists.puremagic.com/pipermail/" ~ list ~ "/" ~ fn;
-						httpGet(url,
-							(Data data)
-							{
-								scope(failure) std.file.write("errorfile", data.contents);
-								auto text = cast(string)(uncompress(data).contents).idup;
-								text = text[text.indexOf('\n')+1..$]; // skip first From line
-								auto fromline = regex("\n\nFrom .* at .*  \\w\\w\\w \\w\\w\\w [\\d ]\\d \\d\\d:\\d\\d:\\d\\d \\d\\d\\d\\d\n");
-								foreach (msg; splitter(text, fromline))
-								{
-									msg = "List-ID: " ~ list ~ "\n" ~ msg;
-									scope(failure) std.file.write("errormsg", msg);
-									auto post = new Rfc850Post(msg);
-									foreach (int n; query("SELECT COUNT(*) FROM `Posts` WHERE `ID` = ?").iterate(post.id))
-										if (n == 0)
-										{
-											log("Found new post: " ~ post.id);
-											announcePost(post);
-										}
-										else if (update)
-										{
-											log("Updating post: " ~ post.id);
-											sink.updatePost(post);
-										}
-								}
-							}, null);
-					}
+						downloadFile(list, m.captures[1]);
 				}
-			}, null);
+			},
+			(string error)
+			{
+				log("Error downloading list " ~ list ~ ": " ~ error);
+				setTimeout({ downloadList(list); }, TickDuration.from!"seconds"(10));
+			});
+	}
+
+	void downloadFile(string list, string fn)
+	{
+		auto url = "http://lists.puremagic.com/pipermail/" ~ list ~ "/" ~ fn;
+		httpGet(url,
+			(Data data)
+			{
+				scope(failure) std.file.write("errorfile", data.contents);
+				auto text = cast(string)(uncompress(data).contents).idup;
+				text = text[text.indexOf('\n')+1..$]; // skip first From line
+				auto fromline = regex("\n\nFrom .* at .*  \\w\\w\\w \\w\\w\\w [\\d ]\\d \\d\\d:\\d\\d:\\d\\d \\d\\d\\d\\d\n");
+				foreach (msg; splitter(text, fromline))
+				{
+					msg = "List-ID: " ~ list ~ "\n" ~ msg;
+					scope(failure) std.file.write("errormsg", msg);
+					auto post = new Rfc850Post(msg);
+					foreach (int n; query("SELECT COUNT(*) FROM `Posts` WHERE `ID` = ?").iterate(post.id))
+						if (n == 0)
+						{
+							log("Found new post: " ~ post.id);
+							announcePost(post);
+						}
+						else if (update)
+						{
+							log("Updating post: " ~ post.id);
+							sink.updatePost(post);
+						}
+				}
+			},
+			(string error)
+			{
+				log("Error downloading file " ~ fn ~ " on list " ~ list ~ ": " ~ error);
+				setTimeout({ downloadFile(list, fn); }, TickDuration.from!"seconds"(10));
+			});
 	}
 }
 
