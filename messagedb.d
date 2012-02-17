@@ -69,7 +69,7 @@ public:
 	{
 		log(format("Updating message %s (%s)", message.id, message.where));
 
-		query("UPDATE `Posts` SET (`Message`, `Author`, `Subject`, `Time`, `ParentID`, `ThreadID`) VALUES (?, ?, ?, ?, ?, ?) WHERE `ID` = ?")
+		query("UPDATE `Posts` SET `Message`=?, `Author`=?, `Subject`=?, `Time`=?, `ParentID`=?, `ThreadID`=? WHERE `ID` = ?")
 			.exec(message.message, message.author, message.subject, message.time.stdTime, message.parentID, message.threadID, message.id);
 	}
 }
