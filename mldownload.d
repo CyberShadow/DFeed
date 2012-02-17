@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -64,7 +64,7 @@ class MLDownloader : NewsSource
 								scope(failure) std.file.write("errorfile", data.contents);
 								auto text = cast(string)(uncompress(data).contents).idup;
 								text = text[text.indexOf('\n')+1..$]; // skip first From line
-								auto fromline = regex("\n\nFrom .* at .*  \\w\\w\\w \\w\\w\\w \\d\\d \\d\\d:\\d\\d:\\d\\d \\d\\d\\d\\d\n");
+								auto fromline = regex("\n\nFrom .* at .*  \\w\\w\\w \\w\\w\\w [\\d ]\\d \\d\\d:\\d\\d:\\d\\d \\d\\d\\d\\d\n");
 								foreach (msg; splitter(text, fromline))
 								{
 									msg = "List-ID: " ~ list ~ "\n" ~ msg;
