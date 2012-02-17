@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -22,6 +22,7 @@ import std.array;
 import std.uri;
 import std.base64;
 import std.datetime;
+import std.exception;
 debug import std.stdio;
 
 import ae.net.http.client;
@@ -417,6 +418,8 @@ class Rfc850Post : Post
 		string[] lines;
 		foreach (name, value; headers)
 		{
+			if (value.hasIntlCharacters())
+				value = value.encodeRfc1522();
 			auto line = name ~ ": " ~ value;
 			auto lineStart = name.length + 2;
 
@@ -532,39 +535,32 @@ private:
 
 string decodeRfc1522(string str)
 {
-	// TODO: actually read RFC
-
 	auto words = str.split(" ");
 	bool[] encoded = new bool[words.length];
 
 	foreach (wordIndex, ref word; words)
-		if (word.length >= 4 && word.startsWith("=?") && word.endsWith("?="))
+		if (word.length > 6 && word.startsWith("=?") && word.endsWith("?="))
 		{
-			string s = word[2..$-2];
+			auto parts = split(word[2..$-2], "?");
+			if (parts.length != 3)
+				continue;
+			auto charset = parts[0];
+			auto encoding = parts[1];
+			auto text = parts[2];
 
-			auto p = s.indexOf('?');
-			if (p<=0) continue;
-			auto textEncoding = s[0..p];
-			s = s[p+1..$];
-
-			p = s.indexOf('?');
-			if (p<=0) continue;
-			auto contentEncoding = s[0..p];
-			s = s[p+1..$];
-
-			switch (toUpper(contentEncoding))
+			switch (toUpper(encoding))
 			{
 			case "Q":
-				s = decodeQuotedPrintable(s, true);
+				text = decodeQuotedPrintable(text, true);
 				break;
 			case "B":
-				s = cast(string)Base64.decode(s);
+				text = cast(string)Base64.decode(text);
 				break;
 			default:
 				continue /*foreach*/;
 			}
 
-			word = decodeEncodedText(s, textEncoding);
+			word = decodeEncodedText(text, charset);
 			encoded[wordIndex] = true;
 		}
 
@@ -576,6 +572,34 @@ string decodeRfc1522(string str)
 		result ~= word;
 	}
 	return result;
+}
+
+string encodeRfc1522(string str)
+{
+	enum CHUNK_LENGTH_THRESHOLD = 20;
+
+	string[] output;
+	while (str.length)
+	{
+		size_t ptr = 0;
+		while (ptr < str.length && ptr < CHUNK_LENGTH_THRESHOLD)
+			ptr += stride(str, ptr);
+		output ~= encodeRfc1522Chunk(str[0..ptr]);
+		str = str[ptr..$];
+	}
+	return output.join(" ");
+}
+
+string encodeRfc1522Chunk(string str)
+{
+	auto result = "=?UTF-8?B?" ~ Base64.encode(cast(ubyte[])str) ~ "?=";
+	return assumeUnique(result);
+}
+
+unittest
+{
+	auto text = "В лесу родилась ёлочка";
+	assert(decodeRfc1522(encodeRfc1522(text)) == text);
 }
 
 string decodeQuotedPrintable(string s, bool inHeaders)
