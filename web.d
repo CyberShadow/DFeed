@@ -104,6 +104,7 @@ class WebUI
 
 		// Temporary hack
 		auto host = aaGet(request.headers, "Host", "");
+		host = aaGet(request.headers, "X-Forwarded-Host", host);
 		if (host != "forum.dlang.org" && host != "localhost")
 		{
 			html.put(
@@ -111,8 +112,9 @@ class WebUI
 					`<tr><th>Deprecated domain name</th></tr>`
 					`<tr><td class="forum-table-message">`
 						`You are accessing this forum via a deprecated domain name.<br>`
+						`<!-- `, host, ` -->`
 						`This domain will be turned into a redirect on February 22.<br>`
-						`Please use <a href="http://forum.dlang.org`, encodeEntities(request.resource), `">forum.lang.org</a> instead.<br><br>`,
+						`Please use <a href="http://forum.dlang.org`, encodeEntities(request.resource), `">forum.dlang.org</a> instead.<br><br>`,
 						(user.isLoggedIn ? `` : `To preserve your read post history, <a href="/registerform">create an account</a> on this domain - `
 							`your browser cookies will be transferred to the server database at registration.`),
 					`</td></tr>`
