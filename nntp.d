@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -94,8 +94,8 @@ private:
 			|| line.startsWith("111")
 			||(line.startsWith("211") && !expectingGroupList.queuePeek())
 			|| line.startsWith("240")
-			|| line.startsWith("340")
-			|| line.startsWith("400");
+			|| line.startsWith("3")
+			|| line.startsWith("4");
 	}
 
 	void send(string line)
