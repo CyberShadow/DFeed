@@ -29,6 +29,7 @@ alias std.string.indexOf indexOf;
 import ae.net.asockets;
 import ae.net.http.server;
 import ae.net.http.responseex;
+import ae.net.ietf.headers;
 import ae.sys.log;
 import ae.utils.json;
 import ae.utils.array;
@@ -100,6 +101,23 @@ class WebUI
 		string bodyClass = "narrowdoc";
 		html.clear();
 		string[] tools, extraHeaders;
+
+		// Temporary hack
+		auto host = aaGet(request.headers, "Host", "");
+		if (host != "forum.dlang.org" && host != "localhost")
+		{
+			html.put(
+				`<table class="forum-table forum-error">`
+					`<tr><th>Deprecated domain name</th></tr>`
+					`<tr><td class="forum-table-message">`
+						`You are accessing this forum via a deprecated domain name.<br>`
+						`This domain will be turned into a redirect on February 22.<br>`
+						`Please use <a href="http://forum.dlang.org`, encodeEntities(request.resource), `">forum.lang.org</a> instead.<br><br>`,
+						(user.isLoggedIn ? `` : `To preserve your read post history, <a href="/registerform">create an account</a> on this domain - `
+							`your browser cookies will be transferred to the server database at registration.`),
+					`</td></tr>`
+				`</table>`);
+		}
 
 		auto splitViewHeaders = [
 			`<script src="` ~ JQUERY_URL ~ `"></script>`,
