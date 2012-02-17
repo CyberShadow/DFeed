@@ -336,6 +336,12 @@ class Rfc850Post : Post
 			try
 				time = parseTime(`D, j M Y H:i:s e`, str);
 			catch (Exception e)
+			try
+				time = parseTime(`D, j M Y H:i O`, str);
+			catch (Exception e)
+			try
+				time = parseTime(`D, j M Y H:i e`, str);
+			catch (Exception e)
 			{ /* fall-back to default (class creation time) */ }
 		}
 	}
@@ -529,6 +535,16 @@ class Rfc850Post : Post
 private:
 	string[] ANNOUNCE_REPLIES = ["digitalmars.D.bugs"];
 	string[] VIPs = ["Walter Bright", "Andrei Alexandrescu", "Sean Kelly", "Don", "dsimcha"];
+}
+
+unittest
+{
+	auto post = new Rfc850Post("From: msonke at example.org (=?ISO-8859-1?Q?S=F6nke_Martin?=)\n\nText");
+	assert(post.author == "Sönke Martin");
+	assert(post.authorEmail == "msonke@example.org");
+
+	post = new Rfc850Post("Date: Tue, 06 Sep 2011 14:52 -0700\n\nText");
+	assert(post.time.year == 2011);
 }
 
 private:
