@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -62,5 +62,14 @@ protected:
 			if (lastUpdated < message.time.stdTime)
 				query("UPDATE `Threads` SET `LastPost` = ?, `LastUpdated` = ? WHERE `ROWID` = ?").exec(message.id, message.time.stdTime, threadIndex);
 		}
+	}
+
+public:
+	void updatePost(Rfc850Post message)
+	{
+		log(format("Updating message %s (%s)", message.id, message.where));
+
+		query("UPDATE `Posts` SET (`Message`, `Author`, `Subject`, `Time`, `ParentID`, `ThreadID`) VALUES (?, ?, ?, ?, ?, ?) WHERE `ID` = ?")
+			.exec(message.message, message.author, message.subject, message.time.stdTime, message.parentID, message.threadID, message.id);
 	}
 }

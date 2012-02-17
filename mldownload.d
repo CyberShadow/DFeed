@@ -31,6 +31,10 @@ import database;
 import messagedb;
 import rfc850;
 
+bool update;
+MessageDBSink sink;
+MLDownloader downloader;
+
 class MLDownloader : NewsSource
 {
 	this()
@@ -76,6 +80,11 @@ class MLDownloader : NewsSource
 											log("Found new post: " ~ post.id);
 											announcePost(post);
 										}
+										else if (update)
+										{
+											log("Updating post: " ~ post.id);
+											sink.updatePost(post);
+										}
 								}
 							}, null);
 					}
@@ -87,10 +96,11 @@ class MLDownloader : NewsSource
 void main(string[] args)
 {
 	getopt(args,
-		"q|quiet", &common.quiet);
+		"q|quiet", &common.quiet,
+		"u|update", &update);
 
-	new MessageDBSink();
-	auto downloader = new MLDownloader();
+	sink = new MessageDBSink();
+	downloader = new MLDownloader();
 
 	startNewsSources();
 
