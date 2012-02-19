@@ -919,7 +919,6 @@ class WebUI
 				formatPosts(post.children, level+1, post.subject, false);
 			}
 
-			auto offsetStr = format("%1.1f", OFFSET_INIT + level * offsetIncrement) ~ OFFSET_UNITS; // OPTLINK
 			foreach (post; posts)
 			{
 				if (topLevel)
@@ -927,6 +926,7 @@ class WebUI
 
 				if (topLevel || normalizeSubject(post.subject) != normalizeSubject(parentSubject))
 				{
+					auto offsetStr = format("%1.1f", OFFSET_INIT + level * offsetIncrement) ~ OFFSET_UNITS;
 					html.put(
 						`<tr><td style="padding-left: `, offsetStr, `">`
 						`<table class="thread-start">`
