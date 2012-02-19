@@ -22,6 +22,11 @@ import std.string;
 import std.exception;
 
 import ae.net.http.client;
+import ae.sys.log;
+
+import common;
+
+Logger log;
 
 void shortenURL(string url, void delegate(string) handler)
 {
@@ -36,6 +41,10 @@ void shortenURL(string url, void delegate(string) handler)
 				enforce(shortened.startsWith("http://"), "Unexpected bit.ly output: " ~ shortened);
 				handler(shortened);
 			}, (string error) {
+				if (!log)
+					log = createLogger("bitly");
+				log("Error while shortening " ~ url ~ ": " ~ error);
+
 				handler(url);
 			});
 	else
