@@ -772,7 +772,7 @@ class WebUI
 	{
 		enum OFFSET_INIT = 1f;
 		enum OFFSET_MAX = 2f;
-		enum OFFSET_WIDTH = 40f;
+		enum OFFSET_WIDTH = 37.5f;
 		enum OFFSET_UNITS = "%";
 
 		struct Post
