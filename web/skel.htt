@@ -2,9 +2,9 @@
 <html lang="en-US">
 
 <!--
-	Copyright (c) 1999-2011 by Digital Mars
+	Copyright (c) 1999-2012 by Digital Mars
 	All Rights Reserved Written by Walter Bright
-	http://www.digitalmars.com
+	http://digitalmars.com
   -->
 
 <head>
@@ -39,6 +39,7 @@ function bodyLoad()
 			placeholder.innerHTML = viewModeTemplate.replace('__URL__', location.pathname);
 }
 </script>
+
 <script type="text/javascript">
 document.write('\x3Cstyle type="text/css"\x3E.nojs { display: none; }\x3C/style\x3E');
 </script>
@@ -82,23 +83,30 @@ document.write('\x3Cstyle type="text/css"\x3E.nojs { display: none; }\x3C/style\
   
 
 <div class="navblock">
-<h2><a href="http://d-p-l.org/index.html" title="D Programming Language">D Home</a></h2>
-<ul><li><a href="http://d-p-l.org/overview.html" title="D language overview">Overview</a></li>
-	<li><a href="http://d-p-l.org/comparison.html" title="D feature list">Features</a></li>
-	<li><a href="http://d-p-l.org/download.html" title="Download a D compiler">Downloads &amp; Tools</a></li>
-	<li><a href="http://d-p-l.org/faq.html" title="Frequently Asked Questions">FAQ</a></li>
-	<li><a href="http://d-p-l.org/appendices.html">Appendices</a></li>
-	<li><a href="http://d-p-l.org/acknowledgements.html" title="Thank-you to these people who have helped with D">Acknowledgements</a></li>
-	<li><a href="http://www.digitalmars.com/d/1.0/index.html" title="D Programming Language 1.0">D1 Home</a></li>
+<h2><a href="http://dlang.org/" title="D Programming Language">D Home</a></h2>
+<ul><li><a href="http://dlang.org/overview.html" title="D language overview">Overview</a></li>
+	<li><a href="http://dlang.org/comparison.html" title="D feature list">Features</a></li>
+	<li><a href="http://dlang.org/download.html" title="Download a D compiler">Downloads &amp; Tools</a></li>
+	<li><a href="http://dlang.org/changelog.html" title="History of changes to D">Changelog</a></li>
+	<li><a href="http://dlang.org/bugstats.php" title="D issue and bug tracking system">Bug tracker</a></li>
+	<li><a href="http://dlang.org/faq.html" title="Frequently Asked Questions">FAQ</a></li>
+	<li><a href="http://dlang.org/appendices.html">Appendices</a></li>
+	<li><a href="http://dlang.org/acknowledgements.html" title="Thank-you to these people who have helped with D">Acknowledgments</a></li>
+	<li><a href="http://dlang.org/sitemap.html" title="Documents on this site, indexed alphabetically">Sitemap</a></li>
+	<li><a href="http://digitalmars.com/d/1.0/index.html" title="D Programming Language 1.0">D1 Home</a></li>
 </ul>
-</div>
+    </div>
 
 <div class="navblock">
 <h2>Documentation</h2>
-<ul><li><a href="http://d-p-l.org/language-reference.html">Language Reference</a></li>
-	<li><a href="http://d-p-l.org/phobos/index.html">Library Reference</a></li>
-	<li><a href="http://d-p-l.org/howtos.html" title="Helps for using D">Howtos</a></li>
-	<li><a href="http://d-p-l.org/articles.html">Articles</a></li>
+<ul>   <li><a href="http://www.amazon.com/exec/obidos/ASIN/0321635361/classicempire">Book</a></li>
+	<li><a href="http://www.informit.com/articles/article.aspx?p=1381876">&nbsp;<font size=-1><span style="visibility: hidden">3</span>1.&nbsp;Tutorial</font></a></li>
+	<li><a href="http://www.informit.com/articles/article.aspx?p=1609144">&nbsp;<font size=-1>13.&nbsp;Concurrency</font></a></li>
+
+	<li><a href="http://dlang.org/language-reference.html">Language Reference</a></li>
+	<li><a href="http://dlang.org/phobos/index.html">Library Reference</a></li>
+	<li><a href="http://dlang.org/howtos.html" title="Helps for using D">Howtos</a></li>
+	<li><a href="http://dlang.org/articles.html">Articles</a></li>
 </ul>
     </div>
 
@@ -107,10 +115,9 @@ document.write('\x3Cstyle type="text/css"\x3E.nojs { display: none; }\x3C/style\
 <ul><li><a href="/" title="User forums">Forums</a></li>
 	<li><a href="http://github.com/D-Programming-Language" title="D on github">Github</a></li>
 	<li><a href="http://prowiki.org/wiki4d/wiki.cgi?FrontPage" title="Wiki for the D Programming Language">Wiki</a></li>
-	<li><a href="http://dsource.org/" title="D projects and libraries at dsource.org">Projects &amp; Libraries</a></li>
+	<li><a href="http://prowiki.org/wiki4d/wiki.cgi?ReviewQueue" title="Queue of current and upcoming standard library additions">Review queue</a></li>
 	<li><a href="http://twitter.com/#search?q=%23d_lang" title="#d_lang on twitter.com">Twitter</a></li>
 	<li><a href="http://digitalmars.com/d/dlinks.html" title="External D related links">Links</a></li>
-	
 	
 </ul>
     </div>
@@ -127,17 +134,18 @@ document.write('\x3Cstyle type="text/css"\x3E.nojs { display: none; }\x3C/style\
 <div id="footernav">
 <a href="/" title="User Forums">Forums</a> |
 <a href="http://www.prowiki.org/wiki4d/wiki.cgi?DocComments/Intro" title="Read/write comments and feedback">Comments</a> |
-<a href="http://d-p-l.org/index.html" title="D Programming Language" class="dlink">&nbsp;D&nbsp;</a> |
-<a href="http://www.digitalmars.com/advancedsearch.html" title="Search Digital Mars web site">Search</a> |
-<a href="http://d-p-l.org/download.html" title="Download D">Downloads</a> |
-<a href="http://www.digitalmars.com/" title="www.digitalmars.com">Home</a>
+<a href="http://dlang.org/" title="D Programming Language" class="dlink">&nbsp;D&nbsp;</a> |
+<a href="http://digitalmars.com/advancedsearch.html" title="Search Digital Mars web site">Search</a> |
+<a href="http://dlang.org/download.html" title="Download D">Downloads</a> |
+<a href="http://dlang.org/">Home</a>
 </div>
 <div id="copyright">
 
-Copyright &copy; 1999-2011 by Digital Mars &reg;, All Rights Reserved.
+Copyright &copy; 1999-2012 by Digital Mars &reg;, All Rights Reserved
 </div>
 
-<script type="text/javascript">
+
+<!--script type="text/javascript">
 
 function googleTranslateElementInit() {
   document.getElementById('translate').innerHTML =
@@ -150,7 +158,7 @@ function googleTranslateElementInit() {
   }, 'google_translate_element');
 }
 </script>
-<!--script type="text/javascript" src="http://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script-->
+<script type="text/javascript" src="http://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script-->
 
 </body>
 </html>
