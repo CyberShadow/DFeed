@@ -1576,7 +1576,9 @@ class WebUI
 			`<label for="loginform-username">Username:</label>`
 			`<input id="loginform-username" name="username" value="`, encodeEntities(aaGet(parameters, "username", "")), `">`
 			`<label for="loginform-password">Password:</label>`
-			`<input id="loginform-password" name="password" value="`, encodeEntities(aaGet(parameters, "password", "")), `">`
+			`<input id="loginform-password" type="password" name="password" value="`, encodeEntities(aaGet(parameters, "password", "")), `">`
+			`<label for="loginform-password2">Confirm:</label>`
+			`<input id="loginform-password2" type="password" name="password2" value="`, encodeEntities(aaGet(parameters, "password2", "")), `">`
 			`<input type="submit" value="Register">`
 			`</td></tr>`);
 		if (errorMessage)
@@ -1591,6 +1593,7 @@ class WebUI
 
 	void discussionRegister(string[string] parameters)
 	{
+		enforce(aaGet(parameters, "password") == aaGet(parameters, "password2"), "Passwords do not match");
 		user.register(aaGet(parameters, "username"), aaGet(parameters, "password"));
 	}
 
