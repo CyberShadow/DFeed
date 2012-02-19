@@ -24,7 +24,23 @@
 
 <p>
   Preferences and read post history are stored in cookies for unregistered users.
-  Registering an account will transfer all variables from cookies to the database.
+  Registering an account will transfer all variables from cookies to the server database.
+</p>
+
+<h2 id="avatars">Avatars</h2>
+
+<p>
+  The discussion board will display avatars associated with users' e-mail addresses.
+  If the e-mail address is registered with <a href="http://en.gravatar.com/">Gravatar</a>, the associated avatar is shown.
+  Otherwise, an <a href="http://en.wikipedia.org/wiki/Identicon">Identicon</a> generated from a hash of the e-mail address is displayed as a fallback.
+</p>
+
+<p>
+  To use a custom avatar on this discussion board,
+    <a href="http://en.gravatar.com/site/signup/">register an account at Gravatar</a>,
+    associate an e-mail address with an image,
+    and use that e-mail address when posting to this discussion board.
+  Additionally, you can create a Gravatar profile, which will be accessible by clicking on your avatar.
 </p>
 
 <h2 id="about">About</h2>
