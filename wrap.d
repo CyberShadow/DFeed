@@ -56,7 +56,8 @@ Paragraph[] unwrapText(string text, bool flowed, bool delsp)
 		 && !line.startsWith(" ")
 		 && line.length
 		 && line != "-- "
-		 && paragraphs[$-1].text != "-- ")
+		 && paragraphs[$-1].text != "-- "
+		 && (flowed || quotePrefix.length))
 		{
 			if (delsp)
 				paragraphs[$-1].text = paragraphs[$-1].text[0..$-1];
@@ -126,4 +127,11 @@ unittest
 {
 	// Space-stuffing
 	assert(wrapText(unwrapText(" Hello", false, false)) == "  Hello");
+
+	// Don't rewrap user input
+	assert(wrapText(unwrapText("Line 1 \nLine 2 ", false, false)) == "Line 1\nLine 2");
+	// ...but rewrap quoted text
+	assert(wrapText(unwrapText("> Line 1 \n> Line 2 ", false, false)) == "> Line 1 Line 2");
+	// Wrap long lines
+	assert(wrapText(unwrapText(std.array.replicate("abcde ", 20), false, false)).split("\n").length > 1);
 }
