@@ -315,6 +315,15 @@ function onKeyPress(e) {
 		}
 	}
 
+	if (!e.ctrlKey && e.shiftKey && !e.altKey) {
+		switch (c) {
+			case 'J':
+				return !(focusNext(+1) && selectFocused());
+			case 'K':
+				return !(focusNext(-1) && selectFocused());
+		}
+	}
+
 	if (e.ctrlKey && !e.shiftKey && !e.altKey) {
 		switch (e.keyCode) {
 			case 13: // ctrl+enter == enter
