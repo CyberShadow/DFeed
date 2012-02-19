@@ -162,6 +162,23 @@ class Rfc850Post : Post
 				error = "Don't know how parse " ~ mimeType ~ " message";
 		}
 
+		enum PGP_START = "-----BEGIN PGP SIGNED MESSAGE-----\n";
+		enum PGP_DELIM = "\n-----BEGIN PGP SIGNATURE-----\n";
+		enum PGP_END   = "\n-----END PGP SIGNATURE-----";
+		if (content.startsWith(PGP_START) && content.contains(PGP_DELIM) && content.strip().endsWith(PGP_END))
+		{
+			// Don't attempt to create meaningful signature files... just get the clutter out of the way
+			content = content.strip();
+			auto p = content.indexOf(PGP_DELIM);
+			auto part = new Rfc850Post(content[p+PGP_DELIM.length..$-PGP_END.length]);
+			content = content[PGP_START.length..p];
+			p = content.indexOf("\n\n");
+			if (p >= 0)
+				content = content[p+2..$];
+			part.fileName = "pgp.sig";
+			parts ~= part;
+		}
+
 		if (content.contains("\nbegin "))
 		{
 			import std.regex;
