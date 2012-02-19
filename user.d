@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -194,6 +194,10 @@ final class GuestUser : User
 
 	override void register(string username, string password)
 	{
+		enforce(username.length, "Please enter a username");
+		enforce(username.length < 32, "Username too long");
+		enforce(password.length < 64, "Password too long");
+
 		// Create user
 		auto session = randomString();
 		query("INSERT INTO `Users` (`Username`, `Password`, `Session`) VALUES (?, ?, ?)").exec(username, encryptPassword(password), session);
