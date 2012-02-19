@@ -136,6 +136,11 @@ function updateSize() {
 	// but it conflicts with our code
 	$('body').attr('style', ''); 
 
+	var focused = $('.thread-post-focused');
+	var wasFocusedInView = false;
+	if (focused.length)
+		wasFocusedInView = isRowInView(focused);
+
 	var resizees = [
 		{ outer : $('#group-index'), inner : $('.group-threads')},
 		{ outer : $('.split-post') , inner : $('.split-post .post-text')},
@@ -150,8 +155,7 @@ function updateSize() {
 		resizees[i].inner.height(space - resizees[i].outer.height());
 	}
 
-	var focused = $('.thread-post-focused');
-	if (focused.length)
+	if (focused.length && wasFocusedInView)
 		focusRow(focused, true);
 }
 
@@ -173,13 +177,24 @@ function nestedOffset(element, container) {
 		return element.offsetTop + nestedOffset(element.offsetParent, container);
 }
 
+function isInView(element, container) {
+	var containerTop = $(container).scrollTop();
+	var containerHeight = $(container).height();
+	var containerBottom = containerTop + containerHeight;
+
+	var elemTop = nestedOffset(element, container);
+	var elemBottom = elemTop + $(element).height();
+
+	return elemTop > containerTop && elemBottom < containerBottom;
+}
+
 function scrollIntoView(element, container, withMargin) {
 	var containerTop = $(container).scrollTop();
 	var containerHeight = $(container).height();
 	var containerBottom = containerTop + containerHeight;
 	//var elemTop = element.offsetTop;
 	var elemTop = nestedOffset(element, container);
-	var elemBottom = elemTop + $(element).height();	
+	var elemBottom = elemTop + $(element).height();
 	var scrollMargin = withMargin ? containerHeight/4 : 10;
 	if (elemTop < containerTop) {
 		$(container).scrollTop(Math.max(0, elemTop - scrollMargin));
@@ -191,6 +206,10 @@ function scrollIntoView(element, container, withMargin) {
 }
 
 // **************************************************************************
+
+function isRowInView(row) {
+	return isInView(row[0], $('.group-threads')[0]);
+}
 
 function focusRow(row, withMargin) {
 	$('.group-threads .thread-post-focused').removeClass('thread-post-focused');
