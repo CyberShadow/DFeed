@@ -99,6 +99,7 @@ class WebUI
 
 		string title, breadcrumb1, breadcrumb2;
 		string bodyClass = "narrowdoc";
+		string returnPage = request.resource;
 		html.clear();
 		string[] tools, extraHeaders;
 
@@ -333,6 +334,7 @@ class WebUI
 					discussionLoginForm(parameters);
 					title = breadcrumb1 = `Log in`;
 					tools ~= `<a href="/registerform?url=__URL__">Register</a>`;
+					returnPage = "/";
 					break;
 				}
 				case "registerform":
@@ -340,6 +342,7 @@ class WebUI
 					discussionRegisterForm(parameters);
 					title = breadcrumb1 = `Registration`;
 					tools ~= `<a href="/registerform?url=__URL__">Register</a>`;
+					returnPage = "/";
 					break;
 				}
 				case "login":
@@ -358,6 +361,7 @@ class WebUI
 						discussionLoginForm(parameters, e.msg);
 						title = breadcrumb1 = `Login error`;
 						tools ~= `<a href="/registerform?url=__URL__">Register</a>`;
+						returnPage = "/";
 						break;
 					}
 				}
@@ -377,6 +381,7 @@ class WebUI
 						discussionRegisterForm(parameters, e.msg);
 						title = breadcrumb1 = `Registration error`;
 						tools ~= `<a href="/registerform?url=__URL__">Register</a>`;
+						returnPage = "/";
 						break;
 					}
 				}
@@ -439,7 +444,7 @@ class WebUI
 
 		string toolStr = tools.join(" &middot; ");
 		toolStr =
-			toolStr.replace("__URL__",  encodeUrlParameter(request.resource)) ~
+			toolStr.replace("__URL__",  encodeUrlParameter(returnPage)) ~
 			`<script type="text/javascript">var toolsTemplate = ` ~ toJson(toolStr) ~ `;</script>`;
 
 		string[string] vars = [
