@@ -283,6 +283,7 @@ var keyboardHelp =
 		'<tr><td><kbd>j</kbd> / <kbd>Ctrl</kbd><kbd title="Down Arrow">&darr;</kbd></td><td>Select next message</td></tr>' +
 		'<tr><td><kbd>k</kbd> / <kbd>Ctrl</kbd><kbd title="Up Arrow">&uarr;</kbd></td><td>Select previous message</td></tr>' +
 		'<tr><td><kbd title="Enter / Return">&crarr;</kbd></td><td>Open selected message</td></tr>' +
+		'<tr><td><kbd>r</kbd></td><td>Reply</td></tr>' +
 		'<tr><td><kbd>u</kbd></td><td>Mark as unread</td></tr>' +
 		'<tr><td><kbd title="Space Bar" style="width: 70px">&nbsp;</kbd></td><td>Scroll message / Open next unread message</td></tr>' +
 	'</table>';
@@ -309,6 +310,15 @@ function onKeyPress(e) {
 					return false;
 				}
 				return !(focusNext(+1, true) && selectFocused());
+			}
+			case 'r':
+			{
+				var replyLink = $('a.replylink');
+				if (replyLink.length == 1) {
+					document.location.href = replyLink.attr('href');
+					return false;
+				}
+				return true;
 			}
 			case 'u':
 				return !markUnread();
