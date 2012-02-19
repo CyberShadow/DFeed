@@ -68,7 +68,8 @@ function onPopState() {
 	var path = getPath();
 	var id = idFromPath(path);
 	var row = findInTree(path);
-	if (id && id == currentID)
+
+	if (id && id == currentID && row.find('.forum-unread').length==0)
 		return;
 	else
 	if (id && row) {
@@ -238,6 +239,7 @@ function focusNext(offset, onlyUnread) {
 		if (index < 0)
 			index = 0;
 		else
+		if (!onlyUnread)
 			index = (index + offset + count) % count;
 	}
 
