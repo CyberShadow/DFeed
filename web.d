@@ -182,19 +182,20 @@ class WebUI
 					int page = to!int(aaGet(parameters, "page", "1"));
 					string threadID = '<' ~ urlDecode(pathX) ~ '>';
 
-					if (user.get("groupviewmode", "basic") == "basic")
-					{
-						string pageStr = page==1 ? "" : format(" (page %d)", page);
-						string group, subject;
-						discussionThread(threadID, page, group, subject);
-						title = subject ~ pageStr;
-						breadcrumb1 = `<a href="/group/` ~encodeEntities(group)~`">` ~ encodeEntities(group  ) ~ `</a>`;
-						breadcrumb2 = `<a href="/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a>` ~ pageStr;
-						//tools ~= viewModeTool(["flat", "nested"], "thread");
-						tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
-					}
-					else
-						return response.redirect(idToUrl(getPostAtThreadIndex(threadID, getPageOffset(page, POSTS_PER_PAGE))));
+					auto firstPostUrl = idToUrl(getPostAtThreadIndex(threadID, getPageOffset(page, POSTS_PER_PAGE)));
+					auto viewMode = user.get("groupviewmode", "basic");
+					if (viewMode != "basic")
+						html.put(`<div class="forum-notice"><a href="`, encodeEntities(firstPostUrl), `">View this thread in `, encodeEntities(viewMode), ` view mode</a></div>`);
+					returnPage = firstPostUrl;
+
+					string pageStr = page==1 ? "" : format(" (page %d)", page);
+					string group, subject;
+					discussionThread(threadID, page, group, subject);
+					title = subject ~ pageStr;
+					breadcrumb1 = `<a href="/group/` ~encodeEntities(group)~`">` ~ encodeEntities(group  ) ~ `</a>`;
+					breadcrumb2 = `<a href="/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a>` ~ pageStr;
+					//tools ~= viewModeTool(["flat", "nested"], "thread");
+					tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
 					break;
 				}
 				case "post":

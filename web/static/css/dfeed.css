@@ -199,6 +199,16 @@ th .forum-read:visited {
 	margin-bottom: 10px;
 }
 
+/* Notice */
+
+.forum-notice {
+	border: 2px solid #E0E0A0;
+	background-color: #FFFFD8;
+	padding: 5px;
+	margin-bottom: 10px;
+	text-align: center;
+}
+
 /*************** Discussion index ***************/
 
 #forum-index > tbody > tr > td:nth-child(even) {
