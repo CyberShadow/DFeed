@@ -44,8 +44,18 @@ protected:
 		log(format("Saving message %s (%s)", message.id, message.where));
 		mixin(DB_TRANSACTION);
 
-		query("INSERT OR IGNORE INTO `Posts` (`ID`, `Message`, `Author`, `Subject`, `Time`, `ParentID`, `ThreadID`) VALUES (?, ?, ?, ?, ?, ?, ?)")
-			.exec(message.id, message.message, message.author, message.subject, message.time.stdTime, message.parentID, message.threadID);
+		long rowid = -1;
+		foreach (long postRowid; query("SELECT `ROWID` FROM `Posts` WHERE `ID` = ?").iterate(message.id))
+			rowid = postRowid;
+
+		if (rowid >= 0)
+			log(format("Message %s already present with ROWID=%d", message.id, rowid));
+		else
+		{
+			query("INSERT INTO `Posts` (`ID`, `Message`, `Author`, `Subject`, `Time`, `ParentID`, `ThreadID`) VALUES (?, ?, ?, ?, ?, ?, ?)")
+				.exec(message.id, message.message, message.author, message.subject, message.time.stdTime, message.parentID, message.threadID);
+			log(format("Message %s saved with ROWID=%d", message.id, db.lastInsertRowID));
+		}
 
 		foreach (xref; message.xref)
 		{
