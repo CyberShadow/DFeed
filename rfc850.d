@@ -23,6 +23,7 @@ import std.uri;
 import std.base64;
 import std.datetime;
 import std.exception;
+import std.algorithm : min;
 debug import std.stdio;
 
 import ae.net.http.client;
@@ -101,7 +102,7 @@ class Rfc850Post : Post
 			if (hasIntlCharacters(value))
 				value = decodeEncodedText(value, defaultEncoding);
 
-		string rawContent = text[headerEnd+2..$]; // not UTF-8
+		string rawContent = text[min(headerEnd+2, $)..$]; // not UTF-8
 
 		if ("Content-Transfer-Encoding" in headers)
 			try
