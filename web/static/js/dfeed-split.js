@@ -149,12 +149,14 @@ function updateSize() {
 
 	for (var i in resizees)
 		resizees[i].inner.height(0);
+	$('#navigation').addClass('temphide');
 
 	var space = $('#content').height() + Math.max(0, $(window).height() - $('body').height() - 20);
 
 	for (var i in resizees) {
 		resizees[i].inner.height(space - resizees[i].outer.height());
 	}
+	$('#navigation').removeClass('temphide');
 
 	if (focused.length && wasFocusedInView)
 		focusRow(focused, true);

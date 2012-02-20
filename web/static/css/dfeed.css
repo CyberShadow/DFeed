@@ -103,6 +103,10 @@
 	margin: 0; /* for Chrome */
 }
 
+.temphide {
+	display: none;
+}
+
 /* A forum-table has a gray header and borders */
 
 .forum-table {
