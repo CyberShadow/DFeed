@@ -60,9 +60,9 @@ class WebUI
 		auto port = to!ushort(readText("data/web.txt").splitLines()[0]);
 
 		server = new HttpServer();
+		server.log = log;
 		server.handleRequest = &onRequest;
 		server.listen(port);
-		log(format("Listening on port %d", port));
 	}
 
 	string staticPath(string path)
@@ -88,12 +88,7 @@ class WebUI
 		responseTime.start();
 		auto response = new HttpResponseEx();
 
-		ip = from.remoteAddress;
-		ip = ip[0..ip.lastIndexOf(':')];
-		if ("X-Forwarded-For" in request.headers)
-			ip = request.headers["X-Forwarded-For"];
-		scope(exit) log(format("%s - %dms - %s", ip, responseTime.peek().msecs, request.resource));
-
+		ip = request.remoteHosts(from.remoteAddress.toAddrString())[0];
 		user = getUser("Cookie" in request.headers ? request.headers["Cookie"] : null);
 		scope(success) foreach (cookie; user.save()) response.headers.add("Set-Cookie", cookie);
 
