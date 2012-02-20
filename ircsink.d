@@ -18,6 +18,7 @@ module ircsink;
 
 import std.string;
 import std.datetime;
+import std.file;
 
 import ae.net.asockets;
 import ae.net.irc.client;
@@ -28,22 +29,23 @@ import common;
 
 alias core.time.TickDuration TickDuration;
 
-debug const
-	CHANNEL = "#d.test",
-	CHANNEL2 = "#d.feed.test",
-	NICK = "DFeed\\Test";
-else const
-	CHANNEL = "#d",
-	CHANNEL2 = "#d.feed",
-	NICK = "DFeed";
-
 //const FORMAT = "PRIVMSG %s :\x01ACTION %s\x01";
 const FORMAT = "PRIVMSG %s :\x01ACTION \x0314%s\x01";
 
 final class IrcSink : NewsSink
 {
+	string server, nick, channel, channel2;
+
 	this()
 	{
+		// Note to hackers: unless you want to work on IRC code, don't create
+		// this configuration file to get DFeed to work - use e.g. dfeed_web instead.
+		auto configLines = readText("data/irc.txt").splitLines();
+		server   = configLines[0];
+		nick     = configLines[1];
+		channel  = configLines[2];
+		channel2 = configLines[3];
+
 		conn = new IrcClient();
 		conn.encoder = conn.decoder = &nullStringTransform;
 		conn.exactNickname = true;
@@ -66,9 +68,9 @@ protected:
 				if (connected)
 				{
 					summary = summary.newlinesToSpaces();
-					conn.sendRaw(format(FORMAT, CHANNEL2, summary));
+					conn.sendRaw(format(FORMAT, channel2, summary));
 					if (important)
-						conn.sendRaw(format(FORMAT, CHANNEL, summary));
+						conn.sendRaw(format(FORMAT, channel, summary));
 				}
 			});
 		}
@@ -80,13 +82,13 @@ private:
 
 	void connect()
 	{
-		conn.connect(NICK, "https://github.com/CyberShadow/DFeed", "irc.freenode.net");
+		conn.connect(nick, "https://github.com/CyberShadow/DFeed", server);
 	}
 
 	void onConnect(IrcClient sender)
 	{
-		conn.join(CHANNEL);
-		conn.join(CHANNEL2);
+		conn.join(channel);
+		conn.join(channel2);
 		connected = true;
 	}
 
@@ -101,6 +103,6 @@ private:
 	/// will be there to see them.
 	bool haveUnimportantListeners()
 	{
-		return (CHANNEL2 in conn.channels) && conn.channels[CHANNEL2].users.length > 1;
+		return (channel2 in conn.channels) && conn.channels[channel2].users.length > 1;
 	}
 }
