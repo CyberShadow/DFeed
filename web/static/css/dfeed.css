@@ -330,6 +330,7 @@ ul.post-info-parts {
 	color: red;
 }
 .post-text {
+	margin: 0;
 	font-family: Consolas, monospace;
 	font-size: 14px;
 	white-space: pre; /* old browser compat */

@@ -48,64 +48,6 @@ form
 	margin: 0;
 }
 
-blockquote
-{
-	font-family: Georgia, "Times New Roman", Times, serif;
-	background-color: #e5e5e5;
-	display: block;
-	padding: 0.25em 1em;
-	margin: 1em 2em;
-}
-
-blockquote p:before
-{
-	content: "\201C";
-	font-family: Georgia, "Times New Roman", Times, serif;
-	color: #bacaca;
-	display: block;
-	font-size: 700%;
-	width: 50px;
-	height: 0;
-	margin-left: -0.5em;
-	line-height: 0.8em;
-}
-
-blockquote p
-{
-	margin: 0;
-	font-style: italic;
-}
-
-blockquote cite
-{
-	display: block;
-	text-align: right;
-}
-
-pre
-{
-	background: white;
-	padding: 1ex;
-	margin: 1em 0 1em 3em;
-	font-family: monospace;
-	font-size: 1.2em;
-	line-height: normal;
-	border: 1px solid #ccc;
-	width: auto;
-	white-space: pre-wrap;       /* css-3 */
-	white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
-	white-space: -pre-wrap;      /* Opera 4-6 */
-	white-space: -o-pre-wrap;    /* Opera 7 */
-	word-wrap: break-word;       /* Internet Explorer 5.5+ */
-}
-
-dd
-{
-	padding: 1ex;
-	margin-left: 3em;
-	margin-bottom: 1em;
-}
-
 table, tr, td, th
 {
 	/*border-style: solid;*/

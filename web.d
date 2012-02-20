@@ -1129,7 +1129,7 @@ class WebUI
 						`<div class="post-toolbar">`), replyButton(id), html.put(`</div>`
 					`</td>`
 					`<td class="post-body">`
-						`<div class="post-text">`), formatBody(content), html.put(`</div>`,
+						`<pre class="post-text">`), formatBody(content), html.put(`</pre>`,
 						(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``),
 					`</td>`
 				`</tr>`
@@ -1224,7 +1224,7 @@ class WebUI
 					`</tr></table>`
 				`</td></tr>`
 				`<tr><td class="post-body">`
-					`<div class="post-text">`), formatBody(content), html.put(`</div>`,
+					`<pre class="post-text">`), formatBody(content), html.put(`</pre>`,
 					(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``),
 				`</td></tr>`
 				`</table>`
