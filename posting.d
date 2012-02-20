@@ -23,11 +23,11 @@ import std.file;
 import ae.utils.text;
 import ae.utils.array;
 import ae.sys.log;
+import ae.net.nntp.client;
 
 import rfc850;
 import recaptcha;
 import spam;
-import nntp;
 import common;
 
 enum PostingStatus

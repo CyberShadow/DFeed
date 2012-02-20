@@ -20,9 +20,9 @@ import std.string;
 import std.conv;
 
 import ae.utils.array : queuePop;
+import ae.net.nntp.client;
 
 import common;
-import nntp;
 import rfc850;
 import database;
 
