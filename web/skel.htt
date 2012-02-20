@@ -132,12 +132,9 @@ document.write('\x3Cstyle type="text/css"\x3E.nojs { display: none; }\x3C/style\
 
 
 <div id="footernav">
-<a href="/" title="User Forums">Forums</a> |
-<a href="http://www.prowiki.org/wiki4d/wiki.cgi?DocComments/Intro" title="Read/write comments and feedback">Comments</a> |
-<a href="http://dlang.org/" title="D Programming Language" class="dlink">&nbsp;D&nbsp;</a> |
-<a href="http://digitalmars.com/advancedsearch.html" title="Search Digital Mars web site">Search</a> |
-<a href="http://dlang.org/download.html" title="Download D">Downloads</a> |
-<a href="http://dlang.org/">Home</a>
+<a href="#top" title="Jump to the top of the page">Top</a> |
+<a href="/">Discussion index</a> |
+<a href="http://dlang.org/">D home</a>
 </div>
 <div id="copyright">
 
