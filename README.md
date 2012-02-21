@@ -8,3 +8,7 @@ For now, to hack on the web interface:
     echo 80>data/web.txt
     echo localhost>>data/web.txt
     rdmd dfeed_web
+
+It will start downloading NNTP messages and save them in the DB.
+This will need to be done once.
+You should be able to access the web interface on http://localhost/.
