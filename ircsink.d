@@ -23,6 +23,7 @@ import std.file;
 import ae.net.asockets;
 import ae.net.irc.client;
 import ae.sys.timing;
+import ae.sys.shutdown;
 import ae.utils.text;
 
 import common;
@@ -53,6 +54,8 @@ final class IrcSink : NewsSink
 		conn.handleConnect = &onConnect;
 		conn.handleDisconnect = &onDisconnect;
 		connect();
+
+		addShutdownHandler({ if (connecting || connected) conn.disconnect("DFeed shutting down"); });
 	}
 
 protected:
@@ -78,15 +81,17 @@ protected:
 
 private:
 	IrcClient conn;
-	bool connected;
+	bool connecting, connected;
 
 	void connect()
 	{
 		conn.connect(nick, "https://github.com/CyberShadow/DFeed", server);
+		connecting = true;
 	}
 
 	void onConnect(IrcClient sender)
 	{
+		connecting = false;
 		conn.join(channel);
 		conn.join(channel2);
 		connected = true;
@@ -94,8 +99,9 @@ private:
 
 	void onDisconnect(IrcClient sender, string reason, DisconnectType type)
 	{
-		connected = false;
-		setTimeout(&connect, TickDuration.from!"seconds"(10));
+		connecting = connected = false;
+		if (type != DisconnectType.Requested)
+			setTimeout(&connect, TickDuration.from!"seconds"(10));
 	}
 
 	/// This function exists for the sole reason of avoiding creation of

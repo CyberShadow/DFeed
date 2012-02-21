@@ -45,6 +45,11 @@ class NntpListener : NewsSource
 		client.connect(server);
 	}
 
+	override void stop()
+	{
+		client.disconnect();
+	}
+
 private:
 	string server;
 
@@ -79,11 +84,23 @@ class NntpDownloader : NewsSource
 	override void start()
 	{
 		client.connect(server);
+		running = true;
+	}
+
+	override void stop()
+	{
+		if (running)
+		{
+			running = false;
+			stopping = true;
+			log("Shutting down");
+			client.disconnect();
+		}
 	}
 
 private:
 	string server;
-	bool fullCheck;
+	bool fullCheck, running, stopping;
 	GroupInfo[] queuedGroups;
 	int[] groupMaxNums;
 	GroupInfo currentGroup;
@@ -92,6 +109,7 @@ private:
 
 	void onConnect()
 	{
+		if (stopping) return;
 		log("Listing groups...");
 		client.listGroups();
 	}
@@ -118,6 +136,7 @@ private:
 
 	void nextGroup()
 	{
+		if (stopping) return;
 		if (queuedGroups.length == 0)
 			return done();
 		currentGroup = queuedGroups.queuePop();
@@ -142,6 +161,7 @@ private:
 	void done()
 	{
 		log("All done!");
+		running = false;
 		client.disconnect();
 	}
 
@@ -173,6 +193,7 @@ private:
 
 	void requestNextMessage()
 	{
+		if (stopping) return;
 		if (queuedMessages.length)
 		{
 			auto num = queuedMessages[0];

@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -43,6 +43,11 @@ class MailingLists : NewsSource
 	override void start()
 	{
 		server.listen(port, host);
+	}
+
+	override void stop()
+	{
+		server.close();
 	}
 
 private:

@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -16,8 +16,10 @@
 
 module common;
 
-import ae.sys.log;
 import std.datetime;
+
+import ae.sys.log;
+import ae.sys.shutdown;
 
 bool quiet;
 
@@ -54,6 +56,7 @@ abstract class NewsSource
 	}
 
 	abstract void start();
+	abstract void stop();
 
 protected:
 	Logger log;
@@ -72,13 +75,19 @@ abstract class NewsSink
 	abstract void handlePost(Post p);
 }
 
-private NewsSource[string] newsSources;
-private NewsSink[] newsSinks;
+// __gshared for ae.sys.shutdown
+__gshared private NewsSource[string] newsSources;
+__gshared private NewsSink[] newsSinks;
 
 void startNewsSources()
 {
 	foreach (source; newsSources)
 		source.start();
+
+	addShutdownHandler({
+		foreach (source; newsSources)
+			source.stop();
+	});
 }
 
 void announcePost(Post p)

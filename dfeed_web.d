@@ -20,6 +20,7 @@ module dfeed_web;
 
 import std.file;
 import std.getopt;
+import std.stdio;
 
 import ae.net.asockets;
 
@@ -49,4 +50,7 @@ void main(string[] args)
 
 	startNewsSources();
 	socketManager.loop();
+
+	if (!common.quiet)
+		writeln("Exiting.");
 }

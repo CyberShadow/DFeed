@@ -31,6 +31,7 @@ import ae.net.http.server;
 import ae.net.http.responseex;
 import ae.net.ietf.headers;
 import ae.sys.log;
+import ae.sys.shutdown;
 import ae.utils.json;
 import ae.utils.array;
 import ae.utils.time;
@@ -63,6 +64,8 @@ class WebUI
 		server.log = log;
 		server.handleRequest = &onRequest;
 		server.listen(port);
+
+		addShutdownHandler({ server.close(); });
 	}
 
 	// ***********************************************************************
