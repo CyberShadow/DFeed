@@ -65,6 +65,8 @@ class WebUI
 		server.listen(port);
 	}
 
+	// ***********************************************************************
+
 	string staticPath(string path)
 	{
 		return "/static/" ~ text(timeLastModified("web/static" ~ path).stdTime) ~ path;
@@ -79,6 +81,28 @@ class WebUI
 		else
 			return path;
 	}
+
+	HttpResponseEx serveFile(HttpResponseEx response, string path)
+	{
+		response.cacheForever();
+		return response.serveFile(optimizedPath("web/static/", path), "web/static/");
+	}
+
+	Cached!(string[string]) staticFilesCache;
+
+	string[string] getStaticFiles()
+	{
+		string[string] result;
+		foreach (string fn; dirEntries("web/static", SpanMode.depth))
+			if (isFile(fn))
+			{
+				auto path = fn["web/static".length..$].replace(`\`, `/`);
+				result[path] = staticPath(path);
+			}
+		return result;
+	}
+
+	// ***********************************************************************
 
 	enum JQUERY_URL = "http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js";
 
@@ -452,23 +476,21 @@ class WebUI
 			"bodyclass" : bodyClass,
 			"tools" : toolStr,
 		];
-		foreach (DirEntry de; dirEntries("web/static", SpanMode.depth))
-			if (isFile(de.name))
-			{
-				auto path = de.name["web/static".length..$].replace(`\`, `/`);
-				vars["static:" ~ path] = staticPath(path);
-			}
+
+		debug
+			auto staticFiles = getStaticFiles();
+		else
+			auto staticFiles = staticFilesCache(getStaticFiles());
+		foreach (path, res; staticFiles)
+			vars["static:" ~ path] = res;
+
 		response.disableCache();
 		response.serveData(HttpResponseEx.loadTemplate(optimizedPath(null, "web/skel.htt"), vars));
 		response.setStatus(HttpStatusCode.OK);
 		return response;
 	}
 
-	HttpResponseEx serveFile(HttpResponseEx response, string path)
-	{
-		response.cacheForever();
-		return response.serveFile(optimizedPath("web/static/", path), "web/static/");
-	}
+	// ***********************************************************************
 
 	struct GroupInfo { bool isML; string name, description; }
 	struct GroupSet { string name; GroupInfo[] groups; }
@@ -527,6 +549,8 @@ class WebUI
 					return &group;
 		return null;
 	}
+
+	// ***********************************************************************
 
 	int[string] getThreadCounts()
 	{
@@ -598,6 +622,8 @@ class WebUI
 		}
 		html.put(`</table>`);
 	}
+
+	// ***********************************************************************
 
 	int[] getThreadPostIndexes(string id)
 	{
@@ -760,6 +786,8 @@ class WebUI
 			`</table>`
 		);
 	}
+
+	// ***********************************************************************
 
 	string[][string] referenceCache; // invariant
 
