@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -18,6 +18,8 @@ module cache;
 
 import common;
 import database;
+
+version(Posix) import ae.sys.signals;
 
 int dbVersion = 1;
 
@@ -70,4 +72,6 @@ struct CachedSet(K, T)
 static this()
 {
 	new CacheSink();
+
+	version(Posix) addSignalHandler(SIGHUP, { dbVersion++; });
 }
