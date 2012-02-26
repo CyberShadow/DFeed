@@ -50,6 +50,7 @@ class WebUI
 {
 	Logger log;
 	HttpServer server;
+	string vhost;
 	User user;
 	string ip;
 	StringBuffer html;
@@ -58,7 +59,9 @@ class WebUI
 	{
 		log = createLogger("Web");
 
-		auto port = to!ushort(readText("data/web.txt").splitLines()[0]);
+		auto lines = readText("data/web.txt").splitLines();
+		auto port = to!ushort(lines[0]);
+		vhost = lines[1];
 
 		server = new HttpServer();
 		server.log = log;
@@ -125,24 +128,11 @@ class WebUI
 		html.clear();
 		string[] tools, extraHeaders;
 
-		// Temporary hack
+		// Redirect to canonical domain name
 		auto host = aaGet(request.headers, "Host", "");
 		host = aaGet(request.headers, "X-Forwarded-Host", host);
-		if (host != "forum.dlang.org" && host != "localhost")
-		{
-			html.put(
-				`<table class="forum-table forum-error">`
-					`<tr><th>Deprecated domain name</th></tr>`
-					`<tr><td class="forum-table-message">`
-						`You are accessing this forum via a deprecated domain name.<br>`
-						`<!-- `, host, ` -->`
-						`This domain will be turned into a redirect on February 22.<br>`
-						`Please use <a href="http://forum.dlang.org`, encodeEntities(request.resource), `">forum.dlang.org</a> instead.<br><br>`,
-						(user.isLoggedIn ? `` : `To preserve your read post history, <a href="/registerform">create an account</a> on this domain - `
-							`your browser cookies will be transferred to the server database at registration.`),
-					`</td></tr>`
-				`</table>`);
-		}
+		if (host != vhost && host != "localhost")
+			return response.redirect("http://" ~ vhost ~ request.resource, HttpStatusCode.MovedPermanently);
 
 		auto splitViewHeaders = [
 			`<script src="` ~ JQUERY_URL ~ `"></script>`,
