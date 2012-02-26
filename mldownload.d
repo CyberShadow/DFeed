@@ -38,6 +38,8 @@ MLDownloader downloader;
 
 class MLDownloader : NewsSource
 {
+	bool stopping;
+
 	this()
 	{
 		super("ML-Downloader");
@@ -49,8 +51,14 @@ class MLDownloader : NewsSource
 			downloadList(list);
 	}
 
+	override void stop()
+	{
+		stopping = true;
+	}
+
 	void downloadList(string list)
 	{
+		if (stopping) return;
 		httpGet("http://lists.puremagic.com/pipermail/" ~ list ~ "/",
 			(string html)
 			{
@@ -72,6 +80,7 @@ class MLDownloader : NewsSource
 
 	void downloadFile(string list, string fn)
 	{
+		if (stopping) return;
 		auto url = "http://lists.puremagic.com/pipermail/" ~ list ~ "/" ~ fn;
 		httpGet(url,
 			(Data data)
