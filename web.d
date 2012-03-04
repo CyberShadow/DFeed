@@ -791,13 +791,12 @@ class WebUI
 		enum OFFSET_WIDTH = 37.5f;
 		enum OFFSET_UNITS = "%";
 
-		struct Post
+		class Post
 		{
 			PostInfo* info;
-			alias info this;
 
 			SysTime maxTime;
-			Post*[] children;
+			Post[] children;
 			int maxDepth;
 
 			bool ghost; // dummy parent for orphans
@@ -805,13 +804,15 @@ class WebUI
 
 			@property string subject() { return ghostSubject ? ghostSubject : info.subject; }
 
+			this(PostInfo* info = null) { this.info = info; }
+
 			void calcStats()
 			{
 				foreach (child; children)
 					child.calcStats();
 
 				if (info)
-					maxTime = time;
+					maxTime = info.time;
 				foreach (child; children)
 					if (maxTime < child.maxTime)
 						maxTime = child.maxTime;
@@ -826,20 +827,20 @@ class WebUI
 
 		Post[string] posts;
 		foreach (info; postInfos)
-			posts[info.id] = Post(info);
+			posts[info.id] = new Post(info);
 
-		posts[null] = Post();
-		foreach (ref post; posts)
+		posts[null] = new Post();
+		foreach (post; posts.values)
 			if (post.info)
 			{
-				auto parent = post.parentID;
+				auto parent = post.info.parentID;
 				if (parent !in posts) // mailing-list users
 				{
 					string[] references;
-					if (post.id in referenceCache)
-						references = referenceCache[post.id];
+					if (post.info.id in referenceCache)
+						references = referenceCache[post.info.id];
 					else
-						references = referenceCache[post.id] = getPost(post.id).references;
+						references = referenceCache[post.info.id] = getPost(post.info.id).references;
 
 					parent = null;
 					foreach_reverse (reference; references)
@@ -851,29 +852,30 @@ class WebUI
 
 					if (!parent)
 					{
-						Post dummy;
+						auto dummy = new Post;
 						dummy.ghost = true;
-						dummy.ghostSubject = post.subject; // HACK
+						dummy.ghostSubject = post.info.subject; // HACK
 						parent = references[0];
 						posts[parent] = dummy;
-						posts[null].children ~= parent in posts;
+						posts[null].children ~= dummy;
 					}
 				}
-				posts[parent].children ~= &post;
+				posts[parent].children ~= post;
 			}
 
 		bool reversed = user.get("groupviewmode", "basic") == "threaded";
-		foreach (ref post; posts)
+		foreach (post; posts)
 		{
 			post.calcStats();
-
 			if (post.info || post.ghost)
-				sort!"a.time < b.time"(post.children);
+				sort!"a.info.time < b.info.time"(post.children);
+/*
 			else // sort threads by last-update
 			if (reversed)
 				sort!"a.maxTime > b.maxTime"(post.children);
 			else
 				sort!"a.maxTime < b.maxTime"(post.children);
+*/
 		}
 
 		float offsetIncrement; // = max(1f, min(OFFSET_MAX, OFFSET_WIDTH / posts[null].maxDepth));
@@ -917,18 +919,18 @@ class WebUI
 			}
 		}
 
-		void formatPosts(Post*[] posts, int level, string parentSubject, bool topLevel)
+		void formatPosts(Post[] posts, int level, string parentSubject, bool topLevel)
 		{
-			void formatPost(Post* post, int level)
+			void formatPost(Post post, int level)
 			{
 				if (post.ghost)
 					return formatPosts(post.children, level, post.subject, false);
 				html.put(
-					`<tr class="thread-post-row`, (post.info && post.id==selectedID ? ` thread-post-focused thread-post-selected` : ``), `">`
+					`<tr class="thread-post-row`, (post.info && post.info.id==selectedID ? ` thread-post-focused thread-post-selected` : ``), `">`
 						`<td>`
 							`<div style="padding-left: `, format("%1.1f", OFFSET_INIT + level * offsetIncrement), OFFSET_UNITS, `">`
-								`<div class="thread-post-time">`, summarizeTime(post.time, true), `</div>`,
-								`<a class="postlink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread" ), `" href="`, encodeEntities(idToUrl(post.id)), `">`, truncateString(post.author, 20), `</a>`
+								`<div class="thread-post-time">`, summarizeTime(post.info.time, true), `</div>`,
+								`<a class="postlink `, (user.isRead(post.info.rowid) ? "forum-read" : "forum-unread" ), `" href="`, encodeEntities(idToUrl(post.info.id)), `">`, truncateString(post.info.author, 20), `</a>`
 							`</div>`
 						`</td>`
 					`</tr>`);
