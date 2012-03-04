@@ -869,13 +869,11 @@ class WebUI
 			post.calcStats();
 			if (post.info || post.ghost)
 				sort!"a.info.time < b.info.time"(post.children);
-/*
 			else // sort threads by last-update
 			if (reversed)
 				sort!"a.maxTime > b.maxTime"(post.children);
 			else
 				sort!"a.maxTime < b.maxTime"(post.children);
-*/
 		}
 
 		float offsetIncrement; // = max(1f, min(OFFSET_MAX, OFFSET_WIDTH / posts[null].maxDepth));
