@@ -1686,30 +1686,53 @@ class WebUI
 			if (line.startsWith(" "))
 				line = line[1..$];
 
-			auto lineLength = line.length;
-			line = encodeEntities(line);
+			auto needsWrap = line.length > 70;
+			auto hasURL = line.contains("://");
 
-			if (lineLength > 70)
+			void processText(string s)
 			{
-				auto segments = line.segmentByWhitespace();
-				foreach (ref segment; segments)
-					if (segment.length > 50)
-						segment = `<span class="forcewrap">` ~ segment ~ `</span>`;
-				line = segments.join();
+				html.put(encodeEntities(s));
 			}
 
-			if (line.contains("://"))
+			void processURLs(string s)
 			{
-				auto segments = line.segmentByWhitespace();
+				alias processText next;
+
+				if (!hasURL)
+					return next(s);
+
+				size_t pos = 0;
+				foreach (m; match(s, reUrl))
+				{
+					next(s[pos..m.pre().length]);
+					html.put(`<a rel="nofollow" href="`, m.hit(), `">`);
+					next(m.hit());
+					html.put(`</a>`);
+					pos = m.pre().length + m.hit().length;
+				}
+				next(s[pos..$]);
+			}
+
+			void processWrap(string s)
+			{
+				alias processURLs next;
+
+				if (!needsWrap)
+					return next(s);
+
+				auto segments = s.segmentByWhitespace();
 				foreach (ref segment; segments)
 				{
-					//segment = `<a rel="nofollow" href="` ~ segment ~ `">` ~ segment ~ `</a>`;
-					segment = replace(segment, reUrl, `<a rel="nofollow" href="$0">$0</a>`);
+					if (segment.length > 50)
+						html.put(`<span class="forcewrap">`);
+					next(segment);
+					if (segment.length > 50)
+						html.put(`</span>`);
 				}
-				line = segments.join();
 			}
 
-			html.put(line, '\n');
+			processWrap(line);
+			html.put('\n');
 		}
 		if (wasQuoted)
 			html ~= `</span>`;
