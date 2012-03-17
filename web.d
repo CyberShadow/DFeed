@@ -138,6 +138,8 @@ class WebUI
 			`<script src="` ~ JQUERY_URL ~ `"></script>`,
 			`<script src="` ~ staticPath("/js/dfeed-split.js") ~ `"></script>`,
 		];
+		auto canonicalHeader =
+			`<link rel="canonical" href="http://`~vhost~request.resource~`"/>`;
 
 		try
 		{
@@ -208,6 +210,7 @@ class WebUI
 					breadcrumb2 = `<a href="/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a>` ~ pageStr;
 					//tools ~= viewModeTool(["flat", "nested"], "thread");
 					tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
+					extraHeaders ~= canonicalHeader; // Google confuses /post/ URLs with threads
 					break;
 				}
 				case "post":
