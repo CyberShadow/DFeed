@@ -886,7 +886,7 @@ class WebUI
 			return s
 				.replace("New: ", "") // Bugzilla hack
 				.replace("\t", " ")   // Apple Mail hack
-				.replace("  ", " ")
+				.replace(" ", "")     // Outlook Express hack
 			;
 		}
 
