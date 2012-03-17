@@ -610,18 +610,40 @@ string decodeRfc1522(string str)
 
 string encodeRfc1522(string str)
 {
+	if (!str.hasIntlCharacters())
+		return str;
+
+	string[] words;
+	bool wasIntl = false;
+	foreach (word; str.split(" "))
+	{
+		bool isIntl = word.hasIntlCharacters();
+		if (wasIntl && isIntl)
+			words[$-1] ~= " " ~ word;
+		else
+			words ~= word;
+		wasIntl = isIntl;
+	}
+
 	enum CHUNK_LENGTH_THRESHOLD = 20;
 
-	string[] output;
-	while (str.length)
+	foreach (ref word; words)
 	{
-		size_t ptr = 0;
-		while (ptr < str.length && ptr < CHUNK_LENGTH_THRESHOLD)
-			ptr += stride(str, ptr);
-		output ~= encodeRfc1522Chunk(str[0..ptr]);
-		str = str[ptr..$];
+		if (!word.hasIntlCharacters())
+			continue;
+		string[] output;
+		string s = word;
+		while (s.length)
+		{
+			size_t ptr = 0;
+			while (ptr < s.length && ptr < CHUNK_LENGTH_THRESHOLD)
+				ptr += stride(s, ptr);
+			output ~= encodeRfc1522Chunk(s[0..ptr]);
+			s = s[ptr..$];
+		}
+		word = output.join(" ");
 	}
-	return output.join(" ");
+	return words.join(" ");
 }
 
 string encodeRfc1522Chunk(string str)
@@ -634,6 +656,9 @@ unittest
 {
 	auto text = "В лесу родилась ёлочка";
 	assert(decodeRfc1522(encodeRfc1522(text)) == text);
+
+	// Make sure e-mail address isn't mangled
+	assert(encodeRfc1522("Sönke Martin <msonke@example.org>").endsWith(" <msonke@example.org>"));
 }
 
 string decodeQuotedPrintable(string s, bool inHeaders)
