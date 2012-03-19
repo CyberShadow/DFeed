@@ -114,6 +114,11 @@ class WebUI
 
 	void onRequest(HttpRequest request, HttpServerConnection conn)
 	{
+		conn.sendResponse(handleRequest(request, conn));
+	}
+
+	HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
+	{
 		StopWatch responseTime;
 		responseTime.start();
 		auto response = new HttpResponseEx();
@@ -132,7 +137,7 @@ class WebUI
 		auto host = aaGet(request.headers, "Host", "");
 		host = aaGet(request.headers, "X-Forwarded-Host", host);
 		if (host != vhost && host != "localhost")
-			return conn.sendResponse(response.redirect("http://" ~ vhost ~ request.resource, HttpStatusCode.MovedPermanently));
+			return response.redirect("http://" ~ vhost ~ request.resource, HttpStatusCode.MovedPermanently);
 
 		auto splitViewHeaders = [
 			`<script src="` ~ JQUERY_URL ~ `"></script>`,
@@ -160,7 +165,7 @@ class WebUI
 			{
 				// Obsolete "/discussion/" prefix
 				case "discussion":
-					return conn.sendResponse(response.redirect("/" ~ path[1..$].join("/"), HttpStatusCode.MovedPermanently));
+					return response.redirect("/" ~ path[1..$].join("/"), HttpStatusCode.MovedPermanently);
 
 				case "":
 					title = "Index";
@@ -216,7 +221,7 @@ class WebUI
 				case "post":
 					enforce(path.length > 1, "No post specified");
 					if (user.get("groupviewmode", "basic") == "basic")
-						return conn.sendResponse(response.redirect(resolvePostUrl('<' ~ urlDecode(pathX) ~ '>')));
+						return response.redirect(resolvePostUrl('<' ~ urlDecode(pathX) ~ '>'));
 					else
 					if (user.get("groupviewmode", "basic") == "threaded")
 					{
@@ -253,19 +258,19 @@ class WebUI
 						//response.headers["Content-Disposition"] = `inline; filename="` ~ post.fileName ~ `"`;
 						response.headers["Content-Disposition"] = `attachment; filename="` ~ post.fileName ~ `"`;
 					// TODO: is allowing text/html (others?) OK here?
-					return conn.sendResponse(response.serveData(Data(post.data), post.mimeType ? post.mimeType : "application/octet-stream"));
+					return response.serveData(Data(post.data), post.mimeType ? post.mimeType : "application/octet-stream");
 				}
 				case "source":
 				{
 					enforce(path.length > 1, "Invalid URL");
 					auto post = getPost('<' ~ urlDecode(path[1]) ~ '>', array(map!(to!uint)(path[2..$])));
 					enforce(post, "Post not found");
-					return conn.sendResponse(response.serveData(Data(post.message), "text/plain"));
+					return response.serveData(Data(post.message), "text/plain");
 				}
 				case "split-post":
 					enforce(path.length > 1, "No post specified");
 					discussionSplitPost('<' ~ urlDecode(pathX) ~ '>');
-					return conn.sendResponse(response.serveData(cast(string)html.get()));
+					return response.serveData(cast(string)html.get());
 				case "set":
 				{
 					if (aaGet(parameters, "secret", "") != getUserSecret())
@@ -276,9 +281,9 @@ class WebUI
 							user[name] = value; // TODO: is this a good idea?
 
 					if ("url" in parameters)
-						return conn.sendResponse(response.redirect(parameters["url"]));
+						return response.redirect(parameters["url"]);
 					else
-						return conn.sendResponse(response.serveText("OK"));
+						return response.serveText("OK");
 				}
 				case "mark-unread":
 				{
@@ -286,12 +291,12 @@ class WebUI
 					auto post = getPostInfo('<' ~ urlDecode(pathX) ~ '>');
 					enforce(post, "Post not found");
 					user.setRead(post.rowid, false);
-					return conn.sendResponse(response.serveText("OK"));
+					return response.serveText("OK");
 				}
 				case "first-unread":
 				{
 					enforce(path.length > 1, "No thread specified");
-					return conn.sendResponse(response.redirect(discussionFirstUnread('<' ~ urlDecode(pathX) ~ '>')));
+					return response.redirect(discussionFirstUnread('<' ~ urlDecode(pathX) ~ '>'));
 				}
 				case "newpost":
 				{
@@ -321,7 +326,7 @@ class WebUI
 					auto postVars = request.decodePostData();
 					auto process = discussionSend(postVars, cast(string[string])request.headers);
 					if (process)
-						return conn.sendResponse(response.redirect("/poststatus/" ~ process.pid));
+						return response.redirect("/poststatus/" ~ process.pid);
 
 					title = breadcrumb1 = `Posting error`;
 					bodyClass ~= " formdoc";
@@ -368,9 +373,9 @@ class WebUI
 						parameters = request.decodePostData();
 						discussionLogin(parameters);
 						if ("url" in parameters)
-							return conn.sendResponse(response.redirect(parameters["url"]));
+							return response.redirect(parameters["url"]);
 						else
-							return conn.sendResponse(response.serveText("OK"));
+							return response.serveText("OK");
 					}
 					catch (Exception e)
 					{
@@ -388,9 +393,9 @@ class WebUI
 						parameters = request.decodePostData();
 						discussionRegister(parameters);
 						if ("url" in parameters)
-							return conn.sendResponse(response.redirect(parameters["url"]));
+							return response.redirect(parameters["url"]);
 						else
-							return conn.sendResponse(response.serveText("OK"));
+							return response.serveText("OK");
 					}
 					catch (Exception e)
 					{
@@ -406,9 +411,9 @@ class WebUI
 					enforce(user.isLoggedIn(), "Not logged in");
 					user.logOut();
 					if ("url" in parameters)
-						return conn.sendResponse(response.redirect(parameters["url"]));
+						return response.redirect(parameters["url"]);
 					else
-						return conn.sendResponse(response.serveText("OK"));
+						return response.serveText("OK");
 				}
 				case "help":
 					title = breadcrumb1 = "Help";
@@ -420,19 +425,19 @@ class WebUI
 				case "images":
 				case "favicon.ico":
 				case "robots.txt":
-					return conn.sendResponse(serveFile(response, pathStr[1..$]));
+					return serveFile(response, pathStr[1..$]);
 
 				case "static":
 					enforce(path.length > 2);
-					return conn.sendResponse(serveFile(response, path[2..$].join("/")));
+					return serveFile(response, path[2..$].join("/"));
 
 				default:
-					return conn.sendResponse(response.writeError(HttpStatusCode.NotFound));
+					return response.writeError(HttpStatusCode.NotFound);
 			}
 		}
 		catch (Exception e)
 		{
-			//return conn.sendResponse(response.writeError(HttpStatusCode.InternalServerError, "Unprocessed exception: " ~ e.msg));
+			//return response.writeError(HttpStatusCode.InternalServerError, "Unprocessed exception: " ~ e.msg);
 			if (cast(NotFoundException) e)
 				breadcrumb1 = title = "Not Found";
 			else
@@ -483,7 +488,7 @@ class WebUI
 		response.disableCache();
 		response.serveData(HttpResponseEx.loadTemplate(optimizedPath(null, "web/skel.htt"), vars));
 		response.setStatus(HttpStatusCode.OK);
-		conn.sendResponse(response);
+		return response;
 	}
 
 	// ***********************************************************************
