@@ -5,33 +5,33 @@
 
 @media screen and (max-width: 1170px) {
 	body.narrowdoc .post-text        { font-size: 12px; }
-	body.narrowdoc #content          { font-size: 0.8em; }
+	body.narrowdoc #forum-content    { font-size: 0.8em; }
 	body.narrowdoc #group-split-list { width: 350px; }
 
 	body.narrowdoc #forum-content input[type="submit"] { font-size: 11px; }
 }
 
 @media screen and (max-width: 1060px) {
-	body.narrowdoc #navigation { display: none; }
-	body.narrowdoc #content    { margin-left: 1.5em !important; }
+	body.narrowdoc #navigation       { display: none; }
+	body.narrowdoc #content          { margin-left: 1.5em !important; }
 }
 
 @media screen and (max-width: 880px) {
 	body.narrowdoc .post-text        { font-size: 11px; }
-	body.narrowdoc #content          { font-size: 0.7em; }
+	body.narrowdoc #forum-content    { font-size: 0.7em; }
 	body.narrowdoc #group-split-list { width: 300px; }
 }
 
 /* wide pages (split-mode view) */
 
 @media screen and (max-width: 1350px) {
-	body.widedoc #navigation { display: none; }
-	body.widedoc #content    { margin-left: 1.5em !important; }
+	body.widedoc #navigation       { display: none; }
+	body.widedoc #content          { margin-left: 1.5em !important; }
 }
 
 @media screen and (max-width: 1170px) {
 	body.widedoc .post-text        { font-size: 12px; }
-	body.widedoc #content          { font-size: 0.8em; }
+	body.widedoc #forum-content    { font-size: 0.8em; }
 	body.widedoc #group-split-list { width: 350px; }
 
 	body.widedoc #forum-content input[type="submit"] { font-size: 11px; }
@@ -39,7 +39,7 @@
 
 @media screen and (max-width: 1040px) {
 	body.widedoc .post-text        { font-size: 11px; }
-	body.widedoc #content          { font-size: 0.7em; }
+	body.widedoc #forum-content    { font-size: 0.7em; }
 	body.widedoc #group-split-list { width: 300px; }
 }
 
