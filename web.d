@@ -136,7 +136,7 @@ class WebUI
 		// Redirect to canonical domain name
 		auto host = aaGet(request.headers, "Host", "");
 		host = aaGet(request.headers, "X-Forwarded-Host", host);
-		if (host != vhost && host != "localhost")
+		if (host != vhost && host != "localhost" && ip != "127.0.0.1")
 			return response.redirect("http://" ~ vhost ~ request.resource, HttpStatusCode.MovedPermanently);
 
 		auto splitViewHeaders = [
