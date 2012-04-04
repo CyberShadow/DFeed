@@ -27,16 +27,18 @@ debug import std.stdio;
 alias std.string.indexOf indexOf;
 
 import ae.net.asockets;
-import ae.net.http.server;
+import ae.net.http.caching;
 import ae.net.http.responseex;
+import ae.net.http.server;
 import ae.net.ietf.headers;
 import ae.sys.log;
 import ae.sys.shutdown;
-import ae.utils.json;
 import ae.utils.array;
-import ae.utils.time;
+import ae.utils.feed;
+import ae.utils.json;
 import ae.utils.text;
 import ae.utils.textout;
+import ae.utils.time;
 
 import common;
 import database;
@@ -170,6 +172,8 @@ class WebUI
 				case "":
 					title = "Index";
 					breadcrumb1 = `<a href="/">Forum Index</a>`;
+					foreach (what; ["posts", "threads"])
+						extraHeaders ~= `<link rel="alternate" type="application/atom+xml" title="New `~what~`" href="/feed/`~what~`" />`;
 					discussionIndex();
 					break;
 				case "group":
@@ -193,6 +197,8 @@ class WebUI
 					}
 					//tools ~= viewModeTool(["basic", "threaded"], "group");
 					tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
+					foreach (what; ["posts", "threads"])
+						extraHeaders ~= `<link rel="alternate" type="application/atom+xml" title="New `~what~` on `~encodeEntities(group)~`" href="/feed/`~what~`/`~encodeEntities(group)~`" />`;
 					break;
 				}
 				case "thread":
@@ -419,6 +425,19 @@ class WebUI
 					title = breadcrumb1 = "Help";
 					html.put(readText(optimizedPath(null, "web/help.htt")));
 					break;
+
+				case "feed":
+				{
+					enforce(path.length > 1, "Feed type not specified");
+					enforce(path[1]=="posts" || path[1]=="threads", "Unknown feed type");
+					bool threadsOnly = path[1] == "threads";
+					string group;
+					if (path.length > 2)
+						group = path[2];
+					auto hours = to!int(aaGet(parameters, "hours", text(FEED_HOURS_DEFAULT)));
+					enforce(hours <= FEED_HOURS_MAX, "hours parameter exceeds limit");
+					return getFeed(group, threadsOnly, hours).getResponse(request);
+				}
 
 				case "js":
 				case "css":
@@ -1952,6 +1971,64 @@ class WebUI
 	string setOptionLink(string name, string value)
 	{
 		return "/set?" ~ encodeUrlParameters([name : value, "url" : "__URL__", "secret" : getUserSecret()]);
+	}
+
+	// ***********************************************************************
+
+	enum FEED_HOURS_DEFAULT = 24;
+	enum FEED_HOURS_MAX = 72;
+
+	CachedSet!(string, CachedResource) feedCache;
+
+	CachedResource getFeed(string group, bool threadsOnly, int hours)
+	{
+		string feedUrl = "http://" ~ vhost ~ "/feed" ~
+			(threadsOnly ? "/threads" : "/posts") ~
+			(group ? "/" ~ group : "") ~
+			(hours!=FEED_HOURS_DEFAULT ? "?hours=" ~ text(hours) : "");
+		return feedCache(feedUrl, makeFeed(feedUrl, group, threadsOnly, hours));
+	}
+
+	CachedResource makeFeed(string feedUrl, string group, bool threadsOnly, int hours)
+	{
+		auto title = "Latest " ~ (threadsOnly ? "threads" : "posts") ~ (group ? " on " ~ group : "");
+
+		AtomFeedWriter feed;
+		feed.startFeed(feedUrl, title, Clock.currTime);
+
+		auto since = (Clock.currTime - dur!"hours"(hours)).stdTime;
+		auto iterator =
+			group ?
+				threadsOnly ?
+					query("SELECT `Message` FROM `Posts` WHERE `ID` IN (SELECT `ID` FROM `Groups` WHERE `Time` > ? AND `Group` = ?) AND `ID` = `ThreadID`").iterate(since, group)
+				:
+					query("SELECT `Message` FROM `Posts` WHERE `ID` IN (SELECT `ID` FROM `Groups` WHERE `Time` > ? AND `Group` = ?)").iterate(since, group)
+			:
+				threadsOnly ?
+					query("SELECT `Message` FROM `Posts` WHERE `Time` > ? AND `ID` = `ThreadID`").iterate(since)
+				:
+					query("SELECT `Message` FROM `Posts` WHERE `Time` > ?").iterate(since)
+			;
+
+		foreach (string message; iterator)
+		{
+			auto post = new Rfc850Post(message);
+
+			html.clear();
+			html.put("<pre>");
+			formatBody(post.content);
+			html.put("</pre>");
+
+			auto url = "http://" ~ vhost ~ idToUrl(post.id);
+			auto title = post.realSubject;
+			if (!group)
+				title = "[" ~ post.where ~ "] " ~ title;
+
+			feed.putEntry(url, title, post.author, post.time, cast(string)html.get(), url);
+		}
+		feed.endFeed();
+
+		return new CachedResource([Data(feed.xml.output.get())], "application/atom+xml");
 	}
 }
 
