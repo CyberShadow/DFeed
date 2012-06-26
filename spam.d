@@ -165,9 +165,20 @@ void checkStopForumSpam(PostProcess process, SpamResultHandler handler)
 	});
 }
 
+void checkUserAgent(PostProcess process, SpamResultHandler handler)
+{
+	auto ua = process.headers.get("User-Agent", "");
+
+	if (ua.startsWith("WWW-Mechanize"))
+		handler(false, "You seem to be posting using an unusual user-agent.");
+
+	handler(true, null);
+}
+
 auto spamEngines =
 [
 	&checkAkismet,
 	&checkProjectHoneyPot,
 	&checkStopForumSpam,
+	&checkUserAgent,
 ];
