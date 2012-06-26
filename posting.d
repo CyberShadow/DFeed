@@ -61,9 +61,9 @@ final class PostProcess
 		this.ip = ip;
 		this.headers = headers;
 
-		enforce(aaGet(vars, "name", "").length, "Please enter a name");
-		enforce(aaGet(vars, "email", "").length, "Please enter an e-mail address");
-		enforce(aaGet(vars, "text", "").length, "Please enter a message");
+		enforce(vars.get("name", "").length, "Please enter a name");
+		enforce(vars.get("email", "").length, "Please enter an e-mail address");
+		enforce(vars.get("text", "").length, "Please enter a message");
 
 		pid = randomString();
 		postProcesses[pid] = this;

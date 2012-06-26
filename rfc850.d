@@ -95,7 +95,7 @@ class Rfc850Post : Post
 		}
 
 		string defaultEncoding = "windows1252";
-		if (aaGet(headers, "User-Agent", null) == "DFeed")
+		if (headers.get("User-Agent", null) == "DFeed")
 			defaultEncoding = "utf8"; // Hack...
 
 		foreach (string key, ref string value; headers)
@@ -121,8 +121,8 @@ class Rfc850Post : Post
 		if ("Content-Disposition" in headers)
 			contentDisposition = decodeTokenHeader(headers["Content-Disposition"]);
 		mimeType = toLower(contentType.value);
-		flowed = aaGet(contentType.properties, "format", "fixed") == "flowed";
-		delsp = aaGet(contentType.properties, "delsp", "no") == "yes";
+		flowed = contentType.properties.get("format", "fixed") == "flowed";
+		delsp = contentType.properties.get("delsp", "no") == "yes";
 
 		if (rawContent)
 		{
@@ -220,9 +220,9 @@ class Rfc850Post : Post
 			content = lines.join("\n");
 		}
 
-		name = aaGet(contentType.properties, "name", string.init);
-		fileName = aaGet(contentDisposition.properties, "filename", string.init);
-		description = aaGet(headers, "Content-Description", string.init);
+		name = contentType.properties.get("name", string.init);
+		fileName = contentDisposition.properties.get("filename", string.init);
+		description = headers.get("Content-Description", string.init);
 		if (name == fileName)
 			name = null;
 
@@ -498,10 +498,10 @@ class Rfc850Post : Post
 		if (where == "")
 			return false;
 
-		if (inArray(ANNOUNCE_REPLIES, where))
+		if (where.isIn(ANNOUNCE_REPLIES))
 			return true;
 
-		return !reply || inArray(VIPs, author);
+		return !reply || author.isIn(VIPs);
 	}
 
 	@property string where()

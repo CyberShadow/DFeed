@@ -136,8 +136,8 @@ class WebUI
 		string[] tools, extraHeaders;
 
 		// Redirect to canonical domain name
-		auto host = aaGet(request.headers, "Host", "");
-		host = aaGet(request.headers, "X-Forwarded-Host", host);
+		auto host = request.headers.get("Host", "");
+		host = request.headers.get("X-Forwarded-Host", host);
 		if (host != vhost && host != "localhost" && ip != "127.0.0.1")
 			return response.redirect("http://" ~ vhost ~ request.resource, HttpStatusCode.MovedPermanently);
 
@@ -180,7 +180,7 @@ class WebUI
 				{
 					enforce(path.length > 1, "No group specified");
 					string group = path[1];
-					int page = to!int(aaGet(parameters, "page", "1"));
+					int page = to!int(parameters.get("page", "1"));
 					string pageStr = page==1 ? "" : format(" (page %d)", page);
 					title = group ~ " index" ~ pageStr;
 					breadcrumb1 = `<a href="/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
@@ -204,7 +204,7 @@ class WebUI
 				case "thread":
 				{
 					enforce(path.length > 1, "No thread specified");
-					int page = to!int(aaGet(parameters, "page", "1"));
+					int page = to!int(parameters.get("page", "1"));
 					string threadID = '<' ~ urlDecode(pathX) ~ '>';
 
 					auto firstPostUrl = idToUrl(getPostAtThreadIndex(threadID, getPageOffset(page, POSTS_PER_PAGE)));
@@ -279,7 +279,7 @@ class WebUI
 					return response.serveData(cast(string)html.get());
 				case "set":
 				{
-					if (aaGet(parameters, "secret", "") != getUserSecret())
+					if (parameters.get("secret", "") != getUserSecret())
 						throw new Exception("XSRF secret verification failed. Are your cookies enabled?");
 
 					foreach (name, value; parameters)
@@ -434,7 +434,7 @@ class WebUI
 					string group;
 					if (path.length > 2)
 						group = path[2];
-					auto hours = to!int(aaGet(parameters, "hours", text(FEED_HOURS_DEFAULT)));
+					auto hours = to!int(parameters.get("hours", text(FEED_HOURS_DEFAULT)));
 					enforce(hours <= FEED_HOURS_MAX, "hours parameter exceeds limit");
 					return getFeed(group, threadsOnly, hours).getResponse(request);
 				}
@@ -1480,7 +1480,7 @@ class WebUI
 
 		try
 		{
-			if (aaGet(vars, "secret", "") != getUserSecret())
+			if (vars.get("secret", "") != getUserSecret())
 				throw new Exception("XSRF secret verification failed. Are your cookies enabled?");
 
 			user["name"] = aaGet(vars, "name");
@@ -1583,9 +1583,9 @@ class WebUI
 
 		html.put(
 				`<label for="loginform-username">Username:</label>`
-				`<input id="loginform-username" name="username" value="`, encodeEntities(aaGet(parameters, "username", "")), `">`
+				`<input id="loginform-username" name="username" value="`, encodeEntities(parameters.get("username", "")), `">`
 				`<label for="loginform-password">Password:</label>`
-				`<input id="loginform-password" type="password" name="password" value="`, encodeEntities(aaGet(parameters, "password", "")), `">`
+				`<input id="loginform-password" type="password" name="password" value="`, encodeEntities(parameters.get("password", "")), `">`
 				`<input type="submit" value="Log in">`
 			`</td></tr>`);
 		if (errorMessage)
@@ -1617,11 +1617,11 @@ class WebUI
 
 		html.put(
 			`<label for="loginform-username">Username:</label>`
-			`<input id="loginform-username" name="username" value="`, encodeEntities(aaGet(parameters, "username", "")), `">`
+			`<input id="loginform-username" name="username" value="`, encodeEntities(parameters.get("username", "")), `">`
 			`<label for="loginform-password">Password:</label>`
-			`<input id="loginform-password" type="password" name="password" value="`, encodeEntities(aaGet(parameters, "password", "")), `">`
+			`<input id="loginform-password" type="password" name="password" value="`, encodeEntities(parameters.get("password", "")), `">`
 			`<label for="loginform-password2">Confirm:</label>`
-			`<input id="loginform-password2" type="password" name="password2" value="`, encodeEntities(aaGet(parameters, "password2", "")), `">`
+			`<input id="loginform-password2" type="password" name="password2" value="`, encodeEntities(parameters.get("password2", "")), `">`
 			`<input type="submit" value="Register">`
 			`</td></tr>`);
 		if (errorMessage)

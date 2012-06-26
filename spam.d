@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -67,11 +67,11 @@ void checkAkismet(PostProcess process, SpamResultHandler handler)
 	string[string] params = [
 		"blog"                 : "http://" ~ site ~ "/",
 		"user_ip"              : process.ip,
-		"user_agent"           : aaGet(process.headers, "User-Agent", ""),
-		"referrer"             : aaGet(process.headers, "Referer", ""),
-		"comment_author"       : aaGet(process.vars, "name", ""),
-		"comment_author_email" : aaGet(process.vars, "email", ""),
-		"comment_content"      : aaGet(process.vars, "text", ""),
+		"user_agent"           : process.headers.get("User-Agent", ""),
+		"referrer"             : process.headers.get("Referer", ""),
+		"comment_author"       : process.vars.get("name", ""),
+		"comment_author_email" : process.vars.get("email", ""),
+		"comment_content"      : process.vars.get("text", ""),
 	];
 
 	return httpPost("http://" ~ key ~ ".rest.akismet.com/1.1/comment-check", params, (string result) {
