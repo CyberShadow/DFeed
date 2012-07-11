@@ -1994,9 +1994,9 @@ class WebUI
 		auto title = "Latest " ~ (threadsOnly ? "threads" : "posts") ~ (group ? " on " ~ group : "");
 
 		AtomFeedWriter feed;
-		feed.startFeed(feedUrl, title, Clock.currTime);
+		feed.startFeed(feedUrl, title, Clock.currTime());
 
-		auto since = (Clock.currTime - dur!"hours"(hours)).stdTime;
+		auto since = (Clock.currTime() - dur!"hours"(hours)).stdTime;
 		auto iterator =
 			group ?
 				threadsOnly ?
