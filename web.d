@@ -134,6 +134,7 @@ class WebUI
 		string returnPage = request.resource;
 		html.clear();
 		string[] tools, extraHeaders;
+		auto status = HttpStatusCode.OK;
 
 		// Redirect to canonical domain name
 		auto host = request.headers.get("Host", "");
@@ -458,9 +459,15 @@ class WebUI
 		{
 			//return response.writeError(HttpStatusCode.InternalServerError, "Unprocessed exception: " ~ e.msg);
 			if (cast(NotFoundException) e)
+			{
 				breadcrumb1 = title = "Not Found";
+				status = HttpStatusCode.NotFound;
+			}
 			else
+			{
 				breadcrumb1 = title = "Error";
+				status = HttpStatusCode.InternalServerError;
+			}
 			auto text = encodeEntities(e.msg).replace("\n", "<br>");
 			debug text ~= `<pre>` ~ encodeEntities(e.toString()) ~ `</pre>`;
 			html.clear();
@@ -506,7 +513,7 @@ class WebUI
 
 		response.disableCache();
 		response.serveData(HttpResponseEx.loadTemplate(optimizedPath(null, "web/skel.htt"), vars));
-		response.setStatus(HttpStatusCode.OK);
+		response.setStatus(status);
 		return response;
 	}
 
