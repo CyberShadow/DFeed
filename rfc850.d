@@ -153,7 +153,7 @@ class Rfc850Post : Post
 
 				if (!content)
 				{
-					if (rawParts.length && rawParts[0].strip().length)
+					if (rawParts.length && rawParts[0].asciiStrip().length)
 						content = rawParts[0]; // default content to multipart stub
 					else
 						error = "Couldn't find text part in this " ~ mimeType ~ " message";
@@ -166,10 +166,10 @@ class Rfc850Post : Post
 		enum PGP_START = "-----BEGIN PGP SIGNED MESSAGE-----\n";
 		enum PGP_DELIM = "\n-----BEGIN PGP SIGNATURE-----\n";
 		enum PGP_END   = "\n-----END PGP SIGNATURE-----";
-		if (content.startsWith(PGP_START) && content.contains(PGP_DELIM) && content.strip().endsWith(PGP_END))
+		if (content.startsWith(PGP_START) && content.contains(PGP_DELIM) && content.asciiStrip().endsWith(PGP_END))
 		{
 			// Don't attempt to create meaningful signature files... just get the clutter out of the way
-			content = content.strip();
+			content = content.asciiStrip();
 			auto p = content.indexOf(PGP_DELIM);
 			auto part = new Rfc850Post(content[p+PGP_DELIM.length..$-PGP_END.length]);
 			content = content[PGP_START.length..p];
@@ -229,14 +229,14 @@ class Rfc850Post : Post
 		if ("References" in headers)
 		{
 			reply = true;
-			auto refs = strip(headers["References"]);
+			auto refs = asciiStrip(headers["References"]);
 			while (refs.startsWith("<"))
 			{
 				auto p = refs.indexOf(">");
 				if (p < 0)
 					break;
 				references ~= refs[0..p+1];
-				refs = strip(refs[p+1..$]);
+				refs = asciiStrip(refs[p+1..$]);
 			}
 		}
 
@@ -283,10 +283,10 @@ class Rfc850Post : Post
 		{
 			auto p = author.indexOf('<');
 			authorEmail = author[p+1..$-1];
-			author = decodeRfc1522(strip(author[0..p]));
+			author = decodeRfc1522(asciiStrip(author[0..p]));
 		}
 		if (author.length>2 && author[0]=='"' && author[$-1]=='"')
-			author = decodeRfc1522(strip(author[1..$-1]));
+			author = decodeRfc1522(asciiStrip(author[1..$-1]));
 		//if (author == authorEmail && author.indexOf("@") > 0)
 		//	author = author[0..author.indexOf("@")];
 
@@ -723,7 +723,7 @@ TokenHeader decodeTokenHeader(string s)
 			s = null;
 		else
 			result = s[0..p],
-			s = strip(s[p+1..$]);
+			s = asciiStrip(s[p+1..$]);
 		return result;
 	}
 
