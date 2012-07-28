@@ -264,7 +264,9 @@ class WebUI
 					if (post.fileName)
 						//response.headers["Content-Disposition"] = `inline; filename="` ~ post.fileName ~ `"`;
 						response.headers["Content-Disposition"] = `attachment; filename="` ~ post.fileName ~ `"`;
-					// TODO: is allowing text/html (others?) OK here?
+					else
+						// TODO: separate subdomain for attachments
+						response.headers["Content-Disposition"] = `attachment; filename="raw"`;
 					return response.serveData(Data(post.data), post.mimeType ? post.mimeType : "application/octet-stream");
 				}
 				case "source":
