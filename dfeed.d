@@ -54,7 +54,7 @@ void main(string[] args)
 	new Feed("Twitter-WalterBright", "http://twitter.com/statuses/user_timeline/18061210.atom", null);
 	new Feed("Twitter-incomputable", "http://twitter.com/statuses/user_timeline/155425162.atom", null);
 	new Feed("Twitter-D_programming", "http://twitter.com/statuses/user_timeline/148794328.atom", null);
-	new Feed("Twitter-DigitalMars", "http://twitter.com/statuses/user_timeline/148481064.atom", null);
+//	new Feed("Twitter-DigitalMars", "http://twitter.com/statuses/user_timeline/148481064.atom", null);
 
 	// Create sinks
 	new IrcSink();
