@@ -31,11 +31,11 @@ class Feed : WebPoller
 {
 	enum POLL_PERIOD = 60;
 
-	this(string name, string url, string action = "posted")
+	this(string name, string url, string action = "posted", int pollPeriod = POLL_PERIOD)
 	{
 		this.url = url;
 		this.action = action;
-		super(name, POLL_PERIOD);
+		super(name, pollPeriod);
 	}
 
 private:

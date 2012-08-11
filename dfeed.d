@@ -51,10 +51,10 @@ void main(string[] args)
 	//new Feed("GitHub", "https://github.com/"~readText("data/github.txt"), null); // TODO: HTTPS
 	new Feed("GitHub", "http://thecybershadow.net/d/ghfeed.php", null);
 //	new Reddit("programming", `(^|[^\w\d\-:*=])D([^\w\-:*=]|$)`);
-	new Feed("Twitter-WalterBright", "http://twitter.com/statuses/user_timeline/18061210.atom", null);
-	new Feed("Twitter-incomputable", "http://twitter.com/statuses/user_timeline/155425162.atom", null);
-	new Feed("Twitter-D_programming", "http://twitter.com/statuses/user_timeline/148794328.atom", null);
-//	new Feed("Twitter-DigitalMars", "http://twitter.com/statuses/user_timeline/148481064.atom", null);
+	new Feed("Twitter-WalterBright", "http://twitter.com/statuses/user_timeline/18061210.atom", null, 120);
+	new Feed("Twitter-incomputable", "http://twitter.com/statuses/user_timeline/155425162.atom", null, 120);
+	new Feed("Twitter-D_programming", "http://twitter.com/statuses/user_timeline/148794328.atom", null, 120);
+//	new Feed("Twitter-DigitalMars", "http://twitter.com/statuses/user_timeline/148481064.atom", null, 120);
 
 	// Create sinks
 	new IrcSink();
