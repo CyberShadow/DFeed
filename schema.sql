@@ -66,3 +66,6 @@ CREATE TABLE [UserSettings] ( [User] VARCHAR(50), [Name] VARCHAR(50), [Value] TE
 -- Index `UserSetting` on table `UserSettings`
 CREATE UNIQUE INDEX [UserSetting] on [UserSettings] ( [User], [Name] );
 
+-- Index `GroupArtNum` on table `Groups`
+CREATE INDEX [GroupArtNum] ON [Groups] ( [Group], [ArtNum] );
+

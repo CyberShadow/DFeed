@@ -168,9 +168,18 @@ class WebUI
 			{
 				// Obsolete "/discussion/" prefix
 				case "discussion":
-					return response.redirect("/" ~ path[1..$].join("/"), HttpStatusCode.MovedPermanently);
 
 				case "":
+					// Handle redirects from pnews
+					if ("group" in parameters && "artnum" in parameters)
+					{
+						foreach (string id; query("SELECT `ID` FROM `Groups` WHERE `Group`=? AND `ArtNum`=?").iterate(parameters["group"], parameters["artnum"]))
+							return response.redirect(idToUrl(id), HttpStatusCode.MovedPermanently);
+					}
+					else
+					if ("group" in parameters)
+						return response.redirect("/group/" ~ parameters["group"], HttpStatusCode.MovedPermanently);
+
 					title = "Index";
 					breadcrumb1 = `<a href="/">Forum Index</a>`;
 					foreach (what; ["posts", "threads"])
@@ -263,7 +272,7 @@ class WebUI
 						throw new Exception(post.error);
 					if (post.fileName)
 						//response.headers["Content-Disposition"] = `inline; filename="` ~ post.fileName ~ `"`;
-						response.headers["Content-Disposition"] = `attachment; filename="` ~ post.fileName ~ `"`;
+						response.headers["Content-Disposition"] = `attachment; filename="` ~ post.fileName ~ `"`; // "
 					else
 						// TODO: separate subdomain for attachments
 						response.headers["Content-Disposition"] = `attachment; filename="raw"`;
@@ -323,7 +332,7 @@ class WebUI
 					enforce(path.length > 1, "No post specified");
 					auto post = getPost('<' ~ urlDecode(pathX) ~ '>');
 					enforce(post, "Post not found");
-					title = `Replying to "` ~ post.subject ~ `"`;
+					title = `Replying to "` ~ post.subject ~ `"`; // "
 					breadcrumb1 = `<a href="` ~ encodeEntities(idToUrl(post.id)) ~ `">` ~ encodeEntities(post.subject) ~ `</a>`;
 					breadcrumb2 = `<a href="/reply/`~pathX~`">Post reply</a>`;
 					if (discussionPostForm(post.replyTemplate()))
