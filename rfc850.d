@@ -313,7 +313,8 @@ class Rfc850Post : Post
 
 		if (subject.startsWith("[Issue "))
 		{
-			url = "http://d.puremagic.com/issues/show_bug.cgi?id=" ~ subject.split(" ")[1][0..$-1];
+			auto urlBase = headers.get("X-Bugzilla-URL", "http://d.puremagic.com/issues/");
+			url = urlBase ~ "show_bug.cgi?id=" ~ subject.split(" ")[1][0..$-1];
 			if (bugzillaCommentNumber > 0)
 				url ~= "#c" ~ .text(bugzillaCommentNumber);
 		}
