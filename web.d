@@ -127,6 +127,14 @@ class WebUI
 
 		ip = request.remoteHosts(conn.remoteAddress.toAddrString())[0];
 		user = getUser("Cookie" in request.headers ? request.headers["Cookie"] : null);
+		string[] cookies;
+		scope(success)
+		{
+			if (!cookies)
+				cookies = user.save();
+			foreach (cookie; cookies)
+				response.headers.add("Set-Cookie", cookie);
+		}
 
 		string title, breadcrumb1, breadcrumb2;
 		string bodyClass = "narrowdoc";
@@ -511,16 +519,15 @@ class WebUI
 			`<script type="text/javascript">var toolsTemplate = ` ~ toJson(toolStr) ~ `;</script>`;
 		string htmlStr = cast(string) html.get(); // html contents will be overwritten on next request
 
-		bool cookieLimit = false;
-		foreach (cookie; user.save())
-		{
-			response.headers.add("Set-Cookie", cookie);
-			cookieLimit = cookieLimit || cookie.length > 4096 * 15/16;
-		}
-		if (cookieLimit)
-			htmlStr =
-				`<div class="forum-notice">Warning: cookie size approaching RFC 2109 limit.`
-				`Please consider <a href="/registerform">creating an account</a> to avoid losing your read post history.</div>` ~ htmlStr;
+		cookies = user.save();
+		foreach (cookie; cookies)
+			if (cookie.length > 4096 * 15/16)
+			{
+				htmlStr =
+					`<div class="forum-notice">Warning: cookie size approaching RFC 2109 limit.`
+					`Please consider <a href="/registerform">creating an account</a> to avoid losing your read post history.</div>` ~ htmlStr;
+				break;
+			}
 
 		string[string] vars = [
 			"title" : encodeEntities(title),
