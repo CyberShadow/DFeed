@@ -549,62 +549,82 @@ class WebUI
 
 	// TODO: Move out to configuration files
 
-	struct GroupInfo { string postMessage, name, description; }
+	struct GroupInfo { string name, description, postMessage, alsoVia; }
 	struct GroupSet { string name; GroupInfo[] groups; }
 
-	static const PostMessage_ML =
-		`You are viewing a mailing list archive.<br>`
-		`For information about posting, visit `
-			`<a href="http://lists.puremagic.com/cgi-bin/mailman/listinfo/%NAME%">%NAME%'s Mailman page</a>.`;
-	static const PostMessage_BZ =
-		`You are viewing a Bugzilla message archive.<br>`
-		`To report a bug, please visit the <a href="http://d.puremagic.com/issues/">D Bugzilla</a> or `
-			`<a href="/newpost/digitalmars.D">post to digitalmars.D</a>.`;
+	static GroupInfo makeGroupInfo(string name, string archiveName, string mlName, string description, bool mlOnly, bool bugzilla)
+	{
+		auto info = GroupInfo(name, description);
+		string[] alsoVia;
+		if (!mlOnly)
+			alsoVia ~= `<a href="news://news.digitalmars.com/`~name~`">NNTP</a>`;
+		if (mlName)
+			alsoVia ~= `<a href="http://lists.puremagic.com/cgi-bin/mailman/listinfo/`~mlName~`">mailing&nbsp;list</a>`;
+		if (mlOnly)
+			info.postMessage =
+				`You are viewing a mailing list archive.<br>`
+				`For information about posting, visit `
+					`<a href="http://lists.puremagic.com/cgi-bin/mailman/listinfo/`~name~`">`~name~`'s Mailman page</a>.`;
+		if (bugzilla)
+		{
+			alsoVia ~= `<a href="http://d.puremagic.com/issues/">Bugzilla</a>`;
+			info.postMessage =
+				`You are viewing a Bugzilla message archive.<br>`
+				`To report a bug, please visit the <a href="http://d.puremagic.com/issues/">D Bugzilla</a> or `
+					`<a href="/newpost/digitalmars.D">post to digitalmars.D</a>.`;
+		}
+		if (mlOnly)
+			alsoVia ~= `<a href="http://lists.puremagic.com/pipermail/`~name.toLower()~`/">archive</a>`;
+		else
+			alsoVia ~= `<a href="http://www.digitalmars.com/d/archives/`~archiveName~`/">archive</a>`;
+		info.alsoVia = alsoVia.join("<br>");
+		return info;
+	}
 
-	static const GroupSet[] groupHierarchy = [
+	static GroupSet[] groupHierarchy = [
 	{ "D Programming Language", [
-		{ null,				"digitalmars.D",			"General discussion of the D programming language." },
-		{ null,				"digitalmars.D.announce",	"Announcements for anything D related" },
-		{ PostMessage_BZ,	"digitalmars.D.bugs",		"Bug reports for D compiler and library" },
-		{ null,				"digitalmars.D.debugger",	"Debuggers for D" },
-		{ null,				"digitalmars.D.dwt",		"Developing the D Widget Toolkit" },
-		{ null,				"digitalmars.D.dtl",		"Developing the D Template Library" },
-		{ null,				"digitalmars.D.ide",		"Integrated Debugging Environments for D" },
-		{ null,				"digitalmars.D.learn",		"Questions about learning D" },
-		{ null,				"D.gnu",					"GDC, the Gnu D Compiler " },
-		{ PostMessage_ML,	"dmd-beta",					"Notify of and discuss beta versions" },
-		{ PostMessage_ML,	"dmd-concurrency",			"Design of concurrency features in D and library" },
-		{ PostMessage_ML,	"dmd-internals",			"dmd compiler internal design and implementation" },
-		{ PostMessage_ML,	"phobos",					"Phobos standard library design and implementation" },
-		{ PostMessage_ML,	"D-runtime",				"Runtime library design and implementation" },
+		makeGroupInfo("digitalmars.D"           , "digitalmars/D"           , "digitalmars-d"           , "General discussion of the D programming language."                , false, false),
+		makeGroupInfo("digitalmars.D.announce"  , "digitalmars/D/announce"  , "digitalmars-d-announce"  , "Announcements for anything D related"                             , false, false),
+		makeGroupInfo("digitalmars.D.bugs"      , "digitalmars/D/bugs"      , "digitalmars-d-bugs"      , "Bug reports for D compiler and library"                           , false, true ),
+		makeGroupInfo("digitalmars.D.debugger"  , "digitalmars/D/debugger"  , "digitalmars-d-debugger"  , "Debuggers for D"                                                  , false, false),
+		makeGroupInfo("digitalmars.D.dwt"       , "digitalmars/D/dwt"       , "digitalmars-d-dwt"       , "Developing the D Widget Toolkit"                                  , false, false),
+		makeGroupInfo("digitalmars.D.dtl"       , "digitalmars/D/dtl"       , "digitalmars-d-dtl"       , "Developing the D Template Library"                                , false, false),
+		makeGroupInfo("digitalmars.D.ide"       , "digitalmars/D/ide"       , "digitalmars-d-ide"       , "Integrated Debugging Environments for D"                          , false, false),
+		makeGroupInfo("digitalmars.D.learn"     , "digitalmars/D/learn"     , "digitalmars-d-learn"     , "Questions about learning D"                                       , false, false),
+		makeGroupInfo("D.gnu"                   , "D/gnu"                   , "d.gnu"                   , "GDC, the Gnu D Compiler "                                         , false, false),
+		makeGroupInfo("dmd-beta"                , null                      , "dmd-beta"                , "Notify of and discuss beta versions"                              , true , false),
+		makeGroupInfo("dmd-concurrency"         , null                      , "dmd-concurrency"         , "Design of concurrency features in D and library"                  , true , false),
+		makeGroupInfo("dmd-internals"           , null                      , "dmd-internals"           , "dmd compiler internal design and implementation"                  , true , false),
+		makeGroupInfo("phobos"                  , null                      , "phobos"                  , "Phobos standard library design and implementation"                , true , false),
+		makeGroupInfo("D-runtime"               , null                      , "D-runtime"               , "Runtime library design and implementation"                        , true , false),
 	]},
 	{ "C and C++", [
-		{ null,				"c++",						"General discussion of DMC++ compiler" },
-		{ null,				"c++.announce",				"Announcements about C++" },
-		{ null,				"c++.atl",					"Microsoft's Advanced Template Library" },
-		{ null,				"c++.beta",					"Test versions of various C++ products" },
-		{ null,				"c++.chat",					"Off topic discussions" },
-		{ null,				"c++.command-line",			"Command line tools" },
-		{ null,				"c++.dos",					"DMC++ and DOS" },
-		{ null,				"c++.dos.16-bits",			"16 bit DOS topics" },
-		{ null,				"c++.dos.32-bits",			"32 bit extended DOS topics" },
-		{ null,				"c++.idde",					"The Digital Mars Integrated Development and Debugging Environment" },
-		{ null,				"c++.mfc",					"Microsoft Foundation Classes" },
-		{ null,				"c++.rtl",					"C++ Runtime Library" },
-		{ null,				"c++.stl",					"Standard Template Library" },
-		{ null,				"c++.stl.hp",				"HP's Standard Template Library" },
-		{ null,				"c++.stl.port",				"STLPort Standard Template Library" },
-		{ null,				"c++.stl.sgi",				"SGI's Standard Template Library" },
-		{ null,				"c++.stlsoft",				"Stlsoft products" },
-		{ null,				"c++.windows",				"Writing C++ code for Microsoft Windows" },
-		{ null,				"c++.windows.16-bits",		"16 bit Windows topics" },
-		{ null,				"c++.windows.32-bits",		"32 bit Windows topics" },
-		{ null,				"c++.wxwindows",			"wxWindows" },
+		makeGroupInfo("c++"                     , "c++"                     , null                      , "General discussion of DMC++ compiler"                             , false, false),
+		makeGroupInfo("c++.announce"            , "c++/announce"            , null                      , "Announcements about C++"                                          , false, false),
+		makeGroupInfo("c++.atl"                 , "c++/atl"                 , null                      , "Microsoft's Advanced Template Library"                            , false, false),
+		makeGroupInfo("c++.beta"                , "c++/beta"                , null                      , "Test versions of various C++ products"                            , false, false),
+		makeGroupInfo("c++.chat"                , "c++/chat"                , null                      , "Off topic discussions"                                            , false, false),
+		makeGroupInfo("c++.command-line"        , "c++/command-line"        , null                      , "Command line tools"                                               , false, false),
+		makeGroupInfo("c++.dos"                 , "c++/dos"                 , null                      , "DMC++ and DOS"                                                    , false, false),
+		makeGroupInfo("c++.dos.16-bits"         , "c++/dos/16-bits"         , null                      , "16 bit DOS topics"                                                , false, false),
+		makeGroupInfo("c++.dos.32-bits"         , "c++/dos/32-bits"         , null                      , "32 bit extended DOS topics"                                       , false, false),
+		makeGroupInfo("c++.idde"                , "c++/idde"                , null                      , "The Digital Mars Integrated Development and Debugging Environment", false, false),
+		makeGroupInfo("c++.mfc"                 , "c++/mfc"                 , null                      , "Microsoft Foundation Classes"                                     , false, false),
+		makeGroupInfo("c++.rtl"                 , "c++/rtl"                 , null                      , "C++ Runtime Library"                                              , false, false),
+		makeGroupInfo("c++.stl"                 , "c++/stl"                 , null                      , "Standard Template Library"                                        , false, false),
+		makeGroupInfo("c++.stl.hp"              , "c++/stl/hp"              , null                      , "HP's Standard Template Library"                                   , false, false),
+		makeGroupInfo("c++.stl.port"            , "c++/stl/port"            , null                      , "STLPort Standard Template Library"                                , false, false),
+		makeGroupInfo("c++.stl.sgi"             , "c++/stl/sgi"             , null                      , "SGI's Standard Template Library"                                  , false, false),
+		makeGroupInfo("c++.stlsoft"             , "c++/stlsoft"             , null                      , "Stlsoft products"                                                 , false, false),
+		makeGroupInfo("c++.windows"             , "c++/windows"             , null                      , "Writing C++ code for Microsoft Windows"                           , false, false),
+		makeGroupInfo("c++.windows.16-bits"     , "c++/windows/16-bits"     , null                      , "16 bit Windows topics"                                            , false, false),
+		makeGroupInfo("c++.windows.32-bits"     , "c++/windows/32-bits"     , null                      , "32 bit Windows topics"                                            , false, false),
+		makeGroupInfo("c++.wxwindows"           , "c++/wxwindows"           , null                      , "wxWindows"                                                        , false, false),
 	]},
 	{ "Other", [
-		{ null,				"DMDScript",				"General discussion of DMDScript" },
-		{ null,				"digitalmars.empire",		"General discussion of Empire, the Wargame of the Century" },
-		{ null,				"D",						"Retired, use digitalmars.D instead" },
+		makeGroupInfo("DMDScript"               , "DMDScript"               , null                      , "General discussion of DMDScript"                                  , false, false),
+		makeGroupInfo("digitalmars.empire"      , "digitalmars/empire"      , null                      , "General discussion of Empire, the Wargame of the Century"         , false, false),
+		makeGroupInfo("D"                       , ""                        , null                      , "Retired, use digitalmars.D instead"                               , false, false),
 	]}];
 
 	const(GroupInfo)* getGroupInfo(string name)
@@ -670,8 +690,8 @@ class WebUI
 		foreach (set; groupHierarchy)
 		{
 			html.put(
-				`<tr><th colspan="4">`, encodeEntities(set.name), `</th></tr>`
-				`<tr class="subheader"><th>Forum</th><th>Last Post</th><th>Threads</th><th>Posts</th>`);
+				`<tr><th colspan="5">`, encodeEntities(set.name), `</th></tr>`
+				`<tr class="subheader"><th>Forum</th><th>Last Post</th><th>Threads</th><th>Posts</th><th>Also via</th></tr>`);
 			foreach (group; set.groups)
 			{
 				html.put(
@@ -679,9 +699,10 @@ class WebUI
 						`<td class="forum-index-col-forum"><a href="/group/`, encodeEntities(group.name), `">`, encodeEntities(group.name), `</a>`
 							`<div class="forum-index-description">`, encodeEntities(group.description), `</div>`
 						`</td>`
-						`<td class="forum-index-col-lastpost">`   , (group.name in lastPosts    ? summarizePost(lastPosts[group.name]) : `<div class="forum-no-data">-</div>`), `</td>`
-						`<td class="number-column">`, (group.name in threadCounts ? formatNumber(threadCounts[group.name]) : `-`), `</td>`
-						`<td class="number-column">`  , (group.name in postCounts   ? formatNumber(postCounts[group.name]) : `-`) , `</td>`
+						`<td class="forum-index-col-lastpost">`, group.name in lastPosts    ? summarizePost(   lastPosts[group.name]) : `<div class="forum-no-data">-</div>`, `</td>`
+						`<td class="number-column">`,            group.name in threadCounts ? formatNumber (threadCounts[group.name]) : `-`, `</td>`
+						`<td class="number-column">`,            group.name in postCounts   ? formatNumber (  postCounts[group.name]) : `-`, `</td>`
+						`<td class="number-column">`, group.alsoVia, `</td>`
 					`</tr>`,
 				);
 			}
@@ -1448,7 +1469,7 @@ class WebUI
 	    {
 			html.put(
 				`<table class="forum-table forum-error">`
-					`<tr><th>Reply to mailing list</th></tr>`
+					`<tr><th>Can't post to archive</th></tr>`
 					`<tr><td class="forum-table-message">`
 						~ info.postMessage.replace("%NAME%", info.name) ~
 					`</td></tr>`
