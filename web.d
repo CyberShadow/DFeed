@@ -615,9 +615,9 @@ class WebUI
 					return &group;
 		return null;
 	}
-	
+
 	// ***********************************************************************
-	
+
 	int[string] getThreadCounts()
 	{
 		int[string] threadCounts;
@@ -1455,7 +1455,7 @@ class WebUI
 				`</table>`);
 	    	return false;
 	    }
-		
+
 		html.put(`<form action="/send" method="post" class="forum-form" id="postform">`);
 
 		string recaptchaError;
@@ -1475,7 +1475,7 @@ class WebUI
 
 		html.put(
 			`<div id="postform-info">`
-				`Posting to <b>`, encodeEntities(postTemplate.where), `</b>`, 
+				`Posting to <b>`, encodeEntities(postTemplate.where), `</b>`,
 				(postTemplate.reply ? ` in reply to ` ~ postLink(getPostInfo(postTemplate.parentID)) : ``),
 			`</div>`
 			`<input type="hidden" name="secret" value="`, getUserSecret(), `">`
