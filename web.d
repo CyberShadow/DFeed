@@ -1481,7 +1481,7 @@ class WebUI
 			`<input type="hidden" name="secret" value="`, getUserSecret(), `">`
 			`<label for="postform-name">Your name:</label>`
 			`<input id="postform-name" name="name" size="40" value="`, encodeEntities(user.get("name", "")), `">`
-			`<label for="postform-email">Your e-mail address:</label>`
+			`<label for="postform-email">Your email address (<a href="/help#email">?</a>):</label>`
 			`<input id="postform-email" name="email" size="40" value="`, encodeEntities(user.get("email", "")), `">`
 			`<label for="postform-subject">Subject:</label>`
 			`<input id="postform-subject" name="subject" size="80" value="`, encodeEntities(postTemplate.subject), `">`

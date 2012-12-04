@@ -27,6 +27,19 @@
   Registering an account will transfer all variables from cookies to the server database.
 </p>
 
+<h2 id="email">Email address</h2>
+
+<p>
+  When posting, you need to indicate an email address.
+  It doesn't need to be a valid one; this software will not send anything to the specified address.
+  The email address will be made public to other users of the news server / mailing list you are posting to.
+  Therefore, please be aware that malicious robots may be able to collect your address and send spam to it.
+</p>
+
+<p>
+  The email address is also used to display an avatar (see below).
+</p>
+
 <h2 id="avatars">Avatars</h2>
 
 <p>
