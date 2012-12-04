@@ -53,13 +53,14 @@ document.write('\x3Cstyle type="text/css"\x3E.nojs { display: none; }\x3C/style\
 		<form method="get" action="http://google.com/search">
 			<div>
 				<img src="/images/search-left.gif" width="11" height="22" alt=""><input id="q" name="q"><input type="image" id="search-submit" name="submit" src="/images/search-button.gif">
-				<input type="hidden" id="domains" name="domains" value="d-programming-language.org">
+				<input type="hidden" id="domains" name="domains" value="dlang.org">
 				<input type="hidden" id="sourceid" name="sourceid" value="google-search">
 				<div id="search-dropdown">
 					<select id="sitesearch" name="sitesearch" size="1">
-						<option value="d-programming-language.org">Entire D Site</option>
-						<option value="d-programming-language.org/phobos">Library Reference</option>
-						<option value="www.digitalmars.com/d/archives" selected>Newsgroup Archives</option>
+						<option value="dlang.org">Entire D Site</option>
+						<option value="dlang.org/phobos">Library Reference</option>
+						<option value="forum.dlang.org" selected>Forum</option>
+						<option value="digitalmars.com/d/archives">Newsgroup Archives</option>
 					</select>
 				</div>
 			</div>
@@ -87,8 +88,8 @@ document.write('\x3Cstyle type="text/css"\x3E.nojs { display: none; }\x3C/style\
 <ul><li><a href="http://dlang.org/overview.html" title="D language overview">Overview</a></li>
 	<li><a href="http://dlang.org/comparison.html" title="D feature list">Features</a></li>
 	<li><a href="http://dlang.org/download.html" title="Download a D compiler">Downloads &amp; Tools</a></li>
-	<li><a href="http://dlang.org/changelog.html" title="History of changes to D">Changelog</a></li>
-	<li><a href="http://dlang.org/bugstats.php" title="D issue and bug tracking system">Bug tracker</a></li>
+	<li><a href="http://dlang.org/changelog.html" title="History of changes to D">Change Log</a></li>
+	<li><a href="http://dlang.org/bugstats.php" title="D issue and bug tracking system">Bug Tracker</a></li>
 	<li><a href="http://dlang.org/faq.html" title="Frequently Asked Questions">FAQ</a></li>
 	<li><a href="http://dlang.org/appendices.html">Appendices</a></li>
 	<li><a href="http://dlang.org/acknowledgements.html" title="Thank-you to these people who have helped with D">Acknowledgments</a></li>
@@ -105,7 +106,7 @@ document.write('\x3Cstyle type="text/css"\x3E.nojs { display: none; }\x3C/style\
 
 	<li><a href="http://dlang.org/language-reference.html">Language Reference</a></li>
 	<li><a href="http://dlang.org/phobos/index.html">Library Reference</a></li>
-	<li><a href="http://dlang.org/howtos.html" title="Helps for using D">Howtos</a></li>
+	<li><a href="http://dlang.org/howtos.html" title="Helps for using D">How-tos</a></li>
 	<li><a href="http://dlang.org/articles.html">Articles</a></li>
 </ul>
     </div>
@@ -113,9 +114,9 @@ document.write('\x3Cstyle type="text/css"\x3E.nojs { display: none; }\x3C/style\
 <div class="navblock">
 <h2>Community</h2>
 <ul><li><a href="/" title="User forums">Forums</a></li>
-	<li><a href="http://github.com/D-Programming-Language" title="D on github">Github</a></li>
+	<li><a href="http://github.com/D-Programming-Language" title="D on github">GitHub</a></li>
 	<li><a href="http://prowiki.org/wiki4d/wiki.cgi?FrontPage" title="Wiki for the D Programming Language">Wiki</a></li>
-	<li><a href="http://prowiki.org/wiki4d/wiki.cgi?ReviewQueue" title="Queue of current and upcoming standard library additions">Review queue</a></li>
+	<li><a href="http://prowiki.org/wiki4d/wiki.cgi?ReviewQueue" title="Queue of current and upcoming standard library additions">Review Queue</a></li>
 	<li><a href="http://twitter.com/#search?q=%23d_lang" title="#d_lang on twitter.com">Twitter</a></li>
 	<li><a href="http://digitalmars.com/d/dlinks.html" title="External D related links">Links</a></li>
 	
