@@ -536,56 +536,67 @@ class WebUI
 
 	// ***********************************************************************
 
-	struct GroupInfo { bool isML; string name, description; }
+	// TODO: Move out to configuration files
+
+	struct GroupInfo { string postMessage, name, description; }
 	struct GroupSet { string name; GroupInfo[] groups; }
 
-	/*const*/ GroupSet[] groupHierarchy = [
+	static const PostMessage_ML =
+		`You are viewing a mailing list archive.<br>`
+		`For information about posting, visit `
+			`<a href="http://lists.puremagic.com/cgi-bin/mailman/listinfo/%NAME%">%NAME%'s Mailman page</a>.`;
+	static const PostMessage_BZ =
+		`You are viewing a Bugzilla message archive.<br>`
+		`To report a bug, please visit the <a href="http://d.puremagic.com/issues/">D Bugzilla</a> or `
+			`<a href="/newpost/digitalmars.D">post to digitalmars.D</a>.`;
+
+	static const GroupSet[] groupHierarchy = [
 	{ "D Programming Language", [
-		{ false,	"digitalmars.D",			"General discussion of the D programming language." },
-		{ false,	"digitalmars.D.announce",	"Announcements for anything D related" },
-		{ false,	"digitalmars.D.bugs",		"Bug reports for D compiler and library" },
-		{ false,	"digitalmars.D.debugger",	"Debuggers for D" },
-		{ false,	"digitalmars.D.dwt",		"Developing the D Widget Toolkit" },
-		{ false,	"digitalmars.D.dtl",		"Developing the D Template Library" },
-		{ false,	"digitalmars.D.ide",		"Integrated Debugging Environments for D" },
-		{ false,	"digitalmars.D.learn",		"Questions about learning D" },
-		{ false,	"D.gnu",					"GDC, the Gnu D Compiler " },
-		{ true,		"dmd-beta",					"Notify of and discuss beta versions" },
-		{ true,		"dmd-concurrency",			"Design of concurrency features in D and library" },
-		{ true,		"dmd-internals",			"dmd compiler internal design and implementation" },
-		{ true,		"phobos",					"Phobos standard library design and implementation" },
-		{ true,		"D-runtime",				"Runtime library design and implementation" },
+		{ null,				"digitalmars.D",			"General discussion of the D programming language." },
+		{ null,				"digitalmars.D.announce",	"Announcements for anything D related" },
+		{ PostMessage_BZ,	"digitalmars.D.bugs",		"Bug reports for D compiler and library" },
+		{ null,				"digitalmars.D.debugger",	"Debuggers for D" },
+		{ null,				"digitalmars.D.dwt",		"Developing the D Widget Toolkit" },
+		{ null,				"digitalmars.D.dtl",		"Developing the D Template Library" },
+		{ null,				"digitalmars.D.ide",		"Integrated Debugging Environments for D" },
+		{ null,				"digitalmars.D.learn",		"Questions about learning D" },
+		{ null,				"D.gnu",					"GDC, the Gnu D Compiler " },
+		{ PostMessage_ML,	"dmd-beta",					"Notify of and discuss beta versions" },
+		{ PostMessage_ML,	"dmd-concurrency",			"Design of concurrency features in D and library" },
+		{ PostMessage_ML,	"dmd-internals",			"dmd compiler internal design and implementation" },
+		{ PostMessage_ML,	"phobos",					"Phobos standard library design and implementation" },
+		{ PostMessage_ML,	"D-runtime",				"Runtime library design and implementation" },
 	]},
 	{ "C and C++", [
-		{ false,	"c++",						"General discussion of DMC++ compiler" },
-		{ false,	"c++.announce",				"Announcements about C++" },
-		{ false,	"c++.atl",					"Microsoft's Advanced Template Library" },
-		{ false,	"c++.beta",					"Test versions of various C++ products" },
-		{ false,	"c++.chat",					"Off topic discussions" },
-		{ false,	"c++.command-line",			"Command line tools" },
-		{ false,	"c++.dos",					"DMC++ and DOS" },
-		{ false,	"c++.dos.16-bits",			"16 bit DOS topics" },
-		{ false,	"c++.dos.32-bits",			"32 bit extended DOS topics" },
-		{ false,	"c++.idde",					"The Digital Mars Integrated Development and Debugging Environment" },
-		{ false,	"c++.mfc",					"Microsoft Foundation Classes" },
-		{ false,	"c++.rtl",					"C++ Runtime Library" },
-		{ false,	"c++.stl",					"Standard Template Library" },
-		{ false,	"c++.stl.hp",				"HP's Standard Template Library" },
-		{ false,	"c++.stl.port",				"STLPort Standard Template Library" },
-		{ false,	"c++.stl.sgi",				"SGI's Standard Template Library" },
-		{ false,	"c++.stlsoft",				"Stlsoft products" },
-		{ false,	"c++.windows",				"Writing C++ code for Microsoft Windows" },
-		{ false,	"c++.windows.16-bits",		"16 bit Windows topics" },
-		{ false,	"c++.windows.32-bits",		"32 bit Windows topics" },
-		{ false,	"c++.wxwindows",			"wxWindows" },
+		{ null,				"c++",						"General discussion of DMC++ compiler" },
+		{ null,				"c++.announce",				"Announcements about C++" },
+		{ null,				"c++.atl",					"Microsoft's Advanced Template Library" },
+		{ null,				"c++.beta",					"Test versions of various C++ products" },
+		{ null,				"c++.chat",					"Off topic discussions" },
+		{ null,				"c++.command-line",			"Command line tools" },
+		{ null,				"c++.dos",					"DMC++ and DOS" },
+		{ null,				"c++.dos.16-bits",			"16 bit DOS topics" },
+		{ null,				"c++.dos.32-bits",			"32 bit extended DOS topics" },
+		{ null,				"c++.idde",					"The Digital Mars Integrated Development and Debugging Environment" },
+		{ null,				"c++.mfc",					"Microsoft Foundation Classes" },
+		{ null,				"c++.rtl",					"C++ Runtime Library" },
+		{ null,				"c++.stl",					"Standard Template Library" },
+		{ null,				"c++.stl.hp",				"HP's Standard Template Library" },
+		{ null,				"c++.stl.port",				"STLPort Standard Template Library" },
+		{ null,				"c++.stl.sgi",				"SGI's Standard Template Library" },
+		{ null,				"c++.stlsoft",				"Stlsoft products" },
+		{ null,				"c++.windows",				"Writing C++ code for Microsoft Windows" },
+		{ null,				"c++.windows.16-bits",		"16 bit Windows topics" },
+		{ null,				"c++.windows.32-bits",		"32 bit Windows topics" },
+		{ null,				"c++.wxwindows",			"wxWindows" },
 	]},
 	{ "Other", [
-		{ false,	"DMDScript",				"General discussion of DMDScript" },
-		{ false,	"digitalmars.empire",		"General discussion of Empire, the Wargame of the Century" },
-		{ false,	"D",						"Retired, use digitalmars.D instead" },
+		{ null,				"DMDScript",				"General discussion of DMDScript" },
+		{ null,				"digitalmars.empire",		"General discussion of Empire, the Wargame of the Century" },
+		{ null,				"D",						"Retired, use digitalmars.D instead" },
 	]}];
 
-	GroupInfo* getGroupInfo(string name)
+	const(GroupInfo)* getGroupInfo(string name)
 	{
 		foreach (set; groupHierarchy)
 			foreach (ref group; set.groups)
@@ -593,9 +604,9 @@ class WebUI
 					return &group;
 		return null;
 	}
-
+	
 	// ***********************************************************************
-
+	
 	int[string] getThreadCounts()
 	{
 		int[string] threadCounts;
@@ -1422,15 +1433,13 @@ class WebUI
 	    auto info = getGroupInfo(postTemplate.xref[0].group);
 	    if (!info)
 	    	throw new Exception("Unknown group");
-	    if (info.isML)
+	    if (info.postMessage)
 	    {
 			html.put(
 				`<table class="forum-table forum-error">`
 					`<tr><th>Reply to mailing list</th></tr>`
 					`<tr><td class="forum-table-message">`
-						`You are viewing a mailing list archive.<br>`
-						`For information about posting, visit `
-							`<a href="http://lists.puremagic.com/cgi-bin/mailman/listinfo/` ~ info.name ~ `">` ~ info.name ~ `'s Mailman page</a>.`
+						~ info.postMessage.replace("%NAME%", info.name) ~
 					`</td></tr>`
 				`</table>`);
 	    	return false;
