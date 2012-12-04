@@ -98,6 +98,8 @@ class NntpDownloader : NewsSource
 		}
 	}
 
+	void delegate() handleFinished;
+
 private:
 	string server;
 	bool fullCheck, running, stopping;
@@ -163,6 +165,8 @@ private:
 		log("All done!");
 		running = false;
 		client.disconnect();
+		if (handleFinished)
+			handleFinished();
 	}
 
 	void onListGroup(string[] messages)
