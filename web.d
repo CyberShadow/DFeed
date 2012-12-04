@@ -1874,21 +1874,32 @@ class WebUI
 		return s;
 	}
 
-	string truncateString(string s, int maxLength = 30)
+	/// Return HTML-encoded string. If it has more than maxLength characters,
+	/// truncate, add ellipses, and wrap in a <span> with the full string as title.
+	static string truncateString(string s8, int maxLength = 30)
 	{
-		if (s.length <= maxLength)
-			return encodeEntities(s);
+		import std.uni;
+		import std.utf;
 
-		import std.ascii;
+		dstring s32 = toUTF32(s8);
+		if (s32.length <= maxLength)
+			return encodeEntities(s8);
+
 		int end = maxLength;
 		foreach_reverse (p; maxLength-10..maxLength)
-			if (isWhite(s[p]))
+			if (isWhite(s32[p]))
 			{
 				end = p+1;
 				break;
 			}
 
-		return `<span title="`~encodeEntities(s)~`">` ~ encodeEntities(s[0..end] ~ "\&hellip;") ~ `</span>`;
+		return `<span title="`~encodeEntities(s8)~`">` ~ encodeEntities(toUTF8(s32[0..end]) ~ "\&hellip;") ~ `</span>`;
+	}
+
+	unittest
+	{
+		assert(truncateString("Hello, world!", 10).split(">")[1].split("<")[0] == "Hello, \&hellip;");
+		assert(truncateString("Привет, мир!" , 10).split(">")[1].split("<")[0] == "Привет, \&hellip;");
 	}
 
 	static string encodeEntities(string s)
