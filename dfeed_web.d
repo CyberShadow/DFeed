@@ -39,8 +39,8 @@ void main(string[] args)
 		"q|quiet", &common.quiet);
 
 	// Create sources
-	new NntpDownloader("news.digitalmars.com", false);
-	new NntpListener("news.digitalmars.com");
+	with (new NntpDownloader("news.digitalmars.com", false))
+		handleFinished = { new NntpListener("news.digitalmars.com"); };
 
 	// Create sinks
 	new MessageDBSink();
