@@ -38,17 +38,7 @@ void main(string[] args)
 	getopt(args,
 		"q|quiet", &common.quiet);
 
-	// Create sources
-	with (new NntpDownloader("news.digitalmars.com", false))
-		handleFinished = { new NntpListener("news.digitalmars.com"); };
-
-	// Create sinks
-	new MessageDBSink();
-
-	// Start web server
 	new WebUI();
-
-	startNewsSources();
 	socketManager.loop();
 
 	if (!common.quiet)

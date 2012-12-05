@@ -7,8 +7,10 @@ For now, to hack on the web interface:
     sqlite3 data/dfeed.s3db < schema.sql
     echo 80>data/web.txt
     echo localhost>>data/web.txt
+    rdmd nntpdownload
     rdmd dfeed_web
 
-It will start downloading NNTP messages and save them in the DB.
-This will need to be done once.
-You should be able to access the web interface on http://localhost/.
+`nntpdownload` will download messages from the NNTP server and save
+them in the DB. This will need to be done once.
+After starting `dfeed_web`, you should be able to access the web
+interface on http://localhost/.
