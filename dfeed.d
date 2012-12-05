@@ -42,9 +42,8 @@ void main(string[] args)
 		"q|quiet", &common.quiet);
 
 	// Create sources
-	with (new NntpDownloader("news.digitalmars.com", false))
-		handleFinished = { new NntpListener("news.digitalmars.com"); };
-
+	new NntpDownloader("news.digitalmars.com", false);
+	new NntpListener("news.digitalmars.com");
 	new MailingLists();
 	new StackOverflow("d");
 	new Feed("Planet D", "http://planetd.thecybershadow.net/_atom.xml");
