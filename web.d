@@ -48,9 +48,12 @@ import user;
 import recaptcha;
 import posting;
 
+version = MeasurePerformance;
+
 class WebUI
 {
 	Logger log;
+	version(MeasurePerformance) Logger perfLog;
 	HttpServer server;
 	string vhost;
 	User user;
@@ -60,6 +63,7 @@ class WebUI
 	this()
 	{
 		log = createLogger("Web");
+		version(MeasurePerformance) perfLog = createLogger("Performance");
 
 		auto lines = readText("data/web.txt").splitLines();
 		auto port = to!ushort(lines[0]);
@@ -662,8 +666,20 @@ class WebUI
 
 	// ***********************************************************************
 
+	enum MeasurePerformanceMixin =
+	q{
+		StopWatch performanceSW;
+		performanceSW.start();
+		scope(success)
+		{
+			performanceSW.stop();
+			perfLog(PERF_SCOPE ~ ": " ~ text(performanceSW.peek().msecs) ~ "ms");
+		}
+	};
+
 	int[string] getThreadCounts()
 	{
+		enum PERF_SCOPE = "getThreadCounts"; mixin(MeasurePerformanceMixin);
 		int[string] threadCounts;
 		foreach (string group, int count; query("SELECT `Group`, COUNT(*) FROM `Threads` GROUP BY `Group`").iterate())
 			threadCounts[group] = count;
@@ -672,6 +688,7 @@ class WebUI
 
 	int[string] getPostCounts()
 	{
+		enum PERF_SCOPE = "getPostCounts"; mixin(MeasurePerformanceMixin);
 		int[string] postCounts;
 		foreach (string group, int count; query("SELECT `Group`, COUNT(*) FROM `Groups`  GROUP BY `Group`").iterate())
 			postCounts[group] = count;
@@ -680,6 +697,7 @@ class WebUI
 
 	string[string] getLastPosts()
 	{
+		enum PERF_SCOPE = "getLastPosts"; mixin(MeasurePerformanceMixin);
 		string[string] lastPosts;
 		foreach (set; groupHierarchy)
 			foreach (group; set.groups)
