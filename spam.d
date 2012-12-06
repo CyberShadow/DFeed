@@ -31,7 +31,9 @@ void spamCheck(PostProcess process, SpamResultHandler handler)
 	int totalResults = 0;
 	bool foundSpam = false;
 
+	// Start all checks simultaneously
 	foreach (checker; spamEngines)
+	{
 		try
 			checker(process, (bool ok, string message) {
 				totalResults++;
@@ -54,6 +56,11 @@ void spamCheck(PostProcess process, SpamResultHandler handler)
 			foundSpam = true;
 			handler(false, "Spam check error: " ~ e.msg);
 		}
+
+		// Avoid starting slow checks if the first engines instantly return a positive
+		if (foundSpam)
+			break;
+	}
 }
 
 private:
@@ -192,9 +199,9 @@ void checkKeywords(PostProcess process, SpamResultHandler handler)
 
 auto spamEngines =
 [
-	&checkAkismet,
-	&checkProjectHoneyPot,
-	&checkStopForumSpam,
 	&checkUserAgent,
 	&checkKeywords,
+	&checkProjectHoneyPot,
+	&checkAkismet,
+	&checkStopForumSpam,
 ];
