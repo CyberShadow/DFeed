@@ -19,7 +19,7 @@ module common;
 import std.datetime;
 
 import ae.sys.log;
-import ae.sys.shutdown;
+import ae.net.shutdown;
 
 bool quiet;
 
@@ -75,9 +75,8 @@ abstract class NewsSink
 	abstract void handlePost(Post p);
 }
 
-// __gshared for ae.sys.shutdown
-__gshared private NewsSource[string] newsSources;
-__gshared private NewsSink[] newsSinks;
+private NewsSource[string] newsSources;
+private NewsSink[] newsSinks;
 
 void startNewsSources()
 {
