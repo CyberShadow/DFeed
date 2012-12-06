@@ -93,12 +93,13 @@ class NntpDownloader : NewsSource
 		client.handleListGroup = &onListGroup;
 		client.handleMessage = &onMessage;
 		client.handleDate = &onDate;
+		client.handleDisconnect = &onDisconnect;
 	}
 
 	override void start()
 	{
-		client.connect(server);
 		running = true;
+		client.connect(server);
 	}
 
 	override void stop()
@@ -240,5 +241,11 @@ private:
 	void onDate(string date)
 	{
 		startTime = date;
+	}
+
+	void onDisconnect(string reason)
+	{
+		if (running)
+			throw new Exception("Unexpected NntpDownloader disconnect: " ~ reason);
 	}
 }
