@@ -55,7 +55,7 @@ final class IrcSink : NewsSink
 		conn.handleDisconnect = &onDisconnect;
 		connect();
 
-		addShutdownHandler({ if (connecting || connected) conn.disconnect("DFeed shutting down"); });
+		addShutdownHandler({ stopping = true; if (connecting || connected) conn.disconnect("DFeed shutting down"); });
 	}
 
 protected:
@@ -81,7 +81,7 @@ protected:
 
 private:
 	IrcClient conn;
-	bool connecting, connected;
+	bool connecting, connected, stopping;
 
 	void connect()
 	{
@@ -100,7 +100,7 @@ private:
 	void onDisconnect(IrcClient sender, string reason, DisconnectType type)
 	{
 		connecting = connected = false;
-		if (type != DisconnectType.Requested)
+		if (type != DisconnectType.Requested && !stopping)
 			setTimeout(&connect, TickDuration.from!"seconds"(10));
 	}
 
