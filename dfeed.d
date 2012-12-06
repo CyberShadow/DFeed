@@ -36,6 +36,9 @@ import reddit;
 import ircsink;
 import messagedb;
 
+// Captcha engine
+import recaptcha;
+
 void main(string[] args)
 {
 	getopt(args,

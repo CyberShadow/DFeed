@@ -40,12 +40,12 @@ import ae.utils.text;
 import ae.utils.textout;
 import ae.utils.time;
 
+import captcha;
 import common;
 import database;
 import cache;
 import rfc850;
 import user;
-import recaptcha;
 import posting;
 
 version = MeasurePerformance;
@@ -1502,7 +1502,7 @@ class WebUI
 
 	// ***********************************************************************
 
-	bool discussionPostForm(Rfc850Post postTemplate, bool showCaptcha=false, string errorMessage=null)
+	bool discussionPostForm(Rfc850Post postTemplate, bool showCaptcha=false, PostError error=PostError.init)
 	{
 		auto info = getGroupInfo(postTemplate.xref[0].group);
 		if (!info)
@@ -1521,15 +1521,8 @@ class WebUI
 
 		html.put(`<form action="/send" method="post" class="forum-form" id="postform">`);
 
-		string recaptchaError;
-		if (errorMessage.startsWith(RecaptchaErrorPrefix))
-		{
-			recaptchaError = errorMessage[RecaptchaErrorPrefix.length..$];
-			errorMessage = "reCAPTCHA error";
-		}
-
-		if (errorMessage)
-			html.put(`<div class="form-error">` ~ encodeEntities(errorMessage) ~ `</div>`);
+		if (error.message)
+			html.put(`<div class="form-error">` ~ encodeEntities(error.message) ~ `</div>`);
 
 		if (postTemplate.reply)
 			html.put(`<input type="hidden" name="parent" value="`, encodeEntities(postTemplate.parentID), `">`);
@@ -1552,7 +1545,7 @@ class WebUI
 			`<textarea id="postform-text" name="text" rows="25" cols="80">`, encodeEntities(postTemplate.content), `</textarea>`);
 
 		if (showCaptcha)
-			html.put(`<div id="postform-captcha">`, recaptchaChallengeHtml(recaptchaError), `</div>`);
+			html.put(`<div id="postform-captcha">`, theCaptcha.getChallengeHtml(error.captchaError), `</div>`);
 
 		html.put(
 			`<input type="submit" value="Send">`
@@ -1593,14 +1586,14 @@ class WebUI
 			user["name"] = aaGet(vars, "name");
 			user["email"] = aaGet(vars, "email");
 
-			bool captchaPresent = recaptchaPresent(vars);
+			bool captchaPresent = theCaptcha.isPresent(vars);
 
 			auto now = Clock.currTime();
 			if (!captchaPresent)
 			{
 				if (ip in lastPostAttempt && now - lastPostAttempt[ip] < dur!"minutes"(1))
 				{
-					discussionPostForm(post, true, "Your last post was less than a minute ago. Please solve a CAPTCHA to continue.");
+					discussionPostForm(post, true, PostError("Your last post was less than a minute ago. Please solve a CAPTCHA to continue."));
 					return null;
 				}
 			}
@@ -1611,7 +1604,7 @@ class WebUI
 		}
 		catch (Exception e)
 		{
-			discussionPostForm(post, false, e.msg);
+			discussionPostForm(post, false, PostError(e.msg));
 			return null;
 		}
 	}
@@ -1628,6 +1621,7 @@ class WebUI
 	void discussionPostStatus(PostProcess process, out bool refresh, out bool form)
 	{
 		refresh = form = false;
+		PostError error = process.error;
 		switch (process.status)
 		{
 			case PostingStatus.SpamCheck:
@@ -1656,15 +1650,16 @@ class WebUI
 				return;
 
 			case PostingStatus.CaptchaFailed:
-				discussionPostForm(process.post, true, process.errorMessage);
+				discussionPostForm(process.post, true, error);
 				form = true;
 				return;
 			case PostingStatus.SpamCheckFailed:
-				discussionPostForm(process.post, true, format("%s. Please solve a CAPTCHA to continue.", process.errorMessage));
+				error.message ~= format("%s. Please solve a CAPTCHA to continue.", error.message);
+				discussionPostForm(process.post, true, error);
 				form = true;
 				return;
 			case PostingStatus.NntpError:
-				discussionPostForm(process.post, false, process.errorMessage);
+				discussionPostForm(process.post, false, error);
 				form = true;
 				return;
 

@@ -25,8 +25,8 @@ import ae.utils.array;
 import ae.sys.log;
 import ae.net.nntp.client;
 
+import captcha;
 import rfc850;
-import recaptcha;
 import spam;
 import common;
 
@@ -47,13 +47,19 @@ enum PostingStatus
 	Redirect,
 }
 
+struct PostError
+{
+	string message;
+	CaptchaErrorData captchaError;
+}
+
 final class PostProcess
 {
 	string pid, ip;
 	string[string] vars, headers;
 	Rfc850Post post;
 	PostingStatus status;
-	string errorMessage;
+	PostError error;
 	bool captchaPresent;
 
 	this(Rfc850Post post, string[string] vars, string ip, string[string] headers)
@@ -94,12 +100,12 @@ final class PostProcess
 		post.id = format("<%s@%s>", pid, hostname);
 		post.compile();
 
-		captchaPresent = recaptchaPresent(vars);
+		captchaPresent = theCaptcha.isPresent(vars);
 		if (captchaPresent)
 		{
 			log("Checking CAPTCHA");
 			status = PostingStatus.Captcha;
-			recaptchaCheck(vars, ip, &onCaptchaResult);
+			theCaptcha.verify(vars, ip, &onCaptchaResult);
 		}
 		else
 		{
@@ -114,12 +120,12 @@ final class PostProcess
 private:
 	Logger log;
 
-	void onCaptchaResult(bool ok, string errorMessage)
+	void onCaptchaResult(bool ok, string errorMessage, CaptchaErrorData errorData)
 	{
 		if (!ok)
 		{
 			this.status = PostingStatus.CaptchaFailed;
-			this.errorMessage = errorMessage;
+			this.error = PostError(errorMessage, errorData);
 			log("CAPTCHA failed: " ~ errorMessage);
 			log.close();
 			return;
@@ -134,7 +140,7 @@ private:
 		if (!ok)
 		{
 			this.status = PostingStatus.SpamCheckFailed;
-			this.errorMessage = errorMessage;
+			this.error = PostError(errorMessage);
 			log("Spam check failed: " ~ errorMessage);
 			log.close();
 			return;
@@ -163,7 +169,7 @@ private:
 	void onDisconnect(string error)
 	{
 		this.status = PostingStatus.NntpError;
-		this.errorMessage = "NNTP connection error: " ~ error;
+		this.error = PostError("NNTP connection error: " ~ error);
 		log("NNTP connection error: " ~ error);
 		log.close();
 	}
@@ -171,7 +177,7 @@ private:
 	void onError(string error)
 	{
 		this.status = PostingStatus.NntpError;
-		this.errorMessage = "NNTP error: " ~ error;
+		this.error = PostError("NNTP error: " ~ error);
 		nntp.handleDisconnect = null;
 		nntp.disconnect();
 		log("NNTP error: " ~ error);

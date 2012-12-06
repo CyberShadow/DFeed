@@ -27,11 +27,8 @@ import ae.net.asockets;
 import common;
 import web;
 
-// Sources
-import newsgroups;
-
-// Sinks
 import messagedb;
+import recaptcha;
 
 void main(string[] args)
 {
