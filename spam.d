@@ -22,6 +22,7 @@ import std.exception;
 
 import ae.net.http.client;
 import ae.utils.array;
+import ae.utils.text;
 
 import posting;
 
@@ -175,10 +176,25 @@ void checkUserAgent(PostProcess process, SpamResultHandler handler)
 	handler(true, null);
 }
 
+void checkKeywords(PostProcess process, SpamResultHandler handler)
+{
+	auto text = process.vars.get("text", "").toLower();
+
+	foreach (keyword; ["<a href=", "[url=", "[url]http"])
+		if (text.contains(keyword))
+		{
+			handler(false, "Your post contains a suspicious keyword or character sequence.");
+			return;
+		}
+
+	handler(true, null);
+}
+
 auto spamEngines =
 [
 	&checkAkismet,
 	&checkProjectHoneyPot,
 	&checkStopForumSpam,
 	&checkUserAgent,
+	&checkKeywords,
 ];
