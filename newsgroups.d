@@ -39,12 +39,13 @@ class NntpListener : NewsSource
 
 	override void start()
 	{
-		client.connect(server);
 	}
 
 	override void stop()
 	{
-		client.disconnect();
+		if (connected)
+			client.disconnect();
+		stopped = true;
 	}
 
 	/// Call this to start polling the server.
@@ -52,11 +53,17 @@ class NntpListener : NewsSource
 	/// server DATE command) for the first poll cutoff time.
 	void startListening(string startTime=null)
 	{
-		client.startPolling(startTime);
+		if (!stopped)
+		{
+			client.connect(server);
+			connected = true;
+			client.startPolling(startTime);
+		}
 	}
 
 private:
 	string server;
+	bool connected, stopped;
 	NntpClient client;
 
 	void onMessage(string[] lines, string num, string id)
