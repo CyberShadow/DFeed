@@ -29,14 +29,11 @@ import database;
 /// Poll the server periodically for new messages
 class NntpListener : NewsSource
 {
-	NntpClient client;
-	
 	this(string server)
 	{
 		super("NNTP-Listener");
 		this.server = server;
 		client = new NntpClient(log);
-		client.polling = true;
 		client.handleMessage = &onMessage;
 	}
 
@@ -50,8 +47,17 @@ class NntpListener : NewsSource
 		client.disconnect();
 	}
 
+	/// Call this to start polling the server.
+	/// startTime is the timestamp (as returned by the
+	/// server DATE command) for the first poll cutoff time.
+	void startListening(string startTime=null)
+	{
+		client.startPolling(startTime);
+	}
+
 private:
 	string server;
+	NntpClient client;
 
 	void onMessage(string[] lines, string num, string id)
 	{
@@ -79,6 +85,7 @@ class NntpDownloader : NewsSource
 		client.handleGroups = &onGroups;
 		client.handleListGroup = &onListGroup;
 		client.handleMessage = &onMessage;
+		client.handleDate = &onDate;
 	}
 
 	override void start()
@@ -98,6 +105,8 @@ class NntpDownloader : NewsSource
 		}
 	}
 
+	void delegate(string startTime) handleFinished;
+
 private:
 	string server;
 	bool fullCheck, running, stopping;
@@ -106,11 +115,13 @@ private:
 	GroupInfo currentGroup;
 	int[] queuedMessages;
 	size_t messagesToDownload;
+	string startTime;
 
 	void onConnect()
 	{
 		if (stopping) return;
 		log("Listing groups...");
+		client.getDate();
 		client.listGroups();
 	}
 
@@ -163,6 +174,9 @@ private:
 		log("All done!");
 		running = false;
 		client.disconnect();
+		assert(startTime, "TODO"); // To fix, add "running==false" check to handleDate and call disconnect / handleFinished from there
+		if (handleFinished)
+			handleFinished(startTime);
 	}
 
 	void onListGroup(string[] messages)
@@ -214,5 +228,10 @@ private:
 			nextGroup();
 		else
 			requestNextMessage();
+	}
+
+	void onDate(string date)
+	{
+		startTime = date;
 	}
 }

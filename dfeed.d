@@ -42,8 +42,7 @@ void main(string[] args)
 		"q|quiet", &common.quiet);
 
 	// Create sources
-	new NntpDownloader("news.digitalmars.com", false);
-	new NntpListener("news.digitalmars.com");
+	startNNTP();
 	new MailingLists();
 	new StackOverflow("d");
 	new Feed("Planet D", "http://planetd.thecybershadow.net/_atom.xml");
@@ -68,4 +67,16 @@ void main(string[] args)
 
 	if (!common.quiet)
 		writeln("Exiting.");
+}
+
+/// Avoid any problems (bugs or missed messages) caused by downloader/listener running
+/// simultaneously or sequentially by doing the following:
+/// 1. Note NNTP server time before starting downloader (sync)
+/// 2. Download new messages
+/// 3. Start listener with querying for new messages since the download START.
+void startNNTP()
+{
+	auto downloader = new NntpDownloader("news.digitalmars.com", false);
+	auto listener = new NntpListener("news.digitalmars.com");
+	downloader.handleFinished = &listener.startListening;
 }
