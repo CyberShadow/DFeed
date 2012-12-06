@@ -178,6 +178,12 @@ class WebUI
 
 				case "":
 					// Handle redirects from pnews
+
+					// Abort on redirect from URLs with unsupported features.
+					// Only search engines would be likely to hit these.
+					enforce("path" !in parameters && "mid" !in parameters, "Unsupported legacy feature");
+
+					// Redirect to our URL scheme
 					string redirectGroup, redirectNum;
 					if ("group" in parameters)
 						redirectGroup = parameters["group"];
