@@ -1504,11 +1504,11 @@ class WebUI
 
 	bool discussionPostForm(Rfc850Post postTemplate, bool showCaptcha=false, string errorMessage=null)
 	{
-	    auto info = getGroupInfo(postTemplate.xref[0].group);
-	    if (!info)
-	    	throw new Exception("Unknown group");
-	    if (info.postMessage)
-	    {
+		auto info = getGroupInfo(postTemplate.xref[0].group);
+		if (!info)
+			throw new Exception("Unknown group");
+		if (info.postMessage)
+		{
 			html.put(
 				`<table class="forum-table forum-error">`
 					`<tr><th>Can't post to archive</th></tr>`
@@ -1516,8 +1516,8 @@ class WebUI
 						~ info.postMessage.replace("%NAME%", info.name) ~
 					`</td></tr>`
 				`</table>`);
-	    	return false;
-	    }
+			return false;
+		}
 
 		html.put(`<form action="/send" method="post" class="forum-form" id="postform">`);
 
