@@ -43,6 +43,8 @@ enum PostingStatus
 	CaptchaFailed,
 	SpamCheckFailed,
 	NntpError,
+
+	Redirect,
 }
 
 final class PostProcess
@@ -75,6 +77,19 @@ final class PostProcess
 				log("[Form] " ~ name ~ ": " ~ line);
 		foreach (name, value; headers)
 			log("[Header] " ~ name ~ ": " ~ value);
+
+		// Discard duplicate posts (redirect to original)
+		string allContent = post.author ~ "\0" ~ post.authorEmail ~ "\0" ~ post.subject ~ "\0" ~ post.content;
+		if (allContent in postsByContent)
+		{
+			string original = postsByContent[allContent];
+			log("Duplicate post, redirecting to " ~ original);
+			pid = original;
+			status = PostingStatus.Redirect;
+			return;
+		}
+		else
+			postsByContent[allContent] = pid;
 
 		post.id = format("<%s@%s>", pid, hostname);
 		post.compile();
@@ -179,6 +194,7 @@ private:
 }
 
 PostProcess[string] postProcesses;
+string[string] postsByContent;
 string hostname;
 
 final class PostingNotifySink : NewsSink
