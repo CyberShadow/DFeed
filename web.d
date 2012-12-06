@@ -181,7 +181,8 @@ class WebUI
 
 					// Abort on redirect from URLs with unsupported features.
 					// Only search engines would be likely to hit these.
-					enforce("path" !in parameters && "mid" !in parameters, "Unsupported legacy feature");
+					if ("path" in parameters || "mid" in parameters)
+						throw new NotFoundException("Legacy redirect - unsupported feature");
 
 					// Redirect to our URL scheme
 					string redirectGroup, redirectNum;
@@ -197,6 +198,7 @@ class WebUI
 					{
 						foreach (string id; query("SELECT `ID` FROM `Groups` WHERE `Group`=? AND `ArtNum`=?").iterate(redirectGroup, redirectNum))
 							return response.redirect(idToUrl(id), HttpStatusCode.MovedPermanently);
+						throw new NotFoundException("Legacy redirect - article not found");
 					}
 					else
 					if (redirectGroup)
@@ -2132,5 +2134,5 @@ class WebUI
 
 class NotFoundException : Exception
 {
-	this() { super("The specified resource cannot be found on this server."); }
+	this(string str = "The specified resource cannot be found on this server.") { super(str); }
 }
