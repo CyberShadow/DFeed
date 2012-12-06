@@ -178,14 +178,23 @@ class WebUI
 
 				case "":
 					// Handle redirects from pnews
-					if ("group" in parameters && "artnum" in parameters)
+					string redirectGroup, redirectNum;
+					if ("group" in parameters)
+						redirectGroup = parameters["group"];
+					if ("art_group" in parameters)
+						redirectGroup = parameters["art_group"];
+					if ("artnum" in parameters)
+						redirectNum = parameters["artnum"];
+					if ("article_id" in parameters)
+						redirectNum = parameters["article_id"];
+					if (redirectGroup && redirectNum)
 					{
-						foreach (string id; query("SELECT `ID` FROM `Groups` WHERE `Group`=? AND `ArtNum`=?").iterate(parameters["group"], parameters["artnum"]))
+						foreach (string id; query("SELECT `ID` FROM `Groups` WHERE `Group`=? AND `ArtNum`=?").iterate(redirectGroup, redirectNum))
 							return response.redirect(idToUrl(id), HttpStatusCode.MovedPermanently);
 					}
 					else
-					if ("group" in parameters)
-						return response.redirect("/group/" ~ parameters["group"], HttpStatusCode.MovedPermanently);
+					if (redirectGroup)
+						return response.redirect("/group/" ~ redirectGroup, HttpStatusCode.MovedPermanently);
 
 					title = "Index";
 					breadcrumb1 = `<a href="/">Forum Index</a>`;
