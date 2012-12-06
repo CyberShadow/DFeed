@@ -69,3 +69,14 @@
     on GitHub: <a href="https://github.com/CyberShadow/DFeed">https://github.com/CyberShadow/DFeed</a>
 </p>
 
+<h2 id="contributing">Contributing</h2>
+
+<p>
+  This discussion board software is open-source, and written in the D programming language.
+  Contributions are welcome. You can help improve this software by reporting bugs, feedback, and submitting pull requests.
+  Patches for fixes, improvements, documentation, unit tests, refactoring, etc. are all welcome.
+</p>
+<p>
+  To start working on DFeed, clone <a href="https://github.com/CyberShadow/DFeed">the GitHub project</a>, and check the instructions in <a href="https://github.com/CyberShadow/DFeed/blob/master/README.md">README.md</a> to get started.
+</p>
+
