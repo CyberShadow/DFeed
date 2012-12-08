@@ -21,6 +21,7 @@ import std.conv;
 
 import ae.utils.array : queuePop;
 import ae.net.nntp.client;
+import ae.sys.timing;
 
 import common;
 import rfc850;
@@ -87,13 +88,8 @@ class NntpDownloader : NewsSource
 		super("NNTP-Downloader");
 		this.server = server;
 		this.fullCheck = fullCheck;
-		client = new NntpClient(log);
-		client.handleConnect = &onConnect;
-		client.handleGroups = &onGroups;
-		client.handleListGroup = &onListGroup;
-		client.handleMessage = &onMessage;
-		client.handleDate = &onDate;
-		client.handleDisconnect = &onDisconnect;
+
+		initialize();
 	}
 
 	override void start()
@@ -246,6 +242,38 @@ private:
 	void onDisconnect(string reason)
 	{
 		if (running)
-			throw new Exception("Unexpected NntpDownloader disconnect: " ~ reason);
+			onError("Unexpected NntpDownloader disconnect: " ~ reason);
+	}
+
+	void onError(string msg)
+	{
+		log(msg);
+		setTimeout({ log("Retrying..."); restart(); }, TickDuration.from!"seconds"(10));
+	}
+
+	void initialize()
+	{
+		queuedGroups = null;
+		groupMaxNums = null;
+		currentGroup = currentGroup.init;
+		queuedMessages = null;
+		messagesToDownload = 0;
+		startTime = null;
+
+		client = new NntpClient(log);
+		client.handleConnect = &onConnect;
+		client.handleGroups = &onGroups;
+		client.handleListGroup = &onListGroup;
+		client.handleMessage = &onMessage;
+		client.handleDate = &onDate;
+		client.handleDisconnect = &onDisconnect;
+	}
+
+	void restart()
+	{
+		if (stopping)
+			return;
+		initialize();
+		start();
 	}
 }
