@@ -75,7 +75,15 @@ final:
 			auto b64 = get("readposts", null);
 			if (b64)
 			{
-				auto zcode = Base64.decode(b64);
+				// Temporary hack to catch Phobos bug
+				ubyte[] zcode;
+				try
+					zcode = Base64.decode(b64);
+				catch
+				{
+					std.file.write("bad-base64.txt", b64);
+					throw new Exception("Malformed Base64 in read post history cookie. Try clearing your cookies.");
+				}
 				readPosts = [uncompress(Data(zcode))].ptr;
 			}
 			else
