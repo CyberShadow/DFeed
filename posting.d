@@ -70,7 +70,7 @@ final class PostProcess
 		this.headers = headers;
 
 		enforce(vars.get("name", "").length, "Please enter a name");
-		enforce(vars.get("email", "").length, "Please enter an e-mail address");
+		enforce(vars.get("email", "").length, "Please enter an email address");
 		enforce(vars.get("text", "").length, "Please enter a message");
 
 		pid = randomString();

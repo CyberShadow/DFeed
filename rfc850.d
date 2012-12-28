@@ -658,7 +658,7 @@ unittest
 	auto text = "В лесу родилась ёлочка";
 	assert(decodeRfc1522(encodeRfc1522(text)) == text);
 
-	// Make sure e-mail address isn't mangled
+	// Make sure email address isn't mangled
 	assert(encodeRfc1522("Sönke Martin <msonke@example.org>").endsWith(" <msonke@example.org>"));
 }
 

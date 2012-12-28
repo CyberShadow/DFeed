@@ -25,7 +25,7 @@ import ae.utils.text;
 import common;
 import rfc850;
 
-/// Listen for e-mail messages piped by a helper script to a socket.
+/// Listen for email messages piped by a helper script to a socket.
 class MailingLists : NewsSource
 {
 	this()

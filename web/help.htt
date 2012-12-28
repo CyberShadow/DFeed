@@ -43,16 +43,16 @@
 <h2 id="avatars">Avatars</h2>
 
 <p>
-  The discussion board will display avatars associated with users' e-mail addresses.
-  If the e-mail address is registered with <a href="http://en.gravatar.com/">Gravatar</a>, the associated avatar is shown.
-  Otherwise, an <a href="http://en.wikipedia.org/wiki/Identicon">Identicon</a> generated from a hash of the e-mail address is displayed as a fallback.
+  The discussion board will display avatars associated with users' email addresses.
+  If the email address is registered with <a href="http://en.gravatar.com/">Gravatar</a>, the associated avatar is shown.
+  Otherwise, an <a href="http://en.wikipedia.org/wiki/Identicon">Identicon</a> generated from a hash of the email address is displayed as a fallback.
 </p>
 
 <p>
   To use a custom avatar on this discussion board,
     <a href="http://en.gravatar.com/site/signup/">register an account at Gravatar</a>,
-    associate an e-mail address with an image,
-    and use that e-mail address when posting to this discussion board.
+    associate an email address with an image,
+    and use that email address when posting to this discussion board.
   Additionally, you can create a Gravatar profile, which will be accessible by clicking on your avatar.
 </p>
 
