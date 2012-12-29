@@ -159,18 +159,15 @@ private:
 		status = PostingStatus.Connecting;
 
 		nntp = new NntpClient(log);
-		nntp.handleConnect = &onConnect;
-		nntp.handlePosted = &onPosted;
 		nntp.handleDisconnect = &onDisconnect;
-		nntp.handleError = &onError;
-		nntp.connect("news.digitalmars.com");
+		nntp.connect("news.digitalmars.com", &onConnect);
 	}
 
-	void onDisconnect(string error)
+	void onDisconnect(string reason, DisconnectType type)
 	{
 		this.status = PostingStatus.NntpError;
-		this.error = PostError("NNTP connection error: " ~ error);
-		log("NNTP connection error: " ~ error);
+		this.error = PostError("NNTP connection error: " ~ reason);
+		log("NNTP connection error: " ~ reason);
 		log.close();
 	}
 
@@ -187,7 +184,7 @@ private:
 	void onConnect()
 	{
 		this.status = PostingStatus.Posting;
-		nntp.postMessage(post.message.splitAsciiLines());
+		nntp.postMessage(post.message.splitAsciiLines(), &onPosted, &onError);
 	}
 
 	void onPosted()

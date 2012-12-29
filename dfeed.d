@@ -80,6 +80,6 @@ void main(string[] args)
 void startNNTP()
 {
 	auto downloader = new NntpDownloader("news.digitalmars.com", false);
-	auto listener = new NntpListener("news.digitalmars.com");
+	auto listener = new NntpListenerSource("news.digitalmars.com");
 	downloader.handleFinished = &listener.startListening;
 }
