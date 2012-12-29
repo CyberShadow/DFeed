@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -19,6 +19,7 @@ module nntpdownload;
 import std.getopt;
 
 import ae.net.asockets;
+import ae.net.shutdown;
 
 import common;
 import newsgroups;
@@ -31,7 +32,8 @@ void main(string[] args)
 		"q|quiet", &common.quiet,
 		"f|full", &full);
 
-	new NntpDownloader("news.digitalmars.com", full);
+	with (new NntpDownloader("news.digitalmars.com", full))
+		handleFinished = (string date) { shutdown(); };
 	new MessageDBSink();
 
 	startNewsSources();
