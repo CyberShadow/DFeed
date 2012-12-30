@@ -197,8 +197,8 @@ private:
 					while (select.step())
 						log("    " ~ toJson(select.getAssoc()));
 
-					if (!PRETEND)
-						db.exec(deleteSql);
+					static if (!PRETEND)
+						query(deleteSql).exec(args);
 				}
 
 				foreach (num; messagesToDelete)
