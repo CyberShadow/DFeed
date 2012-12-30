@@ -16,6 +16,7 @@
 
 module nntpdownload;
 
+import std.exception;
 import std.getopt;
 
 import ae.net.asockets;
@@ -27,12 +28,17 @@ import messagedb;
 
 void main(string[] args)
 {
-	bool full = false;
+	bool full, purge;
 	getopt(args,
 		"q|quiet", &common.quiet,
-		"f|full", &full);
+		"f|full", &full,
+		"purge", &purge,
+	);
 
-	with (new NntpDownloader("news.digitalmars.com", full))
+	enforce(!(full && purge), "Specify either --full or --purge, not both");
+	auto mode = purge ? NntpDownloader.Mode.fullPurge : full ? NntpDownloader.Mode.full : NntpDownloader.Mode.newOnly;
+
+	with (new NntpDownloader("news.digitalmars.com", mode))
 		handleFinished = (string date) { shutdown(); };
 	new MessageDBSink();
 

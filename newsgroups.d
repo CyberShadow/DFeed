@@ -20,6 +20,8 @@ import std.string;
 import std.conv;
 
 import ae.utils.array : queuePop;
+import ae.utils.container : HashSet;
+import ae.utils.json;
 import ae.net.nntp.client;
 import ae.net.nntp.listener;
 import ae.sys.timing;
@@ -77,13 +79,15 @@ private:
 /// Download articles not present in the database.
 class NntpDownloader : NewsSource
 {
+	enum Mode { newOnly, full, fullPurge }
+
 	NntpClient client;
 
-	this(string server, bool fullCheck)
+	this(string server, Mode mode)
 	{
 		super("NNTP-Downloader");
 		this.server = server;
-		this.fullCheck = fullCheck;
+		this.mode = mode;
 
 		initialize();
 	}
@@ -91,6 +95,7 @@ class NntpDownloader : NewsSource
 	override void start()
 	{
 		running = true;
+		log("Starting, mode is " ~ text(mode));
 		client.connect(server, &onConnect);
 	}
 
@@ -109,7 +114,8 @@ class NntpDownloader : NewsSource
 
 private:
 	string server;
-	bool fullCheck, running, stopping;
+	Mode mode;
+	bool running, stopping;
 	string startTime;
 
 	void onConnect()
@@ -148,28 +154,75 @@ private:
 			if (stopping) return;
 			log(format("%d messages in group %s.", messages.length, group.name));
 
-			// Construct set of posts to download
-			bool[int] messageNums;
+			HashSet!int serverMessages;
 			foreach (i, m; messages)
-				messageNums[to!int(m)] = true;
+				serverMessages.add(to!int(m));
+
+			HashSet!int localMessages;
+			foreach (int num; query("SELECT `ArtNum` FROM `Groups` WHERE `Group` = ?").iterate(group.name))
+				localMessages.add(num);
+
+			// Construct set of posts to download
+			HashSet!int messagesToDownload = serverMessages.dup;
+			foreach (num; localMessages)
+				if (num in messagesToDownload)
+					messagesToDownload.remove(num);
 
 			// Remove posts present in the database
-			foreach (int num; query("SELECT `ArtNum` FROM `Groups` WHERE `Group` = ?").iterate(group.name))
-				if (num in messageNums)
-					messageNums.remove(num);
-
-			if (messageNums.length)
+			if (messagesToDownload.length)
 			{
 				client.selectGroup(group.name);
-				foreach (num; messageNums.keys.sort)
+				foreach (num; messagesToDownload.keys.sort)
 					client.getMessage(to!string(num), &onMessage);
+			}
+
+			if (mode == Mode.fullPurge)
+			{
+				HashSet!int messagesToDelete = localMessages.dup;
+				foreach (num; serverMessages)
+					if (num in messagesToDelete)
+						messagesToDelete.remove(num);
+
+				enum PRETEND = false;
+
+				void logAndDelete(string TABLE, string WHERE, T...)(T args)
+				{
+					auto selectSql = "SELECT * FROM `" ~ TABLE ~ "` " ~ WHERE;
+					auto deleteSql = "DELETE   FROM `" ~ TABLE ~ "` " ~ WHERE;
+
+					log("  " ~ deleteSql);
+
+					auto select = query(selectSql);
+					select.bindAll!T(args);
+					while (select.step())
+						log("    " ~ toJson(select.getAssoc()));
+
+					if (!PRETEND)
+						db.exec(deleteSql);
+				}
+
+				foreach (num; messagesToDelete)
+				{
+					log((PRETEND ? "Would delete" : "Deleting") ~ " message: " ~ text(num));
+					mixin(DB_TRANSACTION);
+
+					string id;
+					foreach (string msgId; query("SELECT `ID` FROM `Groups` WHERE `Group` = ? AND `ArtNum` = ?").iterate(group.name, num))
+						id = msgId;
+
+					logAndDelete!(`Groups`, "WHERE `Group` = ? AND `ArtNum` = ?")(group.name, num);
+
+					if (id)
+					{
+						logAndDelete!(`Posts`  , "WHERE `ID` = ?")(id);
+						logAndDelete!(`Threads`, "WHERE `ID` = ?")(id);
+					}
+				}
 			}
 		}
 
 		log(format("Listing group: %s", group.name));
-		if (fullCheck)
-			client.listGroup(group.name, &onListGroup);
-		else
+		if (mode == Mode.newOnly)
 		{
 			log(format("Highest article number in database: %d", maxNum));
 			if (group.high > maxNum)
@@ -178,6 +231,8 @@ private:
 				client.listGroupXover(group.name, maxNum+1, &onListGroup);
 			}
 		}
+		else
+			client.listGroup(group.name, &onListGroup);
 	}
 
 	void onIdle()

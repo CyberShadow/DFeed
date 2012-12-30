@@ -79,7 +79,7 @@ void main(string[] args)
 /// 3. Start listener with querying for new messages since the download START.
 void startNNTP()
 {
-	auto downloader = new NntpDownloader("news.digitalmars.com", false);
+	auto downloader = new NntpDownloader("news.digitalmars.com", NntpDownloader.Mode.fullPurge);
 	auto listener = new NntpListenerSource("news.digitalmars.com");
 	downloader.handleFinished = &listener.startListening;
 }
