@@ -259,6 +259,7 @@ class WebUI
 					breadcrumb2 = `<a href="/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a>` ~ pageStr;
 					//tools ~= viewModeTool(["flat", "nested"], "thread");
 					tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
+					tools ~= emoticonViewModeTool(["off", "on"], "emoticon");
 					extraHeaders ~= canonicalHeader; // Google confuses /post/ URLs with threads
 					break;
 				}
@@ -1800,6 +1801,8 @@ class WebUI
 	{
 		auto lines = s.strip().fastSplit('\n');
 		bool wasQuoted = false, inSignature = false;
+		bool wantEmoticons = user.get("emoticonviewmode", "off") == "on";
+
 		foreach (line; lines)
 		{
 			if (line == "-- ")
@@ -1819,9 +1822,88 @@ class WebUI
 			auto needsWrap = line.length > 70;
 			auto hasURL = line.contains("://");
 
+			string replaceSmileys(string input)
+			{
+				bool inword;
+				size_t wstart;
+				string r;
+				string[string] emoticons = [
+					":)"        : "http://www.freesmileys.org/smileys/smiley-basic/smile.gif",
+					";)"        : "http://www.freesmileys.org/smileys/smiley-basic/smile.gif",
+					":-)"       : "http://www.freesmileys.org/smileys/smiley-basic/smile.gif",
+					":o)"       : "http://www.freesmileys.org/smileys/smiley-basic/smile.gif",
+					":("        : "http://www.freesmileys.org/smileys/smiley-basic/sad.gif",
+					";-("       : "http://www.freesmileys.org/smileys/smiley-basic/sad.gif",
+					":P"        : "http://www.freesmileys.org/smileys/smiley-basic/tongue.gif",
+					":D"        : "http://www.freesmileys.org/smileys/smiley-basic/lol.gif",
+					";-D"       : "http://www.freesmileys.org/smileys/smiley-basic/lol.gif",
+					":confused" : "http://www.freesmileys.org/smileys/smiley-fc/confused.gif",
+					":cool"     : "http://www.freesmileys.org/smileys/smiley-fc/cool.gif",
+					":nono"     : "http://www.freesmileys.org/smileys/smiley-fc/nono.gif",
+					":bye"      : "http://www.freesmileys.org/smileys/smiley-basic/bye.gif",
+					":cry"      : "http://www.freesmileys.org/smileys/smiley-basic/cry.gif",
+					":what"     : "http://www.freesmileys.org/smileys/smiley-basic/what.gif",
+					":greet"    : "http://www.freesmileys.org/smileys/smiley-greet024.gif"		
+				];
+
+				foreach (j, c; input)
+				{
+					// an whitespace is needed before and after the smiley
+					bool white = isWhite(c);
+
+					if (!inword && !white)
+					{
+						wstart = j;
+						inword = true;
+					}
+					else if (inword && white)
+					{
+						auto word = input[wstart .. j];
+						inword = false;
+
+						// dump word or emoticon
+						string* e = (word in emoticons);
+						if (e !is null)
+						{
+							r ~= "<img src=\"" ~ *e ~ "\">";
+						}
+						else
+						{
+							r ~= word;
+						}
+
+						r ~= c;
+					}
+					else if (!inword && white)
+					{
+						r ~= c;
+					}
+				}
+
+				if (inword)
+				{
+					auto word = input[wstart .. input.length];
+
+					// dump word or emoticon
+					string* e = (word in emoticons);
+					if (e !is null)
+					{
+						r ~= "<img src=\"" ~ *e ~ "\">";
+					}
+					else
+					{
+						r ~= word;
+					}
+				}
+				return r;
+			}
+
 			void processText(string s)
 			{
-				html.put(encodeEntities(s));
+				if (wantEmoticons)
+					html.put(replaceSmileys(encodeEntities(s)));
+				else
+					html.put(encodeEntities(s));
 			}
 
 			void processURLs(string s)
@@ -2078,6 +2160,17 @@ class WebUI
 				return mode == currentMode
 					? `<span class="viewmode-active" title="Viewing in ` ~ mode ~ ` mode">` ~ mode ~ `</span>`
 					: `<a title="Switch to ` ~ mode ~ ` ` ~ what ~ ` view mode" href="` ~ encodeEntities(setOptionLink(what ~ "viewmode", mode)) ~ `">` ~ mode ~ `</a>`;
+			})(modes)).join(" / ");
+	}
+
+	string emoticonViewModeTool(string[] modes, string what)
+	{
+		auto currentMode = user.get(what ~ "viewmode", modes[0]);
+		return "Emoticons: " ~
+			array(map!((string mode) {
+				return mode == currentMode
+					? `<span class="viewmode-active" title="Emoticons: ` ~ mode ~ `">` ~ mode ~ `</span>`
+					: `<a title="Switch emoticons to ` ~ mode ~ `" href="` ~ encodeEntities(setOptionLink(what ~ "viewmode", mode)) ~ `">` ~ mode ~ `</a>`;
 			})(modes)).join(" / ");
 	}
 
