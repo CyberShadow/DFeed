@@ -606,6 +606,18 @@ string decodeRfc1522(string str)
 			result ~= ' ';
 		result ~= word;
 	}
+
+	try
+	{
+		import std.utf;
+		validate(result);
+	}
+	catch
+	{
+		import ae.utils.iconv;
+		result = toUtf8(cast(immutable(ubyte[]))result, "ISO-8859-1", true);
+	}
+
 	return result;
 }
 
