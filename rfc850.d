@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -702,8 +702,17 @@ string decodeEncodedText(string s, string textEncoding)
 	catch (Exception e)
 	{
 		debug std.stdio.writefln("iconv fallback for %s (%s)", textEncoding, e.msg);
-		import ae.sys.cmd;
-		return iconv(s, textEncoding);
+		try
+		{
+			import ae.sys.cmd;
+			return iconv(s, textEncoding);
+		}
+		catch (Exception e)
+		{
+			debug std.stdio.writefln("ISO-8859-1 fallback (%s)", e.msg);
+			import ae.utils.iconv;
+			return toUtf8(cast(immutable(ubyte)[])s, "ISO-8859-1", false);
+		}
 	}
 }
 
