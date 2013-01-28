@@ -20,6 +20,7 @@ import std.string;
 import std.conv;
 import std.array;
 import std.uri;
+import std.utf;
 import std.base64;
 import std.datetime;
 import std.exception;
