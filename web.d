@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -248,7 +248,7 @@ class WebUI
 					auto firstPostUrl = idToUrl(getPostAtThreadIndex(threadID, getPageOffset(page, POSTS_PER_PAGE)));
 					auto viewMode = user.get("groupviewmode", "basic");
 					if (viewMode != "basic")
-						html.put(`<div class="forum-notice"><a href="`, encodeEntities(firstPostUrl), `">View this thread in `, encodeEntities(viewMode), ` view mode</a></div>`);
+						html.put(`<div class="forum-notice">Viewing thread in basic view mode &ndash; click a post's title to open it in `, encodeEntities(viewMode), ` view mode</div>`);
 					returnPage = firstPostUrl;
 
 					string pageStr = page==1 ? "" : format(" (page %d)", page);
