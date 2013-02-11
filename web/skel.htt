@@ -2,7 +2,7 @@
 <html lang="en-US">
 
 <!--
-	Copyright (c) 1999-2012 by Digital Mars
+	Copyright (c) 1999-2013 by Digital Mars
 	All Rights Reserved Written by Walter Bright
 	http://digitalmars.com
   -->
@@ -140,7 +140,7 @@ document.write('\x3Cstyle type="text/css"\x3E.nojs { display: none; }\x3C/style\
 </div>
 <div id="copyright">
 
-Copyright &copy; 1999-2012 by Digital Mars &reg;, All Rights Reserved
+Copyright &copy; 1999-2013 by Digital Mars &reg;, All Rights Reserved
 </div>
 
 
