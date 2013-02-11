@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2013  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -69,7 +69,7 @@ protected:
 		auto url = "http://api.stackoverflow.com/1.1/questions?pagesize=10&tagged=" ~ tags ~
 			(exists("data/stackoverflow.txt") ? "&key=" ~ readText("data/stackoverflow.txt") : "");
 		httpGet(url, (string json) {
-			if (json == "<html><body><h1>408 Request Time-out</h1>\nYour browser didn't send a complete request in time.\n</body></html>")
+			if (json == "<html><body><h1>408 Request Time-out</h1>\nYour browser didn't send a complete request in time.\n</body></html>\n")
 			{
 				log("Server reports request timeout");
 				return; // Temporary problem
