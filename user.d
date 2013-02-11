@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2013  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -138,9 +138,10 @@ final class GuestUser : User
 
 	this(string cookieHeader)
 	{
-		auto segments = cookieHeader.split("; ");
+		auto segments = cookieHeader.split(";");
 		foreach (segment; segments)
 		{
+			segment = segment.strip();
 			auto p = segment.indexOf('=');
 			if (p > 0)
 			{
