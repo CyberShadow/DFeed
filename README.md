@@ -1,10 +1,8 @@
 Proper documentation will come later.
 For now, to hack on the web interface:
 
-    git clone git@github.com:CyberShadow/DFeed.git
+    git clone --recursive git://github.com/CyberShadow/DFeed.git
     cd DFeed
-    git submodule init
-    git submodule update
     mkdir data
     sqlite3 data/dfeed.s3db < schema.sql
     echo 80>data/web.txt
