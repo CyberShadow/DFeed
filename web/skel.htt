@@ -115,8 +115,8 @@ document.write('\x3Cstyle type="text/css"\x3E.nojs { display: none; }\x3C/style\
 <h2>Community</h2>
 <ul><li><a href="/" title="User forums">Forums</a></li>
 	<li><a href="http://github.com/D-Programming-Language" title="D on github">GitHub</a></li>
-	<li><a href="http://prowiki.org/wiki4d/wiki.cgi?FrontPage" title="Wiki for the D Programming Language">Wiki</a></li>
-	<li><a href="http://prowiki.org/wiki4d/wiki.cgi?ReviewQueue" title="Queue of current and upcoming standard library additions">Review Queue</a></li>
+	<li><a href="http://wiki.dlang.org" title="Wiki for the D Programming Language">Wiki</a></li>
+	<li><a href="http://wiki.dlang.org/Review_Queue" title="Queue of current and upcoming standard library additions">Review Queue</a></li>
 	<li><a href="http://twitter.com/#search?q=%23d_lang" title="#d_lang on twitter.com">Twitter</a></li>
 	<li><a href="http://digitalmars.com/d/dlinks.html" title="External D related links">Links</a></li>
 	
