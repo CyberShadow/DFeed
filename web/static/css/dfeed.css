@@ -1,4 +1,3 @@
-
 /*************** Font size / side menu ***************/
 
 /* narrow pages (most views) */
@@ -53,6 +52,7 @@
 	font-size: 1.7em;
 	font-family: Georgia, "Times New Roman", Times, serif;
 	font-variant: small-caps;
+	z-index: -1;
 }
 
 #breadcrumbs a {
