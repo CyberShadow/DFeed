@@ -22,6 +22,7 @@ import std.conv;
 import std.exception;
 import std.array, std.algorithm;
 import std.datetime;
+import std.regex;
 debug import std.stdio;
 
 alias std.string.indexOf indexOf;
@@ -1793,7 +1794,6 @@ class WebUI
 
 	// ***********************************************************************
 
-	import std.regex;
 	static Regex!char reUrl;
 	static this() { reUrl = regex(`\w+://[^<>\s]+[\w/]`); }
 
