@@ -183,7 +183,7 @@ class Rfc850Post : Post
 
 		if (content.contains("\nbegin "))
 		{
-			import std.regex;
+			import std.regex, std.string;
 			auto r = regex(`^begin [0-7]+ \S+$`);
 			auto lines = content.split("\n");
 			size_t start;
