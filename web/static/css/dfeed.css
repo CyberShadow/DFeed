@@ -50,9 +50,13 @@
 	position: absolute;
 	top: 20px;
 	left: 210px;
+	right: 220px;
 	font-size: 1.7em;
 	font-family: Georgia, "Times New Roman", Times, serif;
 	font-variant: small-caps;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 #breadcrumbs a {
