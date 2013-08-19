@@ -684,7 +684,7 @@ string decodeQuotedPrintable(string s, bool inHeaders)
 			if (i+1 >= s.length || s[i+1] == '\n')
 				i+=2; // escape newline
 			else
-				r.put(cast(char)parse!ubyte(s[i+1..i+3], 16)), i+=3;
+				r.put(cast(char)to!ubyte(s[i+1..i+3], 16)), i+=3;
 		}
 		else
 		if (s[i]=='_' && inHeaders)
