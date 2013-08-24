@@ -384,10 +384,12 @@ class WebUI
 					enforce(path.length > 1, "No PID specified");
 					auto pid = pathX;
 					enforce(pid in postProcesses, "Sorry, this is not a post I know of.");
+
 					bool refresh, form;
-					discussionPostStatus(postProcesses[pid], refresh, form);
+					string redirectTo;
+					discussionPostStatus(postProcesses[pid], refresh, redirectTo, form);
 					if (refresh)
-						response.setRefresh(1);
+						response.setRefresh(1, redirectTo);
 					if (form)
 					{
 						title = breadcrumb1 = `Posting error`;
@@ -1621,7 +1623,7 @@ class WebUI
 			`</table>`);
 	}
 
-	void discussionPostStatus(PostProcess process, out bool refresh, out bool form)
+	void discussionPostStatus(PostProcess process, out bool refresh, out string redirectTo, out bool form)
 	{
 		refresh = form = false;
 		PostError error = process.error;
@@ -1649,7 +1651,9 @@ class WebUI
 				return;
 
 			case PostingStatus.Posted:
-				discussionPostStatusMessage(`Message posted!<br><br><a class="forum-unread" href="` ~ encodeEntities(idToUrl(process.post.id)) ~ `">View message</a>`);
+				redirectTo = idToUrl(process.post.id);
+				discussionPostStatusMessage(`Message posted! Redirecting...`);
+				refresh = true;
 				return;
 
 			case PostingStatus.CaptchaFailed:
