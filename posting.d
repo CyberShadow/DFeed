@@ -85,7 +85,7 @@ final class PostProcess
 			log("[Header] " ~ name ~ ": " ~ value);
 
 		// Discard duplicate posts (redirect to original)
-		string allContent = post.author ~ "\0" ~ post.authorEmail ~ "\0" ~ post.subject ~ "\0" ~ post.content;
+		string allContent = vars.values.sort.join("\0");
 		if (allContent in postsByContent)
 		{
 			string original = postsByContent[allContent];
