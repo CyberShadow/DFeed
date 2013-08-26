@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2013  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -127,6 +127,7 @@ private:
 			this.status = PostingStatus.CaptchaFailed;
 			this.error = PostError(errorMessage, errorData);
 			log("CAPTCHA failed: " ~ errorMessage);
+			if (errorData) log("CAPTCHA error data: " ~ errorData.toString());
 			log.close();
 			return;
 		}

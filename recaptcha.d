@@ -96,6 +96,7 @@ class RecaptchaErrorData : CaptchaErrorData
 {
 	string code;
 	this(string code) { this.code = code; }
+	override string toString() { return code; }
 }
 
 static this()
