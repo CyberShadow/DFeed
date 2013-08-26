@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2013  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -60,7 +60,10 @@ class Recaptcha : Captcha
 			if (lines[0] == "true")
 				handler(true, null, null);
 			else
-				handler(false, lines.length>1 ? "reCAPTCHA error" : result, new RecaptchaErrorData(lines[1]));
+			if (lines.length >= 2)
+				handler(false, "reCAPTCHA error: " ~ errorText(lines[1]), new RecaptchaErrorData(lines[1]));
+			else
+				handler(false, "Unexpected reCAPTCHA reply: " ~ result, null);
 		}, (string error) {
 			handler(false, error, null);
 		});
@@ -73,6 +76,19 @@ private:
 		import std.file, std.string;
 		auto lines = splitLines(readText("data/recaptcha.txt"));
 		return RecaptchaOptions(lines[0], lines[1]);
+	}
+
+	static string errorText(string code)
+	{
+		switch (code)
+		{
+			case "incorrect-captcha-sol":
+				return "The CAPTCHA solution was incorrect.";
+			case "captcha-timeout":
+				return "The solution was received after the CAPTCHA timed out.";
+			default:
+				return code;
+		}
 	}
 }
 
