@@ -1661,7 +1661,7 @@ class WebUI
 				form = true;
 				return;
 			case PostingStatus.SpamCheckFailed:
-				error.message ~= format("%s. Please solve a CAPTCHA to continue.", error.message);
+				error.message = format("%s. Please solve a CAPTCHA to continue.", error.message);
 				discussionPostForm(process.post, true, error);
 				form = true;
 				return;
