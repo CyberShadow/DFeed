@@ -1455,10 +1455,7 @@ class WebUI
 		if (nested)
 			posts = Rfc850Post.threadify(posts);
 
-		foreach (post; posts)
-			formatPost(post, knownPosts);
-
-		if (!nested)
+		void printPagination()
 		{
 			auto postCount = getPostCount(id);
 
@@ -1469,6 +1466,17 @@ class WebUI
 				html.put(`</table>`);
 			}
 		}
+
+		// Print the pagination at the top
+		if (!nested)
+			printPagination();
+
+		foreach (post; posts)
+			formatPost(post, knownPosts);
+
+		// ...and at the bottom
+		if (!nested)
+			printPagination();
 	}
 
 	void discussionThreadOverview(string threadID, string selectedID)
