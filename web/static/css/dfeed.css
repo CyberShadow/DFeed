@@ -45,6 +45,10 @@
 
 /*************** Title / Breadcrumbs ***************/
 
+#top {
+	position: relative;
+}
+
 #breadcrumbs {
 	color: white;
 	position: absolute;
