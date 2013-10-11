@@ -1,4 +1,3 @@
-
 /*************** Font size / side menu ***************/
 
 /* narrow pages (most views) */
@@ -152,7 +151,7 @@
 
 .forum-unread,
 .forum-unread:visited {
-	font-weight: 600;
+	font-weight: bold;
 }
 .forum-read,
 .forum-read:visited {
