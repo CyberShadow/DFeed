@@ -152,10 +152,12 @@
 
 .forum-unread,
 .forum-unread:visited {
+	font-family: 'Open Sans', Verdana, 'Deja Vu', 'Bitstream Vera Sans', sans-serif;
 	font-weight: 600;
 }
 .forum-read,
 .forum-read:visited {
+	font-family: 'Open Sans', Verdana, 'Deja Vu', 'Bitstream Vera Sans', sans-serif;
 	font-weight: normal;
 }
 
