@@ -152,12 +152,10 @@
 
 .forum-unread,
 .forum-unread:visited {
-	font-family: 'Open Sans', Verdana, 'Deja Vu', 'Bitstream Vera Sans', sans-serif;
-	font-weight: 600;
+	font-weight: bold;
 }
 .forum-read,
 .forum-read:visited {
-	font-family: 'Open Sans', Verdana, 'Deja Vu', 'Bitstream Vera Sans', sans-serif;
 	font-weight: normal;
 }
 
@@ -168,6 +166,12 @@ th .forum-unread:visited {
 th .forum-read,
 th .forum-read:visited {
 	color: black;
+}
+
+/* Use a thinner font for the split-mode index */
+
+.viewmode-horizontal-split {
+	font-family: 'Open Sans', Verdana, 'Deja Vu', 'Bitstream Vera Sans', sans-serif;
 }
 
 /* "Create thread" button */
