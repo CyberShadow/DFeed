@@ -15,3 +15,7 @@
 # Logs and configuration
 /data/
 /logs/
+
+# Binaries
+*
+!*.*
