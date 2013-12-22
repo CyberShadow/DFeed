@@ -69,11 +69,12 @@ class WebUI
 		auto lines = readText("data/web.txt").splitLines();
 		auto port = to!ushort(lines[0]);
 		vhost = lines[1];
+		auto iface = lines.length > 2 ? lines[2] : null;
 
 		server = new HttpServer();
 		server.log = log;
 		server.handleRequest = &onRequest;
-		server.listen(port);
+		server.listen(port, iface);
 
 		addShutdownHandler({ server.close(); });
 	}
