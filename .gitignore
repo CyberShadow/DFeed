@@ -17,5 +17,9 @@
 /logs/
 
 # Binaries
-*
-!*.*
+dfeed
+dfeed_web
+mldownload
+nntpdownload
+rebuilddb
+sanitizedb
