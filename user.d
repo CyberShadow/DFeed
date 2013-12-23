@@ -187,8 +187,8 @@ final class GuestUser : User
 	static string encryptPassword(string password)
 	{
 		// TODO: use bcrypt()
-		import std.md5, std.file;
-		return toLower(getDigestString(password ~ readText("data/salt.txt")));
+		import std.digest.md, std.file;
+		return (password ~ readText("data/salt.txt")).md5Of().toHexString!(LetterCase.lower)().idup; // Issue 9279
 	}
 
 	override void logIn(string username, string password)

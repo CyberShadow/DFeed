@@ -616,7 +616,7 @@ string decodeRfc1522(string str)
 	catch
 	{
 		import ae.utils.iconv;
-		result = toUtf8(cast(immutable(ubyte[]))result, "ISO-8859-1", true);
+		result = toUtf8(cast(ascii)result, "ISO-8859-1", true);
 	}
 
 	return result;
@@ -710,7 +710,7 @@ string decodeEncodedText(string s, string textEncoding)
 	try
 	{
 		import ae.utils.iconv;
-		return toUtf8(cast(immutable(ubyte)[])s, textEncoding, false);
+		return toUtf8(cast(ascii)s, textEncoding, false);
 	}
 	catch (Exception e)
 	{
@@ -724,7 +724,7 @@ string decodeEncodedText(string s, string textEncoding)
 		{
 			debug std.stdio.writefln("ISO-8859-1 fallback (%s)", e.msg);
 			import ae.utils.iconv;
-			return toUtf8(cast(immutable(ubyte)[])s, "ISO-8859-1", false);
+			return toUtf8(cast(ascii)s, "ISO-8859-1", false);
 		}
 	}
 }

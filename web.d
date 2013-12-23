@@ -1205,8 +1205,8 @@ class WebUI
 
 	string getGravatarHash(string email)
 	{
-		import std.md5;
-		return toLower(getDigestString(strip(toLower(email))));
+		import std.digest.md;
+		return email.toLower().strip().md5Of().toHexString!(LetterCase.lower)().idup; // Issue 9279
 	}
 
 	string getUserSecret()
