@@ -1216,12 +1216,18 @@ class WebUI
 		return user["secret"];
 	}
 
-	void replyButton(string id)
+	void postActions(string id)
 	{
-		html.put(
-			`<a class="replylink" href="`, encodeEntities(idToUrl(id, "reply")), `">`
-				`<img src="`, staticPath("/images/reply.png"), `">Reply`
-			`</a>`);
+		if (true)
+			html.put(
+				`<a class="actionlink" href="`, encodeEntities(idToUrl(id, "reply")), `">`
+					`<img src="`, staticPath("/images/reply.png"), `">Reply`
+				`</a>`);
+		if (user.getLevel() >= User.Level.hasRawLink)
+			html.put(
+				`<a class="actionlink" href="`, encodeEntities(idToUrl(id, "source")), `">`
+					`<img src="`, staticPath("/images/source.png"), `">Source`
+				`</a>`);
 	}
 
 	void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts)
@@ -1291,7 +1297,7 @@ class WebUI
 				html.put(`<br>`);
 			html.put(
 						`<br>` // guarantee space for the "toolbar"
-						`<div class="post-toolbar">`), replyButton(id), html.put(`</div>`
+						`<div class="post-actions">`), postActions(id), html.put(`</div>`
 					`</td>`
 					`<td class="post-body">`
 						`<pre class="post-text">`), formatBody(content), html.put(`</pre>`,
@@ -1385,7 +1391,7 @@ class WebUI
 				html.put(`<tr><td class="split-post-info-name">`, a.name, `</td><td class="split-post-info-value">`, a.value, `</td></tr>`);
 			html.put(
 						`</table></td>`
-						`<td class="split-post-reply">`), replyButton(id), html.put(`</td>`
+						`<td class="split-post-actions">`), postActions(id), html.put(`</td>`
 					`</tr></table>`
 				`</td></tr>`
 				`<tr><td class="post-body">`

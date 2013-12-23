@@ -34,7 +34,13 @@ abstract class User
 	abstract void register(string username, string password);
 	abstract bool isLoggedIn();
 
+	enum Level : int
+	{
+		hasRawLink     =   1, /// Get a clickable "raw post" link.
+	}
+
 	string getName() { return null; }
+	Level getLevel() { return Level.init; }
 
 	final bool opIn_r(string name)
 	{
@@ -231,10 +237,12 @@ final class RegisteredUser : User
 {
 	string[string] settings, newSettings;
 	string username;
+	Level level;
 
-	this(string username)
+	this(string username, Level level = Level.init)
 	{
 		this.username = username;
+		this.level = level;
 	}
 
 	override string get(string name, string defaultValue)
@@ -281,6 +289,7 @@ final class RegisteredUser : User
 	override bool isLoggedIn() { return true; }
 	override void register(string username, string password) { throw new Exception("Already registered"); }
 	override string getName() { return username; }
+	override Level getLevel() { return level; }
 
 	override void logOut()
 	{
@@ -293,8 +302,8 @@ User getUser(string cookieHeader)
 	auto guest = new GuestUser(cookieHeader);
 	if ("session" in guest.cookies)
 	{
-		foreach (string username; query("SELECT `Username` FROM `Users` WHERE `Session` = ?").iterate(guest.cookies["session"]))
-			return new RegisteredUser(username);
+		foreach (string username, int level; query("SELECT `Username`, `Level` FROM `Users` WHERE `Session` = ?").iterate(guest.cookies["session"]))
+			return new RegisteredUser(username, cast(User.Level)level);
 	}
 	return guest;
 }

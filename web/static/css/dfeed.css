@@ -325,15 +325,15 @@ ul.post-info-parts {
 	padding-left: 0;
 	list-style-position: inside;
 }
-.post-toolbar {
+.post-actions {
 	position: absolute;
 	bottom: 12px;
 }
-.replylink {
+.actionlink {
 	display: block;
 	white-space: pre;
 }
-.replylink img {
+.actionlink img {
 	vertical-align: middle;
 	margin-right: 5px;
 }
@@ -528,7 +528,7 @@ ul.post-info-parts {
 	font-weight: inherit;
 }
 
-.split-post-reply {
+.split-post-actions {
 	vertical-align: bottom;
 	text-align: right;
 }
