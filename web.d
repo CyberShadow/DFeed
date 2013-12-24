@@ -1733,7 +1733,7 @@ class WebUI
 			//auto logs = dirEntries("DFeed/logs/", "*PostProcess-" ~ post ~ ".log", SpanMode.shallow).array;
 			import std.process;
 			auto result = executeShell("ls logs/*PostProcess-" ~ post ~ ".log"); // This is MUCH faster.
-			enforce(result.status == 0);
+			enforce(result.status < 2, "ls error");
 			auto logs = splitLines(result.output);
 			if (logs.length == 1)
 				return logs[0];
