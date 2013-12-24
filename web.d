@@ -1730,11 +1730,15 @@ class WebUI
 		if (id.match(`^<[a-z]{20}@` ~ vhost.escapeRE() ~ `>`))
 		{
 			auto post = id[1..21];
-			//auto logs = dirEntries("DFeed/logs/", "*PostProcess-" ~ post ~ ".log", SpanMode.shallow).array;
-			import std.process;
-			auto result = executeShell("ls logs/*PostProcess-" ~ post ~ ".log"); // This is MUCH faster.
-			enforce(result.status < 2, "ls error");
-			auto logs = splitLines(result.output);
+			version (Windows)
+				auto logs = dirEntries("logs", "*PostProcess-" ~ post ~ ".log", SpanMode.depth).array;
+			else
+			{
+				import std.process;
+				auto result = execute(["find", "logs", "-name", "*PostProcess-" ~ post ~ ".log"]); // This is MUCH faster than dirEntries.
+				enforce(result.status == 0, "find error");
+				auto logs = splitLines(result.output);
+			}
 			if (logs.length == 1)
 				return logs[0];
 		}
