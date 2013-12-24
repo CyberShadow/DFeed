@@ -400,6 +400,26 @@ class WebUI
 						title = breadcrumb1 = `Posting status`;
 					break;
 				}
+				case "delete":
+				{
+					enforce(path.length > 1, "No post specified");
+					auto post = getPost('<' ~ urlDecode(pathX) ~ '>');
+					enforce(post, "Post not found");
+					title = `Delete "` ~ post.subject ~ `"?`; // "
+					breadcrumb1 = `<a href="` ~ encodeEntities(idToUrl(post.id)) ~ `">` ~ encodeEntities(post.subject) ~ `</a>`;
+					breadcrumb2 = `<a href="/delete/`~pathX~`">Delete post</a>`;
+					discussionDeleteForm(post);
+					bodyClass ~= " formdoc";
+					break;
+				}
+				case "dodelete":
+				{
+					enforce(user.getLevel() >= User.Level.canDeletePosts, "You can't delete posts");
+					auto postVars = request.decodePostData();
+					title = "Deleting post";
+					deletePost(postVars);
+					break;
+				}
 				case "loginform":
 				{
 					discussionLoginForm(parameters);
@@ -1228,6 +1248,11 @@ class WebUI
 				`<a class="actionlink" href="`, encodeEntities(idToUrl(id, "source")), `">`
 					`<img src="`, staticPath("/images/source.png"), `">Source`
 				`</a>`);
+		if (user.getLevel() >= User.Level.canDeletePosts)
+			html.put(
+				`<a class="actionlink" href="`, encodeEntities(idToUrl(id, "delete")), `">`
+					`<img src="`, staticPath("/images/delete.png"), `">Delete`
+				`</a>`);
 	}
 
 	void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts)
@@ -1689,6 +1714,48 @@ class WebUI
 				refresh = true;
 				return;
 		}
+	}
+
+	// ***********************************************************************
+
+	void discussionDeleteForm(Rfc850Post post)
+	{
+		html.put(
+			`<form action="/dodelete" method="post" class="forum-form" id="deleteform">`
+			`<input type="hidden" name="id" value="`, encodeEntities(post.id), `">`
+			`<div id="deleteform-info">`
+				`Are you sure you want to delete this post from DFeed's database?`
+			`</div>`
+			`<input type="hidden" name="secret" value="`, getUserSecret(), `">`
+			`<textarea id="deleteform-message" readonly="readonly" rows="25" cols="80">`, encodeEntities(post.message), `</textarea><br>`
+			`Reason: <input name="reason" value="spam"></input><br>`
+			`<input type="submit" value="Delete"></input>`
+		`</form>`);
+	}
+
+	void deletePost(string[string] vars)
+	{
+		if (vars.get("secret", "") != getUserSecret())
+			throw new Exception("XSRF secret verification failed. Are your cookies enabled?");
+		auto post = getPost(vars.get("id", ""));
+		enforce(post, "Post not found");
+
+		auto deleteLog = new FileLogger("Deleted");
+		scope(exit) deleteLog.close();
+		deleteLog("User %s is deleting post %s (%s)".format(user.getName(), post.id, vars.get("reason", "")));
+		foreach (line; post.message.splitAsciiLines())
+			deleteLog("> " ~ line);
+
+		foreach (string[string] values; query("SELECT * FROM `Posts` WHERE `ID` = ?").iterate(post.id))
+			deleteLog("[Posts] row: " ~ values.toJson());
+		foreach (string[string] values; query("SELECT * FROM `Threads` WHERE `ID` = ?").iterate(post.id))
+			deleteLog("[Threads] row: " ~ values.toJson());
+
+		query("DELETE FROM `Posts` WHERE `ID` = ?").exec(post.id);
+		query("DELETE FROM `Threads` WHERE `ID` = ?").exec(post.id);
+
+		dbVersion++;
+		html.put("Post deleted.");
 	}
 
 	// ***********************************************************************

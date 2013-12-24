@@ -37,6 +37,7 @@ abstract class User
 	enum Level : int
 	{
 		hasRawLink     =   1, /// Get a clickable "raw post" link.
+		canDeletePosts = 100, /// Can delete posts locally
 	}
 
 	string getName() { return null; }
