@@ -23,7 +23,7 @@ import std.exception;
 import std.array, std.algorithm;
 import std.datetime;
 import std.regex;
-debug import std.stdio;
+import std.stdio;
 
 alias std.string.indexOf indexOf;
 
