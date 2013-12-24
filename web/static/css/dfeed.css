@@ -204,7 +204,7 @@ th .forum-read:visited {
 	font-size: inherit;
 }
 
-.forum-form label,
+.post-form label,
 .forum-form input[type=submit] {
 	margin-top: 10px !important;
 	display: block;

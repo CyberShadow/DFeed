@@ -60,11 +60,14 @@ class WebUI
 	User user;
 	string ip;
 	StringBuffer html;
+	string[string] banned;
 
 	this()
 	{
 		log = createLogger("Web");
 		version(MeasurePerformance) perfLog = createLogger("Performance");
+
+		loadBanList();
 
 		auto lines = readText("data/web.txt").splitLines();
 		auto port = to!ushort(lines[0]);
@@ -164,6 +167,9 @@ class WebUI
 
 		try
 		{
+			if (banCheck(ip, request))
+				return response.writeError(HttpStatusCode.Forbidden, "You're banned!");
+
 			auto pathStr = request.resource;
 			enforce(pathStr.startsWith('/'), "Invalid path");
 			string[string] parameters;
@@ -402,6 +408,7 @@ class WebUI
 				}
 				case "delete":
 				{
+					enforce(user.getLevel() >= User.Level.canDeletePosts, "You can't delete posts");
 					enforce(path.length > 1, "No post specified");
 					auto post = getPost('<' ~ urlDecode(pathX) ~ '>');
 					enforce(post, "Post not found");
@@ -1563,7 +1570,7 @@ class WebUI
 			return false;
 		}
 
-		html.put(`<form action="/send" method="post" class="forum-form" id="postform">`);
+		html.put(`<form action="/send" method="post" class="forum-form post-form" id="postform">`);
 
 		if (error.message)
 			html.put(`<div class="form-error">` ~ encodeEntities(error.message) ~ `</div>`);
@@ -1718,17 +1725,36 @@ class WebUI
 
 	// ***********************************************************************
 
+	string findPostingLog(string id)
+	{
+		if (id.match(`^<[a-z]{20}@` ~ vhost.escapeRE() ~ `>`))
+		{
+			auto post = id[1..21];
+			//auto logs = dirEntries("DFeed/logs/", "*PostProcess-" ~ post ~ ".log", SpanMode.shallow).array;
+			import std.process;
+			auto result = executeShell("ls logs/*PostProcess-" ~ post ~ ".log"); // This is MUCH faster.
+			enforce(result.status == 0);
+			auto logs = splitLines(result.output);
+			if (logs.length == 1)
+				return logs[0];
+		}
+		return null;
+	}
+
 	void discussionDeleteForm(Rfc850Post post)
 	{
 		html.put(
-			`<form action="/dodelete" method="post" class="forum-form" id="deleteform">`
+			`<form action="/dodelete" method="post" class="forum-form delete-form" id="deleteform">`
 			`<input type="hidden" name="id" value="`, encodeEntities(post.id), `">`
 			`<div id="deleteform-info">`
 				`Are you sure you want to delete this post from DFeed's database?`
 			`</div>`
 			`<input type="hidden" name="secret" value="`, getUserSecret(), `">`
 			`<textarea id="deleteform-message" readonly="readonly" rows="25" cols="80">`, encodeEntities(post.message), `</textarea><br>`
-			`Reason: <input name="reason" value="spam"></input><br>`
+			`Reason: <input name="reason" value="spam"></input><br>`,
+			 findPostingLog(post.id)
+				? `<input type="checkbox" name="ban" value="Yes" id="deleteform-ban"></input><label for="deleteform-ban">Also ban the poster from accessing the forum</label><br>`
+				: ``,
 			`<input type="submit" value="Delete"></input>`
 		`</form>`);
 	}
@@ -1740,22 +1766,153 @@ class WebUI
 		auto post = getPost(vars.get("id", ""));
 		enforce(post, "Post not found");
 
-		auto deleteLog = new FileLogger("Deleted");
-		scope(exit) deleteLog.close();
-		deleteLog("User %s is deleting post %s (%s)".format(user.getName(), post.id, vars.get("reason", "")));
+		string reason = vars.get("reason", "");
+
+		auto deletionLog = new FileLogger("Deleted");
+		scope(exit) deletionLog.close();
+		scope(failure) deletionLog("An error occurred");
+		deletionLog("User %s is deleting post %s (%s)".format(user.getName(), post.id, reason));
 		foreach (line; post.message.splitAsciiLines())
-			deleteLog("> " ~ line);
+			deletionLog("> " ~ line);
 
 		foreach (string[string] values; query("SELECT * FROM `Posts` WHERE `ID` = ?").iterate(post.id))
-			deleteLog("[Posts] row: " ~ values.toJson());
+			deletionLog("[Posts] row: " ~ values.toJson());
 		foreach (string[string] values; query("SELECT * FROM `Threads` WHERE `ID` = ?").iterate(post.id))
-			deleteLog("[Threads] row: " ~ values.toJson());
+			deletionLog("[Threads] row: " ~ values.toJson());
+
+		if (vars.get("ban", "No") == "Yes")
+		{
+			banPoster(user.getName(), post.id, reason);
+			deletionLog("User was banned for this post.");
+		}
 
 		query("DELETE FROM `Posts` WHERE `ID` = ?").exec(post.id);
 		query("DELETE FROM `Threads` WHERE `ID` = ?").exec(post.id);
 
 		dbVersion++;
 		html.put("Post deleted.");
+	}
+
+	// Create logger on demand, to avoid creating empty log files
+	Logger banLog;
+	void needBanLog() { if (!banLog) banLog = new FileLogger("Banned"); }
+
+	void banPoster(string who, string id, string reason)
+	{
+		needBanLog();
+		banLog("User %s is banning poster of post %s (%s)".format(who, id, reason));
+		auto fn = findPostingLog(id);
+		enforce(fn && fn.exists, "Can't find posting log");
+
+		string ip, secret, session;
+		foreach (line; split(cast(string)read(fn), "\n"))
+		{
+			if (line.length < 30)
+				continue;
+			line = line[26..$]; // trim timestamp
+
+			if (line.startsWith("[Header] Cookie: "))
+			{
+				foreach (cookie; line["[Header] Cookie: ".length..$].split("; "))
+				{
+					auto p = cookie.indexOf("=");
+					if (p<0) continue;
+					auto name = cookie[0..p];
+					auto value = cookie[p+1..$];
+					if (name == "dfeed_secret")
+						secret = value;
+					else
+					if (name == "dfeed_session")
+						session = value;
+				}
+			}
+			else
+			if (line.startsWith("IP: "))
+				ip = line[4..$];
+		}
+
+		banLog("ip      = " ~ ip);
+		banLog("secret  = " ~ secret);
+		banLog("session = " ~ session);
+
+		foreach (key; [ip, secret, session])
+			if (key && key !in banned)
+			{
+				banned[key] = reason;
+				banLog("Adding key: " ~ key);
+			}
+
+		saveBanList();
+		banLog("Done.");
+	}
+
+	enum banListFileName = "data/banned.txt";
+
+	void loadBanList()
+	{
+		if (banListFileName.exists())
+			foreach (string line; splitAsciiLines(cast(string)read(banListFileName)))
+			{
+				auto parts = line.split("\t");
+				if (parts.length >= 2)
+					banned[parts[0]] = parts[1..$].join("\t");
+			}
+	}
+
+	void saveBanList()
+	{
+		const inProgressFileName = banListFileName ~ ".inprogress";
+		auto f = File(inProgressFileName, "wb");
+		foreach (key, reason; banned)
+			f.writefln("%s\t%s", key, reason);
+		f.close();
+		rename(inProgressFileName, banListFileName);
+	}
+
+	/// Returns true if the user is banned.
+	bool banCheck(string ip, HttpRequest request)
+	{
+		string[] keys = [ip];
+		foreach (cookie; ("Cookie" in request.headers ? request.headers["Cookie"] : null).split("; "))
+		{
+			auto p = cookie.indexOf("=");
+			if (p<0) continue;
+			auto name = cookie[0..p];
+			auto value = cookie[p+1..$];
+			if (name == "dfeed_secret" || name == "dfeed_session")
+				if (value.length)
+					keys ~= value;
+		}
+
+		string bannedKey = null;
+		foreach (key; keys)
+			if (key in banned)
+			{
+				bannedKey = key;
+				break;
+			}
+
+		if (!bannedKey)
+			return false;
+
+		needBanLog();
+		banLog("Request from banned user: " ~ request.resource);
+		foreach (name, value; request.headers)
+			banLog("* %s: %s".format(name, value));
+
+		bool propagated;
+		foreach (key; keys)
+			if (key !in banned)
+			{
+				banLog("Propagating: %s -> %s".format(bannedKey, key));
+				banned[key] = "%s (propagated from %s)".format(banned[bannedKey], bannedKey);
+				propagated = true;
+			}
+
+		if (propagated)
+			saveBanList();
+
+		return true;
 	}
 
 	// ***********************************************************************
