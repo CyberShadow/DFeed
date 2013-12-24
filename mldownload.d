@@ -85,6 +85,7 @@ class MLDownloader : NewsSource
 		httpGet(url,
 			(Data data)
 			{
+				log("Got %s/%s".format(list, fn));
 				scope(failure) std.file.write("errorfile", data.contents);
 				auto text = cast(string)(uncompress(data).contents).idup;
 				text = text[text.indexOf('\n')+1..$]; // skip first From line
