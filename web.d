@@ -1788,6 +1788,7 @@ class WebUI
 		{
 			banPoster(user.getName(), post.id, reason);
 			deletionLog("User was banned for this post.");
+			html.put("User banned.<br>");
 		}
 
 		query("DELETE FROM `Posts` WHERE `ID` = ?").exec(post.id);
@@ -1808,7 +1809,7 @@ class WebUI
 		auto fn = findPostingLog(id);
 		enforce(fn && fn.exists, "Can't find posting log");
 
-		string ip, secret, session;
+		string[] keys;
 		foreach (line; split(cast(string)read(fn), "\n"))
 		{
 			if (line.length < 30)
@@ -1823,27 +1824,27 @@ class WebUI
 					if (p<0) continue;
 					auto name = cookie[0..p];
 					auto value = cookie[p+1..$];
-					if (name == "dfeed_secret")
-						secret = value;
-					else
-					if (name == "dfeed_session")
-						session = value;
+					if (name == "dfeed_secret" || name == "dfeed_session")
+						keys ~= value;
 				}
 			}
+			if (line.startsWith("[Form] secret: "))
+				keys ~= line["[Form] secret: ".length..$];
 			else
 			if (line.startsWith("IP: "))
-				ip = line[4..$];
+				keys ~= line["IP: ".length..$];
 		}
 
-		banLog("ip      = " ~ ip);
-		banLog("secret  = " ~ secret);
-		banLog("session = " ~ session);
-
-		foreach (key; [ip, secret, session])
-			if (key && key !in banned)
+		foreach (key; keys)
+			if (key.length)
 			{
-				banned[key] = reason;
-				banLog("Adding key: " ~ key);
+				if (key in banned)
+					banLog("Key already known: " ~ key);
+				else
+				{
+					banned[key] = reason;
+					banLog("Adding key: " ~ key);
+				}
 			}
 
 		saveBanList();
@@ -1887,12 +1888,16 @@ class WebUI
 				if (value.length)
 					keys ~= value;
 		}
+		string secret = user.get("secret", null);
+		if (secret.length)
+			keys ~= secret;
 
-		string bannedKey = null;
+		string bannedKey = null, reason = null;
 		foreach (key; keys)
 			if (key in banned)
 			{
 				bannedKey = key;
+				reason = banned[key];
 				break;
 			}
 
@@ -1904,12 +1909,13 @@ class WebUI
 		foreach (name, value; request.headers)
 			banLog("* %s: %s".format(name, value));
 
+		banLog("Matched on: %s (%s)".format(bannedKey, reason));
 		bool propagated;
 		foreach (key; keys)
 			if (key !in banned)
 			{
 				banLog("Propagating: %s -> %s".format(bannedKey, key));
-				banned[key] = "%s (propagated from %s)".format(banned[bannedKey], bannedKey);
+				banned[key] = "%s (propagated from %s)".format(reason, bannedKey);
 				propagated = true;
 			}
 
