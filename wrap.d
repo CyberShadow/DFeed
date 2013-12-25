@@ -20,8 +20,6 @@ module wrap;
 import std.string;
 import std.utf;
 
-import ae.utils.text;
-
 struct Paragraph
 {
 	dstring quotePrefix, text;
