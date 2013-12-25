@@ -192,4 +192,9 @@ unittest
 	static assert(str.toUTF32().length < DEFAULT_WRAP_LENGTH);
 	static assert(str.length > DEFAULT_WRAP_LENGTH);
 	assert(wrapText(unwrapText(str, false, false)).split("\n").length == 1);
+
+	// Rewrap consecutive quoted lines with length greater than DEFAULT_WRAP_LENGTH
+	static assert(wrapText(unwrapText("> Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod \n> tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,", false, false)) ==
+		      "> Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed \n> do eiusmod tempor incididunt ut labore et dolore magna aliqua. \n> Ut enim ad minim veniam,");
 }
+
