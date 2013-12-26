@@ -1593,7 +1593,7 @@ class WebUI
 			`<label for="postform-subject">Subject:</label>`
 			`<input id="postform-subject" name="subject" size="80" value="`, encodeEntities(postTemplate.subject), `">`
 			`<label for="postform-text">Message:</label>`
-			`<textarea id="postform-text" name="text" rows="25" cols="80">`, encodeEntities(postTemplate.content), `</textarea>`);
+			`<textarea id="postform-text" name="text" rows="25" cols="80" autofocus="autofocus">`, encodeEntities(postTemplate.content), `</textarea>`);
 
 		if (showCaptcha)
 			html.put(`<div id="postform-captcha">`, theCaptcha.getChallengeHtml(error.captchaError), `</div>`);
