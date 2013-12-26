@@ -1247,17 +1247,17 @@ class WebUI
 	{
 		if (true)
 			html.put(
-				`<a class="actionlink" href="`, encodeEntities(idToUrl(id, "reply")), `">`
+				`<a class="actionlink replylink" href="`, encodeEntities(idToUrl(id, "reply")), `">`
 					`<img src="`, staticPath("/images/reply.png"), `">Reply`
 				`</a>`);
 		if (user.getLevel() >= User.Level.hasRawLink)
 			html.put(
-				`<a class="actionlink" href="`, encodeEntities(idToUrl(id, "source")), `">`
+				`<a class="actionlink sourcelink" href="`, encodeEntities(idToUrl(id, "source")), `">`
 					`<img src="`, staticPath("/images/source.png"), `">Source`
 				`</a>`);
 		if (user.getLevel() >= User.Level.canDeletePosts)
 			html.put(
-				`<a class="actionlink" href="`, encodeEntities(idToUrl(id, "delete")), `">`
+				`<a class="actionlink deletelink" href="`, encodeEntities(idToUrl(id, "delete")), `">`
 					`<img src="`, staticPath("/images/delete.png"), `">Delete`
 				`</a>`);
 	}
