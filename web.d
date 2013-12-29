@@ -213,6 +213,20 @@ class WebUI
 						throw new NotFoundException("Legacy redirect - article not found");
 					}
 					else
+					if (redirectNum)
+					{
+						string[] ids;
+						foreach (string id; query("SELECT `ID` FROM `Groups` WHERE `ArtNum`=?").iterate(redirectNum))
+							ids ~= id;
+						if (ids.length == 1)
+							return response.redirect(idToUrl(ids[0]), HttpStatusCode.MovedPermanently);
+						else
+						if (ids.length > 1)
+							throw new NotFoundException("Legacy redirect - ambiguous artnum (group parameter missing)");
+						else
+							throw new NotFoundException("Legacy redirect - article not found");
+					}
+					else
 					if (redirectGroup)
 						return response.redirect("/group/" ~ redirectGroup, HttpStatusCode.MovedPermanently);
 
