@@ -216,6 +216,9 @@ class WebUI
 					if (redirectGroup)
 						return response.redirect("/group/" ~ redirectGroup, HttpStatusCode.MovedPermanently);
 
+					if (request.resource != "/")
+						return response.redirect("/");
+
 					title = "Index";
 					breadcrumb1 = `<a href="/">Forum Index</a>`;
 					foreach (what; ["posts", "threads"])
