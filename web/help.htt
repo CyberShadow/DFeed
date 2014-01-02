@@ -23,7 +23,12 @@
 <h2 id="accounts">Accounts</h2>
 
 <p>
-  Preferences and read post history are stored in cookies for unregistered users.
+  You do not need an account to browse or post this discussion board.
+  Preferences and read post history are stored in browser cookies for unregistered users.
+</p>
+
+<p>
+  You can register an account to keep them on the server instead.
   Registering an account will transfer all variables from cookies to the server database.
 </p>
 
