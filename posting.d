@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2013  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2013, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -113,6 +113,71 @@ final class PostProcess
 			status = PostingStatus.SpamCheck;
 			spamCheck(this, &onSpamResult);
 		}
+	}
+
+	/// Parse a log file
+	this(string fileName)
+	{
+		pid = "unknown";
+		foreach (line; split(cast(string)read(fileName), "\n"))
+		{
+			if (line.length < 30 || line[0] != '[')
+				continue;
+			line = line[26..$]; // trim timestamp
+
+			if (line.eat("[Form] "))
+			{
+				auto var = line.eatUntil(": ");
+				if (var in vars)
+					vars[var] ~= "\n" ~ line;
+				else
+					vars[var] = line;
+			}
+			else
+			if (line.eat("[Header] "))
+			{
+				auto name = line.eatUntil(": ");
+				headers[name] = line;
+			}
+			else
+			if (line.eat("IP: "))
+				ip = line;
+			else
+			if (line.eat("< Message-ID: <"))
+				pid = line.eatUntil("@");
+		}
+		post = createPost(vars, headers, ip, null);
+		post.id = format("<%s@%s>", pid, hostname);
+		post.compile();
+	}
+
+	static Rfc850Post createPost(string[string] vars, string[string] headers, string ip, Rfc850Post delegate(string id) getPost)
+	{
+		Rfc850Post post;
+		if ("parent" in vars)
+		{
+			if (getPost)
+			{
+				auto parent = getPost(vars["parent"]);
+				enforce(parent, "Can't find post to reply to.");
+				post = parent.replyTemplate();
+			}
+			else
+				post = Rfc850Post.newPostTemplate(null);
+		}
+		else
+		if ("where" in vars)
+			post = Rfc850Post.newPostTemplate(vars["where"]);
+
+		post.author = aaGet(vars, "name");
+		post.authorEmail = aaGet(vars, "email");
+		post.subject = aaGet(vars, "subject");
+		post.setText(aaGet(vars, "text"));
+
+		post.headers["X-Web-User-Agent"] = aaGet(headers, "User-Agent");
+		post.headers["X-Web-Originating-IP"] = ip;
+
+		return post;
 	}
 
 	// **********************************************************************

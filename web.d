@@ -1627,26 +1627,7 @@ class WebUI
 
 	PostProcess discussionSend(string[string] vars, string[string] headers)
 	{
-		Rfc850Post post;
-		if ("parent" in vars)
-		{
-			auto parent = getPost(vars["parent"]);
-			enforce(parent, "Can't find post to reply to.");
-			post = parent.replyTemplate();
-		}
-		else
-		if ("where" in vars)
-			post = Rfc850Post.newPostTemplate(vars["where"]);
-		else
-			throw new Exception("Sorry, were you saying something?");
-
-		post.author = aaGet(vars, "name");
-		post.authorEmail = aaGet(vars, "email");
-		post.subject = aaGet(vars, "subject");
-		post.setText(aaGet(vars, "text"));
-
-		post.headers["X-Web-User-Agent"] = aaGet(headers, "User-Agent");
-		post.headers["X-Web-Originating-IP"] = ip;
+		Rfc850Post post = PostProcess.createPost(vars, headers, ip, id => getPost(id));
 
 		try
 		{
@@ -1828,30 +1809,18 @@ class WebUI
 		auto fn = findPostingLog(id);
 		enforce(fn && fn.exists, "Can't find posting log");
 
+		auto pp = new PostProcess(fn);
 		string[] keys;
-		foreach (line; split(cast(string)read(fn), "\n"))
+		keys ~= pp.ip;
+		keys ~= pp.vars.get("secret", null);
+		foreach (cookie; pp.headers.get("Cookie", null).split("; "))
 		{
-			if (line.length < 30)
-				continue;
-			line = line[26..$]; // trim timestamp
-
-			if (line.startsWith("[Header] Cookie: "))
-			{
-				foreach (cookie; line["[Header] Cookie: ".length..$].split("; "))
-				{
-					auto p = cookie.indexOf("=");
-					if (p<0) continue;
-					auto name = cookie[0..p];
-					auto value = cookie[p+1..$];
-					if (name == "dfeed_secret" || name == "dfeed_session")
-						keys ~= value;
-				}
-			}
-			if (line.startsWith("[Form] secret: "))
-				keys ~= line["[Form] secret: ".length..$];
-			else
-			if (line.startsWith("IP: "))
-				keys ~= line["IP: ".length..$];
+			auto p = cookie.indexOf("=");
+			if (p<0) continue;
+			auto name = cookie[0..p];
+			auto value = cookie[p+1..$];
+			if (name == "dfeed_secret" || name == "dfeed_session")
+				keys ~= value;
 		}
 
 		foreach (key; keys)
@@ -2031,7 +2000,7 @@ class WebUI
 		return idToUrl(threadID, "thread", indexToPage(getPostThreadIndex(id), POSTS_PER_PAGE)) ~ "#" ~ idToFragment(id);
 	}
 
-	Rfc850Post getPost(string id, uint[] partPath = null)
+	static Rfc850Post getPost(string id, uint[] partPath = null)
 	{
 		foreach (int rowid, string message; query("SELECT `ROWID`, `Message` FROM `Posts` WHERE `ID` = ?").iterate(id))
 		{
