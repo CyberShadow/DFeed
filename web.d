@@ -517,7 +517,6 @@ class WebUI
 
 				case "feed":
 				{
-					/*
 					enforce(path.length > 1, "Feed type not specified");
 					enforce(path[1]=="posts" || path[1]=="threads", "Unknown feed type");
 					bool threadsOnly = path[1] == "threads";
@@ -527,11 +526,6 @@ class WebUI
 					auto hours = to!int(parameters.get("hours", text(FEED_HOURS_DEFAULT)));
 					enforce(hours <= FEED_HOURS_MAX, "hours parameter exceeds limit");
 					return getFeed(group, threadsOnly, hours).getResponse(request);
-					*/
-
-					// Feed generation performance is currently abyssimal with a cold cache (up to several minutes).
-					// Need another strategy for SQL queries.
-					throw new Exception("Sorry, feeds have been temporarily disabled.");
 				}
 
 				case "js":
@@ -2347,6 +2341,7 @@ class WebUI
 
 	CachedResource makeFeed(string feedUrl, string group, bool threadsOnly, int hours)
 	{
+		string PERF_SCOPE = "makeFeed(,%s,%s,%s)".format(group, threadsOnly, hours); mixin(MeasurePerformanceMixin);
 		auto title = "Latest " ~ (threadsOnly ? "threads" : "posts") ~ (group ? " on " ~ group : "");
 
 		AtomFeedWriter feed;
