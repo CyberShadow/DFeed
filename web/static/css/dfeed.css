@@ -3,45 +3,60 @@
 
 /* narrow pages (most views) */
 
-@media screen and (max-width: 1170px) {
+@media screen and (max-width: 1120px) {
+	/* scale to 7/8 */
 	body.narrowdoc .post-text        { font-size: 12px; }
-	body.narrowdoc #forum-content    { font-size: 0.8em; }
+	body.narrowdoc #forum-content    { font-size: 0.875em; }
 	body.narrowdoc #group-split-list { width: 350px; }
 
 	body.narrowdoc #forum-content input[type="submit"] { font-size: 11px; }
 }
 
-@media screen and (max-width: 1060px) {
+@media screen and (max-width: 1020px) {
+	/* hide dlang.org sidebar */
 	body.narrowdoc #navigation       { display: none; }
 	body.narrowdoc #content          { margin-left: 1.5em !important; }
 }
 
 @media screen and (max-width: 880px) {
+	/* scale to 4/3 */
 	body.narrowdoc .post-text        { font-size: 11px; }
-	body.narrowdoc #forum-content    { font-size: 0.7em; }
+	body.narrowdoc #forum-content    { font-size: 0.75em; }
 	body.narrowdoc #group-split-list { width: 300px; }
 }
 
 /* wide pages (split-mode view) */
 
 @media screen and (max-width: 1350px) {
+	/* hide dlang.org sidebar */
 	body.widedoc #navigation       { display: none; }
 	body.widedoc #content          { margin-left: 1.5em !important; }
 }
 
 @media screen and (max-width: 1170px) {
+	/* scale to 7/8 */
 	body.widedoc .post-text        { font-size: 12px; }
-	body.widedoc #forum-content    { font-size: 0.8em; }
+	body.widedoc #forum-content    { font-size: 0.875em; }
 	body.widedoc #group-split-list { width: 350px; }
 
-	body.widedoc #forum-content input[type="submit"] { font-size: 11px; }
+	body.widedoc #forum-content input[type="submit"] { font-size: 12px; }
 }
 
 @media screen and (max-width: 1040px) {
+	/* scale to 4/3 */
 	body.widedoc .post-text        { font-size: 11px; }
-	body.widedoc #forum-content    { font-size: 0.7em; }
+	body.widedoc #forum-content    { font-size: 0.75em; }
 	body.widedoc #group-split-list { width: 300px; }
 }
+
+/* reply page */
+
+@media screen and (max-width: 950px) {
+	/* hide dlang.org sidebar */
+	body.formdoc   #navigation       { display: none; }
+	body.formdoc   #content          { margin-left: 1.5em !important; }
+}
+
 
 /*************** Title / Breadcrumbs ***************/
 
@@ -71,7 +86,7 @@
 #breadcrumb1,
 #breadcrumb2 {
 	color: #ccc;
-	font-size: 12pt;
+	font-size: 60%;
 }
 
 #breadcrumb1 {
@@ -86,7 +101,7 @@
 
 #forum-tools {
 	text-align: right;
-	font-size: 11px;
+	font-size: 80%;
 	font-style: italic;
 	margin: -13px 0 4px 0;
 	color: #666;
@@ -136,7 +151,7 @@
 }
 
 .number-column {
-	font-size: 10pt;
+	font-size: 90%;
 	text-align: center;
 }
 
@@ -239,7 +254,7 @@ th .forum-read:visited {
 
 .forum-index-description,
 .forum-index-col-lastpost {
-	font-size: 10pt;
+	font-size: 90%;
 }
 
 .forum-postsummary-time {
@@ -258,7 +273,7 @@ th .forum-read:visited {
 }
 
 .group-index-col-last {
-	font-size: 10pt;
+	font-size: 90%;
 	text-align: right;
 }
 
@@ -301,12 +316,12 @@ th .forum-read:visited {
 .post-info {
 	width: 20%;
 	background-color: #F0F0F0;
-	font-size: 9pt;
+	font-size: 85%;
 	word-wrap: break-word;
 }
 .post-author {
 	font-weight: bold;
-	font-size: 11pt;
+	font-size: 130%;
 }
 .post-gravatar {
 	margin-top: 4px;

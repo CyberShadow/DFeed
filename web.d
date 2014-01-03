@@ -389,7 +389,7 @@ class WebUI
 					breadcrumb1 = `<a href="` ~ encodeEntities(idToUrl(post.id)) ~ `">` ~ encodeEntities(post.subject) ~ `</a>`;
 					breadcrumb2 = `<a href="/reply/`~pathX~`">Post reply</a>`;
 					if (discussionPostForm(post.replyTemplate()))
-						bodyClass ~= " formdoc";
+						bodyClass = "formdoc";
 					break;
 				}
 				case "send":
