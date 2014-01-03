@@ -271,7 +271,7 @@ class Rfc850Post : Post
 				}
 		}
 		else
-		if (author.indexOf('@') < 0 && author.indexOf(" at ") >= 0)
+		if ((author.indexOf('@') < 0 && author.indexOf(" at ") >= 0) || (author.indexOf("<") < 0 && author.indexOf(">") < 0 && author.indexOf(" (") > 0 && author.endsWith(")")))
 		{
 			// Mailing list archive format
 			assert(author == authorEmail);
