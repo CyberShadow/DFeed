@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -82,4 +82,27 @@ public:
 		query("UPDATE `Posts` SET `Message`=?, `Author`=?, `Subject`=?, `Time`=?, `ParentID`=?, `ThreadID`=? WHERE `ID` = ?")
 			.exec(message.message, message.author, message.subject, message.time.stdTime, message.parentID, message.threadID, message.id);
 	}
+}
+
+/// Look up the real thread ID of a post, by travelling
+/// up the chain of the first known ancestor IDs.
+string getThreadID(string id)
+{
+	static string[string] cache;
+	auto pcached = id in cache;
+	if (pcached)
+		return *pcached;
+
+	string result = id;
+	foreach (string threadID; query("SELECT [ThreadID] FROM [Posts] WHERE [ID] = ?").iterate(id))
+		result = threadID;
+
+	if (result != id)
+		result = getThreadID(result);
+	return cache[id] = result;
+}
+
+@property string threadID(Rfc850Post post)
+{
+	return getThreadID(post.firstAncestorID);
 }

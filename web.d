@@ -1198,7 +1198,7 @@ class WebUI
 		enforce(post, "Post not found");
 
 		group = post.xref[0].group;
-		page = getThreadPage(group, post.threadID);
+		page = getThreadPage(group, post.cachedThreadID);
 
 		discussionGroupSplit(group, page);
 	}
@@ -1315,9 +1315,9 @@ class WebUI
 			infoBits ~=
 				`Attachments:<ul class="post-info-parts"><li>` ~ partList.join(`</li><li>`) ~ `</li></ul>`;
 
-		if (knownPosts is null && post.threadID)
+		if (knownPosts is null && post.cachedThreadID)
 			infoBits ~=
-				`<a href="` ~ encodeEntities(idToThreadUrl(post.id, post.threadID)) ~ `">View in thread</a>`;
+				`<a href="` ~ encodeEntities(idToThreadUrl(post.id, post.cachedThreadID)) ~ `">View in thread</a>`;
 
 		string repliesTitle = `Replies to `~encodeEntities(post.author)~`'s post from `~encodeEntities(formatShortTime(post.time, false));
 
@@ -1506,7 +1506,7 @@ class WebUI
 
 		Rfc850Post[] posts;
 		foreach (int rowid, string postID, string message; query("SELECT `ROWID`, `ID`, `Message` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC LIMIT ? OFFSET ?").iterate(id, postsPerPage, (page-1)*postsPerPage))
-			posts ~= new Rfc850Post(message, postID, rowid);
+			posts ~= new Rfc850Post(message, postID, rowid, id);
 
 		Rfc850Post[string] knownPosts;
 		foreach (post; posts)
@@ -1559,7 +1559,7 @@ class WebUI
 		title = post.subject;
 
 		formatSplitPost(post);
-		discussionThreadOverview(post.threadID, id);
+		discussionThreadOverview(post.cachedThreadID, id);
 	}
 
 	string discussionFirstUnread(string threadID)
@@ -2002,9 +2002,9 @@ class WebUI
 
 	static Rfc850Post getPost(string id, uint[] partPath = null)
 	{
-		foreach (int rowid, string message; query("SELECT `ROWID`, `Message` FROM `Posts` WHERE `ID` = ?").iterate(id))
+		foreach (int rowid, string message, string threadID; query("SELECT `ROWID`, `Message`, `ThreadID` FROM `Posts` WHERE `ID` = ?").iterate(id))
 		{
-			auto post = new Rfc850Post(message, id, rowid);
+			auto post = new Rfc850Post(message, id, rowid, threadID);
 			while (partPath.length)
 			{
 				enforce(partPath[0] < post.parts.length, "Invalid attachment");

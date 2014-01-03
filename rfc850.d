@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -36,7 +36,6 @@ import ae.utils.mime;
 
 import common;
 import bitly;
-import database;
 import wrap;
 
 struct Xref
@@ -59,6 +58,8 @@ class Rfc850Post : Post
 
 	/// Internal database index
 	int rowid;
+	/// Thread ID obtained by examining parent posts
+	string cachedThreadID;
 
 	Headers headers;
 	string content; /// text/plain only
@@ -70,11 +71,13 @@ class Rfc850Post : Post
 	string name, fileName, description, mimeType;
 	Rfc850Post[] parts;
 
-	this(string _message, string _id=null, int _rowid=0)
+	this(string _message, string _id=null, int _rowid=0, string _threadID=null)
 	{
 		message = _message;
 		id    = _id;
 		rowid = _rowid;
+		cachedThreadID = _threadID;
+
 		debug scope(failure) writeln("Failure while parsing message: ", _id);
 
 		// TODO: actually read RFC 850
@@ -240,6 +243,9 @@ class Rfc850Post : Post
 				refs = asciiStrip(refs[p+1..$]);
 			}
 		}
+		else
+		if ("In-Reply-To" in headers)
+			references = [headers["In-Reply-To"]];
 
 		subject = realSubject = "Subject" in headers ? decodeRfc1522(headers["Subject"]) : null;
 		if (subject.startsWith("Re: "))
@@ -519,7 +525,11 @@ class Rfc850Post : Post
 		return references.length ? references[$-1] : null;
 	}
 
-	@property string threadID()
+	/// Return the oldest known ancestor of this post, possibly
+	/// this post's ID if it is the first one in the thread.
+	/// May not be the thread ID - some UAs/services
+	/// cut off or strip the "References" header.
+	@property string firstAncestorID()
 	{
 		return references.length ? references[0] : id;
 	}
