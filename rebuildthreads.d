@@ -35,9 +35,22 @@ class DatabaseSource : NewsSource
 
 	override void start()
 	{
-		db.exec("BEGIN");
-		allowTransactions = false;
+		static struct Message { string message, id; }
+		Message[] messages;
+
+		log("Loading...");
 		foreach (string message, string id; query("SELECT `Message`, `ID` FROM Posts").iterate())
+			messages ~= Message(message, id);
+
+		log("Deleting...");
+		db.exec("BEGIN");
+		db.exec("DELETE FROM `Groups`");
+		db.exec("DELETE FROM `Threads`");
+
+		log("Updating...");
+		allowTransactions = false;
+		foreach (m; messages)
+		with(m)
 		{
 			auto post = new Rfc850Post(message, id);
 			log("Announcing: " ~ id);
@@ -47,6 +60,7 @@ class DatabaseSource : NewsSource
 		allowTransactions = true;
 		log("Committing...");
 		db.exec("COMMIT");
+		log("Done!");
 	}
 
 	override void stop() { assert(false); }
@@ -56,9 +70,6 @@ void main(string[] args)
 {
 	getopt(args,
 		"q|quiet", &common.quiet);
-
-	db.exec("DELETE FROM `Groups`");
-	db.exec("DELETE FROM `Threads`");
 
 	new DatabaseSource();
 	sink = new MessageDBSink();
