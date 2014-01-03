@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -32,7 +32,7 @@ void spamCheck(PostProcess process, SpamResultHandler handler)
 	bool foundSpam = false;
 
 	// Start all checks simultaneously
-	foreach (checker; spamEngines)
+	foreach (checker; spamCheckers)
 	{
 		try
 			checker(process, (bool ok, string message) {
@@ -46,7 +46,7 @@ void spamCheck(PostProcess process, SpamResultHandler handler)
 					}
 					else
 					{
-						if (totalResults == spamEngines.length)
+						if (totalResults == spamCheckers.length)
 							handler(true, null);
 					}
 				}
@@ -62,6 +62,8 @@ void spamCheck(PostProcess process, SpamResultHandler handler)
 			break;
 	}
 }
+
+enum SpamFeedback { unknown, spam, ham }
 
 private:
 
@@ -88,6 +90,32 @@ void checkAkismet(PostProcess process, SpamResultHandler handler)
 		else
 		if (result == "true")
 			handler(false, "Akismet thinks your post looks like spam");
+		else
+			handler(false, "Akismet error: " ~ result);
+	}, (string error) {
+		handler(false, "Akismet error: " ~ error);
+	});
+}
+
+void sendAkismetFeedback(PostProcess process, SpamResultHandler handler, SpamFeedback feedback)
+{
+	auto key = readText("data/akismet.txt");
+	auto site = readText("data/web.txt").splitLines()[1];
+
+	string[string] params = [
+		"blog"                 : "http://" ~ site ~ "/",
+		"user_ip"              : process.ip,
+		"user_agent"           : process.headers.get("User-Agent", ""),
+		"referrer"             : process.headers.get("Referer", ""),
+		"comment_author"       : process.vars.get("name", ""),
+		"comment_author_email" : process.vars.get("email", ""),
+		"comment_content"      : process.vars.get("text", ""),
+	];
+
+	string[SpamFeedback] names = [ SpamFeedback.spam : "spam", SpamFeedback.ham : "ham" ];
+	return httpPost("http://" ~ key ~ ".rest.akismet.com/1.1/submit-" ~ names[feedback], params, (string result) {
+		if (result == "Thanks for making the web a better place.")
+			handler(true, null);
 		else
 			handler(false, "Akismet error: " ~ result);
 	}, (string error) {
@@ -143,6 +171,8 @@ void checkProjectHoneyPot(PostProcess process, SpamResultHandler handler)
 			handler(true, null);
 }
 
+import ae.utils.xml; // Issue 7016
+
 void checkStopForumSpam(PostProcess process, SpamResultHandler handler)
 {
 	enum DAYS_THRESHOLD = 3; // consider an IP match as a positive if it was last seen at most this many days ago
@@ -197,11 +227,16 @@ void checkKeywords(PostProcess process, SpamResultHandler handler)
 	handler(true, null);
 }
 
-auto spamEngines =
+auto spamCheckers =
 [
 	&checkUserAgent,
 	&checkKeywords,
 	&checkProjectHoneyPot,
 	&checkAkismet,
 	&checkStopForumSpam,
+];
+
+public auto spamFeedbackSenders =
+[
+	&sendAkismetFeedback,
 ];
