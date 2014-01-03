@@ -294,8 +294,8 @@ class Rfc850Post : Post
 		}
 		if (author.length>2 && author[0]=='"' && author[$-1]=='"')
 			author = decodeRfc1522(asciiStrip(author[1..$-1]));
-		//if (author == authorEmail && author.indexOf("@") > 0)
-		//	author = author[0..author.indexOf("@")];
+		if ((author == authorEmail || author == "") && authorEmail.indexOf("@") > 0)
+			author = authorEmail[0..authorEmail.indexOf("@")];
 
 		//where = "Newsgroups" in headers ? headers["Newsgroups"] : null;
 		if ("Xref" in headers)
