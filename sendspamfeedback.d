@@ -26,6 +26,7 @@ import spam;
 
 void main(string[] args)
 {
+	files:
 	foreach (fn; args[1..$])
 	{
 		writeln("--------------------------------------------------------------------");
@@ -42,6 +43,7 @@ void main(string[] args)
 			{
 				case "spam": feedback = SpamFeedback.spam; break;
 				case "ham":  feedback = SpamFeedback.ham;  break;
+				case "skip": continue files;
 				default: break;
 			}
 		}
