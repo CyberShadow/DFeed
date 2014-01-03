@@ -187,6 +187,7 @@ class WebUI
 			{
 				// Obsolete "/discussion/" prefix
 				case "discussion":
+					return response.redirect(request.resource["/discussion".length..$], HttpStatusCode.MovedPermanently);
 
 				case "":
 					// Handle redirects from pnews
