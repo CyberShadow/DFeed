@@ -119,6 +119,14 @@ final class PostProcess
 	this(string fileName)
 	{
 		pid = "unknown";
+
+		{
+			import std.regex;
+
+			auto m = fileName.match(` - PostProcess-([a-z]{20})\.log`);
+			if (m)
+				pid = m.captures[1];
+		}
 		foreach (line; split(cast(string)read(fileName), "\n"))
 		{
 			if (line.length < 30 || line[0] != '[')
