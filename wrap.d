@@ -75,7 +75,7 @@ Paragraph[] unwrapText(string text, bool flowed, bool delsp)
 			{
 				buffer = Paragraph(quotePrefix, line ~ " ");
 			}
-			else if (!paragraphs.length > 0) // Always init paragraph
+			else if (!paragraphs.length > 0) // Init paragraph; get next buffer
 			{
 				paragraphs ~= buffer;
 				buffer = Paragraph(quotePrefix, line ~ " ");
@@ -95,7 +95,10 @@ Paragraph[] unwrapText(string text, bool flowed, bool delsp)
 		else if(buffer.text.length > 0// If we have a buffer, but the current line doesn't go over the limit
 			&& (quotePrefix.length + line.length) <= DEFAULT_WRAP_LENGTH)
 		{
-			paragraphs[$-1].text ~= buffer.text;
+			if (!paragraphs.length > 0) // Init paragraph; no new buffer
+				paragraphs ~= buffer;
+			else
+				paragraphs[$-1].text ~= buffer.text;
 			buffer.clear;
 			paragraphs ~= Paragraph(quotePrefix,line); //This short line might be code, or intentionally short
 			paragraphs ~= Paragraph(quotePrefix,""); //This force break is code smell, but I can't figure out how to rm it.
