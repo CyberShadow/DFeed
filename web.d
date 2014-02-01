@@ -1508,6 +1508,7 @@ class WebUI
 			knownPosts[post.id] = post;
 
 		enforce(posts.length, "Thread not found");
+		enforce(posts[0].xref.length, "No groups found in thread");
 
 		group = posts[0].xref[0].group;
 		title = posts[0].subject;
