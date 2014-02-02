@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -63,7 +63,7 @@ private:
 		// Use a jitter to avoid making multiple simultaneous resquests
 		auto delay = pollPeriod + uniform(-5, 5);
 		log(format("Next poll in %d seconds", delay));
-		timerTask = setTimeout(&startNextRequest, TickDuration.from!"seconds"(delay));
+		timerTask = setTimeout(&startNextRequest, delay.seconds);
 	}
 
 	void startNextRequest()

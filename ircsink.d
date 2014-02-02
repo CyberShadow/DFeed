@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -101,7 +101,7 @@ private:
 	{
 		connecting = connected = false;
 		if (type != DisconnectType.Requested && !stopping)
-			setTimeout(&connect, TickDuration.from!"seconds"(10));
+			setTimeout(&connect, 10.seconds);
 	}
 
 	/// This function exists for the sole reason of avoiding creation of
