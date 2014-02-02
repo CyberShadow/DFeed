@@ -57,6 +57,7 @@ void main(string[] args)
 //	new Feed("Twitter-incomputable", "http://twitter.com/statuses/user_timeline/155425162.atom", null, 120);
 //	new Feed("Twitter-D_programming", "http://twitter.com/statuses/user_timeline/148794328.atom", null, 120);
 //	new Feed("Twitter-DigitalMars", "http://twitter.com/statuses/user_timeline/148481064.atom", null, 120);
+	new Feed("D Wiki", "http://wiki.dlang.org/?title=Special:RecentChanges&feed=atom", "edited");
 
 	// Create sinks
 	new IrcSink();
