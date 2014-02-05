@@ -20,11 +20,11 @@ module wrap;
 import std.string;
 import std.utf;
 
-import ae.utils.text;
-
 struct Paragraph
 {
 	dstring quotePrefix, text;
+
+	@property length(){ return quotePrefix.length + text.length; }
 }
 
 Paragraph[] unwrapText(string text, bool flowed, bool delsp)
@@ -32,6 +32,7 @@ Paragraph[] unwrapText(string text, bool flowed, bool delsp)
 	auto lines = text.toUTF32().splitLines();
 
 	Paragraph[] paragraphs;
+	Paragraph buffer; //For reflowing
 
 	foreach (line; lines)
 	{
@@ -59,15 +60,63 @@ Paragraph[] unwrapText(string text, bool flowed, bool delsp)
 		 && line.length
 		 && line != "-- "
 		 && paragraphs[$-1].text != "-- "d
-		 && (flowed || quotePrefix.length))
+		 && (flowed || quotePrefix.length)
+		 && !buffer.length) // Can't have quotePrefix OR text
 		{
 			if (delsp)
 				paragraphs[$-1].text = paragraphs[$-1].text[0..$-1];
 			paragraphs[$-1].text ~= line;
 		}
-		else
+		//Only use the buffer if we're over the limit
+		else if (!flowed //Not touching it if it's flowed
+			 && (quotePrefix.length + line.length) >= DEFAULT_WRAP_LENGTH) //Is it over the limit?
+		{
+			if (!buffer.text.length) // First contact; always get a buffer
+			{
+				buffer = Paragraph(quotePrefix, line ~ " ");
+			}
+			else if (!paragraphs.length > 0) // Init paragraph; get next buffer
+			{
+				paragraphs ~= buffer;
+				buffer = Paragraph(quotePrefix, line ~ " ");
+			}
+			else if (buffer.quotePrefix.length != quotePrefix.length) // Indentation level changed
+			{
+				paragraphs[$-1].text ~= buffer.text; // So we have to flush the current buffer
+				buffer = Paragraph(quotePrefix, line ~ " ");
+				paragraphs ~= Paragraph(quotePrefix,""); // And increment to the next paragraph.
+			}
+			else // Add to current otherwise
+			{
+				paragraphs[$-1].text ~= buffer.text;
+				buffer.text = line;
+			}
+		}
+		else if(buffer.text.length > 0// If we have a buffer, but the current line doesn't go over the limit
+			&& (quotePrefix.length + line.length) <= DEFAULT_WRAP_LENGTH)
+		{
+			if (!paragraphs.length > 0) // Init paragraph; no new buffer
+				paragraphs ~= buffer;
+			else
+				paragraphs[$-1].text ~= buffer.text;
+			buffer.clear;
+			paragraphs ~= Paragraph(quotePrefix,line); //This short line might be code, or intentionally short
+			paragraphs ~= Paragraph(quotePrefix,""); //This force break is code smell, but I can't figure out how to rm it.
+		}
+		else //Short line and there's no buffer.  Out it goes.
+		{
 			paragraphs ~= Paragraph(quotePrefix, line);
+		}
 	}
+	if(buffer.text.length // If we still have a buffer, final flush
+	 && (buffer.length) >= DEFAULT_WRAP_LENGTH
+	 && paragraphs[$-1].length > DEFAULT_WRAP_LENGTH)
+	{
+		paragraphs[$-1].text ~=  buffer.text;
+		buffer.text.clear;
+	}
+	else
+		paragraphs ~= Paragraph(buffer.quotePrefix, buffer.text);
 
 	return paragraphs;
 }
@@ -144,4 +193,9 @@ unittest
 	static assert(str.toUTF32().length < DEFAULT_WRAP_LENGTH);
 	static assert(str.length > DEFAULT_WRAP_LENGTH);
 	assert(wrapText(unwrapText(str, false, false)).split("\n").length == 1);
+
+	// Rewrap consecutive quoted lines with length greater than DEFAULT_WRAP_LENGTH
+	static assert(wrapText(unwrapText("> Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod \n> tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,", false, false)) ==
+		      "> Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed \n> do eiusmod tempor incididunt ut labore et dolore magna aliqua. \n> Ut enim ad minim veniam,");
 }
+
