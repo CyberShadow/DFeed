@@ -930,11 +930,10 @@ class WebUI
 
 		void summarizeLastPost(PostInfo* info)
 		{
-			// TODO: link?
 			if (info)
 				with (*info)
 					return html.put(
-						`<span class="forum-postsummary-time">`, summarizeTime(time), `</span>`
+						`<a class="forum-postsummary-time ` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `" href="` ~ encodeEntities(idToUrl(id)) ~ `">` ~ summarizeTime(time) ~ `</a>` ~
 						`by <span class="forum-postsummary-author">`, truncateString(author, 25), `</span><br>`);
 
 			html.put(`<div class="forum-no-data">-</div>`);
