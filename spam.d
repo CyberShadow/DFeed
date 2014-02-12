@@ -181,7 +181,7 @@ void checkStopForumSpam(PostProcess process, SpamResultHandler handler)
 		import std.stream;
 		import std.datetime;
 		import ae.utils.xml;
-		import ae.utils.time;
+		import ae.utils.time : parseTime;
 
 		auto xml = new XmlDocument(new MemoryStream(cast(char[])result));
 		auto response = xml["response"];
