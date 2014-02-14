@@ -41,13 +41,13 @@ import ae.utils.text;
 import ae.utils.textout;
 import ae.utils.time;
 
+import cache;
 import captcha;
 import common;
 import database;
-import cache;
-import rfc850;
-import user;
+import message;
 import posting;
+import user;
 
 version = MeasurePerformance;
 
@@ -1212,7 +1212,7 @@ class WebUI
 	string[] formatPostParts(Rfc850Post post)
 	{
 		string[] partList;
-		void visitParts(Rfc850Post[] parts, int[] path)
+		void visitParts(Rfc850Message[] parts, int[] path)
 		{
 			foreach (int i, part; parts)
 			{
@@ -1315,15 +1315,15 @@ class WebUI
 
 		string repliesTitle = `Replies to `~encodeEntities(post.author)~`'s post from `~encodeEntities(formatShortTime(post.time, false));
 
-		with (post)
+		with (post.msg)
 		{
 			html.put(
 				`<div class="post-wrapper">`
-				`<table class="post forum-table`, (children ? ` with-children` : ``), `" id="`, encodeEntities(idToFragment(id)), `">`
+				`<table class="post forum-table`, (post.children ? ` with-children` : ``), `" id="`, encodeEntities(idToFragment(id)), `">`
 				`<tr class="post-header"><th colspan="2">`
 					`<div class="post-time">`, summarizeTime(time), `</div>`
-					`<a title="Permanent link to this post" href="`, encodeEntities(idToUrl(id)), `" class="`, (user.isRead(rowid) ? "forum-read" : "forum-unread"), `">`,
-						encodeEntities(realSubject),
+					`<a title="Permanent link to this post" href="`, encodeEntities(idToUrl(id)), `" class="`, (user.isRead(post.rowid) ? "forum-read" : "forum-unread"), `">`,
+						encodeEntities(rawSubject),
 					`</a>`
 				`</th></tr>`
 				`<tr>`
@@ -1352,7 +1352,7 @@ class WebUI
 				`</table>`
 				`</div>`);
 
-			if (children)
+			if (post.children)
 			{
 				html.put(
 					`<table class="post-nester"><tr>`
@@ -1361,7 +1361,7 @@ class WebUI
 							`title="`, repliesTitle, `"></a>`
 					`</td>`
 					`<td>`);
-				foreach (child; children)
+				foreach (child; post.children)
 					formatPost(child, knownPosts);
 				html.put(`</td>`
 					`</tr></table>`);
@@ -1413,15 +1413,15 @@ class WebUI
 
 		string gravatarHash = getGravatarHash(post.authorEmail);
 
-		with (post)
+		with (post.msg)
 		{
 			html.put(
 				`<div class="post-wrapper">`
 				`<table class="split-post forum-table" id="`, encodeEntities(idToFragment(id)), `">`
 				`<tr class="post-header"><th>`
 					`<div class="post-time">`, summarizeTime(time), `</div>`
-					`<a title="Permanent link to this post" href="`, encodeEntities(idToUrl(id)), `" class="`, (user.isRead(rowid) ? "forum-read" : "forum-unread"), `">`,
-						encodeEntities(realSubject),
+					`<a title="Permanent link to this post" href="`, encodeEntities(idToUrl(id)), `" class="`, (user.isRead(post.rowid) ? "forum-read" : "forum-unread"), `">`,
+						encodeEntities(rawSubject),
 					`</a>`
 				`</th></tr>`
 				`<tr><td class="split-post-info">`
@@ -2371,7 +2371,7 @@ class WebUI
 			html.put("</pre>");
 
 			auto url = "http://" ~ vhost ~ idToUrl(post.id);
-			auto title = post.realSubject;
+			auto title = post.rawSubject;
 			if (!group)
 				title = "[" ~ post.where ~ "] " ~ title;
 

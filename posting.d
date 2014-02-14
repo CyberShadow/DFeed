@@ -26,9 +26,9 @@ import ae.sys.log;
 import ae.net.nntp.client;
 
 import captcha;
-import rfc850;
-import spam;
 import common;
+import message;
+import spam;
 
 enum PostingStatus
 {

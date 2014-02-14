@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -23,7 +23,7 @@ import ae.net.asockets;
 import ae.utils.text;
 
 import common;
-import rfc850;
+import message;
 
 /// Listen for email messages piped by a helper script to a socket.
 class MailingLists : NewsSource

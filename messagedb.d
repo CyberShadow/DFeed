@@ -22,7 +22,7 @@ import ae.sys.log;
 
 import common;
 import database;
-import rfc850;
+import message;
 
 final class MessageDBSink : NewsSink
 {

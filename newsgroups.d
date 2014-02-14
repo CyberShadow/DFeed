@@ -27,8 +27,8 @@ import ae.net.nntp.listener;
 import ae.sys.timing;
 
 import common;
-import rfc850;
 import database;
+import message;
 
 /// Poll the server periodically for new messages
 class NntpListenerSource : NewsSource
