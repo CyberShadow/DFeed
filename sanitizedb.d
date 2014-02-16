@@ -2,7 +2,7 @@ import std.utf;
 import std.stdio;
 
 import database;
-import rfc850;
+import message;
 
 void main()
 {

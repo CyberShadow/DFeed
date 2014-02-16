@@ -190,7 +190,7 @@ void checkStopForumSpam(PostProcess process, SpamResultHandler handler)
 			handler(true, null);
 		else
 		{
-			auto date = parseTime("Y-m-d H:i:s", response["lastseen"].text);
+			auto date = response["lastseen"].text.parseTime!"Y-m-d H:i:s"();
 			if (Clock.currTime() - date < dur!"days"(DAYS_THRESHOLD))
 				handler(false, format(
 					"StopForumSpam thinks you may be a spammer (%s last seen: %s, frequency: %s)",

@@ -20,8 +20,8 @@ import std.getopt;
 
 import common;
 import database;
+import message;
 import messagedb;
-import rfc850;
 
 MessageDBSink sink;
 

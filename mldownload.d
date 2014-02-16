@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -30,7 +30,7 @@ import ae.sys.timing;
 import common;
 import database;
 import messagedb;
-import rfc850;
+import message;
 
 bool update;
 MessageDBSink sink;
@@ -74,7 +74,7 @@ class MLDownloader : NewsSource
 			(string error)
 			{
 				log("Error downloading list " ~ list ~ ": " ~ error);
-				setTimeout({ downloadList(list); }, TickDuration.from!"seconds"(10));
+				setTimeout({ downloadList(list); }, 10.seconds);
 			});
 	}
 
@@ -111,7 +111,7 @@ class MLDownloader : NewsSource
 			(string error)
 			{
 				log("Error downloading file " ~ fn ~ " on list " ~ list ~ ": " ~ error);
-				setTimeout({ downloadFile(list, fn); }, TickDuration.from!"seconds"(10));
+				setTimeout({ downloadFile(list, fn); }, 10.seconds);
 			});
 	}
 }

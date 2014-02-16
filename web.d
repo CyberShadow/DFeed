@@ -2168,14 +2168,20 @@ class WebUI
 			return ago(duration.total!"days", "day");
 		else
 		if (duration < dur!"days"(300))
-			return formatTime(shorter ? "M d"    : "F d"   , time);
+			if (shorter)
+				return time.format!"M d"();
+			else
+				return time.format!"F d"();
 		else
-			return formatTime(shorter ? "M d, Y" : "F d, Y", time);
+			if (shorter)
+				return time.format!"M d, Y"();
+			else
+				return time.format!"F d, Y"();
 	}
 
 	string formatLongTime(SysTime time)
 	{
-		return formatTime("l, d F Y, H:i:s e", time);
+		return time.format!"l, d F Y, H:i:s e"();
 	}
 
 	/// Add thousand-separators

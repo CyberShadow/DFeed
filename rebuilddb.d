@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -20,8 +20,8 @@ import std.getopt;
 
 import common;
 import database;
+import message;
 import messagedb;
-import rfc850;
 
 /// Dummy/test source used for rebuilding the message database.
 class DatabaseSource : NewsSource
