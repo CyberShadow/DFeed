@@ -28,6 +28,8 @@ import ae.utils.array;
 import common;
 import bitly;
 
+alias std.string.indexOf indexOf;
+
 class Rfc850Post : Post
 {
 	/// Internet message.
