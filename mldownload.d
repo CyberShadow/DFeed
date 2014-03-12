@@ -119,7 +119,6 @@ class MLDownloader : NewsSource
 void main(string[] args)
 {
 	getopt(args,
-		"q|quiet", &common.quiet,
 		"u|update", &update);
 
 	sink = new MessageDBSink();

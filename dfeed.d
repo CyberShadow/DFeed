@@ -17,7 +17,6 @@
 module dfeed;
 
 import std.file;
-import std.getopt;
 import std.stdio;
 
 import ae.net.asockets;
@@ -36,11 +35,8 @@ import reddit;
 import ircsink;
 import messagedb;
 
-void main(string[] args)
+void main()
 {
-	getopt(args,
-		"q|quiet", &common.quiet);
-
 	// Create sources
 	startNNTP();
 	new MailingLists();

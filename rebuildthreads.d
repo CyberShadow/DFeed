@@ -16,8 +16,6 @@
 
 module rebuildthreads;
 
-import std.getopt;
-
 import common;
 import database;
 import message;
@@ -66,11 +64,8 @@ class DatabaseSource : NewsSource
 	override void stop() { assert(false); }
 }
 
-void main(string[] args)
+void main()
 {
-	getopt(args,
-		"q|quiet", &common.quiet);
-
 	new DatabaseSource();
 	sink = new MessageDBSink();
 

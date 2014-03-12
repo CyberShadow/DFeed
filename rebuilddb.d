@@ -16,8 +16,6 @@
 
 module rebuilddb;
 
-import std.getopt;
-
 import common;
 import database;
 import message;
@@ -46,11 +44,8 @@ class DatabaseSource : NewsSource
 	}
 }
 
-void main(string[] args)
+void main()
 {
-	getopt(args,
-		"q|quiet", &common.quiet);
-
 	//db.exec("DROP TABLE IF EXISTS `OldPosts`");
 	//db.exec("ALTER TABLE `Posts` RENAME TO `OldPosts`");
 	db.exec("ATTACH 'data/dfeed_old.s3db' AS old");

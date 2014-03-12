@@ -21,12 +21,7 @@ import std.datetime;
 import ae.sys.log;
 import ae.net.shutdown;
 
-bool quiet;
-
-Logger createLogger(string name)
-{
-	return quiet ? new FileLogger(name) : new FileAndConsoleLogger(name);
-}
+alias quiet = ae.sys.log.quiet;
 
 // ***************************************************************************
 
@@ -94,6 +89,8 @@ void announcePost(Post p)
 	foreach (sink; newsSinks)
 		sink.handlePost(p);
 }
+
+// ***************************************************************************
 
 /// Filter a name in an announcement to avoid an IRC highlight.
 /// This is done by toggling "bold" twice inside the middle of each word.
