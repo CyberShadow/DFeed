@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -93,4 +93,18 @@ void announcePost(Post p)
 {
 	foreach (sink; newsSinks)
 		sink.handlePost(p);
+}
+
+/// Filter a name in an announcement to avoid an IRC highlight.
+/// This is done by toggling "bold" twice inside the middle of each word.
+string filterIRCName(string name)
+{
+	import std.string;
+	import std.algorithm;
+	return name.split(" ").map!(s => s[0..$/2] ~ "\x02\x02" ~ s[$/2..$]).join(" ");
+}
+
+unittest
+{
+	assert(filterIRCName("Vladimir Panteleev") == "Vlad\x02\x02imir Pant\x02\x02eleev");
 }

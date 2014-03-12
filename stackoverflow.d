@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2013  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2013, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -58,7 +58,7 @@ private:
 		override void formatForIRC(void delegate(string) handler)
 		{
 			shortenURL(url, (string shortenedURL) {
-				handler(format("[StackOverflow] %s asked \"%s\": %s", author, title, shortenedURL));
+				handler(format("[StackOverflow] %s asked \"%s\": %s", filterIRCName(author), title, shortenedURL));
 			});
 		}
 	}

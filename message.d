@@ -125,7 +125,7 @@ class Rfc850Post : Post
 
 		handler(format("%s%s %s %s%s",
 			where is null ? null : "[" ~ where.replace("digitalmars.", "dm.") ~ "] ",
-			author == "" ? "<no name>" : author,
+			author == "" ? "<no name>" : filterIRCName(author),
 			reply ? "replied to" : "posted",
 			subject == "" ? "<no subject>" : `"` ~ subject ~ `"`,
 			shortURL ? ": " ~ shortURL : ""

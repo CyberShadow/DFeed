@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -59,9 +59,9 @@ private:
 		{
 			shortenURL(url, (string shortenedURL) {
 				if (action)
-					handler(format("[%s] %s %s \"%s\": %s", this.outer.name, author, this.outer.action, title, shortenedURL));
+					handler(format("[%s] %s %s \"%s\": %s", this.outer.name, filterIRCName(author), this.outer.action, title, shortenedURL));
 				else // author is already indicated in title
-					handler(format("[%s] %s: %s", this.outer.name, title, shortenedURL));
+					handler(format("[%s] %s: %s", this.outer.name, filterIRCName(title), shortenedURL));
 			});
 		}
 	}
