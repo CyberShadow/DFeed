@@ -1246,6 +1246,7 @@ class WebUI
 	string getGravatarHash(string email)
 	{
 		import std.digest.md;
+		import std.ascii : LetterCase;
 		return email.toLower().strip().md5Of().toHexString!(LetterCase.lower)().idup; // Issue 9279
 	}
 

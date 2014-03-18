@@ -82,7 +82,10 @@ class Rfc850Post : Post
 		}
 		else
 		if (id.length)
-			url = format("http://%s/post/%s", std.file.readText("data/web.txt").splitLines()[1], encodeComponent(id[1..$-1]));
+		{
+			import std.file;
+			url = format("http://%s/post/%s", readText("data/web.txt").splitLines()[1], encodeComponent(id[1..$-1]));
+		}
 /+		else
 		if (xref.length)
 		{

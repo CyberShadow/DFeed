@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2013  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2013, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -89,7 +89,8 @@ final:
 					zcode = Base64.decode(b64);
 				catch
 				{
-					std.file.write("bad-base64.txt", b64);
+					import std.file;
+					write("bad-base64.txt", b64);
 					throw new Exception("Malformed Base64 in read post history cookie. Try clearing your cookies.");
 				}
 				readPosts = [uncompress(Data(zcode))].ptr;
