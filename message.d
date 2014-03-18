@@ -104,6 +104,8 @@ class Rfc850Post : Post
 
 		//if ("MESSAGE-ID" in headers)
 		//	url = "news://news.digitalmars.com/" ~ headers["MESSAGE-ID"][1..$-1];
+
+		super.time = msg.time;
 	}
 
 	private this(Rfc850Message msg) { this.msg = msg; }
