@@ -92,16 +92,18 @@ void announcePost(Post p)
 
 // ***************************************************************************
 
+/// Formatting codes inserted into names to disrupt IRC highlight.
+enum ircHighlightBreaker = "\u200b"; // zero-width space
+
 /// Filter a name in an announcement to avoid an IRC highlight.
-/// This is done by toggling "bold" twice inside the middle of each word.
 string filterIRCName(string name)
 {
 	import std.string;
 	import std.algorithm;
-	return name.split(" ").map!(s => s[0..$/2] ~ "\x02\x02" ~ s[$/2..$]).join(" ");
+	return name.split(" ").map!(s => s[0..$/2] ~ ircHighlightBreaker ~ s[$/2..$]).join(" ");
 }
 
 unittest
 {
-	assert(filterIRCName("Vladimir Panteleev") == "Vlad\x02\x02imir Pant\x02\x02eleev");
+	assert(filterIRCName("Vladimir Panteleev") == "Vlad" ~ ircHighlightBreaker ~ "imir Pant" ~ ircHighlightBreaker ~ "eleev");
 }

@@ -31,8 +31,11 @@ import common;
 
 alias core.time.TickDuration TickDuration;
 
-//const FORMAT = "PRIVMSG %s :\x01ACTION %s\x01";
-const FORMAT = "PRIVMSG %s :\x01ACTION \x0314%s\x01";
+/// IRC color code for sent lines
+enum ircColor = 14; // Dark gray
+
+/// Format string for IRC announcements (as raw IRC protocol line)
+const ircFormat = "PRIVMSG %s :\x01ACTION \x03" ~ format("%02d", ircColor) ~ "%s\x01";
 
 final class IrcSink : NewsSink
 {
@@ -72,9 +75,9 @@ protected:
 				if (connected)
 				{
 					summary = summary.newlinesToSpaces();
-					conn.sendRaw(format(FORMAT, channel2, summary));
+					conn.sendRaw(format(ircFormat, channel2, summary));
 					if (important)
-						conn.sendRaw(format(FORMAT, channel, summary));
+						conn.sendRaw(format(ircFormat, channel, summary));
 				}
 			});
 		}
