@@ -100,10 +100,20 @@ string filterIRCName(string name)
 {
 	import std.string;
 	import std.algorithm;
-	return name.split(" ").map!(s => s[0..$/2] ~ ircHighlightBreaker ~ s[$/2..$]).join(" ");
+	import std.array;
+
+	name = name.split(" ").map!(s => s[0..$/2] ~ ircHighlightBreaker ~ s[$/2..$]).join(" ");
+
+	// Split additional keywords
+	foreach (word; ["Cyber"])
+		if (name.indexOf(word) >= 0)
+			name = name.replace(word, word[0..$/2] ~ ircHighlightBreaker ~ word[$/2..$]);
+
+	return name;
 }
 
 unittest
 {
 	assert(filterIRCName("Vladimir Panteleev") == "Vlad" ~ ircHighlightBreaker ~ "imir Pant" ~ ircHighlightBreaker ~ "eleev");
+	assert(filterIRCName("CyberShadow") == "Cy" ~ ircHighlightBreaker ~ "ber" ~ ircHighlightBreaker ~ "Shadow");
 }
