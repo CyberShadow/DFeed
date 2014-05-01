@@ -93,7 +93,7 @@ void announcePost(Post p)
 // ***************************************************************************
 
 /// Formatting codes inserted into names to disrupt IRC highlight.
-enum ircHighlightBreaker = "\u200b"; // zero-width space
+enum ircHighlightBreaker = "\uFEFF"; // BOM / zero-width non-breaking space
 
 /// Filter a name in an announcement to avoid an IRC highlight.
 string filterIRCName(string name)
