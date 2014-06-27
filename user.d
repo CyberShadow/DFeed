@@ -85,15 +85,24 @@ final:
 			{
 				// Temporary hack to catch Phobos bug
 				ubyte[] zcode;
+
+				enum advice = "Try clearing your browser's cookies. Create an account to avoid repeated incidents.";
+
 				try
 					zcode = Base64.decode(b64);
 				catch
 				{
-					import std.file;
-					write("bad-base64.txt", b64);
-					throw new Exception("Malformed Base64 in read post history cookie. Try clearing your cookies.");
+					import std.file; write("bad-base64.txt", b64);
+					throw new Exception("Malformed Base64 in read post history cookie. " ~ advice);
 				}
-				readPosts = [uncompress(Data(zcode))].ptr;
+
+				try
+					readPosts = [uncompress(Data(zcode))].ptr;
+				catch (ZlibException e)
+				{
+					import std.file; write("bad-zlib.z", zcode);
+					throw new Exception("Malformed deflated data in read post history cookie (" ~ e.msg ~ "). " ~ advice);
+				}
 			}
 			else
 				readPosts = new Data();
