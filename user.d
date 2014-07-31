@@ -81,7 +81,7 @@ final:
 		if (!readPosts)
 		{
 			auto b64 = get("readposts", null);
-			if (b64)
+			if (b64.length)
 			{
 				// Temporary hack to catch Phobos bug
 				ubyte[] zcode;
