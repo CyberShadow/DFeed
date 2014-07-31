@@ -28,7 +28,7 @@ import bitly;
 import common;
 import webpoller;
 
-const POLL_PERIOD = 15;
+const POLL_PERIOD = 60;
 
 class StackOverflow : WebPoller
 {
@@ -66,8 +66,8 @@ private:
 protected:
 	override void getPosts()
 	{
-		auto url = "http://api.stackoverflow.com/1.1/questions?pagesize=10&tagged=" ~ tags ~
-			(exists("data/stackoverflow.txt") ? "&key=" ~ readText("data/stackoverflow.txt") : "");
+		auto url = "http://api.stackexchange.com/2.2/questions?pagesize=10&order=desc&sort=creation&site=stackoverflow&tagged=" ~ tags ~
+			(exists("data/stackoverflow.txt") ? "&key=" ~ readText("data/stackoverflow2.txt") : "");
 		httpGet(url, (string json) {
 			if (json == "<html><body><h1>408 Request Time-out</h1>\nYour browser didn't send a complete request in time.\n</body></html>\n")
 			{
@@ -77,16 +77,19 @@ protected:
 
 			struct JsonQuestionOwner
 			{
+				int reputation;
 				int user_id;
 				string user_type;
+				int accept_rate;
+				string profile_image;
 				string display_name;
-				int reputation;
-				string email_hash;
+				string link;
 			}
 
 			struct JsonQuestion
 			{
 				string[] tags;
+				bool is_answered;
 				int answer_count, accepted_answer_id, favorite_count;
 				int closed_date;
 				string closed_reason;
@@ -98,20 +101,21 @@ protected:
 				int creation_date, last_edit_date, last_activity_date;
 				int up_vote_count, down_vote_count, view_count, score;
 				bool community_owned;
-				string title;
+				string title, link;
 			}
 
 			struct JsonQuestions
 			{
-				int total, page, pagesize;
-				JsonQuestion[] questions;
+				JsonQuestion[] items;
+				bool has_more;
+				int quota_max, quota_remaining;
 			}
 
 			scope(failure) std.file.write("so-error.txt", json);
 			auto data = jsonParse!(JsonQuestions)(json);
 			Post[string] r;
 
-			foreach (q; data.questions)
+			foreach (q; data.items)
 				r[text(q.question_id)] = new Question(q.title, q.owner.display_name, format("http://stackoverflow.com/q/%d", q.question_id), SysTime(unixTimeToStdTime(q.creation_date)));
 
 			handlePosts(r);
