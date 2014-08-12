@@ -17,7 +17,9 @@
 module webpoller;
 
 import ae.sys.timing;
+import ae.utils.aa;
 
+import std.algorithm;
 import std.random;
 import std.string;
 
@@ -89,10 +91,12 @@ protected:
 		if (newPosts.length > LIMIT)
 			return handleError("Too many posts, aborting!");
 
-		foreach (id, q; newPosts)
+		auto newPostList = newPosts.pairs();
+		newPostList.sort!`a.value.time < b.value.time`();
+		foreach (pair; newPostList)
 		{
-			log(format("Announcing %s", id));
-			announcePost(q);
+			log(format("Announcing %s", pair.key));
+			announcePost(pair.value);
 		}
 
 		scheduleNextRequest();
