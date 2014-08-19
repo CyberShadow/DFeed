@@ -2151,13 +2151,13 @@ class WebUI
 			return "just now";
 		else
 		if (duration < dur!"minutes"(1))
-			return ago(duration.seconds, "second");
+			return ago(duration.total!"seconds", "second");
 		else
 		if (duration < dur!"hours"(1))
-			return ago(duration.minutes, "minute");
+			return ago(duration.total!"minutes", "minute");
 		else
 		if (duration < dur!"days"(1))
-			return ago(duration.hours, "hour");
+			return ago(duration.total!"hours", "hour");
 		else
 		/*if (duration < dur!"days"(2))
 			return "yesterday";
