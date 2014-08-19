@@ -335,9 +335,9 @@ class WebUI
 				case "source":
 				{
 					enforce(path.length > 1, "Invalid URL");
-					auto post = getPost('<' ~ urlDecode(path[1]) ~ '>', array(map!(to!uint)(path[2..$])));
-					enforce(post, "Post not found");
-					return response.serveData(Data(post.message), "text/plain");
+					auto message = getPostSource('<' ~ urlDecode(path[1]) ~ '>');
+					enforce(message !is null, "Post not found");
+					return response.serveData(Data(message), "text/plain");
 				}
 				case "split-post":
 					enforce(path.length > 1, "No post specified");
@@ -2009,6 +2009,13 @@ class WebUI
 			}
 			return post;
 		}
+		return null;
+	}
+
+	static string getPostSource(string id)
+	{
+		foreach (string message; query("SELECT `Message` FROM `Posts` WHERE `ID` = ?").iterate(id))
+			return message;
 		return null;
 	}
 
