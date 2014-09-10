@@ -75,6 +75,12 @@ protected:
 				return; // Temporary problem
 			}
 
+			if (json.canFind("<title>We are Offline</title>")
+			{
+				log("Server reports SO is offline");
+				return; // Temporary problem
+			}
+
 			struct JsonQuestionOwner
 			{
 				int reputation;
