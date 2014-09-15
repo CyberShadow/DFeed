@@ -23,6 +23,7 @@ import std.datetime;
 
 import ae.net.http.client;
 import ae.utils.json;
+import ae.utils.text;
 
 import bitly;
 import common;
@@ -75,7 +76,7 @@ protected:
 				return; // Temporary problem
 			}
 
-			if (json.canFind("<title>We are Offline</title>")
+			if (json.contains("<title>We are Offline</title>"))
 			{
 				log("Server reports SO is offline");
 				return; // Temporary problem
