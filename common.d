@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -99,11 +99,23 @@ enum ircHighlightBreaker = "\u200E"; // LEFT-TO-RIGHT MARK
 /// Filter a name in an announcement to avoid an IRC highlight.
 string filterIRCName(string name)
 {
-	import std.string;
 	import std.algorithm;
 	import std.array;
+	import std.conv;
+	import std.string;
 
-	name = name.split(" ").map!(s => s[0..$/2] ~ ircHighlightBreaker ~ s[$/2..$]).join(" ");
+	name = name
+		.to!dstring
+		.split(" "d)
+		.map!(s =>
+			s.length < 2
+			?
+				s
+			:
+				s[0..$/2] ~ ircHighlightBreaker ~ s[$/2..$]
+		)
+		.join(" "d)
+		.to!string;
 
 	// Split additional keywords
 	foreach (word; ["Cyber"])
@@ -117,4 +129,5 @@ unittest
 {
 	assert(filterIRCName("Vladimir Panteleev") == "Vlad" ~ ircHighlightBreaker ~ "imir Pant" ~ ircHighlightBreaker ~ "eleev");
 	assert(filterIRCName("CyberShadow") == "Cy" ~ ircHighlightBreaker ~ "ber" ~ ircHighlightBreaker ~ "Shadow");
+	assert(filterIRCName("Rémy") == "Ré" ~ ircHighlightBreaker ~ "my");
 }
