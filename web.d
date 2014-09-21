@@ -2040,7 +2040,7 @@ class WebUI
 	// ***********************************************************************
 
 	static Regex!char reUrl;
-	static this() { reUrl = regex(`\w+://[^<>\s]+[\w/]`); }
+	static this() { reUrl = regex(`\w+://[^<>\s]+[\w/\-=]`); }
 
 	void formatBody(string s)
 	{
