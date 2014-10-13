@@ -627,7 +627,7 @@ class WebUI
 
 	static GroupInfo makeGroupInfo(string name, string archiveName, string mlName, string description, bool mlOnly, bool bugzilla)
 	{
-		auto info = GroupInfo(name, description);
+		auto info = GroupInfo(name, description.chomp(".").strip());
 		string[] alsoVia;
 		if (!mlOnly)
 			alsoVia ~= `<a href="news://news.digitalmars.com/`~name~`">NNTP</a>`;
@@ -1600,7 +1600,11 @@ class WebUI
 		html.put(
 			`<div id="postform-info">`
 				`Posting to <b>`, encodeEntities(postTemplate.where), `</b>`,
-				(postTemplate.reply ? ` in reply to ` ~ postLink(getPostInfo(postTemplate.parentID)) : ``),
+				(postTemplate.reply
+					? ` in reply to ` ~ postLink(getPostInfo(postTemplate.parentID))
+					: getGroupInfo(postTemplate.where)
+						? `:<br>(<b>` ~ encodeEntities(getGroupInfo(postTemplate.where).description) ~ `</b>)`
+						: ``),
 			`</div>`
 			`<input type="hidden" name="secret" value="`, getUserSecret(), `">`
 			`<label for="postform-name">Your name:</label>`
