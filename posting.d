@@ -16,6 +16,7 @@
 
 module posting;
 
+import std.algorithm;
 import std.exception;
 import std.string;
 import std.file;
@@ -85,7 +86,7 @@ final class PostProcess
 			log("[Header] " ~ name ~ ": " ~ value);
 
 		// Discard duplicate posts (redirect to original)
-		string allContent = vars.values.sort.join("\0");
+		string allContent = vars.values.sort().release().join("\0");
 		if (allContent in postsByContent)
 		{
 			string original = postsByContent[allContent];

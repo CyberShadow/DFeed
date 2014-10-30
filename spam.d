@@ -16,9 +16,10 @@
 
 module spam;
 
-import std.string;
-import std.file;
+import std.algorithm;
 import std.exception;
+import std.file;
+import std.string;
 
 import ae.net.http.client;
 import ae.utils.array;
@@ -142,13 +143,13 @@ void checkProjectHoneyPot(PostProcess process, SpamResultHandler handler)
 		string[] sections = split(ip, ".");
 		if (sections.length != 4) // IPv6
 			return PHPResult(false);
-		sections.reverse;
+		sections.reverse();
 		string addr = ([key] ~ sections ~ ["dnsbl.httpbl.org"]).join(".");
 		InternetHost ih = new InternetHost;
 		if (!ih.getHostByName(addr))
 			return PHPResult(false);
 		auto resultIP = cast(ubyte[])(&ih.addrList[0])[0..1];
-		resultIP.reverse;
+		resultIP.reverse();
 		enforce(resultIP[0] == 127, "PHP API error");
 		return PHPResult(true, resultIP[1], resultIP[2], resultIP[3]);
 	}

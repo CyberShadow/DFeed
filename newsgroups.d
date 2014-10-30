@@ -16,6 +16,7 @@
 
 module newsgroups;
 
+import std.algorithm;
 import std.string;
 import std.conv;
 
@@ -172,7 +173,7 @@ private:
 			if (messagesToDownload.length)
 			{
 				client.selectGroup(group.name);
-				foreach (num; messagesToDownload.keys.sort)
+				foreach (num; messagesToDownload.keys.sort().release())
 					client.getMessage(to!string(num), &onMessage);
 			}
 
