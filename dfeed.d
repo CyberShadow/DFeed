@@ -27,9 +27,9 @@ import web;
 // Sources
 import newsgroups;
 import mailinglists;
-import stackoverflow;
+import services.stackoverflow;
 import feed;
-import reddit;
+import services.reddit;
 
 // Sinks
 import ircsink;

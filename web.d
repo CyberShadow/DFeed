@@ -42,7 +42,7 @@ import ae.utils.textout;
 import ae.utils.time;
 
 import cache;
-import captcha;
+import services.captcha;
 import common;
 import database;
 import message;

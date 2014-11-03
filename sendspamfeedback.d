@@ -22,7 +22,7 @@ import std.string;
 import ae.net.asockets;
 
 import posting;
-import spam;
+import services.spam;
 
 void main(string[] args)
 {

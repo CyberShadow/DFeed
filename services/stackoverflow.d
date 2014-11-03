@@ -14,7 +14,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-module stackoverflow;
+module services.stackoverflow;
 
 import std.string;
 import std.file;
@@ -25,7 +25,7 @@ import ae.net.http.client;
 import ae.utils.json;
 import ae.utils.text;
 
-import bitly;
+import services.bitly;
 import common;
 import webpoller;
 

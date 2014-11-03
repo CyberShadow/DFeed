@@ -14,7 +14,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-module reddit;
+module services.reddit;
 
 import std.string;
 import std.stream;
@@ -27,7 +27,7 @@ import ae.utils.time;
 
 import common;
 import webpoller;
-import bitly;
+import services.bitly;
 
 class Reddit : WebPoller
 {

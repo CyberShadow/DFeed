@@ -26,7 +26,7 @@ public import ae.net.ietf.message;
 import ae.utils.array;
 
 import common;
-import bitly;
+import services.bitly;
 
 alias std.string.indexOf indexOf;
 
