@@ -24,8 +24,8 @@ import ae.utils.xml;
 import ae.net.http.client;
 
 import common;
-import bitly;
-import webpoller;
+import services.bitly;
+import news_sources.webpoller;
 
 class Feed : WebPoller
 {

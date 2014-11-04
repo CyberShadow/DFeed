@@ -14,7 +14,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-module bitly;
+module services.bitly;
 
 import std.uri;
 import std.file;

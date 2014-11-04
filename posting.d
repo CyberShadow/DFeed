@@ -26,10 +26,10 @@ import ae.utils.array;
 import ae.sys.log;
 import ae.net.nntp.client;
 
-import captcha;
+import services.captcha;
 import common;
 import message;
-import spam;
+import services.spam;
 
 enum PostingStatus
 {

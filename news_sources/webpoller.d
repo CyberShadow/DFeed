@@ -14,7 +14,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-module webpoller;
+module news_sources.webpoller;
 
 import ae.sys.timing;
 import ae.utils.aa;

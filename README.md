@@ -5,9 +5,9 @@ For now, to hack on the web interface:
     cd DFeed
     mkdir data
     sqlite3 data/dfeed.s3db < schema.sql
-    echo 80>data/web.txt
-    echo localhost>>data/web.txt
-    rdmd nntpdownload
+    echo 80 > data/web.txt
+    echo localhost >> data/web.txt
+    rdmd tools/nntpdownload
     rdmd dfeed_web
 
 `nntpdownload` will download messages from the NNTP server and save
