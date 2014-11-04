@@ -23,7 +23,7 @@ import ae.net.asockets;
 import ae.net.shutdown;
 
 import common;
-import newsgroups;
+import news_sources.newsgroups;
 import messagedb;
 
 void main(string[] args)

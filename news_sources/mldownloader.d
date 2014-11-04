@@ -14,9 +14,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-module mldownload;
+module news_sources.mldownloader;
 
-import std.getopt;
 import std.string;
 import std.regex;
 
@@ -39,6 +38,8 @@ MLDownloader downloader;
 class MLDownloader : NewsSource
 {
 	bool stopping;
+	public:
+	Logger log;
 
 	this()
 	{
@@ -114,20 +115,4 @@ class MLDownloader : NewsSource
 				setTimeout({ downloadFile(list, fn); }, 10.seconds);
 			});
 	}
-}
-
-void main(string[] args)
-{
-	getopt(args,
-		"u|update", &update);
-
-	sink = new MessageDBSink();
-	downloader = new MLDownloader();
-
-	startNewsSources();
-
-	db.exec("BEGIN"); allowTransactions = false;
-	socketManager.loop();
-	downloader.log("Committing...");
-	db.exec("COMMIT");
 }

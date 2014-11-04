@@ -14,7 +14,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-module newsgroups;
+module news_sources.newsgroups;
 
 import std.algorithm;
 import std.string;
