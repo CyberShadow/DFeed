@@ -2183,19 +2183,19 @@ class WebUI
 		else
 		if (duration < dur!"days"(300))
 			if (shorter)
-				return time.format!"M d"();
+				return time.formatTime!"M d"();
 			else
-				return time.format!"F d"();
+				return time.formatTime!"F d"();
 		else
 			if (shorter)
-				return time.format!"M d, Y"();
+				return time.formatTime!"M d, Y"();
 			else
-				return time.format!"F d, Y"();
+				return time.formatTime!"F d, Y"();
 	}
 
 	string formatLongTime(SysTime time)
 	{
-		return time.format!"l, d F Y, H:i:s e"();
+		return time.formatTime!"l, d F Y, H:i:s e"();
 	}
 
 	/// Add thousand-separators
