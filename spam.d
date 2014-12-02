@@ -216,14 +216,15 @@ void checkUserAgent(PostProcess process, SpamResultHandler handler)
 
 void checkKeywords(PostProcess process, SpamResultHandler handler)
 {
-	auto text = process.vars.get("text", "").toLower();
+	auto subject = process.vars.get("subject", "").toLower();
+	foreach (keyword; ["kitchen", "spamtest"])
+		if (subject.contains(keyword))
+			return handler(false, "Your subject contains a suspicious keyword or character sequence.");
 
+	auto text = process.vars.get("text", "").toLower();
 	foreach (keyword; ["<a href=", "[url=", "[url]http"])
 		if (text.contains(keyword))
-		{
-			handler(false, "Your post contains a suspicious keyword or character sequence.");
-			return;
-		}
+			return handler(false, "Your post contains a suspicious keyword or character sequence.");
 
 	handler(true, null);
 }
