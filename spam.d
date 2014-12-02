@@ -209,7 +209,7 @@ void checkUserAgent(PostProcess process, SpamResultHandler handler)
 	auto ua = process.headers.get("User-Agent", "");
 
 	if (ua.startsWith("WWW-Mechanize"))
-		handler(false, "You seem to be posting using an unusual user-agent.");
+		handler(false, "You seem to be posting using an unusual user-agent");
 
 	handler(true, null);
 }
@@ -219,12 +219,12 @@ void checkKeywords(PostProcess process, SpamResultHandler handler)
 	auto subject = process.vars.get("subject", "").toLower();
 	foreach (keyword; ["kitchen", "spamtest"])
 		if (subject.contains(keyword))
-			return handler(false, "Your subject contains a suspicious keyword or character sequence.");
+			return handler(false, "Your subject contains a suspicious keyword or character sequence");
 
 	auto text = process.vars.get("text", "").toLower();
 	foreach (keyword; ["<a href=", "[url=", "[url]http"])
 		if (text.contains(keyword))
-			return handler(false, "Your post contains a suspicious keyword or character sequence.");
+			return handler(false, "Your post contains a suspicious keyword or character sequence");
 
 	handler(true, null);
 }
