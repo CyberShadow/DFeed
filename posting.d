@@ -199,7 +199,7 @@ private:
 		if (!ok)
 		{
 			this.status = PostingStatus.CaptchaFailed;
-			this.error = PostError(errorMessage, errorData);
+			this.error = PostError("CAPTCHA error: " ~ errorMessage, errorData);
 			log("CAPTCHA failed: " ~ errorMessage);
 			if (errorData) log("CAPTCHA error data: " ~ errorData.toString());
 			log.close();
