@@ -22,9 +22,9 @@ import std.file;
 
 import ae.net.asockets;
 import ae.net.irc.client;
+import ae.net.shutdown;
 import ae.sys.log;
 import ae.sys.timing;
-import ae.sys.shutdown;
 import ae.utils.text;
 
 import common;
