@@ -35,6 +35,9 @@ import reddit;
 import ircsink;
 import messagedb;
 
+// Captcha
+import recaptcha;
+
 void main()
 {
 	// Create sources
