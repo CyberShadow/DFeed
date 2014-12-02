@@ -1639,12 +1639,18 @@ class WebUI
 			user["name"] = aaGet(vars, "name");
 			user["email"] = aaGet(vars, "email");
 
-			bool captchaPresent = theCaptcha.isPresent(vars);
-
 			auto now = Clock.currTime();
+
+			if (ip in lastPostAttempt && now - lastPostAttempt[ip] < 15.seconds)
+			{
+				discussionPostForm(post, false, PostError("Your last post was less than 15 seconds ago. Please wait a few seconds before trying again."));
+				return null;
+			}
+
+			bool captchaPresent = theCaptcha.isPresent(vars);
 			if (!captchaPresent)
 			{
-				if (ip in lastPostAttempt && now - lastPostAttempt[ip] < dur!"minutes"(1))
+				if (ip in lastPostAttempt && now - lastPostAttempt[ip] < 1.minutes)
 				{
 					discussionPostForm(post, true, PostError("Your last post was less than a minute ago. Please solve a CAPTCHA to continue."));
 					return null;
