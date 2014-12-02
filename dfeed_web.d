@@ -27,7 +27,7 @@ import ae.net.asockets;
 import common;
 import web;
 
-import recaptcha;
+import captcha_recaptcha;
 
 import messagedb;
 

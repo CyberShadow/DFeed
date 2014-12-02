@@ -14,7 +14,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-module recaptcha;
+module captcha_recaptcha;
 
 import std.string;
 
