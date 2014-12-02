@@ -12,14 +12,25 @@
 *.suo
 *-opt
 
+/core
+/bad-zlib.z
+/bad-base64.txt
+/feed-error.xml
+/so-error.txt
+
 # Logs and configuration
 /data/
 /logs/
 
 # Binaries
-dfeed
-dfeed_web
-mldownload
-nntpdownload
-rebuilddb
-sanitizedb
+/dfeed
+/dfeed_web
+/mldownload
+/nntpdownload
+/rebuilddb
+/rebuildthreads
+/sanitizedb
+/sendspamfeedback
+
+# Deimos
+/deimos/
