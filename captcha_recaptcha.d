@@ -19,7 +19,6 @@ module captcha_recaptcha;
 import std.string;
 
 import ae.net.http.client;
-import ae.utils.meta.misc;
 
 import captcha;
 
@@ -69,8 +68,6 @@ class Recaptcha : Captcha
 			handler(false, error, null);
 		});
 	}
-
-	alias instance = singleton!(typeof(this));
 
 private:
 	struct RecaptchaOptions { string publicKey, privateKey; }

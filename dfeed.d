@@ -36,7 +36,7 @@ import ircsink;
 import messagedb;
 
 // Captcha
-import captcha_recaptcha;
+import captcha_dcaptcha;
 
 void main()
 {
