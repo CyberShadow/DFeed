@@ -83,9 +83,9 @@ private:
 		switch (code)
 		{
 			case "incorrect-captcha-sol":
-				return "The CAPTCHA solution was incorrect.";
+				return "The CAPTCHA solution was incorrect";
 			case "captcha-timeout":
-				return "The solution was received after the CAPTCHA timed out.";
+				return "The solution was received after the CAPTCHA timed out";
 			default:
 				return code;
 		}

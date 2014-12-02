@@ -73,7 +73,7 @@ final class Dcaptcha : Captcha
 
 		bool correct = challenge.answers.any!(answer => icmp(answer, response) == 0);
 
-		return handler(correct, correct ? null : "The answer is incorrect.", null);
+		return handler(correct, correct ? null : "The answer is incorrect", null);
 	}
 }
 
