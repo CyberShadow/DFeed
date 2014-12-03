@@ -186,7 +186,15 @@ void checkStopForumSpam(PostProcess process, SpamResultHandler handler)
 
 		auto xml = new XmlDocument(new MemoryStream(cast(char[])result));
 		auto response = xml["response"];
-		enforce(response.attributes["success"] == "true", "StopForumSpam API error");
+		if (response.attributes["success"] != "true")
+		{
+			string error = result;
+			auto errorNode = response.findChild("error");
+			if (errorNode)
+				error = errorNode.text;
+			enforce(false, "StopForumSpam API error: " ~ error);
+		}
+
 		if (response["appears"].text == "no")
 			handler(true, null);
 		else
