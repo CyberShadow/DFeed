@@ -100,20 +100,6 @@ final class PostProcess
 
 		post.id = format("<%s@%s>", pid, hostname);
 		post.compile();
-
-		captchaPresent = theCaptcha.isPresent(vars);
-		if (captchaPresent)
-		{
-			log("Checking CAPTCHA");
-			status = PostingStatus.Captcha;
-			theCaptcha.verify(vars, ip, &onCaptchaResult);
-		}
-		else
-		{
-			log("Checking for spam");
-			status = PostingStatus.SpamCheck;
-			spamCheck(this, &onSpamResult);
-		}
 	}
 
 	/// Parse a log file
@@ -158,6 +144,23 @@ final class PostProcess
 		post = createPost(vars, headers, ip, null);
 		post.id = format("<%s@%s>", pid, hostname);
 		post.compile();
+	}
+
+	void run()
+	{
+		captchaPresent = theCaptcha.isPresent(vars);
+		if (captchaPresent)
+		{
+			log("Checking CAPTCHA");
+			status = PostingStatus.Captcha;
+			theCaptcha.verify(vars, ip, &onCaptchaResult);
+		}
+		else
+		{
+			log("Checking for spam");
+			status = PostingStatus.SpamCheck;
+			spamCheck(this, &onSpamResult);
+		}
 	}
 
 	static Rfc850Post createPost(string[string] vars, string[string] headers, string ip, Rfc850Post delegate(string id) getPost)

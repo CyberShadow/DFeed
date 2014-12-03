@@ -1658,6 +1658,7 @@ class WebUI
 			}
 
 			auto process = new PostProcess(post, vars, ip, headers);
+			process.run();
 			lastPostAttempt[ip] = Clock.currTime();
 			return process;
 		}
