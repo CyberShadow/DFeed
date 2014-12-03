@@ -177,8 +177,16 @@ import ae.utils.xml; // Issue 7016
 void checkStopForumSpam(PostProcess process, SpamResultHandler handler)
 {
 	enum DAYS_THRESHOLD = 3; // consider an IP match as a positive if it was last seen at most this many days ago
-	
-	httpGet("http://www.stopforumspam.com/api?ip=" ~ process.ip, (string result) {
+
+	auto ip = process.ip;
+
+	if (ip.canFind(':') || ip.split(".").length != 4)
+	{
+		// Not an IPv4 address, skip StopForumSpam check
+		return handler(true, "Not an IPv4 address");
+	}
+
+	httpGet("http://www.stopforumspam.com/api?ip=" ~ ip, (string result) {
 		import std.stream;
 		import std.datetime;
 		import ae.utils.xml;
