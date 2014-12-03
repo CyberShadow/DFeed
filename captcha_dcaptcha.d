@@ -49,7 +49,11 @@ final class Dcaptcha : Captcha
 			`<pre>` ~ challenge.code.encodeEntities() ~ `</pre>`
 			`<input type="hidden" name="dcaptcha_challenge_field" value="` ~ key ~ `">`
 			`<input type="hidden" "dcaptcha_response_field"></input>`
-			`<input name="dcaptcha_response_field"></input>`;
+			`<input name="dcaptcha_response_field"></input>`
+			`<p><b>Hint</b>: ` ~ challenge.hint ~ `</p>`
+			`<p>Is the CAPTCHA too hard? Refresh the page to get a different question, or ask in the`
+				`<a href="http://webchat.freenode.net?randomnick=1&channels=%23d">#d IRC channel on Freenode</a>.</p>`
+		;
 	}
 
 	override bool isPresent(string[string] fields)
