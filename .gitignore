@@ -10,6 +10,7 @@
 *.map
 *.mem
 *.suo
+*.ilk
 *-opt
 
 /core
