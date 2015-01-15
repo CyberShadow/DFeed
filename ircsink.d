@@ -51,7 +51,7 @@ final class IrcSink : NewsSink
 		channel  = configLines[2];
 		channel2 = configLines[3];
 
-		auto tcp = new TcpConnection();
+		tcp = new TcpConnection();
 		irc = new IrcClient(tcp);
 		irc.encoder = irc.decoder = &nullStringTransform;
 		irc.exactNickname = true;
