@@ -1,4 +1,4 @@
-/*  Copyright (C) 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2012, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -19,7 +19,6 @@ module captcha_dcaptcha;
 import std.algorithm : any;
 import std.string : strip, icmp;
 
-import ae.utils.meta.misc;
 import ae.utils.text;
 import ae.utils.xmllite : encodeEntities;
 

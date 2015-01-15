@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -36,7 +36,7 @@ class MailingLists : NewsSource
 		host = serverConfig[0];
 		port = to!ushort(serverConfig[1]);
 
-		server = new RelayServerSocket();
+		server = new TcpServer();
 		server.handleAccept = &onAccept;
 	}
 
@@ -51,40 +51,28 @@ class MailingLists : NewsSource
 	}
 
 private:
-	static class RelaySocket : ClientSocket
-	{
-		Data data;
-
-		this(Socket conn) { super(conn); }
-	}
-
-	alias GenericServerSocket!RelaySocket RelayServerSocket;
-
-	RelayServerSocket server;
+	TcpServer server;
 	string host;
 	ushort port;
 
-	void onAccept(RelaySocket incoming)
+	void onAccept(TcpConnection incoming)
 	{
 		log("* New connection");
-		incoming.handleDisconnect = &onRelayDisconnect;
-		incoming.handleReadData = &onRelayData;
-	}
+		Data received;
 
-	void onRelayData(ClientSocket sender, Data data)
-	{
-		auto relay = cast(RelaySocket)sender;
-		relay.data ~= data;
-	}
+		incoming.handleReadData = (Data data)
+		{
+			received ~= data;
+		};
 
-	void onRelayDisconnect(ClientSocket sender, string reason, DisconnectType type)
-	{
-		auto relay = cast(RelaySocket)sender;
-		auto text = (cast(string)relay.data.contents).idup;
-		foreach (line; splitAsciiLines(text))
-			log("> " ~ line);
-		log("* Disconnected");
+		incoming.handleDisconnect = (string reason, DisconnectType type)
+		{
+			auto text = cast(string)received.toHeap();
+			foreach (line; splitAsciiLines(text))
+				log("> " ~ line);
+			log("* Disconnected");
 
-		announcePost(new Rfc850Post(text));
+			announcePost(new Rfc850Post(text));
+		};
 	}
 }

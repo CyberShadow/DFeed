@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -51,15 +51,16 @@ final class IrcSink : NewsSink
 		channel  = configLines[2];
 		channel2 = configLines[3];
 
-		conn = new IrcClient();
-		conn.encoder = conn.decoder = &nullStringTransform;
-		conn.exactNickname = true;
-		conn.log = createLogger("IRC");
-		conn.handleConnect = &onConnect;
-		conn.handleDisconnect = &onDisconnect;
+		auto tcp = new TcpConnection();
+		irc = new IrcClient(tcp);
+		irc.encoder = irc.decoder = &nullStringTransform;
+		irc.exactNickname = true;
+		irc.log = createLogger("IRC");
+		irc.handleConnect = &onConnect;
+		irc.handleDisconnect = &onDisconnect;
 		connect();
 
-		addShutdownHandler({ stopping = true; if (connecting || connected) conn.disconnect("DFeed shutting down"); });
+		addShutdownHandler({ stopping = true; if (connecting || connected) irc.disconnect("DFeed shutting down"); });
 	}
 
 protected:
@@ -75,36 +76,39 @@ protected:
 				if (connected)
 				{
 					summary = summary.newlinesToSpaces();
-					conn.sendRaw(format(ircFormat, channel2, summary));
+					irc.sendRaw(format(ircFormat, channel2, summary));
 					if (important)
-						conn.sendRaw(format(ircFormat, channel, summary));
+						irc.sendRaw(format(ircFormat, channel, summary));
 				}
 			});
 		}
 	}
 
 private:
-	IrcClient conn;
+	TcpConnection tcp;
+	IrcClient irc;
 	bool connecting, connected, stopping;
 
 	void connect()
 	{
-		conn.connect(nick, "https://github.com/CyberShadow/DFeed", server);
+		irc.nickname = nick;
+		irc.realname = "https://github.com/CyberShadow/DFeed";
+		tcp.connect(server, 6667);
 		connecting = true;
 	}
 
-	void onConnect(IrcClient sender)
+	void onConnect()
 	{
 		connecting = false;
-		conn.join(channel);
-		conn.join(channel2);
+		irc.join(channel);
+		irc.join(channel2);
 		connected = true;
 	}
 
-	void onDisconnect(IrcClient sender, string reason, DisconnectType type)
+	void onDisconnect(string reason, DisconnectType type)
 	{
 		connecting = connected = false;
-		if (type != DisconnectType.Requested && !stopping)
+		if (type != DisconnectType.requested && !stopping)
 			setTimeout(&connect, 10.seconds);
 	}
 
@@ -113,6 +117,6 @@ private:
 	/// will be there to see them.
 	bool haveUnimportantListeners()
 	{
-		return (channel2 in conn.channels) && conn.channels[channel2].users.length > 1;
+		return (channel2 in irc.channels) && irc.channels[channel2].users.length > 1;
 	}
 }
