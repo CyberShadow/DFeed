@@ -133,7 +133,7 @@ class Rfc850Post : Post
 			author == "" ? "<no name>" : filterIRCName(author),
 			reply ? "replied to" : "posted",
 			subject == "" ? "<no subject>" : `"` ~ subject ~ `"`,
-			shortURL ? ": " ~ shortURL : ""
+			shortURL ? ": " ~ shortURL : url ? ": " ~ url : "",
 		));
 	}
 
