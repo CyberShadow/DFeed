@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -27,10 +27,11 @@ alias quiet = ae.sys.log.quiet;
 
 abstract class Post
 {
-	/// Asynchronously summarise this post to a single line, ready to be sent to IRC
+	/// Asynchronously summarise this post to a single line, ready to be sent to IRC.
 	abstract void formatForIRC(void delegate(string) handler);
 
-	/// Only "important" posts are sent to IRC
+	/// Whether this post is important enough to be announced in the main D channel.
+	/// If false, it should only be announced in the feed channel (#d.feed).
 	bool isImportant() { return true; }
 
 	this()
