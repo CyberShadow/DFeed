@@ -64,14 +64,16 @@
 <h2 id="canonical">Canonical links</h2>
 
 <p>
-  If you'd like to get a link to a particular post, you should right-click the post title and select "Copy link location" (or your browser's equivalent).
+  If you use the default (basic) view and would like to get a link to a particular post, please use the "Permalink" item located in the left sidebar
+  (by right-clicking it and selecting "Copy link location", or your browser's equivalent).
   If you copy the contents of your browser's address bar, the resulting link may be excessively long, and may not work as well for users who have selected a different view mode.
   A canonical link has the form <tt>http://<i>domain</i>/post/<i>message-id@goes-here</i></tt>, and does not contain <tt>/thread/</tt> or an URL fragment (<tt>#</tt> or any text following it).
 </p>
 
 <p>
   To get the canonical link to a thread, just use the first post's canonical link.
-  Don't confuse the first post's title link (located directly above the post text) with the thread title link (located in the page header).
+  If you use the "threaded" or "horizontal-split" view mode, you can simply copy the URL from your address bar.
+  Each post's title is also a canonical link to the post in question in any view mode.
 </p>
 
 <h2 id="about">About</h2>

@@ -1345,8 +1345,16 @@ class WebUI
 		return user["secret"];
 	}
 
+	enum maxPostActions = 2;
+
 	void postActions(string id)
 	{
+		if (user.get("groupviewmode", "basic") == "basic")
+			html.put(
+				`<a class="actionlink permalink" href="`, encodeEntities(idToUrl(id)), `" `
+					`title="Canonical link to this post. See &quot;Canonical links&quot; on the Help page for more information.">`
+					`<img src="`, staticPath("/images/link.png"), `">Permalink`
+				`</a>`);
 		if (true)
 			html.put(
 				`<a class="actionlink replylink" href="`, encodeEntities(idToUrl(id, "reply")), `">`
@@ -1429,8 +1437,10 @@ class WebUI
 			}
 			else
 				html.put(`<br>`);
+			foreach (n; 0..maxPostActions)
+				html.put(`<br>`); // guarantee space for the "toolbar"
+
 			html.put(
-						`<br>` // guarantee space for the "toolbar"
 						`<div class="post-actions">`), postActions(id), html.put(`</div>`
 					`</td>`
 					`<td class="post-body">`
