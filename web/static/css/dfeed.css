@@ -671,3 +671,15 @@ body.frame div.forum-postsummary-info {
 body.frame .forum-unread {
 	font-weight: 600;
 }
+
+body.frame .forum-postsummary-gravatar {
+	float: left;
+}
+
+body.frame .post-gravatar {
+	border-width: 2px !important;
+	margin: -2px 5px -2px 0;
+	width: 32px;
+	height: 32px;
+	display: block;
+}
