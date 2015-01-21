@@ -516,11 +516,16 @@ class WebUI
 					html.put(readText(optimizedPath(null, "web/help.htt")));
 					break;
 
-				case "frame":
-					// dlang.org front page iframe
+				// dlang.org front page iframes
+				case "frame-discussions":
 					bodyClass = "frame";
 					title = breadcrumb1 = "Forum activity summary";
-					discussionFrame();
+					discussionFrameDiscussions();
+					break;
+				case "frame-announcements":
+					bodyClass = "frame";
+					title = breadcrumb1 = "Forum activity summary";
+					discussionFrameAnnouncements();
 					break;
 
 				case "feed":
@@ -856,46 +861,42 @@ class WebUI
 		return result;
 	}
 
-	void discussionFrame()
+	string summarizeFrameThread(PostInfo* info, string infoText)
+	{
+		if (info)
+			with (*info)
+				return
+					`<a target="_top" class="forum-postsummary-subject ` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `" href="` ~ encodeEntities(idToUrl(id)) ~ `">` ~ truncateString(subject) ~ `</a><br>` ~
+					`<div class="forum-postsummary-info">` ~ infoText ~ `</div>`
+					`by <span class="forum-postsummary-author">` ~ truncateString(author) ~ `</span>`
+				;
+
+		return `<div class="forum-no-data">-</div>`;
+	}
+
+	void discussionFrameDiscussions()
 	{
 		auto activeDiscussions = activeDiscussionsCache(getActiveDiscussions());
+
+		html.put(`<table class="forum-table"><tr><th>Active discussions</th></tr>`);
+		foreach (row; activeDiscussions)
+			html.put(`<tr><td>`, summarizeFrameThread(getPostInfo(row.id), "%d posts".format(row.postCount)), `</td></tr>`);
+		html.put(`</table>`);
+	}
+
+	final void discussionFrameAnnouncements()
+	{
 		auto latestAnnouncements = latestAnnouncementsCache(getLatestAnnouncements());
 
-		string summarizeThread(string postID, int postCount=0)
+		html.put(`<table class="forum-table"><tr><th>Latest announcements</th></tr>`);
+		foreach (row; latestAnnouncements)
 		{
-			auto info = getPostInfo(postID);
-			if (info)
-				with (*info)
-					return
-						`<a target="_top" class="forum-postsummary-subject ` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `" href="` ~ encodeEntities(idToUrl(id)) ~ `">` ~ truncateString(subject) ~ `</a><br>` ~
-						`<div class="forum-postsummary-info">` ~
-							(
-								postCount
-								?
-									"%d posts".format(postCount)
-								:
-									summarizeTime(time)
-							) ~
-						`</div>`
-						`by <span class="forum-postsummary-author">` ~ truncateString(author) ~ `</span>`
-					;
-
-			return `<div class="forum-no-data">-</div>`;
-		}
-
-		html.put(
-			`<table class="forum-table">`
-				`<tr><th>Active discussions</th><th>Latest announcements</th></tr>`
-		);
-
-		foreach (row; std.range.zip(activeDiscussions, latestAnnouncements))
+			auto info = getPostInfo(row);
 			html.put(
-				`<tr><td>`, summarizeThread(row[0].id, row[0].postCount), `</td><td>`, summarizeThread(row[1]), `</td></tr>`
+				`<tr><td>`, summarizeFrameThread(info, summarizeTime(info.time)), `</td></tr>`
 			);
-
-		html.put(
-			`</table>`
-		);
+		}
+		html.put(`</table>`);
 	}
 
 	// ***********************************************************************
