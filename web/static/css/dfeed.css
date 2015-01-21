@@ -643,6 +643,10 @@ kbd { /* stolen from http://en.wikipedia.org/wiki/Template:Key_press */
 
 /*************** Frame view ***************/
 
+body.frame {
+	font-size: 90%;
+}
+
 body.frame > div, body.frame #forum-tools {
 	display: none;
 }
@@ -657,4 +661,13 @@ body.frame > div#content {
 
 body.frame tr:nth-child(2n+1) {
 	background-color: #F0F0F0;
+}
+
+body.frame div.forum-postsummary-info {
+	display: block;
+	float: right;
+}
+
+body.frame .forum-unread {
+	font-weight: 600;
 }

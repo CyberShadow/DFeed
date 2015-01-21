@@ -868,14 +868,17 @@ class WebUI
 				with (*info)
 					return
 						`<a target="_top" class="forum-postsummary-subject ` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `" href="` ~ encodeEntities(idToUrl(id)) ~ `">` ~ truncateString(subject) ~ `</a><br>` ~
-						`by <span class="forum-postsummary-author">` ~ truncateString(author) ~ `</span>` ~
-						(
-							postCount
-							?
-								" - %d posts".format(postCount)
-							:
-								`, ` ~ summarizeTime(time)
-						);
+						`<div class="forum-postsummary-info">` ~
+							(
+								postCount
+								?
+									"%d posts".format(postCount)
+								:
+									summarizeTime(time)
+							) ~
+						`</div>`
+						`by <span class="forum-postsummary-author">` ~ truncateString(author) ~ `</span>`
+					;
 
 			return `<div class="forum-no-data">-</div>`;
 		}
