@@ -45,6 +45,7 @@ import cache;
 import captcha;
 import common;
 import database;
+import mailhide;
 import message;
 import posting;
 import user;
@@ -1345,10 +1346,11 @@ class WebUI
 		return user["secret"];
 	}
 
-	enum maxPostActions = 2;
+	enum maxPostActions = 3;
 
-	void postActions(string id)
+	void postActions(Rfc850Message msg)
 	{
+		auto id = msg.id;
 		if (user.get("groupviewmode", "basic") == "basic")
 			html.put(
 				`<a class="actionlink permalink" href="`, encodeEntities(idToUrl(id)), `" `
@@ -1360,6 +1362,14 @@ class WebUI
 				`<a class="actionlink replylink" href="`, encodeEntities(idToUrl(id, "reply")), `">`
 					`<img src="`, staticPath("/images/reply.png"), `">Reply`
 				`</a>`);
+/*
+		if (mailHide)
+			html.put(
+				`<a class="actionlink emaillink" href="`, mailHide.getUrl(msg.authorEmail), `" `
+					`title="Solve a CAPTCHA to obtain this poster's email address.">`
+					`<img src="`, staticPath("/images/email.png"), `">Email`
+				`</a>`);
+*/
 		if (user.getLevel() >= User.Level.hasRawLink)
 			html.put(
 				`<a class="actionlink sourcelink" href="`, encodeEntities(idToUrl(id, "source")), `">`
@@ -1441,7 +1451,7 @@ class WebUI
 				html.put(`<br>`); // guarantee space for the "toolbar"
 
 			html.put(
-						`<div class="post-actions">`), postActions(id), html.put(`</div>`
+						`<div class="post-actions">`), postActions(post.msg), html.put(`</div>`
 					`</td>`
 					`<td class="post-body">`
 						`<pre class="post-text">`), formatBody(content), html.put(`</pre>`,
@@ -1535,7 +1545,7 @@ class WebUI
 				html.put(`<tr><td class="split-post-info-name">`, a.name, `</td><td class="split-post-info-value">`, a.value, `</td></tr>`);
 			html.put(
 						`</table></td>`
-						`<td class="split-post-actions">`), postActions(id), html.put(`</td>`
+						`<td class="split-post-actions">`), postActions(post.msg), html.put(`</td>`
 					`</tr></table>`
 				`</td></tr>`
 				`<tr><td class="post-body">`
