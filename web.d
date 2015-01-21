@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -515,6 +515,13 @@ class WebUI
 					html.put(readText(optimizedPath(null, "web/help.htt")));
 					break;
 
+				case "frame":
+					// dlang.org front page iframe
+					bodyClass = "frame";
+					title = breadcrumb1 = "Forum activity summary";
+					discussionFrame();
+					break;
+
 				case "feed":
 				{
 					enforce(path.length > 1, "Feed type not specified");
@@ -806,6 +813,85 @@ class WebUI
 			}
 		}
 		html.put(`</table>`);
+	}
+
+	Cached!(ActiveDiscussion[]) activeDiscussionsCache;
+	Cached!(string[]) latestAnnouncementsCache;
+	enum framePostsLimit = 10;
+
+	static struct ActiveDiscussion { string id; int postCount; }
+
+	ActiveDiscussion[] getActiveDiscussions()
+	{
+		enum PERF_SCOPE = "getLatestAnnouncements"; mixin(MeasurePerformanceMixin);
+		const groupFilter = ["digitalmars.D.announce", "digitalmars.D.bugs"]; // TODO: config
+		enum postCountLimit = 10;
+		ActiveDiscussion[] result;
+		foreach (string firstPostID, string group; query("SELECT [Threads].[ID], [Threads].[Group] FROM [Threads] JOIN [Posts] ON [Threads].[ID]=[Posts].[ID] ORDER BY [Posts].[Time] DESC").iterate())
+		{
+			if (groupFilter.canFind(group))
+				continue;
+
+			int postCount;
+			foreach (int count; query("SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ?").iterate(firstPostID))
+				postCount = count;
+			if (postCount < postCountLimit)
+				continue;
+
+			result ~= ActiveDiscussion(firstPostID, postCount);
+			if (result.length == framePostsLimit)
+				break;
+		}
+		return result;
+	}
+
+	string[] getLatestAnnouncements()
+	{
+		enum PERF_SCOPE = "getActiveDiscussions"; mixin(MeasurePerformanceMixin);
+		enum group = "digitalmars.D.announce"; // TODO: config
+		string[] result;
+		foreach (string firstPostID; query("SELECT [Threads].[ID] FROM [Threads] JOIN [Posts] ON [Threads].[ID]=[Posts].[ID] WHERE [Threads].[Group] = ? ORDER BY [Posts].[Time] DESC LIMIT ?").iterate(group, framePostsLimit))
+			result ~= firstPostID;
+		return result;
+	}
+
+	void discussionFrame()
+	{
+		auto activeDiscussions = activeDiscussionsCache(getActiveDiscussions());
+		auto latestAnnouncements = latestAnnouncementsCache(getLatestAnnouncements());
+
+		string summarizeThread(string postID, int postCount=0)
+		{
+			auto info = getPostInfo(postID);
+			if (info)
+				with (*info)
+					return
+						`<a target="_top" class="forum-postsummary-subject ` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `" href="` ~ encodeEntities(idToUrl(id)) ~ `">` ~ truncateString(subject) ~ `</a><br>` ~
+						`by <span class="forum-postsummary-author">` ~ truncateString(author) ~ `</span>` ~
+						(
+							postCount
+							?
+								" - %d posts".format(postCount)
+							:
+								`, ` ~ summarizeTime(time)
+						);
+
+			return `<div class="forum-no-data">-</div>`;
+		}
+
+		html.put(
+			`<table class="forum-table">`
+				`<tr><th>Active discussions</th><th>Latest announcements</th></tr>`
+		);
+
+		foreach (row; std.range.zip(activeDiscussions, latestAnnouncements))
+			html.put(
+				`<tr><td>`, summarizeThread(row[0].id, row[0].postCount), `</td><td>`, summarizeThread(row[1]), `</td></tr>`
+			);
+
+		html.put(
+			`</table>`
+		);
 	}
 
 	// ***********************************************************************

@@ -640,3 +640,21 @@ kbd { /* stolen from http://en.wikipedia.org/wiki/Template:Key_press */
 	font-size: 8pt;
 	margin: 50px 30px 0 30px;
 }
+
+/*************** Frame view ***************/
+
+body.frame > div, body.frame #forum-tools {
+	display: none;
+}
+
+body.frame > div#content {
+	display: block;
+	margin: 0;
+	max-width: none;
+	border: 0;
+	padding: 0;
+}
+
+body.frame tr:nth-child(2n+1) {
+	background-color: #F0F0F0;
+}
