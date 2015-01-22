@@ -45,7 +45,7 @@ import cache;
 import captcha;
 import common;
 import database;
-import mailhide;
+//import mailhide;
 import message;
 import posting;
 import user;
