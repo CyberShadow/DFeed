@@ -886,17 +886,7 @@ class WebUI
 		return `<div class="forum-no-data">-</div>`;
 	}
 
-	void discussionFrameDiscussions()
-	{
-		auto activeDiscussions = activeDiscussionsCache(getActiveDiscussions());
-
-		html.put(`<table class="forum-table"><thead><tr><th><a target="_top" href="/">Active discussions</a></th></tr></thead><tbody>`);
-		foreach (row; activeDiscussions)
-			html.put(`<tr><td>`, summarizeFrameThread(getPostInfo(row.id), "%d posts".format(row.postCount)), `</td></tr>`);
-		html.put(`</tbody></table>`);
-	}
-
-	final void discussionFrameAnnouncements()
+	void discussionFrameAnnouncements()
 	{
 		auto latestAnnouncements = latestAnnouncementsCache(getLatestAnnouncements());
 
@@ -911,6 +901,16 @@ class WebUI
 				`<tr><td>`, summarizeFrameThread(info, summarizeTime(info.time)), `</td></tr>`
 			);
 		}
+		html.put(`</tbody></table>`);
+	}
+
+	void discussionFrameDiscussions()
+	{
+		auto activeDiscussions = activeDiscussionsCache(getActiveDiscussions());
+
+		html.put(`<table class="forum-table"><thead><tr><th><a target="_top" href="/">Active discussions</a></th></tr></thead><tbody>`);
+		foreach (row; activeDiscussions)
+			html.put(`<tr><td>`, summarizeFrameThread(getPostInfo(row.id), "%d posts".format(row.postCount)), `</td></tr>`);
 		html.put(`</tbody></table>`);
 	}
 
