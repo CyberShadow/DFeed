@@ -890,17 +890,20 @@ class WebUI
 	{
 		auto activeDiscussions = activeDiscussionsCache(getActiveDiscussions());
 
-		html.put(`<table class="forum-table"><tr><th>Active discussions</th></tr>`);
+		html.put(`<table class="forum-table"><thead><tr><th><a target="_top" href="/">Active discussions</a></th></tr></thead><tbody>`);
 		foreach (row; activeDiscussions)
 			html.put(`<tr><td>`, summarizeFrameThread(getPostInfo(row.id), "%d posts".format(row.postCount)), `</td></tr>`);
-		html.put(`</table>`);
+		html.put(`</tbody></table>`);
 	}
 
 	final void discussionFrameAnnouncements()
 	{
 		auto latestAnnouncements = latestAnnouncementsCache(getLatestAnnouncements());
 
-		html.put(`<table class="forum-table"><tr><th>Latest announcements</th></tr>`);
+		html.put(`<table class="forum-table"><thead><tr><th>`
+			`<a target="_top" class="feed-icon" title="Subscribe" href="/feed/threads/digitalmars.D.announce"><img src="`, staticPath("/images/rss.png"),`"></img></a>`
+			`<a target="_top" href="/group/digitalmars.D.announce">Latest announcements</a>`
+			`</th></tr></thead><tbody>`);
 		foreach (row; latestAnnouncements)
 		{
 			auto info = getPostInfo(row);
@@ -908,7 +911,7 @@ class WebUI
 				`<tr><td>`, summarizeFrameThread(info, summarizeTime(info.time)), `</td></tr>`
 			);
 		}
-		html.put(`</table>`);
+		html.put(`</tbody></table>`);
 	}
 
 	// ***********************************************************************

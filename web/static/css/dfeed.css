@@ -645,6 +645,7 @@ kbd { /* stolen from http://en.wikipedia.org/wiki/Template:Key_press */
 
 body.frame {
 	font-size: 90%;
+	background: #1F252B;
 }
 
 body.frame > div, body.frame #forum-tools {
@@ -657,15 +658,66 @@ body.frame > div#content {
 	max-width: none;
 	border: 0;
 	padding: 0;
+	background: none;
+	min-height: 0;
+	font:normal normal normal 12px/16px "Helvetica Neue",Roboto,"Segoe UI",Calibri,sans-serif;
 }
 
-body.frame tr:nth-child(2n+1) {
-	background-color: #F0F0F0;
+body.frame .forum-table > tbody {
+	display: block;
+	max-height: 162px;
+	overflow-y: auto;
+}
+body.frame .forum-table > tbody,
+body.frame .forum-table > tbody > tr,
+body.frame .forum-table > tbody > tr > td {
+	/* HACK */
+	width: 249px;
+}
+body.frame .forum-table > thead > tr > th,
+body.frame .forum-table > tbody > tr > td,
+body.frame .forum-table {
+	border: 1px solid #444;
+	background: none;
+}
+body.frame .forum-table > thead > tr > th,
+body.frame .forum-table > tbody > tr > td {
+	border-left: 0;
+	border-right: 0;
+	border-top: 0;
+}
+body.frame .forum-table > thead > tr > th {
+	font-size: 14px; /* copy Twitter CSS */
+	text-align: left;
+	padding: 10px;
+}
+body.frame .forum-table > thead > tr > th .feed-icon {
+	display: block;
+	float: right;
+}
+
+body.frame #forum-content table.forum-table {
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
+	border-collapse: separate;
+	background-color: #333;
+	color: #A0A0A0;
+}
+
+body.frame a {
+	color: #CFCFCF;
+	text-decoration: none;
+}
+
+body.frame .forum-postsummary-author {
+	color: #CFCFCF;
 }
 
 body.frame div.forum-postsummary-info {
 	display: block;
 	float: right;
+	color: #A0A0A0;
 }
 
 body.frame .forum-unread {
@@ -677,9 +729,16 @@ body.frame .forum-postsummary-gravatar {
 }
 
 body.frame .post-gravatar {
-	border-width: 2px !important;
+/*
+	border: 2px solid #444 !important;
 	margin: -2px 5px -2px 0;
+*/
+	border: 0 !important;
+	margin: 0 5px 0 0;
 	width: 32px;
 	height: 32px;
 	display: block;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
 }
