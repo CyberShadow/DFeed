@@ -966,8 +966,7 @@ class WebUI
 		}
 
 		int radius = 0;
-		while (widthAt(radius+1) < maxWidth)
-			radius++;
+		for (; radius < 10 && widthAt(radius+1) < maxWidth; radius++) {}
 
 		int pagerStart = max(1, page - radius);
 		int pagerEnd = min(pageCount, page + radius);
