@@ -2126,7 +2126,7 @@ class WebUI
 		foreach (string threadID; query("SELECT `ThreadID` FROM `Posts` WHERE `ID` = ?").iterate(id))
 			return idToThreadUrl(id, threadID);
 
-		throw new Exception("Post not found");
+		throw new NotFoundException("Post not found");
 	}
 
 	string idToThreadUrl(string id, string threadID)
