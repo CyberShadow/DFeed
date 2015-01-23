@@ -1052,8 +1052,8 @@ class WebUI
 				with (*info)
 					return html.put(
 					//	`<!-- Thread ID: ` ~ encodeEntities(threadID) ~ ` | First Post ID: ` ~ encodeEntities(id) ~ `-->` ~
-						`<a class="forum-postsummary-subject `, (isRead ? "forum-read" : "forum-unread"), `" href="`, encodeEntities(idToUrl(tid, "thread")), `">`, truncateString(subject, 100), `</a><br>`
-						`by <span class="forum-postsummary-author">`, truncateString(author, 100), `</span><br>`);
+						`<a class="forum-postsummary-subject `, (isRead ? "forum-read" : "forum-unread"), `" href="`, encodeEntities(idToUrl(tid, "thread")), `">`, truncateString(subject, 70), `</a><br>`
+						`by <span class="forum-postsummary-author">`, truncateString(author, 70), `</span><br>`);
 
 			html.put(`<div class="forum-no-data">-</div>`);
 		}
@@ -1064,7 +1064,7 @@ class WebUI
 				with (*info)
 					return html.put(
 						`<a class="forum-postsummary-time `, user.isRead(rowid) ? "forum-read" : "forum-unread", `" href="`, encodeEntities(idToUrl(id)), `">`, summarizeTime(time), `</a>`
-						`by <span class="forum-postsummary-author">`, truncateString(author, 25), `</span><br>`);
+						`by <span class="forum-postsummary-author">`, truncateString(author, 20), `</span><br>`);
 
 			html.put(`<div class="forum-no-data">-</div>`);
 		}
@@ -1103,7 +1103,7 @@ class WebUI
 
 	string[][string] referenceCache; // invariant
 
-	void formatThreadedPosts(PostInfo*[] postInfos, string selectedID = null)
+	void formatThreadedPosts(PostInfo*[] postInfos, bool narrow, string selectedID = null)
 	{
 		enum OFFSET_INIT = 1f;
 		enum OFFSET_MAX = 2f;
@@ -1247,7 +1247,7 @@ class WebUI
 						`<td>`
 							`<div style="padding-left: `, format("%1.1f", OFFSET_INIT + level * offsetIncrement), OFFSET_UNITS, `">`
 								`<div class="thread-post-time">`, summarizeTime(post.info.time, true), `</div>`,
-								`<a class="postlink `, (user.isRead(post.info.rowid) ? "forum-read" : "forum-unread" ), `" href="`, encodeEntities(idToUrl(post.info.id)), `">`, truncateString(post.info.author, 20), `</a>`
+								`<a class="postlink `, (user.isRead(post.info.rowid) ? "forum-read" : "forum-unread" ), `" href="`, encodeEntities(idToUrl(post.info.id)), `">`, truncateString(post.info.author, narrow ? 20 : 50), `</a>`
 							`</div>`
 						`</td>`
 					`</tr>`);
@@ -1295,7 +1295,7 @@ class WebUI
 			`<tr class="group-index-header"><th><div>`), newPostButton(group), html.put(encodeEntities(group), `</div></th></tr>`,
 		//	`<tr class="group-index-captions"><th>Subject / Author</th><th>Time</th>`,
 			`<tr><td class="group-threads-cell"><div class="group-threads"><table>`);
-		formatThreadedPosts(posts);
+		formatThreadedPosts(posts, narrow);
 		html.put(`</table></div></td></tr>`);
 		threadPager(group, page, narrow ? 25 : 50);
 		html.put(`</table>`);
@@ -1692,7 +1692,7 @@ class WebUI
 			`<table id="thread-index" class="forum-table group-wrapper viewmode-`, encodeEntities(user.get("groupviewmode", "basic")), `">`
 			`<tr class="group-index-header"><th><div>Thread overview</div></th></tr>`,
 			`<tr><td class="group-threads-cell"><div class="group-threads"><table>`);
-		formatThreadedPosts(posts, selectedID);
+		formatThreadedPosts(posts, false, selectedID);
 		html.put(`</table></div></td></tr></table>`);
 	}
 
@@ -2367,6 +2367,7 @@ class WebUI
 	/// truncate, add ellipses, and wrap in a <span> with the full string as title.
 	static string truncateString(string s8, int maxLength = 30)
 	{
+	/*
 		import std.uni;
 		import std.utf;
 
@@ -2383,6 +2384,9 @@ class WebUI
 			}
 
 		return `<span title="`~encodeEntities(s8)~`">` ~ encodeEntities(toUTF8(s32[0..end]) ~ "\&hellip;") ~ `</span>`;
+	*/
+		auto encoded = encodeEntities(s8);
+		return `<span class="truncated" style="max-width: ` ~ text(maxLength * 0.6) ~ `em" title="`~encoded~`">` ~ encodeEntities(s8) ~ `</span>`;
 	}
 
 	unittest

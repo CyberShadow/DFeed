@@ -130,6 +130,18 @@
 	display: none;
 }
 
+span.truncated {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: inline-block;
+	vertical-align: top;
+}
+
+a span.truncated {
+	text-decoration: underline;
+}
+
 /* A forum-table has a gray header and borders */
 
 .forum-table {
