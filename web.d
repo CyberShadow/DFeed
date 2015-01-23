@@ -1614,7 +1614,7 @@ class WebUI
 	{
 		foreach (string id; query("SELECT `ID` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC LIMIT 1 OFFSET ?").iterate(threadID, index))
 			return id;
-		throw new Exception(format("Post #%d of thread %s not found", index, threadID));
+		throw new NotFoundException(format("Post #%d of thread %s not found", index, threadID));
 	}
 
 	void discussionThread(string id, int page, out string group, out string title)
