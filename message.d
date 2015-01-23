@@ -78,8 +78,9 @@ class Rfc850Post : Post
 		{
 			auto list = headers["List-Id"];
 			auto listId = list.findSplit(" <")[2].findSplit(">")[0].findSplit(".")[0];
-			if (listId.length)
-				author = author.chomp(" via " ~ std.ascii.toUpper(listId[0]) ~ listId[1..$]);
+			auto suffix = " via " ~ listId.toLower();
+			if (listId.length && author.toLower().endsWith(suffix))
+				author = author[0 .. $ - suffix.length];
 		}
 
 		if (subject.startsWith("[Issue "))
