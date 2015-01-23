@@ -30,6 +30,7 @@ import mailinglists;
 import stackoverflow;
 import feed;
 import reddit;
+import socket;
 
 // Sinks
 import ircsink;
