@@ -936,7 +936,7 @@ class WebUI
 			`</form>`);
 	}
 
-	void pager(string base, int page, int pageCount, int radius = 4)
+	void pager(string base, int page, int pageCount, int maxWidth = 50)
 	{
 		string linkOrNot(string text, int page, bool cond)
 		{
@@ -945,6 +945,29 @@ class WebUI
 			else
 				return `<span class="disabled-link">` ~ text ~ `</span>`;
 		}
+
+		// Try to make the pager as wide as it will fit in the alotted space
+
+		int widthAt(int radius)
+		{
+			import std.math : log10;
+
+			int pagerStart = max(1, page - radius);
+			int pagerEnd = min(pageCount, page + radius);
+
+			int width = pagerEnd - pagerStart;
+			foreach (n; pagerStart..pagerEnd+1)
+				width += 1 + cast(int)log10(n);
+			if (pagerStart > 1)
+				width += 3;
+			if (pagerEnd < pageCount)
+				width += 3;
+			return width;
+		}
+
+		int radius = 0;
+		while (widthAt(radius+1) < maxWidth)
+			radius++;
 
 		int pagerStart = max(1, page - radius);
 		int pagerEnd = min(pageCount, page + radius);
@@ -982,14 +1005,14 @@ class WebUI
 	static int getPageCount(int count, int perPage) { return indexToPage(count-1, perPage); }
 	static int getPageOffset(int page, int perPage) { return (page-1) * perPage; }
 
-	void threadPager(string group, int page, int radius = 4)
+	void threadPager(string group, int page, int maxWidth = 40)
 	{
 		auto threadCounts = threadCountCache(getThreadCounts());
 		enforce(group in threadCounts, "Empty or unknown group");
 		auto threadCount = threadCounts[group];
 		auto pageCount = getPageCount(threadCount, THREADS_PER_PAGE);
 
-		pager(`/group/` ~ group, page, pageCount, radius);
+		pager(`/group/` ~ group, page, pageCount, maxWidth);
 	}
 
 	void discussionGroup(string group, int page)
@@ -1275,7 +1298,7 @@ class WebUI
 			`<tr><td class="group-threads-cell"><div class="group-threads"><table>`);
 		formatThreadedPosts(posts);
 		html.put(`</table></div></td></tr>`);
-		threadPager(group, page, narrow ? 1 : 4);
+		threadPager(group, page, narrow ? 25 : 50);
 		html.put(`</table>`);
 	}
 
