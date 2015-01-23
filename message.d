@@ -49,11 +49,11 @@ class Rfc850Post : Post
 	/// Result of threadify()
 	Rfc850Post[] children;
 
-	this(string _message, string id=null, int rowid=0, string threadID=null)
+	this(string _message, string _id=null, int rowid=0, string threadID=null)
 	{
 		msg = new Rfc850Message(_message);
-		if (id && !msg.id)
-			msg.id = id;
+		if (!msg.id && _id)
+			msg.id = _id;
 		this.rowid = rowid;
 		this.cachedThreadID = threadID;
 
