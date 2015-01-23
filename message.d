@@ -73,6 +73,13 @@ class Rfc850Post : Post
 					bugzillaCommentNumber = to!int(line["--- Comment #".length .. line.indexOf(" from ")]);
 				}
 		}
+		else
+		if ("List-Id" in headers)
+		{
+			auto list = headers["List-Id"];
+			auto listId = list.findSplit(" <")[2].findSplit(">")[0].findSplit(".")[0];
+			author = author.chomp(" via " ~ std.ascii.toUpper(listId[0]) ~ listId[1..$]);
+		}
 
 		if (subject.startsWith("[Issue "))
 		{
