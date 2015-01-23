@@ -710,8 +710,23 @@ body.frame a {
 	text-decoration: none;
 }
 
+body.frame .forum-postsummary-subject {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: inline-block;
+	vertical-align: top;
+	width: 180px;
+}
+
 body.frame .forum-postsummary-author {
 	color: #CFCFCF;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: inline-block;
+	vertical-align: top;
+	max-width: 110px;
 }
 
 body.frame div.forum-postsummary-info {

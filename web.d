@@ -878,9 +878,9 @@ class WebUI
 					`<a target="_top" class="forum-postsummary-gravatar" href="` ~ encodeEntities(idToUrl(id)) ~ `">`
 						`<img alt="Gravatar" class="post-gravatar" src="http://www.gravatar.com/avatar/` ~ getGravatarHash(authorEmailCache(id, getAuthorEmail(id))) ~ `?d=identicon">`
 					`</a>`
-					`<a target="_top" class="forum-postsummary-subject ` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `" href="` ~ encodeEntities(idToUrl(id)) ~ `">` ~ truncateString(subject) ~ `</a><br>` ~
+					`<a target="_top" class="forum-postsummary-subject ` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `" href="` ~ encodeEntities(idToUrl(id)) ~ `">` ~ encodeEntities(subject) ~ `</a><br>` ~
 					`<div class="forum-postsummary-info">` ~ infoText ~ `</div>`
-					`by <span class="forum-postsummary-author">` ~ truncateString(author) ~ `</span>`
+					`by <span class="forum-postsummary-author">` ~ encodeEntities(author) ~ `</span>`
 				;
 
 		return `<div class="forum-no-data">-</div>`;
