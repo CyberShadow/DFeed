@@ -19,10 +19,11 @@ module message;
 import std.algorithm;
 import std.array;
 import std.conv;
+import std.exception;
 import std.string;
-import std.uri;
 
 public import ae.net.ietf.message;
+import ae.net.ietf.url;
 import ae.utils.array;
 
 import common;
@@ -84,7 +85,7 @@ class Rfc850Post : Post
 		if (id.length)
 		{
 			import std.file;
-			url = format("http://%s/post/%s", readText("data/web.txt").splitLines()[1], encodeComponent(id[1..$-1]));
+			url = format("http://%s%s", readText("data/web.txt").splitLines()[1], idToUrl(id));
 		}
 /+		else
 		if (xref.length)
@@ -201,4 +202,55 @@ unittest
 
 	post = new Rfc850Post("Date: Tue, 06 Sep 2011 14:52 -0700\n\nText");
 	assert(post.time.year == 2011);
+}
+
+// ***************************************************************************
+
+template urlEncode(string forbidden, char escape = '%')
+{
+	alias encoder = encodeUrlPart!(c => c >= 0x20 && c < 0x7F && forbidden.indexOf(c) < 0 && c != escape, escape);
+	string urlEncode(string s)
+	{
+		//  !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
+		// " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+		return encoder(s);
+	}
+}
+
+string urlDecode(string encoded)
+{
+	return decodeUrlParameter!false(encoded);
+}
+
+/// Encode a string to one suitable for an HTML anchor
+string encodeAnchor(string s)
+{
+	//return encodeUrlParameter(s).replace("%", ".");
+	// RFC 3986: " \"#%<>[\\]^`{|}"
+	return urlEncode!(" !\"#$%&'()*+,/;<=>?@[\\]^`{|}~", ':')(s);
+}
+
+/// Get relative URL to a post ID.
+string idToUrl(string id, string action = "post", int page = 1)
+{
+	enforce(id.startsWith('<') && id.endsWith('>'));
+
+	// RFC 3986:
+	// pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
+	// sub-delims    = "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
+	// unreserved    = ALPHA / DIGIT / "-" / "." / "_" / "~"
+	string path = "/" ~ action ~ "/" ~ urlEncode!(" \"#%/<>?[\\]^`{|}", '%')(id[1..$-1]);
+
+	assert(page >= 1);
+	if (page > 1)
+		path ~= "?page=" ~ text(page);
+
+	return path;
+}
+
+/// Get URL fragment / anchor name for a post on the same page.
+string idToFragment(string id)
+{
+	enforce(id.startsWith('<') && id.endsWith('>'));
+	return "post-" ~ encodeAnchor(id[1..$-1]);
 }

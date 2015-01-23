@@ -2398,66 +2398,6 @@ class WebUI
 		return result.get();
 	}
 
-	private string urlEncode(string s, in char[] forbidden, char escape)
-	{
-		//  !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
-		// " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
-		string result;
-		foreach (char c; s)
-			if (c < 0x20 || c >= 0x7F || forbidden.indexOf(c) >= 0 || c == escape)
-				result ~= format("%s%02X", escape, c);
-			else
-				result ~= c;
-		return result;
-	}
-
-	private string urlDecode(string encoded)
-	{
-		string s;
-		for (int i=0; i<encoded.length; i++)
-			if (encoded[i] == '%')
-			{
-				s ~= cast(char)fromHex!ubyte(encoded[i+1..i+3]);
-				i += 2;
-			}
-			else
-				s ~= encoded[i];
-		return s;
-	}
-
-	/// Encode a string to one suitable for an HTML anchor
-	string encodeAnchor(string s)
-	{
-		//return encodeUrlParameter(s).replace("%", ".");
-		// RFC 3986: " \"#%<>[\\]^`{|}"
-		return urlEncode(s, " !\"#$%&'()*+,/;<=>?@[\\]^`{|}~", ':');
-	}
-
-	/// Get relative URL to a post ID.
-	string idToUrl(string id, string action = "post", int page = 1)
-	{
-		enforce(id.startsWith('<') && id.endsWith('>'));
-
-		// RFC 3986:
-		// pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
-		// sub-delims    = "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
-		// unreserved    = ALPHA / DIGIT / "-" / "." / "_" / "~"
-		string path = "/" ~ action ~ "/" ~ urlEncode(id[1..$-1], " \"#%/<>?[\\]^`{|}", '%');
-
-		assert(page >= 1);
-		if (page > 1)
-			path ~= "?page=" ~ text(page);
-
-		return path;
-	}
-
-	/// Get URL fragment / anchor name for a post on the same page.
-	string idToFragment(string id)
-	{
-		enforce(id.startsWith('<') && id.endsWith('>'));
-		return "post-" ~ encodeAnchor(id[1..$-1]);
-	}
-
 	string viewModeTool(string[] modes, string what)
 	{
 		auto currentMode = user.get(what ~ "viewmode", modes[0]);
