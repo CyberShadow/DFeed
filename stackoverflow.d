@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2013, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2013, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -68,7 +68,7 @@ protected:
 	override void getPosts()
 	{
 		auto url = "http://api.stackexchange.com/2.2/questions?pagesize=10&order=desc&sort=creation&site=stackoverflow&tagged=" ~ tags ~
-			(exists("data/stackoverflow.txt") ? "&key=" ~ readText("data/stackoverflow2.txt") : "");
+			(exists("data/stackoverflow2.txt") ? "&key=" ~ readText("data/stackoverflow2.txt") : "");
 		httpGet(url, (string json) {
 			if (json == "<html><body><h1>408 Request Time-out</h1>\nYour browser didn't send a complete request in time.\n</body></html>\n")
 			{
