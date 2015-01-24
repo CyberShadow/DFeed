@@ -726,7 +726,7 @@ body.frame .forum-postsummary-author {
 	text-overflow: ellipsis;
 	display: inline-block;
 	vertical-align: top;
-	max-width: 110px;
+	max-width: 100px;
 }
 
 body.frame div.forum-postsummary-info {
