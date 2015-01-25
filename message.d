@@ -77,7 +77,7 @@ class Rfc850Post : Post
 		if ("List-Id" in headers)
 		{
 			auto list = headers["List-Id"];
-			auto listId = list.findSplit(" <")[2].findSplit(">")[0].findSplit(".")[0];
+			auto listId = list.findSplit(" <")[2].findSplit(".puremagic.com>")[0];
 			auto suffix = " via " ~ listId.toLower();
 			if (listId.length && author.toLower().endsWith(suffix))
 				author = author[0 .. $ - suffix.length];
