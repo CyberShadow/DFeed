@@ -28,7 +28,7 @@ class Recaptcha : Captcha
 	{
 		string error = errorData ? (cast(RecaptchaErrorData)errorData).code : null;
 
-		auto publicKey = getOptions().publicKey;
+		auto publicKey = config.recaptcha.publicKey;
 		return
 			`<script type="text/javascript" src="http://www.google.com/recaptcha/api/challenge?k=` ~ publicKey ~ (error ? `&error=` ~ error : ``) ~ `">`
 			`</script>`
@@ -51,7 +51,7 @@ class Recaptcha : Captcha
 		assert(isPresent(fields));
 
 		httpPost("http://www.google.com/recaptcha/api/verify", [
-			"privatekey" : getOptions().privateKey,
+			"privatekey" : config.recaptcha.privateKey,
 			"remoteip" : ip,
 			"challenge" : fields["recaptcha_challenge_field"],
 			"response" : fields["recaptcha_response_field"],
@@ -69,16 +69,7 @@ class Recaptcha : Captcha
 		});
 	}
 
-private:
-	struct RecaptchaOptions { string publicKey, privateKey; }
-	static RecaptchaOptions getOptions()
-	{
-		import std.file, std.string;
-		auto lines = splitLines(readText("data/recaptcha.txt"));
-		return RecaptchaOptions(lines[0], lines[1]);
-	}
-
-	static string errorText(string code)
+	private static string errorText(string code)
 	{
 		switch (code)
 		{
@@ -99,7 +90,20 @@ class RecaptchaErrorData : CaptchaErrorData
 	override string toString() { return code; }
 }
 
+struct RecaptchaConfig { string publicKey, privateKey; }
+
 static this()
 {
 	theCaptcha = new Recaptcha();
 }
+
+// **************************************************************************
+
+struct Config
+{
+	RecaptchaConfig recaptcha;
+}
+immutable Config config;
+
+import ae.utils.sini;
+shared static this() { config = loadIni!Config("config/captcha.ini"); }

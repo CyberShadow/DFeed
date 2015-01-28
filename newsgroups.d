@@ -20,7 +20,7 @@ import std.string;
 import std.conv;
 
 import ae.utils.array : queuePop;
-import ae.utils.container : HashSet;
+import ae.utils.aa : HashSet;
 import ae.utils.json;
 import ae.net.nntp.client;
 import ae.net.nntp.listener;

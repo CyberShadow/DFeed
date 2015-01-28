@@ -17,7 +17,7 @@
 module spam;
 
 import std.string;
-import std.file;
+import std.file : readText;
 import std.exception;
 
 import ae.net.http.client;
@@ -69,9 +69,15 @@ private:
 
 alias void delegate(bool ok, string message) SpamResultHandler;
 
+// **************************************************************************
+
+struct AkismetConfig { string key; }
+
 void checkAkismet(PostProcess process, SpamResultHandler handler)
 {
-	auto key = readText("data/akismet.txt");
+	if (!config.akismet.key)
+		return handler(true, "Akismet is not set up");
+
 	auto site = readText("data/web.txt").splitLines()[1];
 
 	string[string] params = [
@@ -84,7 +90,7 @@ void checkAkismet(PostProcess process, SpamResultHandler handler)
 		"comment_content"      : process.vars.get("text", ""),
 	];
 
-	return httpPost("http://" ~ key ~ ".rest.akismet.com/1.1/comment-check", params, (string result) {
+	return httpPost("http://" ~ config.akismet.key ~ ".rest.akismet.com/1.1/comment-check", params, (string result) {
 		if (result == "false")
 			handler(true, null);
 		else
@@ -99,7 +105,9 @@ void checkAkismet(PostProcess process, SpamResultHandler handler)
 
 void sendAkismetFeedback(PostProcess process, SpamResultHandler handler, SpamFeedback feedback)
 {
-	auto key = readText("data/akismet.txt");
+	if (!config.akismet.key)
+		return handler(true, "Akismet is not set up");
+
 	auto site = readText("data/web.txt").splitLines()[1];
 
 	string[string] params = [
@@ -113,7 +121,7 @@ void sendAkismetFeedback(PostProcess process, SpamResultHandler handler, SpamFee
 	];
 
 	string[SpamFeedback] names = [ SpamFeedback.spam : "spam", SpamFeedback.ham : "ham" ];
-	return httpPost("http://" ~ key ~ ".rest.akismet.com/1.1/submit-" ~ names[feedback], params, (string result) {
+	return httpPost("http://" ~ config.akismet.key ~ ".rest.akismet.com/1.1/submit-" ~ names[feedback], params, (string result) {
 		if (result == "Thanks for making the web a better place.")
 			handler(true, null);
 		else
@@ -123,8 +131,15 @@ void sendAkismetFeedback(PostProcess process, SpamResultHandler handler, SpamFee
 	});
 }
 
+// **************************************************************************
+
+struct ProjectHoneyPotConfig { string key; }
+
 void checkProjectHoneyPot(PostProcess process, SpamResultHandler handler)
 {
+	if (!config.projecthoneypot.key)
+		return handler(true, "ProjectHoneyPot is not set up");
+
 	enum DAYS_THRESHOLD  =  7; // consider an IP match as a positive if it was last seen at most this many days ago
 	enum SCORE_THRESHOLD = 10; // consider an IP match as a positive if its ProjectHoneyPot score is at least this value
 
@@ -136,14 +151,12 @@ void checkProjectHoneyPot(PostProcess process, SpamResultHandler handler)
 
 	static PHPResult phpCheck(string ip)
 	{
-		auto key = readText("data/projecthoneypot.txt");
-
 		import std.socket;
 		string[] sections = split(ip, ".");
 		if (sections.length != 4) // IPv6
 			return PHPResult(false);
 		sections.reverse;
-		string addr = ([key] ~ sections ~ ["dnsbl.httpbl.org"]).join(".");
+		string addr = ([config.projecthoneypot.key] ~ sections ~ ["dnsbl.httpbl.org"]).join(".");
 		InternetHost ih = new InternetHost;
 		if (!ih.getHostByName(addr))
 			return PHPResult(false);
@@ -171,12 +184,14 @@ void checkProjectHoneyPot(PostProcess process, SpamResultHandler handler)
 			handler(true, null);
 }
 
+// **************************************************************************
+
 import ae.utils.xml; // Issue 7016
 
 void checkStopForumSpam(PostProcess process, SpamResultHandler handler)
 {
 	enum DAYS_THRESHOLD = 3; // consider an IP match as a positive if it was last seen at most this many days ago
-	
+
 	httpGet("http://www.stopforumspam.com/api?ip=" ~ process.ip, (string result) {
 		import std.stream;
 		import std.datetime;
@@ -203,6 +218,8 @@ void checkStopForumSpam(PostProcess process, SpamResultHandler handler)
 	});
 }
 
+// **************************************************************************
+
 void checkUserAgent(PostProcess process, SpamResultHandler handler)
 {
 	auto ua = process.headers.get("User-Agent", "");
@@ -227,6 +244,8 @@ void checkKeywords(PostProcess process, SpamResultHandler handler)
 	handler(true, null);
 }
 
+// **************************************************************************
+
 auto spamCheckers =
 [
 	&checkUserAgent,
@@ -240,3 +259,15 @@ public auto spamFeedbackSenders =
 [
 	&sendAkismetFeedback,
 ];
+
+// **************************************************************************
+
+struct Config
+{
+	AkismetConfig akismet;
+	ProjectHoneyPotConfig projecthoneypot;
+}
+const Config config;
+
+import ae.utils.sini;
+shared static this() { config = loadIni!Config("config/spam.ini"); }

@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2013  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2013, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -195,8 +195,9 @@ final class GuestUser : User
 	static string encryptPassword(string password)
 	{
 		// TODO: use bcrypt()
-		import std.digest.md, std.file;
-		return (password ~ readText("data/salt.txt")).md5Of().toHexString!(LetterCase.lower)().idup; // Issue 9279
+		enforce(config.salt.length, "Salt not set!");
+		import std.digest.md;
+		return (password ~ config.salt).md5Of().toHexString!(LetterCase.lower)().idup; // Issue 9279
 	}
 
 	override void logIn(string username, string password)
@@ -309,3 +310,14 @@ User getUser(string cookieHeader)
 	}
 	return guest;
 }
+
+// **************************************************************************
+
+struct Config
+{
+	string salt;
+}
+immutable Config config;
+
+import ae.utils.sini;
+shared static this() { config = loadIni!Config("config/user.ini"); }
