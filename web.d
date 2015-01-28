@@ -48,6 +48,7 @@ import database;
 //import mailhide;
 import message;
 import posting;
+import site;
 import user;
 
 version = MeasurePerformance;
@@ -70,15 +71,12 @@ class WebUI
 
 		loadBanList();
 
-		auto lines = readText("data/web.txt").splitLines();
-		auto port = to!ushort(lines[0]);
-		vhost = lines[1];
-		auto iface = lines.length > 2 ? lines[2] : null;
+		vhost = site.config.host;
 
 		server = new HttpServer();
 		server.log = log;
 		server.handleRequest = &onRequest;
-		server.listen(port, iface);
+		server.listen(config.listen.port, config.listen.addr);
 
 		addShutdownHandler({ server.close(); });
 	}
@@ -2505,3 +2503,20 @@ class NotFoundException : Exception
 {
 	this(string str = "The specified resource cannot be found on this server.") { super(str); }
 }
+
+// **************************************************************************
+
+struct ListenConfig
+{
+	string addr;
+	ushort port = 80;
+}
+
+struct Config
+{
+	ListenConfig listen;
+}
+const Config config;
+
+import ae.utils.sini;
+shared static this() { config = loadIni!Config("config/web.ini"); }

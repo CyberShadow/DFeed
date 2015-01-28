@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -30,11 +30,12 @@ Logger log;
 
 void shortenURL(string url, void delegate(string) handler)
 {
-	if (std.file.exists("data/bitly.txt"))
+	if (config.apiKey)
 		httpGet(
 			format(
-				"http://api.bitly.com/v3/shorten?%s&longUrl=%s&format=txt&domain=j.mp",
-				readText("data/bitly.txt"),
+				"http://api.bitly.com/v3/shorten?login=%s&apiKey=%s&longUrl=%s&format=txt&domain=j.mp",
+				config.login,
+				config.apiKey,
 				std.uri.encodeComponent(url)
 			), (string shortened) {
 				shortened = shortened.strip();
@@ -50,3 +51,14 @@ void shortenURL(string url, void delegate(string) handler)
 	else
 		handler(url);
 }
+
+// **************************************************************************
+
+struct Config
+{
+	string login, apiKey;
+}
+const Config config;
+
+import ae.utils.sini;
+shared static this() { config = loadIni!Config("config/bitly.ini"); }

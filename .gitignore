@@ -19,9 +19,10 @@
 /feed-error.xml
 /so-error.txt
 
-# Logs and configuration
+# Data, logs and configuration
 /data/
 /logs/
+/config/*.ini
 
 # Binaries
 /dfeed
