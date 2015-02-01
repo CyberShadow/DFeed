@@ -1320,6 +1320,7 @@ class WebUI
 	{
 		auto post = getPost(id);
 		enforce(post, "Post not found");
+		enforce(post.xref.length, "No groups found in post");
 
 		group = post.xref[0].group;
 		page = getThreadPage(group, post.cachedThreadID);
