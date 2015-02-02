@@ -263,3 +263,9 @@ string idToFragment(string id)
 	enforce(id.startsWith('<') && id.endsWith('>'));
 	return "post-" ~ encodeAnchor(id[1..$-1]);
 }
+
+string getGroup(Rfc850Post post)
+{
+	enforce(post.xref.length, "No groups found in post");
+	return post.xref[0].group;
+}
