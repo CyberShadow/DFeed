@@ -1319,7 +1319,7 @@ class WebUI
 		auto post = getPost(id);
 		enforce(post, "Post not found");
 
-		group = post.xref[0].group;
+		group = post.getGroup();
 		page = getThreadPage(group, post.cachedThreadID);
 
 		discussionGroupSplit(group, page);
@@ -1655,9 +1655,8 @@ class WebUI
 			knownPosts[post.id] = post;
 
 		enforce(posts.length, "Thread not found");
-		enforce(posts[0].xref.length, "No groups found in thread");
 
-		group = posts[0].xref[0].group;
+		group = posts[0].getGroup();
 		title = posts[0].subject;
 
 		if (nested)
@@ -1698,7 +1697,7 @@ class WebUI
 	{
 		auto post = getPost(id);
 		enforce(post, "Post not found");
-		group = post.xref[0].group;
+		group = post.getGroup();
 		title = post.subject;
 
 		formatSplitPost(post);
