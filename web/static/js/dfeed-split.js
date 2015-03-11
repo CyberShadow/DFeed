@@ -133,10 +133,6 @@ var resizeTimeout = null;
 function updateSize() {
 	resizeTimeout = null;
 
-	// Google Translate seems to add this,
-	// but it conflicts with our code
-	$('body').attr('style', ''); 
-
 	var focused = $('.thread-post-focused');
 	var wasFocusedInView = false;
 	if (focused.length)
@@ -149,14 +145,16 @@ function updateSize() {
 
 	for (var i in resizees)
 		resizees[i].inner.height(0);
-	$('#navigation').addClass('temphide');
+	$('#navigation,#top').addClass('temphide');
 
-	var space = $('#content').height() + Math.max(0, $(window).height() - $('body').height() - 20);
+	//var bodyHeight = $('body').height();
+	var bodyHeight = $('#copyright').position().top + $('#copyright').outerHeight(true);
+	var space = $('#content').height() + Math.max(0, $(window).height() - bodyHeight - 20);
 
 	for (var i in resizees) {
 		resizees[i].inner.height(space - resizees[i].outer.height());
 	}
-	$('#navigation').removeClass('temphide');
+	$('#navigation,#top').removeClass('temphide');
 
 	if (focused.length && wasFocusedInView)
 		focusRow(focused, true);

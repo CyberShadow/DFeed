@@ -1,3 +1,35 @@
+table, table th {
+	border-style: none;
+}
+
+div#content {
+	text-align: left;
+}
+
+table th, table caption {
+	text-align: center;
+}
+
+table td {
+	text-align: left;
+}
+
+table td, table th, table caption {
+	vertical-align: inherit;
+	padding: 0;
+}
+
+h1 {
+	margin-bottom: 0.5em;
+}
+
+div#footernav {
+	clear: none;
+}
+
+#cssmenu > ul > li.active.has-sub > a {
+	background-color: #622;
+}
 
 /*************** Font size / side menu ***************/
 
@@ -14,6 +46,7 @@
 
 @media screen and (max-width: 1020px) {
 	/* hide dlang.org sidebar */
+	body.narrowdoc #top              { display: none; }
 	body.narrowdoc #navigation       { display: none; }
 	body.narrowdoc #content          { margin-left: 1.5em !important; }
 }
@@ -29,6 +62,7 @@
 
 @media screen and (max-width: 1350px) {
 	/* hide dlang.org sidebar */
+	body.widedoc #top              { display: none; }
 	body.widedoc #navigation       { display: none; }
 	body.widedoc #content          { margin-left: 1.5em !important; }
 }
@@ -53,6 +87,7 @@
 
 @media screen and (max-width: 950px) {
 	/* hide dlang.org sidebar */
+	body.formdoc   #top              { display: none; }
 	body.formdoc   #navigation       { display: none; }
 	body.formdoc   #content          { margin-left: 1.5em !important; }
 }
@@ -100,7 +135,7 @@
 /*************** Tool links ***************/
 
 #forum-tools {
-	text-align: right;
+	float: right;
 	font-size: 80%;
 	font-style: italic;
 	margin: -13px 0 4px 0;
@@ -128,6 +163,10 @@
 
 .temphide {
 	display: none;
+}
+
+.nowrap {
+	white-space: nowrap;
 }
 
 span.truncated {
@@ -613,8 +652,10 @@ kbd { /* stolen from http://en.wikipedia.org/wiki/Template:Key_press */
 }
 
 .formdoc #content {
+/*
 	display: inline-block;
 	margin-left: 0 !important;
+*/
 }
 
 /*************** Login ***************/

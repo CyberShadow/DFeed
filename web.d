@@ -45,6 +45,7 @@ import cache;
 import captcha;
 import common;
 import database;
+import list;
 //import mailhide;
 import message;
 import posting;
@@ -552,6 +553,10 @@ class WebUI
 					enforce(path.length > 2);
 					return serveFile(response, path[2..$].join("/"));
 
+				case "dlang.org":
+					enforce(path.length > 1);
+					return response.serveFile(path[1..$].join("/"), "dlang.org/");
+
 				default:
 					return response.writeError(HttpStatusCode.NotFound);
 			}
@@ -614,6 +619,7 @@ class WebUI
 			"extraheaders" : extraHeaders.join("\n"),
 			"bodyclass" : bodyClass,
 			"tools" : toolStr,
+			"dlang-org-root" : "/dlang.org",
 		];
 
 		debug
@@ -624,9 +630,27 @@ class WebUI
 			vars["static:" ~ path] = res;
 
 		response.disableCache();
-		response.serveData(HttpResponseEx.loadTemplate(optimizedPath(null, "web/skel.htt"), vars));
+
+		auto page = readText("web/skel.htt");
+		page = renderNav(page);
+		page = HttpResponseEx.parseTemplate(page, vars);
+		response.serveData(page);
+
 		response.setStatus(status);
 		return response;
+	}
+
+	string renderNav(string html)
+	{
+		auto nav = inferList(html, [["<-?category1?->"], ["<-?category2?->"]]);
+		auto nav2 = inferList(nav.itemSuffix, [["<-?url1?->", "<-?title1?->"], ["<-?url2?->", "<-?title2?->"]]);
+		nav.itemSuffix = null; nav.varPrefix ~= null;
+
+		return nav.render(groupHierarchy.map!(set =>
+			[set.shortName, nav2.render(set.groups.map!(group =>
+				[group.name, group.name]
+			).array)]
+		).array);
 	}
 
 	// ***********************************************************************
@@ -634,7 +658,14 @@ class WebUI
 	// TODO: Move out to configuration files
 
 	struct GroupInfo { string name, description, postMessage, alsoVia; }
-	struct GroupSet { string name; GroupInfo[] groups; }
+	struct GroupSet { string name, shortName; GroupInfo[] groups; }
+
+	static GroupSet makeGroupSet(string name, GroupInfo[] groups)
+	{
+		auto shortName = name;
+		shortName.eat("D Programming Language - ");
+		return GroupSet(name, shortName, groups);
+	}
 
 	static GroupInfo makeGroupInfo(string name, string archiveName, string mlName, string description, bool mlOnly, bool bugzilla)
 	{
@@ -667,37 +698,37 @@ class WebUI
 	}
 
 	static GroupSet[] groupHierarchy = [
-	{ "D Programming Language - New users", [
+	makeGroupSet("D Programming Language - New users", [
 		makeGroupInfo("digitalmars.D.learn"     , "digitalmars/D/learn"     , "digitalmars-d-learn"     , "Questions about learning D"                                       , false, false),
-	]},
-	{ "D Programming Language - General", [
+	]),
+	makeGroupSet("D Programming Language - General", [
 		makeGroupInfo("digitalmars.D"           , "digitalmars/D"           , "digitalmars-d"           , "General discussion of the D programming language."                , false, false),
 		makeGroupInfo("digitalmars.D.announce"  , "digitalmars/D/announce"  , "digitalmars-d-announce"  , "Announcements for anything D related"                             , false, false),
-	]},
-	{ "D Programming Language - Ecosystem", [
+	]),
+	makeGroupSet("D Programming Language - Ecosystem", [
 		makeGroupInfo("D.gnu"                   , "D/gnu"                   , "d.gnu"                   , "GDC, the Gnu D Compiler "                                         , false, false),
 		makeGroupInfo("digitalmars.D.ldc"       , null                      , "digitalmars-d-ldc"       , "LDC, the LLVM-based D Compiler "                                  , false, false),
 
 		makeGroupInfo("digitalmars.D.debugger"  , "digitalmars/D/debugger"  , "digitalmars-d-debugger"  , "Debuggers for D"                                                  , false, false),
 		makeGroupInfo("digitalmars.D.ide"       , "digitalmars/D/ide"       , "digitalmars-d-ide"       , "Integrated Development Environments for D"                        , false, false),
-	]},
-	{ "D Programming Language - Development", [
+	]),
+	makeGroupSet("D Programming Language - Development", [
 		makeGroupInfo("digitalmars.D.bugs"      , "digitalmars/D/bugs"      , "digitalmars-d-bugs"      , "Bug reports for D compiler and library"                           , false, true ),
 		makeGroupInfo("dmd-beta"                , null                      , "dmd-beta"                , "Notify of and discuss beta versions"                              , true , false),
 		makeGroupInfo("dmd-concurrency"         , null                      , "dmd-concurrency"         , "Design of concurrency features in D and library"                  , true , false),
 		makeGroupInfo("dmd-internals"           , null                      , "dmd-internals"           , "dmd compiler internal design and implementation"                  , true , false),
 		makeGroupInfo("phobos"                  , null                      , "phobos"                  , "Phobos standard library design and implementation"                , true , false),
 		makeGroupInfo("D-runtime"               , null                      , "D-runtime"               , "Runtime library design and implementation"                        , true , false),
-	]},
-	{ "Other", [
+	]),
+	makeGroupSet("Other", [
 		makeGroupInfo("digitalmars.D.dwt"       , "digitalmars/D/dwt"       , "digitalmars-d-dwt"       , "Developing the D Widget Toolkit"                                  , false, false),
 		makeGroupInfo("digitalmars.D.dtl"       , "digitalmars/D/dtl"       , "digitalmars-d-dtl"       , "Developing the D Template Library"                                , false, false),
 
 		makeGroupInfo("DMDScript"               , "DMDScript"               , null                      , "General discussion of DMDScript"                                  , false, false),
 		makeGroupInfo("digitalmars.empire"      , "digitalmars/empire"      , null                      , "General discussion of Empire, the Wargame of the Century"         , false, false),
 		makeGroupInfo("D"                       , ""                        , null                      , "Retired, use digitalmars.D instead"                               , false, false),
-	]},
-	{ "C and C++", [
+	]),
+	makeGroupSet("C and C++", [
 		makeGroupInfo("c++"                     , "c++"                     , null                      , "General discussion of DMC++ compiler"                             , false, false),
 		makeGroupInfo("c++.announce"            , "c++/announce"            , null                      , "Announcements about C++"                                          , false, false),
 		makeGroupInfo("c++.atl"                 , "c++/atl"                 , null                      , "Microsoft's Advanced Template Library"                            , false, false),
@@ -719,7 +750,7 @@ class WebUI
 		makeGroupInfo("c++.windows.16-bits"     , "c++/windows/16-bits"     , null                      , "16 bit Windows topics"                                            , false, false),
 		makeGroupInfo("c++.windows.32-bits"     , "c++/windows/32-bits"     , null                      , "32 bit Windows topics"                                            , false, false),
 		makeGroupInfo("c++.wxwindows"           , "c++/wxwindows"           , null                      , "wxWindows"                                                        , false, false),
-	]},
+	]),
 	];
 
 	const(GroupInfo)* getGroupInfo(string name)
@@ -1050,8 +1081,8 @@ class WebUI
 				with (*info)
 					return html.put(
 					//	`<!-- Thread ID: ` ~ encodeEntities(threadID) ~ ` | First Post ID: ` ~ encodeEntities(id) ~ `-->` ~
-						`<a class="forum-postsummary-subject `, (isRead ? "forum-read" : "forum-unread"), `" href="`, encodeEntities(idToUrl(tid, "thread")), `">`, truncateString(subject, 70), `</a><br>`
-						`by <span class="forum-postsummary-author">`, truncateString(author, 70), `</span><br>`);
+						`<a class="forum-postsummary-subject `, (isRead ? "forum-read" : "forum-unread"), `" href="`, encodeEntities(idToUrl(tid, "thread")), `">`, truncateString(subject, 60), `</a>`
+						`<div class="nowrap">by <span class="forum-postsummary-author">`, truncateString(author, 60), `</span></div>`);
 
 			html.put(`<div class="forum-no-data">-</div>`);
 		}
@@ -1062,7 +1093,7 @@ class WebUI
 				with (*info)
 					return html.put(
 						`<a class="forum-postsummary-time `, user.isRead(rowid) ? "forum-read" : "forum-unread", `" href="`, encodeEntities(idToUrl(id)), `">`, summarizeTime(time), `</a>`
-						`by <span class="forum-postsummary-author">`, truncateString(author, 20), `</span><br>`);
+						`<div class="nowrap">by <span class="forum-postsummary-author">`, truncateString(author, 20), `</span></div>`);
 
 			html.put(`<div class="forum-no-data">-</div>`);
 		}
@@ -2383,7 +2414,7 @@ class WebUI
 		return `<span title="`~encodeEntities(s8)~`">` ~ encodeEntities(toUTF8(s32[0..end]) ~ "\&hellip;") ~ `</span>`;
 	*/
 		auto encoded = encodeEntities(s8);
-		return `<span class="truncated" style="max-width: ` ~ text(maxLength * 0.6) ~ `em" title="`~encoded~`">` ~ encodeEntities(s8) ~ `</span>`;
+		return `<span class="truncated" style="max-width: ` ~ text(maxLength * 0.6) ~ `em" title="`~encoded~`">` ~ encoded ~ `</span>`;
 	}
 
 	unittest
