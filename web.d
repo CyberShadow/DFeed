@@ -1459,6 +1459,7 @@ class WebUI
 		string gravatarHash = getGravatarHash(post.authorEmail);
 
 		string[] infoBits;
+		string horizontalInfo;
 
 		if (post.parentID)
 		{
@@ -1480,7 +1481,11 @@ class WebUI
 			}
 
 			if (author && link)
-				infoBits ~= `Posted in reply to <a href="` ~ encodeEntities(link) ~ `">` ~ encodeEntities(author) ~ `</a>`;
+			{
+				string a = `<a href="` ~ encodeEntities(link) ~ `">` ~ encodeEntities(author) ~ `</a>`;
+				infoBits ~= `Posted in reply to ` ~ a;
+				horizontalInfo ~= `<br>in reply to ` ~ a;
+			}
 		}
 
 		auto partList = formatPostParts(post);
@@ -1506,6 +1511,22 @@ class WebUI
 						encodeEntities(rawSubject),
 					`</a>`
 				`</th></tr>`
+				`<tr class="post-info-horizontal">`
+					`<td class="horizontal-post-info" colspan="2">`
+						`<table><tr>`
+							`<td class="horizontal-post-info-avatar">`
+								`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`, encodeEntities(author), `'s Gravatar profile">`
+									`<img alt="Gravatar" class="post-gravatar" width="32" height="32" src="http://www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&s=32">`
+								`</a>`
+							`</td>`
+							`<td>`
+								`Posted by <b>`, encodeEntities(author), `</b>`,
+								horizontalInfo,
+							`</td>`
+							`<td class="horizontal-post-info-actions">`); postActions(post.msg); html.put(`</td>`
+						`</tr></table>`
+					`</td>`
+				`</tr>`
 				`<tr>`
 					`<td class="post-info">`
 						`<div class="post-author">`, encodeEntities(author), `</div>`
@@ -1606,19 +1627,19 @@ class WebUI
 						encodeEntities(rawSubject),
 					`</a>`
 				`</th></tr>`
-				`<tr><td class="split-post-info">`
-					`<table><tr>`, // yay 4x nested table layouts
-						`<td class="split-post-avatar" rowspan="`, text(infoRows.length), `">`
+				`<tr><td class="horizontal-post-info">`
+					`<table><tr>`
+						`<td class="horizontal-post-info-avatar" rowspan="`, text(infoRows.length), `">`
 							`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`, encodeEntities(author), `'s Gravatar profile">`
 								`<img alt="Gravatar" class="post-gravatar" width="48" height="48" src="http://www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&s=48">`
 							`</a>`
 						`</td>`
 						`<td><table>`);
 			foreach (a; infoRows)
-				html.put(`<tr><td class="split-post-info-name">`, a.name, `</td><td class="split-post-info-value">`, a.value, `</td></tr>`);
+				html.put(`<tr><td class="horizontal-post-info-name">`, a.name, `</td><td class="horizontal-post-info-value">`, a.value, `</td></tr>`);
 			html.put(
 						`</table></td>`
-						`<td class="split-post-actions">`), postActions(post.msg), html.put(`</td>`
+						`<td class="horizontal-post-info-actions">`), postActions(post.msg), html.put(`</td>`
 					`</tr></table>`
 				`</td></tr>`
 				`<tr><td class="post-body">`
@@ -1626,7 +1647,8 @@ class WebUI
 					(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``),
 				`</td></tr>`
 				`</table>`
-				`</div>`);
+				`</div>`
+			);
 		}
 	}
 

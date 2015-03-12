@@ -139,7 +139,7 @@ function updateSize() {
 		wasFocusedInView = isRowInView(focused);
 
 	var resizees = [
-		{ outer : $('#group-index'), inner : $('.group-threads')},
+		{ outer : $('#group-index-threaded'), inner : $('.group-threads')},
 		{ outer : $('.split-post') , inner : $('.split-post .post-text')},
 	];
 
