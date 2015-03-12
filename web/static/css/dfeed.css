@@ -45,13 +45,36 @@ table td {
 	border-bottom: none;
 }
 
-/*************** Title / Breadcrumbs ***************/
+/*************** Responsive overrides ***************/
+
+@media only screen and (max-width: 50em) {
+	div#content {
+		padding-left: 0;
+		padding-right: 0;
+		border-left: 0;
+		border-right: 0;
+		font-size: 75%;
+	}
+
+	#forum-tools {
+		margin-right: 1em;
+	}
+
+	.forum-form {
+		display: block;
+		margin: 0 0.5em;
+	}
+
+	#forum-index > tbody > tr > *:nth-child(3),
+	#forum-index > tbody > tr > *:nth-child(4),
+	#forum-index > tbody > tr > *:nth-child(5) { display: none; }
+}
+
+/*************** General layout ***************/
 
 #top {
 	position: relative;
 }
-
-/*************** Tool links ***************/
 
 #forum-tools {
 	float: right;
@@ -68,20 +91,6 @@ table td {
 
 #forum-content {
 	position: relative;
-}
-
-@media only screen and (max-width: 50em) {
-	div#content {
-		padding-left: 0;
-		padding-right: 0;
-		border-left: 0;
-		border-right: 0;
-		font-size: 75%;
-	}
-
-	#forum-tools {
-		margin-right: 1em;
-	}
 }
 
 #forum-content table {
@@ -215,13 +224,6 @@ th .forum-read:visited {
 
 /* Forms */
 
-@media only screen and (max-width: 50em) {
-	.forum-form {
-		display: block;
-		margin: 0 0.5em;
-	}
-}
-
 .forum-form input,
 .forum-form textarea {
 	max-width: 100%;
@@ -273,12 +275,6 @@ div#footernav a {
 #forum-index > tbody > tr > td:nth-child(3) { width: 5em; }
 #forum-index > tbody > tr > td:nth-child(4) { width: 5em; }
 #forum-index > tbody > tr > td:nth-child(5) { width: 6em; }
-
-@media only screen and (max-width: 50em) {
-	#forum-index > tbody > tr > *:nth-child(3),
-	#forum-index > tbody > tr > *:nth-child(4),
-	#forum-index > tbody > tr > *:nth-child(5) { display: none; }
-}
 
 .forum-index-description {
 	color: #444;
