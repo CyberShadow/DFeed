@@ -121,8 +121,6 @@ class WebUI
 
 	// ***********************************************************************
 
-	enum JQUERY_URL = "http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js";
-
 	void onRequest(HttpRequest request, HttpServerConnection conn)
 	{
 		conn.sendResponse(handleRequest(request, conn));
@@ -159,7 +157,6 @@ class WebUI
 			return response.redirect("http://" ~ vhost ~ request.resource, HttpStatusCode.MovedPermanently);
 
 		auto splitViewHeaders = [
-			`<script src="` ~ JQUERY_URL ~ `"></script>`,
 			`<script src="` ~ staticPath("/js/dfeed-split.js") ~ `"></script>`,
 		];
 		auto canonicalHeader =
@@ -819,14 +816,15 @@ class WebUI
 			if (info)
 				with (*info)
 					return
-						`<a class="forum-postsummary-subject ` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `" href="` ~ encodeEntities(idToUrl(id)) ~ `">` ~ truncateString(subject) ~ `</a><br>` ~
-						`by <span class="forum-postsummary-author">` ~ truncateString(author) ~ `</span><br>` ~
+						`<div class="truncated"><a class="forum-postsummary-subject ` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `" href="` ~ encodeEntities(idToUrl(id)) ~ `" title="` ~ encodeEntities(subject) ~ `">` ~ encodeEntities(subject) ~ `</a></div>` ~
+						`<div class="truncated">by <span class="forum-postsummary-author" title="` ~ encodeEntities(author) ~ `">` ~ encodeEntities(author) ~ `</span></div>` ~
 						`<span class="forum-postsummary-time">` ~ summarizeTime(time) ~ `</span>`;
 
 			return `<div class="forum-no-data">-</div>`;
 		}
 
 		html.put(`<table id="forum-index" class="forum-table">`);
+		html.put(`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(5), `</tr>`); // Fixed layout dummies
 		foreach (set; groupHierarchy)
 		{
 			html.put(
@@ -836,8 +834,9 @@ class WebUI
 			{
 				html.put(
 					`<tr>`
-						`<td class="forum-index-col-forum"><a href="/group/`, encodeEntities(group.name), `">`, encodeEntities(group.name), `</a>`
-							`<div class="forum-index-description">`, encodeEntities(group.description), `</div>`
+						`<td class="forum-index-col-forum">`
+							`<a href="/group/`, encodeEntities(group.name), `">`, encodeEntities(group.name), `</a>`
+							`<div class="truncated forum-index-description" title="`, encodeEntities(group.description), `">`, encodeEntities(group.description), `</div>`
 						`</td>`
 						`<td class="forum-index-col-lastpost">`, group.name in lastPosts    ? summarizePost(   lastPosts[group.name]) : `<div class="forum-no-data">-</div>`, `</td>`
 						`<td class="number-column">`,            group.name in threadCounts ? formatNumber (threadCounts[group.name]) : `-`, `</td>`
@@ -1081,8 +1080,8 @@ class WebUI
 				with (*info)
 					return html.put(
 					//	`<!-- Thread ID: ` ~ encodeEntities(threadID) ~ ` | First Post ID: ` ~ encodeEntities(id) ~ `-->` ~
-						`<a class="forum-postsummary-subject `, (isRead ? "forum-read" : "forum-unread"), `" href="`, encodeEntities(idToUrl(tid, "thread")), `">`, truncateString(subject, 60), `</a>`
-						`<div class="nowrap">by <span class="forum-postsummary-author">`, truncateString(author, 60), `</span></div>`);
+						`<div class="truncated"><a class="forum-postsummary-subject `, (isRead ? "forum-read" : "forum-unread"), `" href="`, encodeEntities(idToUrl(tid, "thread")), `" title="`, encodeEntities(subject), `">`, encodeEntities(subject), `</a></div>`
+						`<div class="truncated">by <span class="forum-postsummary-author" title="`, encodeEntities(author), `">`, encodeEntities(author), `</span></div>`);
 
 			html.put(`<div class="forum-no-data">-</div>`);
 		}
@@ -1093,7 +1092,7 @@ class WebUI
 				with (*info)
 					return html.put(
 						`<a class="forum-postsummary-time `, user.isRead(rowid) ? "forum-read" : "forum-unread", `" href="`, encodeEntities(idToUrl(id)), `">`, summarizeTime(time), `</a>`
-						`<div class="nowrap">by <span class="forum-postsummary-author">`, truncateString(author, 20), `</span></div>`);
+						`<div class="truncated">by <span class="forum-postsummary-author" title="`, encodeEntities(author), `">`, encodeEntities(author), `</span></div>`);
 
 			html.put(`<div class="forum-no-data">-</div>`);
 		}
@@ -1113,6 +1112,7 @@ class WebUI
 
 		html.put(
 			`<table id="group-index" class="forum-table">`
+			`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(3), `</tr>` // Fixed layout dummies
 			`<tr class="group-index-header"><th colspan="3"><div class="header-with-tools">`), newPostButton(group), html.put(encodeEntities(group), `</div></th></tr>`
 			`<tr class="subheader"><th>Thread / Thread Starter</th><th>Last Post</th><th>Replies</th>`);
 		foreach (thread; threads)
@@ -1497,6 +1497,7 @@ class WebUI
 			html.put(
 				`<div class="post-wrapper">`
 				`<table class="post forum-table`, (post.children ? ` with-children` : ``), `" id="`, encodeEntities(idToFragment(id)), `">`
+				`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(2), `</tr>` // Fixed layout dummies
 				`<tr class="post-header"><th colspan="2">`
 					`<div class="post-time">`, summarizeTime(time), `</div>`
 					`<a title="Permanent link to this post" href="`, encodeEntities(idToUrl(id)), `" class="`, (user.isRead(post.rowid) ? "forum-read" : "forum-unread"), `">`,
@@ -1584,7 +1585,7 @@ class WebUI
 		foreach (int rowid, string id, string author; query("SELECT `ROWID`, `ID`, `Author` FROM `Posts` WHERE ParentID = ?").iterate(post.id))
 			replies ~= postLink(rowid, id, author);
 		if (replies.length)
-			infoRows ~= InfoRow("Replies", replies.join(", "));
+			infoRows ~= InfoRow("Replies", `<span class="avoid-wrap">` ~ replies.join(`,</span> <span class="avoid-wrap">`) ~ `</span>`);
 
 		auto partList = formatPostParts(post);
 		if (partList.length)
@@ -2391,36 +2392,10 @@ class WebUI
 		return s;
 	}
 
-	/// Return HTML-encoded string. If it has more than maxLength characters,
-	/// truncate, add ellipses, and wrap in a <span> with the full string as title.
 	static string truncateString(string s8, int maxLength = 30)
 	{
-	/*
-		import std.uni;
-		import std.utf;
-
-		dstring s32 = toUTF32(s8);
-		if (s32.length <= maxLength)
-			return encodeEntities(s8);
-
-		int end = maxLength;
-		foreach_reverse (p; maxLength-10..maxLength)
-			if (isWhite(s32[p]))
-			{
-				end = p+1;
-				break;
-			}
-
-		return `<span title="`~encodeEntities(s8)~`">` ~ encodeEntities(toUTF8(s32[0..end]) ~ "\&hellip;") ~ `</span>`;
-	*/
 		auto encoded = encodeEntities(s8);
 		return `<span class="truncated" style="max-width: ` ~ text(maxLength * 0.6) ~ `em" title="`~encoded~`">` ~ encoded ~ `</span>`;
-	}
-
-	unittest
-	{
-		assert(truncateString("Hello, world!", 10).split(">")[1].split("<")[0] == "Hello, \&hellip;");
-		assert(truncateString("Привет, мир!" , 10).split(">")[1].split("<")[0] == "Привет, \&hellip;");
 	}
 
 	static string encodeEntities(string s)

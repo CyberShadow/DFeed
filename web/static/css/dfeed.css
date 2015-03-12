@@ -1,8 +1,12 @@
+
+/*************** style.css overrides ***************/
+
 table, table th {
 	border-style: none;
 }
 
 div#content {
+	line-height: inherit;
 	text-align: left;
 }
 
@@ -31,105 +35,15 @@ div#footernav {
 	background-color: #622;
 }
 
-/*************** Font size / side menu ***************/
-
-/* narrow pages (most views) */
-
-@media screen and (max-width: 1120px) {
-	/* scale to 7/8 */
-	body.narrowdoc .post-text        { font-size: 12px; }
-	body.narrowdoc #forum-content    { font-size: 0.875em; }
-	body.narrowdoc #group-split-list { width: 350px; }
-
-	body.narrowdoc #forum-content input[type="submit"] { font-size: 11px; }
+pre {
+	background: inherit;
+	border: none;
 }
-
-@media screen and (max-width: 1020px) {
-	/* hide dlang.org sidebar */
-	body.narrowdoc #top              { display: none; }
-	body.narrowdoc #navigation       { display: none; }
-	body.narrowdoc #content          { margin-left: 1.5em !important; }
-}
-
-@media screen and (max-width: 880px) {
-	/* scale to 4/3 */
-	body.narrowdoc .post-text        { font-size: 11px; }
-	body.narrowdoc #forum-content    { font-size: 0.75em; }
-	body.narrowdoc #group-split-list { width: 300px; }
-}
-
-/* wide pages (split-mode view) */
-
-@media screen and (max-width: 1350px) {
-	/* hide dlang.org sidebar */
-	body.widedoc #top              { display: none; }
-	body.widedoc #navigation       { display: none; }
-	body.widedoc #content          { margin-left: 1.5em !important; }
-}
-
-@media screen and (max-width: 1170px) {
-	/* scale to 7/8 */
-	body.widedoc .post-text        { font-size: 12px; }
-	body.widedoc #forum-content    { font-size: 0.875em; }
-	body.widedoc #group-split-list { width: 350px; }
-
-	body.widedoc #forum-content input[type="submit"] { font-size: 12px; }
-}
-
-@media screen and (max-width: 1040px) {
-	/* scale to 4/3 */
-	body.widedoc .post-text        { font-size: 11px; }
-	body.widedoc #forum-content    { font-size: 0.75em; }
-	body.widedoc #group-split-list { width: 300px; }
-}
-
-/* reply page */
-
-@media screen and (max-width: 950px) {
-	/* hide dlang.org sidebar */
-	body.formdoc   #top              { display: none; }
-	body.formdoc   #navigation       { display: none; }
-	body.formdoc   #content          { margin-left: 1.5em !important; }
-}
-
 
 /*************** Title / Breadcrumbs ***************/
 
 #top {
 	position: relative;
-}
-
-#breadcrumbs {
-	color: white;
-	position: absolute;
-	top: 20px;
-	left: 210px;
-	right: 220px;
-	font-size: 1.7em;
-	font-family: Georgia, "Times New Roman", Times, serif;
-	font-variant: small-caps;
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-}
-
-#breadcrumbs a {
-	color: inherit;
-	text-decoration: none;
-}
-
-#breadcrumb1,
-#breadcrumb2 {
-	color: #ccc;
-	font-size: 60%;
-}
-
-#breadcrumb1 {
-	margin-left: 20px;
-}
-#breadcrumb2 {
-	margin-left: 40px;
-	font-variant: normal;
 }
 
 /*************** Tool links ***************/
@@ -151,10 +65,29 @@ div#footernav {
 	position: relative;
 }
 
+@media only screen and (max-width: 50em) {
+	div#content {
+		padding-left: 0;
+		padding-right: 0;
+		border-left: 0;
+		border-right: 0;
+		font-size: 75%;
+	}
+
+	#forum-tools {
+		margin-right: 1em;
+	}
+}
+
 #forum-content table {
 	width: 100%;
 	border-spacing: 0;
 	border-collapse: collapse;
+}
+
+#forum-content table tr.table-fixed-dummy td {
+	padding: 0 !important;
+	border: 0 !important;
 }
 
 #forum-content input[type=submit] {
@@ -169,6 +102,10 @@ div#footernav {
 	white-space: nowrap;
 }
 
+.avoid-wrap {
+	display: inline-block;
+}
+
 span.truncated {
 	white-space: nowrap;
 	overflow: hidden;
@@ -181,10 +118,18 @@ a span.truncated {
 	text-decoration: underline;
 }
 
+div.truncated {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 100%;
+}
+
 /* A forum-table has a gray header and borders */
 
 .forum-table {
 	border: 2px solid #D0D0D0;
+	table-layout: fixed;
 }
 
 .forum-table > tbody > tr > th {
@@ -197,12 +142,12 @@ a span.truncated {
 
 .forum-table > tbody > tr > td,
 .forum-table > tbody > tr > th {
-	padding: 4px;
+	padding: 0.3em;
 	border: 1px solid #D0D0D0;
+	overflow: hidden;
 }
 
 .number-column {
-	font-size: 90%;
 	text-align: center;
 }
 
@@ -267,7 +212,7 @@ th .forum-read:visited {
 
 .forum-form input,
 .forum-form textarea {
-	font-size: inherit;
+	font-size: 100%;
 }
 
 .post-form label,
@@ -293,10 +238,28 @@ th .forum-read:visited {
 	text-align: center;
 }
 
+/* Footer */
+
+div#footernav a {
+	white-space: nowrap;
+}
+
 /*************** Discussion index ***************/
 
 #forum-index > tbody > tr > td:nth-child(even) {
 	background-color: #F0F0F0;
+}
+
+#forum-index > tbody > tr > td:nth-child(1) { width: 60%; }
+#forum-index > tbody > tr > td:nth-child(2) { width: 40%; }
+#forum-index > tbody > tr > td:nth-child(3) { width: 5em; }
+#forum-index > tbody > tr > td:nth-child(4) { width: 5em; }
+#forum-index > tbody > tr > td:nth-child(5) { width: 6em; }
+
+@media only screen and (max-width: 50em) {
+	#forum-index > tbody > tr > *:nth-child(3),
+	#forum-index > tbody > tr > *:nth-child(4),
+	#forum-index > tbody > tr > *:nth-child(5) { display: none; }
 }
 
 .forum-index-description {
@@ -305,7 +268,6 @@ th .forum-read:visited {
 
 .forum-index-description,
 .forum-index-col-lastpost {
-	font-size: 90%;
 }
 
 .forum-postsummary-time {
@@ -319,12 +281,15 @@ th .forum-read:visited {
 	background-color: #F0F0F0;
 }
 
+#group-index > tbody > tr > td:nth-child(1) { width: 65%; }
+#group-index > tbody > tr > td:nth-child(2) { width: 25%; }
+#group-index > tbody > tr > td:nth-child(3) { width: 10%; }
+
 .group-index-col-first {
 	width: 70%;
 }
 
 .group-index-col-last {
-	font-size: 90%;
 	text-align: right;
 }
 
@@ -344,6 +309,9 @@ th .forum-read:visited {
 	vertical-align: top;
 	padding: 10px;
 }
+
+.post > tbody > tr > td:nth-child(1) { width: 10em; }
+
 
 /* Header */
 
@@ -412,7 +380,7 @@ ul.post-info-parts {
 .post-text {
 	margin: 0;
 	font-family: Consolas, monospace;
-	font-size: 14px;
+	font-size: 1em;
 	white-space: pre; /* old browser compat */
 	white-space: pre-wrap;
 	word-wrap: break-word;
@@ -523,6 +491,10 @@ ul.post-info-parts {
 
 #thread-index {
 	margin-top: 20px;
+}
+
+table.viewmode-threaded > tbody > tr > th {
+	width: 100%;
 }
 
 /*************** Split view ***************/
