@@ -589,10 +589,13 @@ class WebUI
 		tools ~= `<a href="/help">Help</a>`;
 
 		string toolStr = tools.join(" &middot; ");
-		toolStr = `<div id="forum-tools-left"></div><div id="forum-tools-right">` ~ toolStr ~ `</div>`;
 		toolStr =
 			toolStr.replace("__URL__",  encodeUrlParameter(returnPage)) ~
 			`<script type="text/javascript">var toolsTemplate = ` ~ toJson(toolStr) ~ `;</script>`;
+		toolStr =
+			`<div id="forum-tools-left"></div>`
+			`<div id="forum-tools-right">` ~ toolStr ~ `</div>`
+			`<div style="clear: both"></div>`;
 		string htmlStr = cast(string) html.get(); // html contents will be overwritten on next request
 
 		cookies = user.save();
