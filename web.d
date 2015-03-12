@@ -147,7 +147,7 @@ class WebUI
 		string bodyClass = "narrowdoc";
 		string returnPage = request.resource;
 		html.clear();
-		string[] tools, extraHeaders;
+		string[] tools, extraHeaders, extraScripts;
 		auto status = HttpStatusCode.OK;
 
 		// Redirect to canonical domain name
@@ -156,7 +156,7 @@ class WebUI
 		if (host != vhost && host != "localhost" && ip != "127.0.0.1")
 			return response.redirect("http://" ~ vhost ~ request.resource, HttpStatusCode.MovedPermanently);
 
-		auto splitViewHeaders = [
+		auto splitViewScripts = [
 			`<script src="` ~ staticPath("/js/dfeed-split.js") ~ `"></script>`,
 		];
 		auto canonicalHeader =
@@ -254,7 +254,7 @@ class WebUI
 					else
 					{
 						discussionGroupSplit(group, page);
-						extraHeaders ~= splitViewHeaders;
+						extraScripts ~= splitViewScripts;
 					}
 					//tools ~= viewModeTool(["basic", "threaded"], "group");
 					tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
@@ -309,7 +309,7 @@ class WebUI
 						string pageStr = page==1 ? "" : format(" (page %d)", page);
 						title = group ~ " index" ~ pageStr;
 						breadcrumb1 = `<a href="/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
-						extraHeaders ~= splitViewHeaders;
+						extraScripts ~= splitViewScripts;
 						tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
 
 						break;
@@ -614,6 +614,7 @@ class WebUI
 			"breadcrumb1" : breadcrumb1,
 			"breadcrumb2" : breadcrumb2,
 			"extraheaders" : extraHeaders.join("\n"),
+			"extrascripts" : extraScripts.join("\n"),
 			"bodyclass" : bodyClass,
 			"tools" : toolStr,
 			"dlang-org-root" : "/dlang.org",
@@ -629,6 +630,7 @@ class WebUI
 		response.disableCache();
 
 		auto page = readText("web/skel.htt");
+		//scope(failure) std.file.write("bad-tpl.html", page);
 		page = renderNav(page);
 		page = HttpResponseEx.parseTemplate(page, vars);
 		response.serveData(page);
@@ -639,13 +641,13 @@ class WebUI
 
 	string renderNav(string html)
 	{
-		auto nav = inferList(html, [["<-?category1?->"], ["<-?category2?->"]]);
-		auto nav2 = inferList(nav.itemSuffix, [["<-?url1?->", "<-?title1?->"], ["<-?url2?->", "<-?title2?->"]]);
+		auto nav = inferList(html, [["<?category1?>"], ["<?category2?>"]]);
+		auto nav2 = inferList(nav.itemSuffix, [["<?url1?>", "<?title1?>"], ["<?url2?>", "<?title2?>"]]);
 		nav.itemSuffix = null; nav.varPrefix ~= null;
 
 		return nav.render(groupHierarchy.map!(set =>
 			[set.shortName, nav2.render(set.groups.map!(group =>
-				[group.name, group.name]
+				["/group/" ~ group.name, group.name]
 			).array)]
 		).array);
 	}
@@ -1320,7 +1322,7 @@ class WebUI
 			posts ~= [PostInfo(rowid, id, null, parent, author, subject, SysTime(stdTime, UTC()))].ptr; // TODO: optimize?
 
 		html.put(
-			`<table id="group-index" class="forum-table group-wrapper viewmode-`, encodeEntities(user.get("groupviewmode", "basic")), `">`
+			`<table id="group-index-threaded" class="forum-table group-wrapper viewmode-`, encodeEntities(user.get("groupviewmode", "basic")), `">`
 			`<tr class="group-index-header"><th><div>`), newPostButton(group), html.put(encodeEntities(group), `</div></th></tr>`,
 		//	`<tr class="group-index-captions"><th>Subject / Author</th><th>Time</th>`,
 			`<tr><td class="group-threads-cell"><div class="group-threads"><table>`);

@@ -38,6 +38,11 @@ div#footernav {
 pre {
 	background: inherit;
 	border: none;
+	padding: 0;
+}
+
+table td {
+	border-bottom: none;
 }
 
 /*************** Title / Breadcrumbs ***************/
@@ -52,7 +57,7 @@ pre {
 	float: right;
 	font-size: 80%;
 	font-style: italic;
-	margin: -13px 0 4px 0;
+	margin: -1em 0 0.25em 0;
 	color: #666;
 }
 #forum-tools a {
@@ -210,22 +215,35 @@ th .forum-read:visited {
 
 /* Forms */
 
+@media only screen and (max-width: 50em) {
+	.forum-form {
+		display: block;
+		margin: 0 0.5em;
+	}
+}
+
 .forum-form input,
 .forum-form textarea {
-	font-size: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+.forum-form textarea {
+	/* We are working relative to the default UA font-size */
+	font-size: 120%;
 }
 
 .post-form label,
 .forum-form input[type=submit] {
-	margin-top: 10px !important;
+	margin-top: 0.75em !important;
 	display: block;
 }
 
 .form-error {
 	border: 2px dotted red;
 	color: red;
-	padding: 10px;
-	margin-bottom: 10px;
+	padding: 0.75em;
+	margin-bottom: 0.75em;
 }
 
 /* Notice */
@@ -233,8 +251,8 @@ th .forum-read:visited {
 .forum-notice {
 	border: 2px solid #E0E0A0;
 	background-color: #FFFFD8;
-	padding: 5px;
-	margin-bottom: 10px;
+	padding: 0.5em;
+	margin-bottom: 1em;
 	text-align: center;
 }
 
@@ -302,12 +320,12 @@ div#footernav a {
 	position: relative;
 }
 .post {
-	margin-top: 10px;
+	margin-top: 0.75em;
 }
 
 .post > tbody > tr > td {
 	vertical-align: top;
-	padding: 10px;
+	padding: 0.75em;
 }
 
 .post > tbody > tr > td:nth-child(1) { width: 10em; }
@@ -343,16 +361,16 @@ div#footernav a {
 	font-size: 130%;
 }
 .post-gravatar {
-	margin-top: 4px;
+	margin-top: 0.35em;
 	border: 5px solid #D0D0D0 !important;
 }
 .post-info > hr {
 	border: 1px solid #D0D0D0;
 	border-bottom: none;
-	margin: 6px 0;
+	margin: 0.5em 0;
 }
 .post-info-bit {
-	margin-bottom: 12px;
+	margin-bottom: 1em;
 }
 ul.post-info-parts {
 	margin: 0;
@@ -361,7 +379,7 @@ ul.post-info-parts {
 }
 .post-actions {
 	position: absolute;
-	bottom: 12px;
+	bottom: 1em;
 }
 .actionlink {
 	display: block;
@@ -434,6 +452,8 @@ ul.post-info-parts {
 .forum-table > tbody > tr > td.group-threads-cell {
 	padding: 2px 0 0 0;
 }
+
+#group-index-threaded > tbody > tr > th { width: 100%; }
 
 .group-threads > table {
 	width: 100%;
