@@ -961,7 +961,8 @@ class WebUI
 		html.put(
 			`<form name="new-post-form" method="get" action="/newpost/`, encodeEntities(group), `">`
 				`<div class="header-tools">`
-					`<input type="submit" value="Create thread">`
+					`<input class="btn" type="submit" value="Create thread">`
+					`<input class="img" type="image" src="`, staticPath("/images/newthread.png"), `" alt="Create thread">`
 				`</div>`
 			`</form>`);
 	}

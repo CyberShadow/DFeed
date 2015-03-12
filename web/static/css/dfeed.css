@@ -209,6 +209,11 @@ th .forum-read:visited {
 	right: 3px;
 }
 
+.header-tools .img {
+	display: none;
+	margin: 4px;
+}
+
 /* Pager */
 
 .pager th {
@@ -737,6 +742,13 @@ kbd { /* stolen from http://en.wikipedia.org/wiki/Template:Key_press */
 	.viewmode-horizontal-split .pager-numbers {
 		display: none;
 	}
+	.viewmode-horizontal-split .header-tools .btn {
+		display: none;
+	}
+	.viewmode-horizontal-split .header-tools .img {
+		display: inline-block;
+	}
+
 	body #group-split-list {
 		width: 15em;
 	}
