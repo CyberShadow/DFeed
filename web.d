@@ -1454,13 +1454,8 @@ class WebUI
 				`</a>`);
 	}
 
-	void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts)
+	string getParentLink(Rfc850Post post, Rfc850Post[string] knownPosts)
 	{
-		string gravatarHash = getGravatarHash(post.authorEmail);
-
-		string[] infoBits;
-		string horizontalInfo;
-
 		if (post.parentID)
 		{
 			string author, link;
@@ -1481,12 +1476,21 @@ class WebUI
 			}
 
 			if (author && link)
-			{
-				string a = `<a href="` ~ encodeEntities(link) ~ `">` ~ encodeEntities(author) ~ `</a>`;
-				infoBits ~= `Posted in reply to ` ~ a;
-				horizontalInfo ~= `<br>in reply to ` ~ a;
-			}
+				return `<a href="` ~ encodeEntities(link) ~ `">` ~ encodeEntities(author) ~ `</a>`;
 		}
+
+		return null;
+	}
+
+	void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts)
+	{
+		string gravatarHash = getGravatarHash(post.authorEmail);
+
+		string[] infoBits;
+
+		auto parentLink = getParentLink(post, knownPosts);
+		if (parentLink)
+			infoBits ~= `Posted in reply to ` ~ parentLink;
 
 		auto partList = formatPostParts(post);
 		if (partList.length)
@@ -1511,20 +1515,9 @@ class WebUI
 						encodeEntities(rawSubject),
 					`</a>`
 				`</th></tr>`
-				`<tr class="post-info-horizontal">`
-					`<td class="horizontal-post-info" colspan="2">`
-						`<table><tr>`
-							`<td class="horizontal-post-info-avatar">`
-								`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`, encodeEntities(author), `'s Gravatar profile">`
-									`<img alt="Gravatar" class="post-gravatar" width="32" height="32" src="http://www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&s=32">`
-								`</a>`
-							`</td>`
-							`<td>`
-								`Posted by <b>`, encodeEntities(author), `</b>`,
-								horizontalInfo,
-							`</td>`
-							`<td class="horizontal-post-info-actions">`); postActions(post.msg); html.put(`</td>`
-						`</tr></table>`
+				`<tr class="mini-post-info-cell">`
+					`<td colspan="2">`
+			); miniPostInfo(post, knownPosts); html.put(
 					`</td>`
 				`</tr>`
 				`<tr>`
@@ -1548,6 +1541,7 @@ class WebUI
 						`<div class="post-actions">`), postActions(post.msg), html.put(`</div>`
 					`</td>`
 					`<td class="post-body">`
+	//		); miniPostInfo(post, knownPosts); html.put(
 						`<pre class="post-text">`), formatBody(content), html.put(`</pre>`,
 						(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``),
 					`</td>`
@@ -1572,6 +1566,30 @@ class WebUI
 		}
 
 		user.setRead(post.rowid, true);
+	}
+
+	void miniPostInfo(Rfc850Post post, Rfc850Post[string] knownPosts)
+	{
+		string horizontalInfo;
+		string gravatarHash = getGravatarHash(post.authorEmail);
+		auto parentLink = getParentLink(post, knownPosts);
+		with (post.msg)
+		{
+			html.put(
+				`<table class="mini-post-info"><tr>`
+					`<td class="mini-post-info-avatar">`
+						`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`, encodeEntities(author), `'s Gravatar profile">`
+							`<img alt="Gravatar" class="post-gravatar" width="32" height="32" src="http://www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&s=32">`
+						`</a>`
+					`</td>`
+					`<td>`
+						`Posted by <b>`, encodeEntities(author), `</b>`,
+						parentLink ? `<br>in reply to ` ~ parentLink : null,
+					`</td>`
+					`<td class="post-info-actions">`); postActions(post.msg); html.put(`</td>`
+				`</tr></table>`
+			);	
+		}
 	}
 
 	string postLink(int rowid, string id, string author)
@@ -1629,7 +1647,7 @@ class WebUI
 				`</th></tr>`
 				`<tr><td class="horizontal-post-info">`
 					`<table><tr>`
-						`<td class="horizontal-post-info-avatar" rowspan="`, text(infoRows.length), `">`
+						`<td class="post-info-avatar" rowspan="`, text(infoRows.length), `">`
 							`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`, encodeEntities(author), `'s Gravatar profile">`
 								`<img alt="Gravatar" class="post-gravatar" width="48" height="48" src="http://www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&s=48">`
 							`</a>`
@@ -1639,10 +1657,12 @@ class WebUI
 				html.put(`<tr><td class="horizontal-post-info-name">`, a.name, `</td><td class="horizontal-post-info-value">`, a.value, `</td></tr>`);
 			html.put(
 						`</table></td>`
-						`<td class="horizontal-post-info-actions">`), postActions(post.msg), html.put(`</td>`
+						`<td class="post-info-actions">`), postActions(post.msg), html.put(`</td>`
 					`</tr></table>`
 				`</td></tr>`
-				`<tr><td class="post-body">`
+				`<tr><td class="post-body">`);
+			miniPostInfo(post, null);
+			html.put(
 					`<pre class="post-text">`), formatBody(content), html.put(`</pre>`,
 					(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``),
 				`</td></tr>`

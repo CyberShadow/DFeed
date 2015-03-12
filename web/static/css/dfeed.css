@@ -50,73 +50,6 @@ table td:not(:last-child), table th:not(:last-child) {
 	padding-right: 0;
 }
 
-/*************** Responsive overrides ***************/
-
-@media only screen and (max-width: 60em) {
-	.viewmode-horizontal-split .thread-post-time {
-		display: none;
-	}
-	.viewmode-horizontal-split .pager-numbers {
-		display: none;
-	}
-	body #group-split-list {
-		width: 15em;
-	}
-}
-
-@media only screen and (max-width: 50em) {
-	div#navigation {
-		height: 100%;
-		min-height: 100%;
-		overflow: auto;
-	}
-
-	body div#content {
-		padding-left: 0;
-		padding-right: 0;
-		padding-bottom: 0;
-		border-left: 0;
-		border-right: 0;
-		border-bottom: 0;
-		margin-left: 0 !important;
-		font-size: 75%;
-	}
-
-	body #forum-tools-left {
-		margin-left: 1em;
-	}
-
-	body #forum-tools-right {
-		margin-right: 1em;
-	}
-
-	.forum-form {
-		display: block;
-		margin: 0 0.5em;
-	}
-
-	#forum-index > tbody > tr > *:nth-child(3),
-	#forum-index > tbody > tr > *:nth-child(4),
-	#forum-index > tbody > tr > *:nth-child(5) { display: none; }
-
-	div#footernav, div#copyright {
-		display: none;
-	}
-}
-
-@media only screen and (max-width: 30em) {
-	#forum-content .post > tbody > tr.post-info-horizontal > td.horizontal-post-info {
-		display: table-cell !important;
-	}
-	#forum-content .post > tbody > tr > td.post-info,
-	#forum-content .post > tbody > tr:first-child > td:first-child {
-		display: none;
-	}
-	#forum-content .post > tbody > tr:first-child > td:nth-child(2) {
-		width: 100%;
-	}
-}
-
 /*************** Navigation toggle ***************/
 
 body.navhidden #top,
@@ -166,9 +99,11 @@ body.navhidden #content {
 	border-collapse: collapse;
 }
 
+#forum-content table tr.table-fixed-dummy,
 #forum-content table tr.table-fixed-dummy td {
+	margin : 0 !important;
 	padding: 0 !important;
-	border: 0 !important;
+	border : 0 !important;
 }
 
 #forum-content input[type=submit] {
@@ -411,23 +346,6 @@ div#footernav a {
 	font-weight: normal;
 }
 
-/* Horizontal info (responsive view) */
-
-#forum-content .post > tbody > tr.post-info-horizontal > td.horizontal-post-info {
-	display: none;
-	font-size: 100%;
-	padding: 0;
-}
-
-#forum-content .post > tbody > tr.post-info-horizontal > td.horizontal-post-info a img.post-gravatar {
-	border-width: 3px;
-	margin-right: 0.5em;
-}
-
-.post-info-horizontal .horizontal-post-info-actions {
-	padding: 0.5em;
-}
-
 /* Info */
 
 .post-info {
@@ -468,6 +386,12 @@ ul.post-info-parts {
 .actionlink img {
 	vertical-align: middle;
 	margin-right: 5px;
+}
+
+/* Horizontal info (responsive view) */
+
+tr.mini-post-info-cell > td {
+	padding: 0 !important;
 }
 
 /* Body */
@@ -640,17 +564,19 @@ table.viewmode-threaded > tbody > tr > th {
 }
 
 .split-post .post-body {
-	padding: 10px;
+	overflow: auto;
+	padding: 0;
+	display: block;
 }
 
 .split-post .post-text {
-	overflow: auto;
+	margin: 10px;
 }
 
 .split-post {
 }
 
-.horizontal-post-info-avatar {
+.post-info-avatar {
 	padding-left: 5px;
 	padding-bottom: 2px;
 	border-right: none !important;
@@ -675,9 +601,36 @@ table td.horizontal-post-info-name {
 	font-weight: inherit;
 }
 
-.horizontal-post-info-actions {
+.post-info-actions {
 	vertical-align: bottom;
 	text-align: right;
+}
+
+/* Horizontal info (responsive view) */
+
+table.mini-post-info {
+	display: none;
+}
+
+table.mini-post-info a img.post-gravatar {
+	border-width: 3px !important;
+	margin: 0 0.5em;
+}
+
+table.mini-post-info .post-info-actions {
+	padding: 0.5em;
+}
+
+table.mini-post-info > tbody > tr > td:first-child {
+	width: 1px; /* force shrink to fit */
+}
+
+table.mini-post-info {
+	background-color: #E8E8E8;
+}
+
+.split-post table.mini-post-info {
+	border-bottom: 2px solid #D0D0D0;
 }
 
 .group-split-message-none {
@@ -773,6 +726,81 @@ kbd { /* stolen from http://en.wikipedia.org/wiki/Template:Key_press */
 	text-align: left;
 	font-size: 8pt;
 	margin: 50px 30px 0 30px;
+}
+
+/*************** Responsive overrides ***************/
+
+@media only screen and (max-width: 60em) {
+	.viewmode-horizontal-split .thread-post-time {
+		display: none;
+	}
+	.viewmode-horizontal-split .pager-numbers {
+		display: none;
+	}
+	body #group-split-list {
+		width: 15em;
+	}
+}
+
+@media only screen and (max-width: 50em) {
+	div#navigation {
+		height: 100%;
+		min-height: 100%;
+		overflow: auto;
+	}
+
+	body div#content {
+		padding-left: 0;
+		padding-right: 0;
+		padding-bottom: 0;
+		border-left: 0;
+		border-right: 0;
+		border-bottom: 0;
+		margin-left: 0 !important;
+		font-size: 75%;
+	}
+
+	body #forum-tools-left {
+		margin-left: 1em;
+	}
+
+	body #forum-tools-right {
+		margin-right: 1em;
+	}
+
+	.forum-form {
+		display: block;
+		margin: 0 0.5em;
+	}
+
+	#forum-index > tbody > tr > *:nth-child(3),
+	#forum-index > tbody > tr > *:nth-child(4),
+	#forum-index > tbody > tr > *:nth-child(5) { display: none; }
+
+	div#footernav, div#copyright {
+		display: none;
+	}
+
+	.horizontal-post-info {
+		display: none;
+	}
+
+	table.mini-post-info {
+		display: table;
+	}
+}
+
+@media only screen and (max-width: 30em) {
+	#forum-content .post > tbody > tr.mini-post-info-cell > td > table.mini-post-info {
+		display: table !important;
+	}
+	#forum-content .post > tbody > tr > td.post-info,
+	#forum-content .post > tbody > tr:first-child > td:first-child {
+		display: none;
+	}
+	#forum-content .post > tbody > tr:first-child > td:nth-child(2) {
+		width: 100%;
+	}
 }
 
 /*************** Frame view ***************/
