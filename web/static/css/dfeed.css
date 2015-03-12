@@ -52,6 +52,18 @@ table td:not(:last-child), table th:not(:last-child) {
 
 /*************** Responsive overrides ***************/
 
+@media only screen and (max-width: 60em) {
+	.viewmode-horizontal-split .thread-post-time {
+		display: none;
+	}
+	.viewmode-horizontal-split .pager-numbers {
+		display: none;
+	}
+	body #group-split-list {
+		width: 15em;
+	}
+}
+
 @media only screen and (max-width: 50em) {
 	div#navigation {
 		height: 100%;
@@ -496,9 +508,14 @@ ul.post-info-parts {
 
 #group-index-threaded > tbody > tr > th { width: 100%; }
 
+.group-threads table {
+	table-layout: fixed;
+}
+
 .group-threads > table {
 	width: 100%;
 }
+
 .group-threads > table > tbody > tr > td {
 	border-bottom: none;
 	padding-bottom: 1px;
@@ -525,6 +542,10 @@ ul.post-info-parts {
 .thread-start td {
 	text-align: left;
 }
+.thread-post-row div {
+	overflow: hidden;
+}
+
 .thread-post-time {
 	float: right;
 }
@@ -583,7 +604,8 @@ table.viewmode-threaded > tbody > tr > th {
 
 .viewmode-horizontal-split .group-threads {
 	height: 400px;
-	overflow: auto;
+	overflow-x: hidden;
+	overflow-y: auto;
 }
 
 .split-post {

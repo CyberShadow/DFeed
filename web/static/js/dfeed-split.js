@@ -145,14 +145,23 @@ function updateSize() {
 
 	for (var i in resizees)
 		resizees[i].inner.height(0);
+
 	$('#navigation,#top').addClass('temphide');
 
-	//var bodyHeight = $('body').height();
-	var bodyHeight = $('#copyright').position().top + $('#copyright').outerHeight(true);
-	var space = $('#content').height() + Math.max(0, $(window).height() - bodyHeight - 20);
+	var contentBottom = $('#content').position().top + $('#content').outerHeight(true);
+	var usedSpace  = contentBottom;
+	var totalSpace = $(window).height();
+	var freeSpace  = totalSpace - usedSpace;
+	var contentSize = $('#content').height();
+	var targetSize = contentSize;
+	targetSize -= $('#content').outerHeight() - $('#content').height();
+	if ($('#copyright:visible').length)
+		targetSize -= $('#copyright').position().top + $('#copyright').height() - contentBottom;
 
 	for (var i in resizees) {
-		resizees[i].inner.height(space - resizees[i].outer.height());
+		var itemBaseSpace = resizees[i].outer.height();
+		var itemFreeSpace = targetSize - itemBaseSpace + freeSpace;
+		resizees[i].inner.height(itemFreeSpace);
 	}
 	$('#navigation,#top').removeClass('temphide');
 
