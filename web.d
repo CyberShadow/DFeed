@@ -156,9 +156,9 @@ class WebUI
 		if (host != vhost && host != "localhost" && ip != "127.0.0.1")
 			return response.redirect("http://" ~ vhost ~ request.resource, HttpStatusCode.MovedPermanently);
 
-		auto splitViewScripts = [
-			`<script src="` ~ staticPath("/js/dfeed-split.js") ~ `"></script>`,
-		];
+		extraScripts ~=
+			`<script src="` ~ staticPath("/js/dfeed.js") ~ `"></script>`;
+
 		auto canonicalHeader =
 			`<link rel="canonical" href="http://`~vhost~request.resource~`"/>`;
 
@@ -252,10 +252,7 @@ class WebUI
 					if (viewMode == "threaded")
 						discussionGroupThreaded(group, page);
 					else
-					{
 						discussionGroupSplit(group, page);
-						extraScripts ~= splitViewScripts;
-					}
 					//tools ~= viewModeTool(["basic", "threaded"], "group");
 					tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
 					foreach (what; ["posts", "threads"])
@@ -309,7 +306,6 @@ class WebUI
 						string pageStr = page==1 ? "" : format(" (page %d)", page);
 						title = group ~ " index" ~ pageStr;
 						breadcrumb1 = `<a href="/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
-						extraScripts ~= splitViewScripts;
 						tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
 
 						break;
@@ -593,6 +589,7 @@ class WebUI
 		tools ~= `<a href="/help">Help</a>`;
 
 		string toolStr = tools.join(" &middot; ");
+		toolStr = `<div id="forum-tools-left"></div><div id="forum-tools-right">` ~ toolStr ~ `</div>`;
 		toolStr =
 			toolStr.replace("__URL__",  encodeUrlParameter(returnPage)) ~
 			`<script type="text/javascript">var toolsTemplate = ` ~ toJson(toolStr) ~ `;</script>`;

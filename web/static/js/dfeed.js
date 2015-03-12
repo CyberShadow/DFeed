@@ -1,31 +1,53 @@
 $(document).ready(function() {
-	$('body').removeClass('narrowdoc').addClass('widedoc');
+	if ($('#group-split').length) {
+		$('body').removeClass('narrowdoc').addClass('widedoc');
 
-	$('.postlink').live('click', function() {
-		var path = $(this).attr('href');
-		return !selectMessage(path);
-	});
-	$('tr.thread-post-row').live('mousedown', function(e) {
-		if (e.which == 1)
-			return selectRow($(this));
-		return true;
-	}).css('cursor', 'default');
+		$('.postlink').live('click', function() {
+			var path = $(this).attr('href');
+			return !selectMessage(path);
+		});
+		$('tr.thread-post-row').live('mousedown', function(e) {
+			if (e.which == 1)
+				return selectRow($(this));
+			return true;
+		}).css('cursor', 'default');
 
-	if ($.browser.webkit) {
-		// Chrome does not pass Ctrl+keys to keypress - but in many
-		// other browsers keydown does not repeat
-		$(document).keydown(onKeyPress);
-	} else {
-		$(document).keypress(onKeyPress);
+		if ($.browser.webkit) {
+			// Chrome does not pass Ctrl+keys to keypress - but in many
+			// other browsers keydown does not repeat
+			$(document).keydown(onKeyPress);
+		} else {
+			$(document).keypress(onKeyPress);
+		}
+
+		$(window).resize(onResize);
+		updateSize();
+		focusRow($('tr.thread-post-row').last());
+
+		$(window).bind('popstate', onPopState);
+		onPopState();
+
+		$('#forum-tools-left').append(
+			$('<a>')
+			.attr('href', 'javascript:toggleNav()')
+			.text('Toggle navigation')
+		);
+
+		showNav(localStorage.getItem('navhidden') == 'true');
 	}
-
-	$(window).resize(onResize);
-	updateSize();
-	focusRow($('tr.thread-post-row').last());
-
-	$(window).bind('popstate', onPopState);
-	onPopState();
 });
+
+function toggleNav() {
+	var hidden = localStorage.getItem('navhidden') == 'true';
+	hidden = !hidden;
+	localStorage.setItem('navhidden', hidden);
+	showNav(hidden);
+}
+
+function showNav(hidden) {
+	$('body').toggleClass('navhidden', hidden);
+	updateSize();
+}
 
 function selectMessage(path) {
 	var id = idFromPath(path);
@@ -102,7 +124,7 @@ function onPopState() {
 			showHtml('Your browser does not support HTML5 pushState.');
 	}
 
-	$('#forum-tools').html(toolsTemplate.replace(/__URL__/g, encodeURIComponent(document.location.href)));
+	$('#forum-tools-right').html(toolsTemplate.replace(/__URL__/g, encodeURIComponent(document.location.href)));
 }
 
 function showPost(postHtml) {
@@ -154,7 +176,7 @@ function updateSize() {
 	var freeSpace  = totalSpace - usedSpace;
 	var contentSize = $('#content').height();
 	var targetSize = contentSize;
-	targetSize -= $('#content').outerHeight() - $('#content').height();
+	targetSize -= 10;
 	if ($('#copyright:visible').length)
 		targetSize -= $('#copyright').position().top + $('#copyright').height() - contentBottom;
 

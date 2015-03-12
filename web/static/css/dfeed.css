@@ -71,15 +71,22 @@ table td:not(:last-child), table th:not(:last-child) {
 		overflow: auto;
 	}
 
-	div#content {
+	body div#content {
 		padding-left: 0;
 		padding-right: 0;
+		padding-bottom: 0;
 		border-left: 0;
 		border-right: 0;
+		border-bottom: 0;
+		margin-left: 0 !important;
 		font-size: 75%;
 	}
 
-	body #forum-tools {
+	body #forum-tools-left {
+		margin-left: 1em;
+	}
+
+	body #forum-tools-right {
 		margin-right: 1em;
 	}
 
@@ -110,6 +117,16 @@ table td:not(:last-child), table th:not(:last-child) {
 	}
 }
 
+/*************** Navigation toggle ***************/
+
+body.navhidden #top,
+body.navhidden #navigation {
+	display: none;
+}
+body.navhidden #content {
+	margin-left: 1em;
+}
+
 /*************** General layout ***************/
 
 #top {
@@ -117,14 +134,20 @@ table td:not(:last-child), table th:not(:last-child) {
 }
 
 #forum-tools {
-	float: right;
 	font-size: 80%;
 	font-style: italic;
-	margin: -1em 0 0.25em 0;
+	margin: -1.2em 0 0.25em 0;
 	color: #666;
+	height: 0.5em;
 }
 #forum-tools a {
 	color: inherit;
+}
+#forum-tools-left {
+	float: left;
+}
+#forum-tools-right {
+	float: right;
 }
 
 /*************** General rules ***************/

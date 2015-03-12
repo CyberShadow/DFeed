@@ -6,7 +6,7 @@ TARGETS : \
 	web/skel.htt-opt \
 	web/help.htt-opt \
 	web/static/css/dfeed.css-opt \
-	web/static/js/dfeed-split.js-opt
+	web/static/js/dfeed.js-opt
 
 %.htt-opt : %.htt
 	$(HTMLTOOL) < $^ > $@
