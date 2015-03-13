@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -ex
+
+git pull
+
+git submodule update
+
+./rebuild
+
+./restart

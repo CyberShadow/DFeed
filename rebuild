@@ -1,0 +1,16 @@
+#!/bin/bash
+set -e
+MODEL=64
+DFLAGS="-m$MODEL -g"
+#DFLAGS="$DFLAGS -debug"
+#DFLAGS="$DFLAGS -debug=ASOCKETS"
+#DFLAGS="$DFLAGS -version=LIBEV"
+for PROGRAM in dfeed dfeed_web nntpdownload mldownload sendspamfeedback rebuildthreads
+do
+	echo Rebuilding $PROGRAM...
+	rdmd --build-only $DFLAGS $PROGRAM.d
+	echo OK.
+done
+echo Rebuilding resources...
+make -sf web-resources.mak
+echo Done.
