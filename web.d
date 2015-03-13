@@ -1667,13 +1667,18 @@ class WebUI
 						`<td class="post-info-actions">`), postActions(post.msg), html.put(`</td>`
 					`</tr></table>`
 				`</td></tr>`
-				`<tr><td class="post-body">`);
+				`<tr><td class="post-body">`
+					`<table class="post-layout"><tr class="post-layout-header"><td>`);
 			miniPostInfo(post, null);
 			html.put(
-					`<pre class="post-text">`), formatBody(content), html.put(`</pre>`,
-					(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``));
-			postFooter(footerNav, infoRows[1..$]);
-			html.put(
+					`</td></tr>`
+					`<tr class="post-layout-body"><td>`
+						`<pre class="post-text">`), formatBody(content), html.put(`</pre>`,
+						(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``),
+					`</td></tr>`
+					`<tr class="post-layout-footer"><td>`
+						); postFooter(footerNav, infoRows[1..$]); html.put(
+					`</td></tr></table>`
 				`</td></tr>`
 				`</table>`
 				`</div>`

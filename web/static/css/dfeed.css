@@ -618,6 +618,22 @@ table td.horizontal-post-info-name {
 	text-align: right;
 }
 
+/* Layout of scrollable section */
+
+table.post-layout {
+	width: 100%;
+	height: 100%;
+}
+
+table.post-layout > tbody > tr > td {
+	vertical-align: top;
+}
+
+tr.post-layout-header,
+tr.post-layout-footer {
+	height: 1px; /* force shrink to fit */
+}
+
 /* Horizontal info (responsive view) */
 
 table.mini-post-info {
