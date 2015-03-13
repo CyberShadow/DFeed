@@ -1605,22 +1605,28 @@ class WebUI
 		return postLink(info.rowid, info.id, info.author);
 	}
 
+	struct InfoRow { string name, value; }
+
 	/// Alternative post formatting, with the meta-data header on top
-	void formatSplitPost(Rfc850Post post)
+	void formatSplitPost(Rfc850Post post, bool footerNav)
 	{
 		scope(success) user.setRead(post.rowid, true);
 
-		struct InfoRow { string name, value; }
 		InfoRow[] infoRows;
+		string parentLink;
 
 		infoRows ~= InfoRow("From", post.author);
-		infoRows ~= InfoRow("Date", format("%s (%s)", formatLongTime(post.time), formatShortTime(post.time, false)));
+		//infoRows ~= InfoRow("Date", format("%s (%s)", formatLongTime(post.time), formatShortTime(post.time, false)));
+		infoRows ~= InfoRow("Date", formatLongTime(post.time));
 
 		if (post.parentID)
 		{
-			auto parent = getPostInfo(post.parentID);
+			auto parent = post.parentID ? getPostInfo(post.parentID) : null;
 			if (parent)
-				infoRows ~= InfoRow("In reply to", postLink(parent.rowid, parent.id, parent.author));
+			{
+				parentLink = postLink(parent.rowid, parent.id, parent.author);
+				infoRows ~= InfoRow("In reply to", parentLink);
+			}
 		}
 
 		string[] replies;
@@ -1665,7 +1671,9 @@ class WebUI
 			miniPostInfo(post, null);
 			html.put(
 					`<pre class="post-text">`), formatBody(content), html.put(`</pre>`,
-					(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``),
+					(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``));
+			postFooter(footerNav, infoRows[1..$]);
+			html.put(
 				`</td></tr>`
 				`</table>`
 				`</div>`
@@ -1673,12 +1681,27 @@ class WebUI
 		}
 	}
 
+	void postFooter(bool footerNav, InfoRow[] infoRows)
+	{
+		html.put(
+			`<table class="post-footer"><tr>`,
+				(footerNav ? `<td class="post-footer-nav"><a href="javascript:navPrev()">&laquo; Prev</a></td>` : null),
+				`<td class="post-footer-info"><table>`);
+		foreach (a; infoRows)
+			html.put(`<tr><td class="horizontal-post-info-name">`, a.name, `</td><td class="horizontal-post-info-value">`, a.value, `</td></tr>`);
+		html.put(
+				`</table></td>`,
+				(footerNav ? `<td class="post-footer-nav"><a href="javascript:navNext()">Next &raquo;</a></td>` : null),
+			`</tr></table>`
+		);
+	}
+
 	void discussionSplitPost(string id)
 	{
 		auto post = getPost(id);
 		enforce(post, "Post not found");
 
-		formatSplitPost(post);
+		formatSplitPost(post, true);
 	}
 
 	void postPager(string threadID, int page, int postCount)
@@ -1777,7 +1800,7 @@ class WebUI
 		group = post.getGroup();
 		title = post.subject;
 
-		formatSplitPost(post);
+		formatSplitPost(post, false);
 		discussionThreadOverview(post.cachedThreadID, id);
 	}
 

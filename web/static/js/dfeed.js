@@ -148,7 +148,7 @@ function showHtml(text) {
 
 // **************************************************************************
 
-// This hack could probably be achieved using CSS and 100% html/body height.
+// This *might* be possible with just CSS, but so far all my attempts failed.
 
 var resizeTimeout = null;
 
@@ -161,31 +161,48 @@ function updateSize() {
 		wasFocusedInView = isRowInView(focused);
 
 	var resizees = [
-		{ outer : $('#group-index-threaded'), inner : $('.group-threads')},
-		{ outer : $('.split-post') , inner : $('.split-post .post-text')},
+		{ outer : $('#group-split-list    > div'), inner : $('.group-threads')},
+		{ outer : $('#group-split-message > div'), inner : $('.split-post .post-body')},
 	];
 
-	for (var i in resizees)
-		resizees[i].inner.height(0);
+	// Hide some elements temporarily, to prevent them getting in the way of measurements
 
-	$('#navigation,#top').addClass('temphide');
+	$temphide = $('.mini-post-info');
+	$temphide.addClass('temphide');
 
-	var contentBottom = $('#content').position().top + $('#content').outerHeight(true);
-	var usedSpace  = contentBottom;
-	var totalSpace = $(window).height();
-	var freeSpace  = totalSpace - usedSpace;
-	var contentSize = $('#content').height();
-	var targetSize = contentSize;
-	targetSize -= 10;
-	if ($('#copyright:visible').length)
-		targetSize -= $('#copyright').position().top + $('#copyright').height() - contentBottom;
+	// Shrink content to 0 height, so we can calculate how much space we have to grow.
 
 	for (var i in resizees) {
-		var itemBaseSpace = resizees[i].outer.height();
-		var itemFreeSpace = targetSize - itemBaseSpace + freeSpace;
+		resizees[i].inner.height(0);
+		resizees[i].inner.addClass('temphide');
+	}
+
+	var contentBottom = $('#content').position().top + $('#content').outerHeight(true);
+	var usedWindowSpace  = contentBottom;
+	if ($('#copyright:visible').length)
+		usedWindowSpace += $('#copyright').position().top + $('#copyright').height() - contentBottom;
+	var totalWindowSpace = $(window).height();
+	var freeWindowSpace  = totalWindowSpace - usedWindowSpace;
+
+	var resizeeOuterSizes = $.map(resizees, function(r) { return r.outer.outerHeight(true); });
+	resizeeOuterSizes[1] += 4; // HACK ??? border?
+	var contentSize = Math.max.apply(null, resizeeOuterSizes);
+
+	for (var i in resizees) {
+		var resizeeOuterSize = resizeeOuterSizes[i];
+		var itemFreeSpace = 0;
+
+		// Grow to fill content (this will be 0 for tallest resizee)
+		itemFreeSpace += contentSize - resizeeOuterSize;
+
+		// Grow to fill window
+		itemFreeSpace += freeWindowSpace;
+
+		resizees[i].inner.removeClass('temphide');
 		resizees[i].inner.height(itemFreeSpace);
 	}
-	$('#navigation,#top').removeClass('temphide');
+
+	$temphide.removeClass('temphide');
 
 	if (focused.length && wasFocusedInView)
 		focusRow(focused, true);
@@ -388,3 +405,7 @@ function onKeyPress(e) {
 
 	return true; // event handlers return "false" if the event was handled
 }
+
+/* These are linked to in responsive horizontal-split post footer */
+function navPrev() { focusNext(-1) && selectFocused(); }
+function navNext() { focusNext(+1) && selectFocused(); }

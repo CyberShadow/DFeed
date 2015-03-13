@@ -111,7 +111,7 @@ body.navhidden #content {
 }
 
 .temphide {
-	display: none;
+	display: none !important;
 }
 
 .nowrap {
@@ -564,6 +564,8 @@ table.viewmode-threaded > tbody > tr > th {
 	overflow-y: auto;
 }
 
+/* The post itself */
+
 .split-post {
 	table-layout: fixed;
 }
@@ -580,6 +582,8 @@ table.viewmode-threaded > tbody > tr > th {
 
 .split-post {
 }
+
+/* Horizontal info (full view) */
 
 .post-info-avatar {
 	padding-left: 5px;
@@ -601,7 +605,7 @@ table td.horizontal-post-info-name {
 	white-space: pre;
 }
 
-.horizontal-post-info .forum-unread {
+.horizontal-post-info-value .forum-unread {
 	/* this just looks confusing and distracting */
 	font-weight: inherit;
 }
@@ -637,6 +641,37 @@ table.mini-post-info {
 .split-post table.mini-post-info {
 	border-bottom: 2px solid #D0D0D0;
 }
+
+/* Footer (responsive view only) */
+
+table.post-footer {
+	background-color: #E8E8E8;
+	border-top: 2px solid #D0D0D0;
+	display: none;
+}
+
+table.post-footer > tbody > tr > td {
+	margin: 0;
+}
+
+table.post-footer > tbody > tr > td > table {
+	margin: 0.5em;
+	font-size: 90%;
+}
+
+td.post-footer-nav {
+	background-color: #D0D0D0;
+	text-align: center;
+}
+
+td.post-footer-nav a {
+	display: block;
+	height: 100%;
+	padding: 1em;
+	margin: 0;
+}
+
+/* Placeholder */
 
 .group-split-message-none {
 	text-align: center;
@@ -797,7 +832,8 @@ kbd { /* stolen from http://en.wikipedia.org/wiki/Template:Key_press */
 		display: none;
 	}
 
-	table.mini-post-info {
+	table.mini-post-info,
+	table.post-footer {
 		display: table;
 	}
 }
