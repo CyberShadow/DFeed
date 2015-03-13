@@ -82,5 +82,6 @@ public // template alias parameter
 void createDatabase(string schema, string target)
 {
 	std.stdio.stderr.writeln("Creating new database from schema");
+	ensurePathExists(target);
 	enforce(spawnProcess(["sqlite3", target], File(schema, "rb")).wait() == 0, "sqlite3 failed");
 }
