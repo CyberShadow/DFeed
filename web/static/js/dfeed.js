@@ -180,7 +180,7 @@ function updateSize() {
 	var contentBottom = $('#content').position().top + $('#content').outerHeight(true);
 	var usedWindowSpace  = contentBottom;
 	if ($('#copyright:visible').length)
-		usedWindowSpace += $('#copyright').position().top + $('#copyright').height() - contentBottom;
+		usedWindowSpace += $('#copyright').position().top + $('#copyright').outerHeight(true) - contentBottom + 10 /*???*/;
 	var totalWindowSpace = $(window).height();
 	var freeWindowSpace  = totalWindowSpace - usedWindowSpace;
 
@@ -211,7 +211,7 @@ function updateSize() {
 function onResize() {
 	if (resizeTimeout)
 		clearTimeout(resizeTimeout);
-	resizeTimeout = setTimeout(updateSize, 100);
+	resizeTimeout = setTimeout(updateSize, 10);
 }
 
 // **************************************************************************
