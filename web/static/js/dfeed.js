@@ -162,7 +162,7 @@ function updateSize() {
 
 	var resizees = [
 		{ outer : $('#group-split-list    > div'), inner : $('.group-threads')},
-		{ outer : $('#group-split-message > div'), inner : $('.split-post .post-body')},
+		{ outer : $('#group-split-message > *'  ), inner : $('.split-post .post-body')},
 	];
 
 	// Hide some elements temporarily, to prevent them getting in the way of measurements
@@ -185,7 +185,7 @@ function updateSize() {
 	var freeWindowSpace  = totalWindowSpace - usedWindowSpace;
 
 	var resizeeOuterSizes = $.map(resizees, function(r) { return r.outer.outerHeight(true); });
-	resizeeOuterSizes[1] += 4; // HACK ??? border?
+	resizeeOuterSizes[1] += 3; // HACK ??? border?
 	var contentSize = Math.max.apply(null, resizeeOuterSizes);
 
 	for (var i in resizees) {
