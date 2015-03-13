@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -46,13 +46,19 @@ enum DB_TRANSACTION = q{
 
 static this()
 {
-	db = new SQLite("data/dfeed.s3db");
+	auto dbFileName = "data/dfeed.s3db";
+	if (!dbFileName.exists)
+		atomic!createDatabase(schemaFileName, dbFileName);
+
+	db = new SQLite(dbFileName);
 	dumpSchema();
 }
 
 private:
 
 import std.file, std.string, std.array;
+
+enum schemaFileName = "schema.sql";
 
 void dumpSchema()
 {
@@ -66,5 +72,15 @@ void dumpSchema()
 				schema ~= format("-- %s `%s` on table `%s`\n", capitalize(type), name, tbl_name);
 			schema ~= sql.replace("\r\n", "\n") ~ ";\n\n";
 		}
-	write("schema.sql", schema);
+	write(schemaFileName, schema);
+}
+
+import ae.sys.file;
+import std.process;
+
+public // template alias parameter
+void createDatabase(string schema, string target)
+{
+	std.stdio.stderr.writeln("Creating new database from schema");
+	enforce(spawnProcess(["sqlite3", target], File(schema, "rb")).wait() == 0, "sqlite3 failed");
 }
