@@ -16,6 +16,7 @@
 
 module sendspamfeedback;
 
+import std.file;
 import std.stdio;
 import std.string;
 
@@ -29,6 +30,9 @@ void main(string[] args)
 	files:
 	foreach (fn; args[1..$])
 	{
+		if (fn.length == 20)
+			fn = dirEntries("logs", "* - PostProcess-" ~ fn ~ ".log", SpanMode.shallow).front.name;
+
 		writeln("--------------------------------------------------------------------");
 		auto pp = new PostProcess(fn);
 		write(pp.post.message);
@@ -52,4 +56,14 @@ void main(string[] args)
 			sender(pp, &handler, feedback);
 		socketManager.loop();
 	}
+}
+
+/// Work around link error
+void foo()
+{
+	import std.array;
+	auto a = appender!string();
+	a.put("test"d);
+	dchar c = 't';
+	a.put(c);
 }
