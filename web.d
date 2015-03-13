@@ -1686,11 +1686,11 @@ class WebUI
 		html.put(
 			`<table class="post-footer"><tr>`,
 				(footerNav ? `<td class="post-footer-nav"><a href="javascript:navPrev()">&laquo; Prev</a></td>` : null),
-				`<td class="post-footer-info"><table>`);
+				`<td class="post-footer-info">`);
 		foreach (a; infoRows)
-			html.put(`<tr><td class="horizontal-post-info-name">`, a.name, `</td><td class="horizontal-post-info-value">`, a.value, `</td></tr>`);
+			html.put(`<div><span class="horizontal-post-info-name">`, a.name, `</span>: <span class="horizontal-post-info-value">`, a.value, `</span></div>`);
 		html.put(
-				`</table></td>`,
+				`</td>`,
 				(footerNav ? `<td class="post-footer-nav"><a href="javascript:navNext()">Next &raquo;</a></td>` : null),
 			`</tr></table>`
 		);

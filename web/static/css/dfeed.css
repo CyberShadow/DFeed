@@ -598,11 +598,14 @@ table.viewmode-threaded > tbody > tr > th {
 	font-size: 0.9em;
 }
 
+.horizontal-post-info-name {
+	font-weight: bold;
+	white-space: pre;
+}
+
 table td.horizontal-post-info-name {
 	text-align: right;
-	font-weight: bold;
 	padding: 0 10px;
-	white-space: pre;
 }
 
 .horizontal-post-info-value .forum-unread {
@@ -654,9 +657,8 @@ table.post-footer > tbody > tr > td {
 	margin: 0;
 }
 
-table.post-footer > tbody > tr > td > table {
-	margin: 0.5em;
-	font-size: 90%;
+td.post-footer-info {
+	padding: 0.5em 0.75em;
 }
 
 td.post-footer-nav {
