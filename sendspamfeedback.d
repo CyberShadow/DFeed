@@ -57,3 +57,13 @@ void main(string[] args)
 		socketManager.loop();
 	}
 }
+
+/// Work around link error
+void foo()
+{
+	import std.array;
+	auto a = appender!string();
+	a.put("test"d);
+	dchar c = 't';
+	a.put(c);
+}
