@@ -26,6 +26,7 @@ import ae.utils.array;
 import ae.utils.text;
 
 import posting;
+import site;
 
 void spamCheck(PostProcess process, SpamResultHandler handler)
 {
@@ -79,10 +80,8 @@ void checkAkismet(PostProcess process, SpamResultHandler handler)
 	if (!config.akismet.key)
 		return handler(true, "Akismet is not set up");
 
-	auto site = readText("data/web.txt").splitLines()[1];
-
 	string[string] params = [
-		"blog"                 : "http://" ~ site ~ "/",
+		"blog"                 : "http://" ~ site.config.host ~ "/",
 		"user_ip"              : process.ip,
 		"user_agent"           : process.headers.get("User-Agent", ""),
 		"referrer"             : process.headers.get("Referer", ""),
@@ -109,10 +108,8 @@ void sendAkismetFeedback(PostProcess process, SpamResultHandler handler, SpamFee
 	if (!config.akismet.key)
 		return handler(true, "Akismet is not set up");
 
-	auto site = readText("data/web.txt").splitLines()[1];
-
 	string[string] params = [
-		"blog"                 : "http://" ~ site ~ "/",
+		"blog"                 : "http://" ~ site.config.host ~ "/",
 		"user_ip"              : process.ip,
 		"user_agent"           : process.headers.get("User-Agent", ""),
 		"referrer"             : process.headers.get("Referer", ""),

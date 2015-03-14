@@ -26,8 +26,9 @@ public import ae.net.ietf.message;
 import ae.net.ietf.url;
 import ae.utils.array;
 
-import common;
 import bitly;
+import common;
+import site;
 
 alias std.string.indexOf indexOf;
 
@@ -93,8 +94,7 @@ class Rfc850Post : Post
 		else
 		if (id.length)
 		{
-			import std.file;
-			url = format("http://%s%s", readText("data/web.txt").splitLines()[1], idToUrl(id));
+			url = format("http://%s%s", site.config.host, idToUrl(id));
 		}
 /+		else
 		if (xref.length)

@@ -29,6 +29,7 @@ import ae.net.nntp.client;
 import captcha;
 import common;
 import message;
+import site;
 import spam;
 
 enum PostingStatus
@@ -98,7 +99,7 @@ final class PostProcess
 		else
 			postsByContent[allContent] = pid;
 
-		post.id = format("<%s@%s>", pid, hostname);
+		post.id = format("<%s@%s>", pid, site.config.host);
 		post.compile();
 	}
 
@@ -142,7 +143,7 @@ final class PostProcess
 				pid = line.eatUntil("@");
 		}
 		post = createPost(vars, headers, ip, null);
-		post.id = format("<%s@%s>", pid, hostname);
+		post.id = format("<%s@%s>", pid, site.config.host);
 		post.compile();
 	}
 
@@ -278,7 +279,6 @@ private:
 
 PostProcess[string] postProcesses;
 string[string] postsByContent;
-string hostname;
 
 final class PostingNotifySink : NewsSink
 {
@@ -288,7 +288,7 @@ final class PostingNotifySink : NewsSink
 		if (rfc850post)
 		{
 			auto id = rfc850post.id;
-			if (id.endsWith("@" ~ hostname ~ ">"))
+			if (id.endsWith("@" ~ site.config.host ~ ">"))
 			{
 				auto pid = id.split("@")[0][1..$];
 				if (pid in postProcesses)
@@ -303,6 +303,5 @@ final class PostingNotifySink : NewsSink
 
 static this()
 {
-	hostname = readText("data/web.txt").splitLines()[1];
 	new PostingNotifySink();
 }
