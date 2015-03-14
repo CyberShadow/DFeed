@@ -36,14 +36,6 @@ SQLite.PreparedStatement query(string sql)
 	return cache[sql.ptr] = statement;
 }
 
-bool allowTransactions = true;
-
-enum DB_TRANSACTION = q{
-	if (allowTransactions) query("BEGIN TRANSACTION").exec();
-	scope(failure) if (allowTransactions) query("ROLLBACK TRANSACTION").exec();
-	scope(success) if (allowTransactions) query("COMMIT TRANSACTION").exec();
-};
-
 static this()
 {
 	auto dbFileName = "data/dfeed.s3db";
@@ -53,6 +45,34 @@ static this()
 	db = new SQLite(dbFileName);
 	dumpSchema();
 }
+
+// ***************************************************************************
+
+int transactionDepth;
+
+enum DB_TRANSACTION = q{
+	if (transactionDepth++ == 0) query("BEGIN TRANSACTION").exec();
+	scope(failure) if (--transactionDepth == 0) query("ROLLBACK TRANSACTION").exec();
+	scope(success) if (--transactionDepth == 0) query("COMMIT TRANSACTION").exec();
+};
+
+bool flushTransactionEvery(int count)
+{
+	static int calls = 0;
+
+	assert(transactionDepth, "Not in a transaction");
+
+	if (count && ++calls % count == 0 && transactionDepth == 1)
+	{
+		query("COMMIT TRANSACTION");
+		query("BEGIN TRANSACTION");
+		return true;
+	}
+	else
+		return false;
+}
+
+// ***************************************************************************
 
 private:
 

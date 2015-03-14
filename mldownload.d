@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -35,6 +35,8 @@ import message;
 bool update;
 MessageDBSink sink;
 MLDownloader downloader;
+
+int flushInterval = 50;
 
 class MLDownloader : NewsSource
 {
@@ -106,6 +108,8 @@ class MLDownloader : NewsSource
 							log("Updating post: " ~ post.id);
 							sink.updatePost(post);
 						}
+					if (flushTransactionEvery(flushInterval))
+						log("Transaction flushed");
 				}
 			},
 			(string error)
@@ -119,15 +123,15 @@ class MLDownloader : NewsSource
 void main(string[] args)
 {
 	getopt(args,
-		"u|update", &update);
+		"u|update", &update,
+		"flush-every", &flushInterval,
+	);
 
 	sink = new MessageDBSink();
 	downloader = new MLDownloader();
 
 	startNewsSources();
 
-	db.exec("BEGIN"); allowTransactions = false;
+	mixin(DB_TRANSACTION);
 	socketManager.loop();
-	downloader.log("Committing...");
-	db.exec("COMMIT");
 }

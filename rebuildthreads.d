@@ -1,4 +1,4 @@
-/*  Copyright (C) 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -40,13 +40,13 @@ class DatabaseSource : NewsSource
 		foreach (string message, string id; query("SELECT `Message`, `ID` FROM Posts").iterate())
 			messages ~= Message(message, id);
 
+		mixin(DB_TRANSACTION);
+
 		log("Deleting...");
-		db.exec("BEGIN");
 		db.exec("DELETE FROM `Groups`");
 		db.exec("DELETE FROM `Threads`");
 
 		log("Updating...");
-		allowTransactions = false;
 		foreach (m; messages)
 		with(m)
 		{
@@ -54,11 +54,11 @@ class DatabaseSource : NewsSource
 			log("Announcing: " ~ id);
 			announcePost(post);
 			sink.updatePost(post);
+
+			if (flushTransactionEvery(50))
+				log("Transaction flushed");
 		}
-		allowTransactions = true;
 		log("Committing...");
-		db.exec("COMMIT");
-		log("Done!");
 	}
 
 	override void stop() { assert(false); }

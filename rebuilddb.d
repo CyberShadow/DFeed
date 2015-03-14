@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -21,6 +21,8 @@ import database;
 import message;
 import messagedb;
 
+int flushInterval = 50;
+
 /// Dummy/test source used for rebuilding the message database.
 class DatabaseSource : NewsSource
 {
@@ -31,16 +33,21 @@ class DatabaseSource : NewsSource
 
 	override void start()
 	{
-		db.exec("BEGIN");
-		allowTransactions = false;
+		mixin(DB_TRANSACTION);
+
 		foreach (string message, string id; query("SELECT `Message`, `ID` FROM old.Posts").iterate())
 		{
 			log("Announcing: " ~ id);
 			announcePost(new Rfc850Post(message, id));
+			if (flushTransactionEvery(flushInterval))
+				log("Transaction flushed");
 		}
-		allowTransactions = true;
 		log("Committing...");
-		db.exec("COMMIT");
+	}
+
+	override void stop()
+	{
+		assert(false);
 	}
 }
 

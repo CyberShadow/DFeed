@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -40,6 +40,13 @@ protected:
 		auto message = cast(Rfc850Post)post;
 		if (!message)
 			return;
+
+		scope(success)
+		{
+			if (transactionDepth == 1) // This is a batch operation
+				if (flushTransactionEvery(50))
+					log("Transaction flushed");
+		}
 
 		log(format("Saving message %s (%s)", message.id, message.where));
 		mixin(DB_TRANSACTION);

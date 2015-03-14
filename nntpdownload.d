@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -23,6 +23,7 @@ import ae.net.asockets;
 import ae.net.shutdown;
 
 import common;
+import database;
 import newsgroups;
 import messagedb;
 
@@ -40,6 +41,8 @@ void main(string[] args)
 	with (new NntpDownloader("news.digitalmars.com", mode))
 		handleFinished = (string date) { shutdown(); };
 	new MessageDBSink();
+
+	mixin(DB_TRANSACTION);
 
 	startNewsSources();
 	socketManager.loop();
