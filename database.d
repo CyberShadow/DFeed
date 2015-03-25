@@ -36,7 +36,7 @@ SQLite.PreparedStatement query(string sql)
 	return cache[sql.ptr] = statement;
 }
 
-static this()
+shared static this()
 {
 	auto dbFileName = "data/dfeed.s3db";
 	if (!dbFileName.exists)
