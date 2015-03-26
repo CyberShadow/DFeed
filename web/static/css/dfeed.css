@@ -694,7 +694,7 @@ td.post-footer-nav a {
 .group-split-message-none {
 	text-align: center;
 	vertical-align: middle !important;
-	white-space: pre;
+	overflow: hidden;
 }
 
 body.widedoc #content,
