@@ -39,17 +39,22 @@ const ircFormat = "PRIVMSG %s :\x01ACTION \x03" ~ format("%02d", ircColor) ~ "%s
 
 final class IrcSink : NewsSink
 {
-	string server, nick, channel, channel2;
-
-	this()
+	static struct Config
 	{
-		// Note to hackers: unless you want to work on IRC code, don't create
-		// this configuration file to get DFeed to work - use e.g. dfeed_web instead.
-		auto configLines = readText("data/irc.txt").splitLines();
-		server   = configLines[0];
-		nick     = configLines[1];
-		channel  = configLines[2];
-		channel2 = configLines[3];
+		string server;
+		ushort port = 6667;
+		string nick;
+		string channel;
+		string channel2;
+	}
+
+	this(Config config)
+	{
+		if (config.channel.length && !config.channel.startsWith("#"))
+			config.channel = '#' ~ config.channel;
+		if (config.channel2.length && !config.channel2.startsWith("#"))
+			config.channel2 = '#' ~ config.channel2;
+		this.config = config;
 
 		tcp = new TcpConnection();
 		irc = new IrcClient(tcp);
@@ -76,9 +81,10 @@ protected:
 				if (connected)
 				{
 					summary = summary.newlinesToSpaces();
-					irc.sendRaw(format(ircFormat, channel2, summary));
-					if (important)
-						irc.sendRaw(format(ircFormat, channel, summary));
+					if (config.channel.length && important)
+						irc.sendRaw(format(ircFormat, config.channel , summary));
+					if (config.channel2.length)
+						irc.sendRaw(format(ircFormat, config.channel2, summary));
 				}
 			});
 		}
@@ -87,21 +93,24 @@ protected:
 private:
 	TcpConnection tcp;
 	IrcClient irc;
+	immutable Config config;
 	bool connecting, connected, stopping;
 
 	void connect()
 	{
-		irc.nickname = nick;
+		irc.nickname = config.nick;
 		irc.realname = "https://github.com/CyberShadow/DFeed";
-		tcp.connect(server, 6667);
+		tcp.connect(config.server, config.port);
 		connecting = true;
 	}
 
 	void onConnect()
 	{
 		connecting = false;
-		irc.join(channel);
-		irc.join(channel2);
+		if (config.channel.length)
+			irc.join(config.channel);
+		if (config.channel2.length)
+			irc.join(config.channel2);
 		connected = true;
 	}
 
@@ -117,6 +126,8 @@ private:
 	/// will be there to see them.
 	bool haveUnimportantListeners()
 	{
-		return (channel2 in irc.channels) && irc.channels[channel2].users.length > 1;
+		return config.channel2.length
+			&& config.channel2 in irc.channels
+			&& irc.channels[config.channel2].users.length > 1;
 	}
 }

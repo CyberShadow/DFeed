@@ -16,7 +16,6 @@
 
 module mailhide;
 
-import std.array;
 import std.base64;
 import std.exception;
 import std.uri;
@@ -25,11 +24,19 @@ import deimos.openssl.aes;
 import deimos.openssl.evp;
 
 import ae.net.ssl.openssl;
+import ae.utils.sini;
 import ae.utils.text;
 
 class MailHide
 {
+	static struct Config
+	{
+		string publicKey, privateKey;
+	}
+
 private:
+	immutable Config config;
+
 	string pubKey;
 	EVP_CIPHER_CTX e;
 
@@ -61,10 +68,10 @@ private:
 	enum API_MAILHIDE_SERVER = "http://mailhide.recaptcha.net";
 
 public:
-	this(string pubKey, string privKey)
+	this(Config config)
 	{
-		this.pubKey = pubKey;
-		aesInit(arrayFromHex(privKey));
+		this.config = config;
+		aesInit(arrayFromHex(config.privateKey));
 	}
 
 	string getUrl(string email)
@@ -81,11 +88,6 @@ MailHide mailHide;
 
 static this()
 {
-	import std.file, std.string;
-	auto fn = "data/mailhide.txt";
-	if (fn.exists)
-	{
-		auto lines = fn.readText().splitLines();
-		mailHide = new MailHide(lines[0], lines[1]);
-	}
+	import common : createService;
+	mailHide = createService!MailHide("apis/mailhide");
 }

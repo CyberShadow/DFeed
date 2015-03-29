@@ -38,8 +38,13 @@ void main(string[] args)
 	enforce(!(full && purge), "Specify either --full or --purge, not both");
 	auto mode = purge ? NntpDownloader.Mode.fullPurge : full ? NntpDownloader.Mode.full : NntpDownloader.Mode.newOnly;
 
-	with (new NntpDownloader("news.digitalmars.com", mode))
-		handleFinished = (string date) { shutdown(); };
+	static class Downloader : NntpDownloader
+	{
+		alias Config = NntpConfig;
+		this(Config config, NntpDownloader.Mode mode) { super(config.host, mode); }
+	}
+
+	createServices!Downloader("sources/nntp", mode);
 	new MessageDBSink();
 
 	mixin(DB_TRANSACTION);

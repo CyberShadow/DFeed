@@ -1,4 +1,4 @@
-/*  Copyright (C) 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -52,8 +52,7 @@ void main(string[] args)
 			}
 		}
 		void handler(bool ok, string message) { writeln(ok ? "OK!" : "Error: " ~ message); }
-		foreach (sender; spamFeedbackSenders)
-			sender(pp, &handler, feedback);
+		sendSpamFeedback(pp, &handler, feedback);
 		socketManager.loop();
 	}
 }

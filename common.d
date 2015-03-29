@@ -132,3 +132,31 @@ unittest
 	assert(filterIRCName("CyberShadow") == "Cy" ~ ircHighlightBreaker ~ "ber" ~ ircHighlightBreaker ~ "Shadow");
 	assert(filterIRCName("Rémy") == "Ré" ~ ircHighlightBreaker ~ "my");
 }
+
+// ***************************************************************************
+
+import ae.utils.sini;
+import std.file;
+
+/// Create a Class instance if the corresponding .ini file exists.
+Class createService(Class)(string configName)
+{
+	auto fn = "config/" ~ configName ~ ".ini";
+	if (fn.exists)
+		return new Class(loadIni!(Class.Config)(fn));
+	return null;
+}
+
+/// Create one instance of Class for each .ini configuration file
+/// found in the specified config subdirectory.
+void createServices(Class, Args...)(string configDir, Args args)
+{
+	auto dir = "config/" ~ configDir;
+	if (!dir.exists)
+		return;
+	foreach (de; dir.dirEntries("*.ini", SpanMode.breadth))
+	{
+		auto config = loadIni!(Class.Config)(de.name);
+		new Class(config, args);
+	}
+}

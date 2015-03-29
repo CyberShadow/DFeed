@@ -32,13 +32,17 @@ import message;
 /// Listen for email messages piped by a helper script to a socket.
 class SocketSource : NewsSource
 {
-	this()
+	static struct Config
+	{
+		ushort port;
+		string password;
+	}
+
+	this(Config config)
 	{
 		super("SocketSource");
 
-		auto serverConfig = splitLines(readText("data/socket.txt"));
-		password = serverConfig[0];
-		port = to!ushort(serverConfig[1]);
+		this.config = config;
 
 		server = new TcpServer();
 		server.handleAccept = &onAccept;
@@ -46,7 +50,7 @@ class SocketSource : NewsSource
 
 	override void start()
 	{
-		server.listen(port);
+		server.listen(config.port);
 	}
 
 	override void stop()
@@ -56,8 +60,7 @@ class SocketSource : NewsSource
 
 private:
 	TcpServer server;
-	string password;
-	ushort port;
+	Config config;
 
 	void onAccept(TcpConnection incoming)
 	{
@@ -85,7 +88,7 @@ private:
 				auto text = cast(string)received.joinToHeap();
 
 				auto receivedPassword = text.eatLine();
-				enforce(receivedPassword == password, "Wrong password");
+				enforce(receivedPassword == config.password, "Wrong password");
 
 				auto component = text.eatLine();
 

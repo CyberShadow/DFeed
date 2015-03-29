@@ -1,0 +1,15 @@
+# Messages coming from other sources (e.g. email, for mailing lists)
+# can be piped to the address/port configured here.
+# DFeed will accept one message per connection, and process it as usual.
+#addr = 127.0.0.1
+#port = 12345
+
+# Exim configuration:
+# Create an alias file with the content:
+# | nc -q 0 127.0.0.1 12345
+
+# qmail/vpopmail configuration: 
+# For address foo@bar.com, create the file
+# ~vpopmail/domains/bar.com/.qmail-foo
+# with the content:
+# | nc -q 0 127.0.0.1 12345

@@ -16,10 +16,10 @@
 
 module dfeed;
 
-import std.file;
-import std.stdio;
+import std.stdio : stderr;
 
 import ae.net.asockets;
+import ae.utils.sini;
 
 import common;
 import web;
@@ -42,24 +42,15 @@ import captcha_dcaptcha;
 void main()
 {
 	// Create sources
-	startNNTP();
-	new MailingLists();
-	new StackOverflow("d");
-	new Feed("Planet D", "http://planetd.thecybershadow.net/_atom.xml");
-	new Feed("Wikipedia", "http://en.wikipedia.org/w/api.php?action=feedwatchlist&allrev=allrev&hours=1&"~readText("data/wikipedia.txt")~"&feedformat=atom", "edited");
-	//new Feed("GitHub", "https://github.com/"~readText("data/github.txt"), null); // TODO: HTTPS
-	new Feed("GitHub", "http://thecybershadow.net/d/ghfeed.php", null);
-//	new Reddit("programming", `(^|[^\w\d\-:*=])D([^\w\-:*=]|$)`);
-//	new Feed("Twitter-WalterBright", "http://twitter.com/statuses/user_timeline/18061210.atom", null, 120);
-//	new Feed("Twitter-incomputable", "http://twitter.com/statuses/user_timeline/155425162.atom", null, 120);
-//	new Feed("Twitter-D_programming", "http://twitter.com/statuses/user_timeline/148794328.atom", null, 120);
-//	new Feed("Twitter-DigitalMars", "http://twitter.com/statuses/user_timeline/148481064.atom", null, 120);
-//	new Feed("D Wiki", "http://wiki.dlang.org/?title=Special:RecentChanges&feed=atom", "edited");
-//	new Feed("D Wiki", "http://wiki.dlang.org/api.php?hidebots=1&days=7&limit=50&action=feedrecentchanges&feedformat=atom", "edited");
-	new SocketSource();
+	createServices!NntpSource   ("sources/nntp");
+	createServices!MailingLists ("sources/mailrelay");
+	createServices!Feed         ("sources/feeds");
+	createServices!StackOverflow("sources/stackoverflow");
+	createServices!Reddit       ("sources/reddit");
+	createServices!SocketSource ("sources/socket");
 
 	// Create sinks
-	new IrcSink();
+	createServices!IrcSink("sinks/irc");
 	new MessageDBSink();
 
 	// Start web server
@@ -69,7 +60,7 @@ void main()
 	socketManager.loop();
 
 	if (!common.quiet)
-		writeln("Exiting.");
+		stderr.writeln("Exiting.");
 }
 
 /// Avoid any problems (bugs or missed messages) caused by downloader/listener running
@@ -77,9 +68,14 @@ void main()
 /// 1. Note NNTP server time before starting downloader (sync)
 /// 2. Download new messages
 /// 3. Start listener with querying for new messages since the download START.
-void startNNTP()
+class NntpSource
 {
-	auto downloader = new NntpDownloader("news.digitalmars.com", NntpDownloader.Mode.fullPurge);
-	auto listener = new NntpListenerSource("news.digitalmars.com");
-	downloader.handleFinished = &listener.startListening;
+	alias Config = NntpConfig;
+
+	this(Config config)
+	{
+		auto downloader = new NntpDownloader(config.host, NntpDownloader.Mode.fullPurge);
+		auto listener = new NntpListenerSource(config.host);
+		downloader.handleFinished = &listener.startListening;
+	}
 }

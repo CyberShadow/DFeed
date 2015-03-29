@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -24,13 +24,31 @@ import std.exception;
 import ae.net.http.client;
 import ae.sys.log;
 
-import common;
-
-Logger log;
-
 void shortenURL(string url, void delegate(string) handler)
 {
-	if (config.apiKey)
+	if (urlShortener)
+		urlShortener.shorten(url, handler);
+	else
+		handler(url);
+}
+
+// **************************************************************************
+
+private:
+
+class UrlShortener { abstract void shorten(string url, void delegate(string) handler); }
+UrlShortener urlShortener;
+
+class Bitly : UrlShortener
+{
+	static struct Config { string login, apiKey; }
+	immutable Config config;
+	this(Config config) { this.config = config; }
+
+	Logger log;
+
+	override void shorten(string url, void delegate(string) handler)
+	{
 		httpGet(
 			format(
 				"http://api.bitly.com/v3/shorten?login=%s&apiKey=%s&longUrl=%s&format=txt&domain=j.mp",
@@ -48,17 +66,11 @@ void shortenURL(string url, void delegate(string) handler)
 
 				handler(url);
 			});
-	else
-		handler(url);
+	}
 }
 
-// **************************************************************************
-
-struct Config
+static this()
 {
-	string login, apiKey;
+	import common : createService;
+	urlShortener = createService!Bitly("apis/bitly");
 }
-const Config config;
-
-import ae.utils.sini;
-shared static this() { config = loadIni!Config("config/bitly.ini"); }
