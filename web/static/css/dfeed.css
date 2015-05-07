@@ -606,6 +606,7 @@ table.viewmode-threaded > tbody > tr > th {
 table td.horizontal-post-info-name {
 	text-align: right;
 	padding: 0 10px;
+	width: 6em;
 }
 
 .horizontal-post-info-value .forum-unread {
