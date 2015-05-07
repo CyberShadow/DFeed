@@ -19,6 +19,7 @@ module dfeed;
 import std.stdio : stderr;
 
 import ae.net.asockets;
+import ae.utils.meta;
 import ae.utils.sini;
 
 import common;
@@ -74,7 +75,7 @@ class NntpSource
 
 	this(Config config)
 	{
-		auto downloader = new NntpDownloader(config.host, NntpDownloader.Mode.fullPurge);
+		auto downloader = new NntpDownloader(config.host, isDebug ? NntpDownloader.Mode.newOnly : NntpDownloader.Mode.fullPurge);
 		auto listener = new NntpListenerSource(config.host);
 		downloader.handleFinished = &listener.startListening;
 	}
