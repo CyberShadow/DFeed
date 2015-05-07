@@ -355,7 +355,7 @@ function onKeyPress(e) {
 				return !selectFocused();
 			case ' ':
 			{
-				var p = $('.post-text');
+				var p = $('.post-body');
 				var dest = p.scrollTop()+p.height();
 				if (dest < p[0].scrollHeight) {
 					p.animate({scrollTop : dest}, 200);
