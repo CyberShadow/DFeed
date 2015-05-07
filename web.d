@@ -1139,7 +1139,7 @@ class WebUI
 	{
 		enum OFFSET_INIT = 1f;
 		enum OFFSET_MAX = 2f;
-		enum OFFSET_WIDTH = 37.5f;
+		enum OFFSET_WIDTH = 30f;
 		enum OFFSET_UNITS = "%";
 
 		class Post
@@ -1279,7 +1279,7 @@ class WebUI
 						`<td>`
 							`<div style="padding-left: `, format("%1.1f", OFFSET_INIT + level * offsetIncrement), OFFSET_UNITS, `">`
 								`<div class="thread-post-time">`, summarizeTime(post.info.time, true), `</div>`,
-								`<a class="postlink `, (user.isRead(post.info.rowid) ? "forum-read" : "forum-unread" ), `" href="`, encodeEntities(idToUrl(post.info.id)), `">`, truncateString(post.info.author, narrow ? 20 : 50), `</a>`
+								`<a class="postlink `, (user.isRead(post.info.rowid) ? "forum-read" : "forum-unread" ), `" href="`, encodeEntities(idToUrl(post.info.id)), `">`, truncateString(post.info.author, narrow ? 17 : 50), `</a>`
 							`</div>`
 						`</td>`
 					`</tr>`);
