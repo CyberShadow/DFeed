@@ -366,7 +366,7 @@ function onKeyPress(e) {
 			case 'r':
 			{
 				var replyLink = $('a.replylink');
-				if (replyLink.length == 1) {
+				if (replyLink.length) {
 					document.location.href = replyLink.attr('href');
 					return false;
 				}
