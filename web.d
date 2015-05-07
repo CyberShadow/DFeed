@@ -32,11 +32,13 @@ import ae.net.http.caching;
 import ae.net.http.responseex;
 import ae.net.http.server;
 import ae.net.ietf.headers;
+import ae.net.ietf.wrap;
 import ae.net.shutdown;
 import ae.sys.log;
 import ae.utils.array;
 import ae.utils.feed;
 import ae.utils.json;
+import ae.utils.meta;
 import ae.utils.text;
 import ae.utils.textout;
 import ae.utils.time;
@@ -1543,7 +1545,7 @@ class WebUI
 					`</td>`
 					`<td class="post-body">`
 	//		); miniPostInfo(post, knownPosts); html.put(
-						`<pre class="post-text">`), formatBody(content), html.put(`</pre>`,
+						`<pre class="post-text">`), formatBody(post), html.put(`</pre>`,
 						(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``),
 					`</td>`
 				`</tr>`
@@ -1673,7 +1675,7 @@ class WebUI
 			html.put(
 					`</td></tr>`
 					`<tr class="post-layout-body"><td>`
-						`<pre class="post-text">`), formatBody(content), html.put(`</pre>`,
+						`<pre class="post-text">`), formatBody(post), html.put(`</pre>`,
 						(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``),
 					`</td></tr>`
 					`<tr class="post-layout-footer"><td>`
@@ -2302,28 +2304,33 @@ class WebUI
 	static Regex!char reUrl;
 	static this() { reUrl = regex(`\w+://[^<>\s]+[\w/\-=]`); }
 
-	void formatBody(string s)
+	void formatBody(Rfc850Message post)
 	{
-		auto lines = s.strip().fastSplit('\n');
-		bool wasQuoted = false, inSignature = false;
-		foreach (line; lines)
+		auto paragraphs = unwrapText(post.content, post.flowed, post.delsp);
+		bool inSignature = false;
+		int quoteLevel = 0;
+		foreach (paragraph; paragraphs)
 		{
-			if (line == "-- ")
-				inSignature = true;
-			auto isQuoted = inSignature || line.startsWith(">");
-			if (isQuoted && !wasQuoted)
-				html ~= `<span class="forum-quote">`;
-			else
-			if (!isQuoted && wasQuoted)
+			int paragraphQuoteLevel;
+			foreach (c; paragraph.quotePrefix)
+				if (c == '>')
+					paragraphQuoteLevel++;
+
+			for (; quoteLevel > paragraphQuoteLevel; quoteLevel--)
 				html ~= `</span>`;
-			wasQuoted = isQuoted;
+			for (; quoteLevel < paragraphQuoteLevel; quoteLevel++)
+				html ~= `<span class="forum-quote">`;
 
-			// Remove space-stuffing
-			if (line.startsWith(" "))
-				line = line[1..$];
+			if (!quoteLevel && paragraph.text == "-- ")
+			{
+				html ~= `<span class="forum-signature">`;
+				inSignature = true;
+			}
 
-			auto needsWrap = line.length > 70;
-			auto hasURL = line.contains("://");
+			import std.utf;
+			bool needsWrap = paragraph.text.byChar.splitter(' ').map!(s => s.length).I!(r => reduce!max(0, r)) > 70;
+
+			auto hasURL = paragraph.text.contains("://");
 
 			void processText(string s)
 			{
@@ -2367,10 +2374,14 @@ class WebUI
 				}
 			}
 
-			processWrap(line);
+			if (paragraph.quotePrefix.length)
+				html.put(`<span class="forum-quote-prefix">`, encodeEntities(paragraph.quotePrefix), `</span>`);
+			processWrap(paragraph.text);
 			html.put('\n');
 		}
-		if (wasQuoted)
+		for (; quoteLevel; quoteLevel--)
+			html ~= `</span>`;
+		if (inSignature)
 			html ~= `</span>`;
 	}
 
@@ -2561,7 +2572,7 @@ class WebUI
 
 			html.clear();
 			html.put("<pre>");
-			formatBody(post.content);
+			formatBody(post);
 			html.put("</pre>");
 
 			auto url = "http://" ~ vhost ~ idToUrl(post.id);

@@ -413,7 +413,7 @@ tr.mini-post-info-cell > td {
 	word-wrap: break-word;
 }
 
-.forum-quote {
+.forum-quote, .forum-signature {
 	color: #706666;
 }
 
