@@ -5,7 +5,7 @@ DFLAGS="-m$MODEL -g"
 #DFLAGS="$DFLAGS -debug"
 #DFLAGS="$DFLAGS -debug=ASOCKETS"
 #DFLAGS="$DFLAGS -version=LIBEV"
-for PROGRAM in dfeed dfeed_web nntpdownload mldownload sendspamfeedback rebuildthreads
+for PROGRAM in dfeed nntpdownload mldownload sendspamfeedback rebuildthreads
 do
 	echo Rebuilding $PROGRAM...
 	rdmd --build-only $DFLAGS $PROGRAM.d
