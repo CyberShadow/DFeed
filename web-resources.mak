@@ -9,13 +9,16 @@ TARGETS : \
 	web/static/js/dfeed.js-opt
 
 %.htt-opt : %.htt
-	$(HTMLTOOL) < $^ > $@
+	$(HTMLTOOL) < $^ > $@.tmp
+	mv $@.tmp $@
 
 %.js-opt : %.js
-	$(JSTOOL) < $^ > $@
+	$(JSTOOL) < $^ > $@.tmp
+	mv $@.tmp $@
 
 %.css-opt : %.css
-	$(CSSTOOL) < $^ > $@
+	$(CSSTOOL) < $^ > $@.tmp
+	mv $@.tmp $@
 
 web/skel.htt : dlang.org/forum-template.html
 	cp $^ $@
