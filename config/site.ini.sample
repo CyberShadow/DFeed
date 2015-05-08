@@ -1,0 +1,8 @@
+# The canonical domain name for your instance.
+# This is used in a number of places:
+# - Requests coming to other domain names will be redirected to the canonical one.
+# - Message IDs for new messages will use this setting for the hostname part.
+# - External URLs to web resources (e.g. in IRC announcements) will use this setting for the host part.
+# Default is "localhost".
+
+host = forum.example.com

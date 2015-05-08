@@ -22,7 +22,7 @@
 # Data, logs and configuration
 /data/
 /logs/
-/config/*.ini
+/config/**/*.ini
 
 # Binaries
 /dfeed

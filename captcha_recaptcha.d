@@ -1,4 +1,4 @@
-/*  Copyright (C) 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2012, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -19,16 +19,21 @@ module captcha_recaptcha;
 import std.string;
 
 import ae.net.http.client;
+import ae.utils.sini;
 
 import captcha;
 
 class Recaptcha : Captcha
 {
+	static struct Config { string publicKey, privateKey; }
+	immutable Config config;
+	this(Config config) { this.config = config; }
+
 	override string getChallengeHtml(CaptchaErrorData errorData)
 	{
 		string error = errorData ? (cast(RecaptchaErrorData)errorData).code : null;
 
-		auto publicKey = config.recaptcha.publicKey;
+		auto publicKey = config.publicKey;
 		return
 			`<script type="text/javascript" src="http://www.google.com/recaptcha/api/challenge?k=` ~ publicKey ~ (error ? `&error=` ~ error : ``) ~ `">`
 			`</script>`
@@ -51,7 +56,7 @@ class Recaptcha : Captcha
 		assert(isPresent(fields));
 
 		httpPost("http://www.google.com/recaptcha/api/verify", [
-			"privatekey" : config.recaptcha.privateKey,
+			"privatekey" : config.privateKey,
 			"remoteip" : ip,
 			"challenge" : fields["recaptcha_challenge_field"],
 			"response" : fields["recaptcha_response_field"],
@@ -90,20 +95,9 @@ class RecaptchaErrorData : CaptchaErrorData
 	override string toString() { return code; }
 }
 
-struct RecaptchaConfig { string publicKey, privateKey; }
-
 static this()
 {
-	theCaptcha = new Recaptcha();
+	import common : createService;
+	if (auto c = createService!Recaptcha("apis/recaptcha"))
+		theCaptcha = c;
 }
-
-// **************************************************************************
-
-struct Config
-{
-	RecaptchaConfig recaptcha;
-}
-immutable Config config;
-
-import ae.utils.sini;
-shared static this() { config = loadIni!Config("config/captcha.ini"); }

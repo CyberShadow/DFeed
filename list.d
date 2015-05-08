@@ -32,7 +32,7 @@ struct ListTemplate
 	string[] varPrefix;
 	string itemSuffix, itemSeparator;
 
-	string render(string[][] items)
+	string render(in string[][] items)
 	{
 		return
 			listPrefix ~

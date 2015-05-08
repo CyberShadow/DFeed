@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -30,6 +30,11 @@ import ae.sys.timing;
 import common;
 import database;
 import message;
+
+struct NntpConfig
+{
+	string host;
+}
 
 /// Poll the server periodically for new messages
 class NntpListenerSource : NewsSource
@@ -147,7 +152,7 @@ private:
 		// before any getMessage commands.
 
 		int maxNum = 0;
-		foreach (int num; query("SELECT MAX(`ArtNum`) FROM `Groups` WHERE `Group` = ?").iterate(group.name))
+		foreach (int num; query!"SELECT MAX(`ArtNum`) FROM `Groups` WHERE `Group` = ?".iterate(group.name))
 			maxNum = num;
 
 		void onListGroup(string[] messages)
@@ -160,7 +165,7 @@ private:
 				serverMessages.add(to!int(m));
 
 			HashSet!int localMessages;
-			foreach (int num; query("SELECT `ArtNum` FROM `Groups` WHERE `Group` = ?").iterate(group.name))
+			foreach (int num; query!"SELECT `ArtNum` FROM `Groups` WHERE `Group` = ?".iterate(group.name))
 				localMessages.add(num);
 
 			// Construct set of posts to download
@@ -188,18 +193,18 @@ private:
 
 				void logAndDelete(string TABLE, string WHERE, T...)(T args)
 				{
-					auto selectSql = "SELECT * FROM `" ~ TABLE ~ "` " ~ WHERE;
-					auto deleteSql = "DELETE   FROM `" ~ TABLE ~ "` " ~ WHERE;
+					enum selectSql = "SELECT * FROM `" ~ TABLE ~ "` " ~ WHERE;
+					enum deleteSql = "DELETE   FROM `" ~ TABLE ~ "` " ~ WHERE;
 
 					log("  " ~ deleteSql);
 
-					auto select = query(selectSql);
+					auto select = query!selectSql;
 					select.bindAll!T(args);
 					while (select.step())
 						log("    " ~ toJson(select.getAssoc()));
 
 					static if (!PRETEND)
-						query(deleteSql).exec(args);
+						query!deleteSql.exec(args);
 				}
 
 				foreach (num; messagesToDelete)
@@ -208,7 +213,7 @@ private:
 					mixin(DB_TRANSACTION);
 
 					string id;
-					foreach (string msgId; query("SELECT `ID` FROM `Groups` WHERE `Group` = ? AND `ArtNum` = ?").iterate(group.name, num))
+					foreach (string msgId; query!"SELECT `ID` FROM `Groups` WHERE `Group` = ? AND `ArtNum` = ?".iterate(group.name, num))
 						id = msgId;
 
 					logAndDelete!(`Groups`, "WHERE `Group` = ? AND `ArtNum` = ?")(group.name, num);

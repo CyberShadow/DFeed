@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -29,17 +29,22 @@ import webpoller;
 
 class Feed : WebPoller
 {
-	enum POLL_PERIOD = 60;
-
-	this(string name, string url, string action = "posted", int pollPeriod = POLL_PERIOD)
+	static struct Config
 	{
-		this.url = url;
-		this.action = action;
-		super(name, pollPeriod);
+		string name;
+		string url;
+		string action = "posted";
+		int pollPeriod = 60;
+	}
+
+	this(Config config)
+	{
+		this.config = config;
+		super(config.name, config.pollPeriod);
 	}
 
 private:
-	string url, action;
+	Config config;
 
 	class FeedPost : Post
 	{
@@ -58,8 +63,8 @@ private:
 		override void formatForIRC(void delegate(string) handler)
 		{
 			shortenURL(url, (string shortenedURL) {
-				if (action)
-					handler(format("[%s] %s %s \"%s\": %s", this.outer.name, filterIRCName(author), this.outer.action, title, shortenedURL));
+				if (config.action.length)
+					handler(format("[%s] %s %s \"%s\": %s", this.outer.name, filterIRCName(author), config.action, title, shortenedURL));
 				else // author is already indicated in title
 					handler(format("[%s] %s: %s", this.outer.name, filterIRCName(title), shortenedURL));
 			});
@@ -69,7 +74,7 @@ private:
 protected:
 	override void getPosts()
 	{
-		httpGet(url, (string result) {
+		httpGet(config.url, (string result) {
 			auto content = cast(char[])result;
 			scope(failure) std.file.write("feed-error.xml", content);
 			auto data = new XmlDocument(new MemoryStream(content));

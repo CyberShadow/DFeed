@@ -1,0 +1,8 @@
+# StackOverflow questions feed.
+
+# Comma-separated list of tags to watch.
+tags = d
+
+# Optional - API key.
+# Requests will be rate-limited without one.
+#key = abcdefghijklmnopqrstuvwx

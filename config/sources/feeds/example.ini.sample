@@ -1,0 +1,13 @@
+# Atom feed example configuration.
+
+# Feed title - used in IRC announcements.
+#name = Example
+
+# Direct URL to the ATOM XML file.
+#url = http://www.example.com/feeds/atom.xml
+
+# Action (verb used in IRC announcements).
+# The announcements is formatted like "<author> <verb> <title>".
+# If left empty, as a special case, the author and verb is not included.
+# Defaults to "posted".
+#action = posted

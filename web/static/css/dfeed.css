@@ -413,8 +413,29 @@ tr.mini-post-info-cell > td {
 	word-wrap: break-word;
 }
 
-.forum-quote {
+.forum-quote, .forum-signature {
 	color: #706666;
+}
+
+.forum-quote {
+	display: block;
+	border-left: 4px solid #D0D0D0;
+	padding-left: 4px;
+	/* HACK: 0.6 (instead of 0.5) fixes Chrome without affecting Firefox. */
+	border-left: 0.6ch solid #D0D0D0;
+	padding-left: 0.5ch;
+}
+
+.forum-quote-prefix {
+	/*
+		Make it so the quote prefix is invisible and has zero width,
+		but is still copied when the user selects and copies text
+		from the web page.
+		https://thejh.net/misc/website-terminal-copy-paste
+	*/
+	position: absolute;
+	left: -1000px;
+	top: -1000px;
 }
 
 .forcewrap {
@@ -606,6 +627,7 @@ table.viewmode-threaded > tbody > tr > th {
 table td.horizontal-post-info-name {
 	text-align: right;
 	padding: 0 10px;
+	width: 6em;
 }
 
 .horizontal-post-info-value .forum-unread {
@@ -694,7 +716,7 @@ td.post-footer-nav a {
 .group-split-message-none {
 	text-align: center;
 	vertical-align: middle !important;
-	white-space: pre;
+	overflow: hidden;
 }
 
 body.widedoc #content,

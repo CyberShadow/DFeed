@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2013, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2013, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -212,7 +212,7 @@ final class GuestUser : User
 
 	override void logIn(string username, string password)
 	{
-		foreach (string session; query("SELECT `Session` FROM `Users` WHERE `Username` = ? AND `Password` = ?").iterate(username, encryptPassword(password)))
+		foreach (string session; query!"SELECT `Session` FROM `Users` WHERE `Username` = ? AND `Password` = ?".iterate(username, encryptPassword(password)))
 		{
 			set("session", session);
 			return;
@@ -228,7 +228,7 @@ final class GuestUser : User
 
 		// Create user
 		auto session = randomString();
-		query("INSERT INTO `Users` (`Username`, `Password`, `Session`) VALUES (?, ?, ?)").exec(username, encryptPassword(password), session);
+		query!"INSERT INTO `Users` (`Username`, `Password`, `Session`) VALUES (?, ?, ?)".exec(username, encryptPassword(password), session);
 
 		// Copy cookies to database
 		auto user = new RegisteredUser(username);
@@ -270,7 +270,7 @@ final class RegisteredUser : User
 			value = *pSetting;
 		else
 		{
-			foreach (string v; query("SELECT `Value` FROM `UserSettings` WHERE `User` = ? AND `Name` = ?").iterate(username, name))
+			foreach (string v; query!"SELECT `Value` FROM `UserSettings` WHERE `User` = ? AND `Name` = ?".iterate(username, name))
 				value = v;
 			settings[name] = value;
 		}
@@ -292,7 +292,7 @@ final class RegisteredUser : User
 			if (name in settings && settings[name] == value)
 				continue;
 
-			query("INSERT OR REPLACE INTO `UserSettings` (`User`, `Name`, `Value`) VALUES (?, ?, ?)").exec(username, name, value);
+			query!"INSERT OR REPLACE INTO `UserSettings` (`User`, `Name`, `Value`) VALUES (?, ?, ?)".exec(username, name, value);
 		}
 
 		return null;
@@ -306,7 +306,7 @@ final class RegisteredUser : User
 
 	override void logOut()
 	{
-		query("UPDATE `Users` SET `Session` = ? WHERE `Username` = ?").exec(randomString(), username);
+		query!"UPDATE `Users` SET `Session` = ? WHERE `Username` = ?".exec(randomString(), username);
 	}
 }
 
@@ -315,7 +315,7 @@ User getUser(string cookieHeader)
 	auto guest = new GuestUser(cookieHeader);
 	if ("session" in guest.cookies)
 	{
-		foreach (string username, int level; query("SELECT `Username`, `Level` FROM `Users` WHERE `Session` = ?").iterate(guest.cookies["session"]))
+		foreach (string username, int level; query!"SELECT `Username`, `Level` FROM `Users` WHERE `Session` = ?".iterate(guest.cookies["session"]))
 			return new RegisteredUser(username, cast(User.Level)level);
 	}
 	return guest;

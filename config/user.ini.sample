@@ -1,0 +1,2 @@
+# A unique string used in hashing user passwords.
+# salt = insert random string here

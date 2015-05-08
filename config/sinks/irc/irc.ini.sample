@@ -1,0 +1,16 @@
+# IRC sink parameters.
+
+# IRC server to connect to.
+#server = irc.freenode.net
+
+# Port. Defaults to 6667.
+#port = 6667
+
+# Nickname to use.
+#nick = DFeed\My\Test
+
+# Primary channel - only "important" announcements will be posted here.
+#channel  = dfeed.test
+
+# Secondary (feed) channel, for all announcements.
+#channel2 = dfeed.test2

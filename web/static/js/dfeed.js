@@ -165,32 +165,31 @@ function updateSize() {
 		{ outer : $('#group-split-message > *'  ), inner : $('.split-post .post-body')},
 	];
 
-	// Hide some elements temporarily, to prevent them getting in the way of measurements
+	var dummyHeight = 300;
 
-	$temphide = $('.mini-post-info');
-	$temphide.addClass('temphide');
-
-	// Shrink content to 0 height, so we can calculate how much space we have to grow.
+	// Shrink content to a fixed height, so we can calculate how much space we have to grow.
 
 	for (var i in resizees) {
-		resizees[i].inner.height(0);
-		resizees[i].inner.addClass('temphide');
+		resizees[i].inner.height(dummyHeight);
 	}
 
 	var contentBottom = $('#content').position().top + $('#content').outerHeight(true);
 	var usedWindowSpace  = contentBottom;
 	if ($('#copyright:visible').length)
 		usedWindowSpace += $('#copyright').position().top + $('#copyright').outerHeight(true) - contentBottom + 10 /*???*/;
+	usedWindowSpace = Math.trunc(usedWindowSpace);
 	var totalWindowSpace = $(window).height();
 	var freeWindowSpace  = totalWindowSpace - usedWindowSpace;
 
 	var resizeeOuterSizes = $.map(resizees, function(r) { return r.outer.outerHeight(true); });
-	resizeeOuterSizes[1] += 3; // HACK ??? border?
+//	resizeeOuterSizes[1] += 1; // HACK ??? border?
 	var contentSize = Math.max.apply(null, resizeeOuterSizes);
+
+	//console.log(JSON.stringify({contentBottom:contentBottom, usedWindowSpace:usedWindowSpace, totalWindowSpace:totalWindowSpace, freeWindowSpace:freeWindowSpace,resizeeOuterSizes:resizeeOuterSizes, contentSize:contentSize, }));
 
 	for (var i in resizees) {
 		var resizeeOuterSize = resizeeOuterSizes[i];
-		var itemFreeSpace = 0;
+		var itemFreeSpace = dummyHeight;
 
 		// Grow to fill content (this will be 0 for tallest resizee)
 		itemFreeSpace += contentSize - resizeeOuterSize;
@@ -198,11 +197,14 @@ function updateSize() {
 		// Grow to fill window
 		itemFreeSpace += freeWindowSpace;
 
-		resizees[i].inner.removeClass('temphide');
 		resizees[i].inner.height(itemFreeSpace);
+
+		// Correction
+	//	console.log([contentSize, resizees[i].outer.height() - (freeWindowSpace)]);
 	}
 
-	$temphide.removeClass('temphide');
+	//console.log($('#content').outerHeight(true));
+	console.log([resizees[0].outer.outerHeight(true), resizees[1].outer.outerHeight(true)]);
 
 	if (focused.length && wasFocusedInView)
 		focusRow(focused, true);
@@ -364,7 +366,7 @@ function onKeyPress(e) {
 			case 'r':
 			{
 				var replyLink = $('a.replylink');
-				if (replyLink.length == 1) {
+				if (replyLink.length) {
 					document.location.href = replyLink.attr('href');
 					return false;
 				}

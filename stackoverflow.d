@@ -29,18 +29,23 @@ import bitly;
 import common;
 import webpoller;
 
-const POLL_PERIOD = 60;
-
 class StackOverflow : WebPoller
 {
-	this(string tags)
+	static struct Config
 	{
-		this.tags = tags;
-		super("StackOverflow-" ~ tags, POLL_PERIOD);
+		string tags;
+		string key;
+		int pollPeriod = 60;
+	}
+
+	this(Config config)
+	{
+		this.config = config;
+		super("StackOverflow-" ~ config.tags, config.pollPeriod);
 	}
 
 private:
-	string tags;
+	Config config;
 
 	class Question : Post
 	{
@@ -67,8 +72,8 @@ private:
 protected:
 	override void getPosts()
 	{
-		auto url = "http://api.stackexchange.com/2.2/questions?pagesize=10&order=desc&sort=creation&site=stackoverflow&tagged=" ~ tags ~
-			(exists("data/stackoverflow2.txt") ? "&key=" ~ readText("data/stackoverflow2.txt") : "");
+		auto url = "http://api.stackexchange.com/2.2/questions?pagesize=10&order=desc&sort=creation&site=stackoverflow&tagged=" ~ config.tags ~
+			(config.key ? "&key=" ~ config.key : "");
 		httpGet(url, (string json) {
 			if (json == "<html><body><h1>408 Request Time-out</h1>\nYour browser didn't send a complete request in time.\n</body></html>\n")
 			{

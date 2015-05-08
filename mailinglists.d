@@ -16,9 +16,6 @@
 
 module mailinglists;
 
-import std.string;
-import std.file;
-
 import ae.net.asockets;
 import ae.utils.text;
 
@@ -28,13 +25,17 @@ import message;
 /// Listen for email messages piped by a helper script to a socket.
 class MailingLists : NewsSource
 {
-	this()
+	static struct Config
+	{
+		string addr;
+		ushort port;
+	}
+
+	this(Config config)
 	{
 		super("MailingList");
 
-		auto serverConfig = splitLines(readText("data/mailrelay.txt"));
-		host = serverConfig[0];
-		port = to!ushort(serverConfig[1]);
+		this.config = config;
 
 		server = new TcpServer();
 		server.handleAccept = &onAccept;
@@ -42,7 +43,7 @@ class MailingLists : NewsSource
 
 	override void start()
 	{
-		server.listen(port, host);
+		server.listen(config.port, config.addr);
 	}
 
 	override void stop()
@@ -52,8 +53,7 @@ class MailingLists : NewsSource
 
 private:
 	TcpServer server;
-	string host;
-	ushort port;
+	immutable Config config;
 
 	void onAccept(TcpConnection incoming)
 	{

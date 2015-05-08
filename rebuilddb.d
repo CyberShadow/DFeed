@@ -35,7 +35,7 @@ class DatabaseSource : NewsSource
 	{
 		mixin(DB_TRANSACTION);
 
-		foreach (string message, string id; query("SELECT `Message`, `ID` FROM old.Posts").iterate())
+		foreach (string message, string id; query!"SELECT `Message`, `ID` FROM old.Posts".iterate())
 		{
 			log("Announcing: " ~ id);
 			announcePost(new Rfc850Post(message, id));

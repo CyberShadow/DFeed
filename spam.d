@@ -30,6 +30,9 @@ import site;
 
 void spamCheck(PostProcess process, SpamResultHandler handler)
 {
+	if (!spamCheckers)
+		initSpamCheckers();
+
 	int totalResults = 0;
 	bool foundSpam = false;
 
@@ -37,7 +40,7 @@ void spamCheck(PostProcess process, SpamResultHandler handler)
 	foreach (checker; spamCheckers)
 	{
 		try
-			checker(process, (bool ok, string message) {
+			checker.check(process, (bool ok, string message) {
 				totalResults++;
 				if (!foundSpam)
 				{
@@ -65,224 +68,245 @@ void spamCheck(PostProcess process, SpamResultHandler handler)
 	}
 }
 
-enum SpamFeedback { unknown, spam, ham }
+void sendSpamFeedback(PostProcess process, SpamResultHandler handler, SpamFeedback feedback)
+{
+	if (!spamCheckers)
+		initSpamCheckers();
 
-private:
+	foreach (checker; spamCheckers)
+		checker.sendFeedback(process, handler, feedback);
+}
+
+// **************************************************************************
 
 alias void delegate(bool ok, string message) SpamResultHandler;
 
-// **************************************************************************
+enum SpamFeedback { unknown, spam, ham }
 
-struct AkismetConfig { string key; }
-
-void checkAkismet(PostProcess process, SpamResultHandler handler)
+class SpamChecker
 {
-	if (!config.akismet.key)
-		return handler(true, "Akismet is not set up");
+	abstract void check(PostProcess process, SpamResultHandler handler);
 
-	string[string] params = [
-		"blog"                 : "http://" ~ site.config.host ~ "/",
-		"user_ip"              : process.ip,
-		"user_agent"           : process.headers.get("User-Agent", ""),
-		"referrer"             : process.headers.get("Referer", ""),
-		"comment_author"       : process.vars.get("name", ""),
-		"comment_author_email" : process.vars.get("email", ""),
-		"comment_content"      : process.vars.get("text", ""),
-	];
-
-	return httpPost("http://" ~ config.akismet.key ~ ".rest.akismet.com/1.1/comment-check", params, (string result) {
-		if (result == "false")
-			handler(true, null);
-		else
-		if (result == "true")
-			handler(false, "Akismet thinks your post looks like spam");
-		else
-			handler(false, "Akismet error: " ~ result);
-	}, (string error) {
-		handler(false, "Akismet error: " ~ error);
-	});
-}
-
-void sendAkismetFeedback(PostProcess process, SpamResultHandler handler, SpamFeedback feedback)
-{
-	if (!config.akismet.key)
-		return handler(true, "Akismet is not set up");
-
-	string[string] params = [
-		"blog"                 : "http://" ~ site.config.host ~ "/",
-		"user_ip"              : process.ip,
-		"user_agent"           : process.headers.get("User-Agent", ""),
-		"referrer"             : process.headers.get("Referer", ""),
-		"comment_author"       : process.vars.get("name", ""),
-		"comment_author_email" : process.vars.get("email", ""),
-		"comment_content"      : process.vars.get("text", ""),
-	];
-
-	string[SpamFeedback] names = [ SpamFeedback.spam : "spam", SpamFeedback.ham : "ham" ];
-	return httpPost("http://" ~ config.akismet.key ~ ".rest.akismet.com/1.1/submit-" ~ names[feedback], params, (string result) {
-		if (result == "Thanks for making the web a better place.")
-			handler(true, null);
-		else
-			handler(false, "Akismet error: " ~ result);
-	}, (string error) {
-		handler(false, "Akismet error: " ~ error);
-	});
+	void sendFeedback(PostProcess process, SpamResultHandler handler, SpamFeedback feedback)
+	{
+		handler(true, "Not implemented");
+	}
 }
 
 // **************************************************************************
 
-struct ProjectHoneyPotConfig { string key; }
-
-void checkProjectHoneyPot(PostProcess process, SpamResultHandler handler)
+class Akismet : SpamChecker
 {
-	if (!config.projecthoneypot.key)
-		return handler(true, "ProjectHoneyPot is not set up");
+	struct Config { string key; }
+	Config config;
+	this(Config config) { this.config = config; }
 
-	enum DAYS_THRESHOLD  =  7; // consider an IP match as a positive if it was last seen at most this many days ago
-	enum SCORE_THRESHOLD = 10; // consider an IP match as a positive if its ProjectHoneyPot score is at least this value
-
-	struct PHPResult
+	override void check(PostProcess process, SpamResultHandler handler)
 	{
-		bool present;
-		ubyte daysLastSeen, threatScore, type;
+		if (!config.key)
+			return handler(true, "Akismet is not set up");
+
+		string[string] params = [
+			"blog"                 : "http://" ~ site.config.host ~ "/",
+			"user_ip"              : process.ip,
+			"user_agent"           : process.headers.get("User-Agent", ""),
+			"referrer"             : process.headers.get("Referer", ""),
+			"comment_author"       : process.vars.get("name", ""),
+			"comment_author_email" : process.vars.get("email", ""),
+			"comment_content"      : process.vars.get("text", ""),
+		];
+
+		return httpPost("http://" ~ config.key ~ ".rest.akismet.com/1.1/comment-check", params, (string result) {
+			if (result == "false")
+				handler(true, null);
+			else
+			if (result == "true")
+				handler(false, "Akismet thinks your post looks like spam");
+			else
+				handler(false, "Akismet error: " ~ result);
+		}, (string error) {
+			handler(false, "Akismet error: " ~ error);
+		});
 	}
 
-	static PHPResult phpCheck(string ip)
+	override void sendFeedback(PostProcess process, SpamResultHandler handler, SpamFeedback feedback)
 	{
-		import std.socket;
-		string[] sections = split(ip, ".");
-		if (sections.length != 4) // IPv6
-			return PHPResult(false);
-		sections.reverse();
-		string addr = ([config.projecthoneypot.key] ~ sections ~ ["dnsbl.httpbl.org"]).join(".");
-		InternetHost ih = new InternetHost;
-		if (!ih.getHostByName(addr))
-			return PHPResult(false);
-		auto resultIP = cast(ubyte[])(&ih.addrList[0])[0..1];
-		resultIP.reverse();
-		enforce(resultIP[0] == 127, "PHP API error");
-		return PHPResult(true, resultIP[1], resultIP[2], resultIP[3]);
-	}
+		if (!config.key)
+			return handler(true, "Akismet is not set up");
 
-	auto result = phpCheck(process.ip);
-	with (result)
-		if (present && daysLastSeen <= DAYS_THRESHOLD && threatScore >= SCORE_THRESHOLD)
-			handler(false, format(
-				"ProjectHoneyPot thinks you may be a spammer (%s last seen: %d days ago, threat score: %d/255, type: %s)",
-				process.ip,
-				daysLastSeen,
-				threatScore,
-				(
-					( type == 0      ? ["Search Engine"  ] : []) ~
-					((type & 0b0001) ? ["Suspicious"     ] : []) ~
-					((type & 0b0010) ? ["Harvester"      ] : []) ~
-					((type & 0b0100) ? ["Comment Spammer"] : [])
-				).join(", ")));
-		else
-			handler(true, null);
+		string[string] params = [
+			"blog"                 : "http://" ~ site.config.host ~ "/",
+			"user_ip"              : process.ip,
+			"user_agent"           : process.headers.get("User-Agent", ""),
+			"referrer"             : process.headers.get("Referer", ""),
+			"comment_author"       : process.vars.get("name", ""),
+			"comment_author_email" : process.vars.get("email", ""),
+			"comment_content"      : process.vars.get("text", ""),
+		];
+
+		string[SpamFeedback] names = [ SpamFeedback.spam : "spam", SpamFeedback.ham : "ham" ];
+		return httpPost("http://" ~ config.key ~ ".rest.akismet.com/1.1/submit-" ~ names[feedback], params, (string result) {
+			if (result == "Thanks for making the web a better place.")
+				handler(true, null);
+			else
+				handler(false, "Akismet error: " ~ result);
+		}, (string error) {
+			handler(false, "Akismet error: " ~ error);
+		});
+	}
 }
 
 // **************************************************************************
 
-import ae.utils.xml; // Issue 7016
-
-void checkStopForumSpam(PostProcess process, SpamResultHandler handler)
+class ProjectHoneyPot : SpamChecker
 {
-	enum DAYS_THRESHOLD = 3; // consider an IP match as a positive if it was last seen at most this many days ago
+	struct Config { string key; }
+	Config config;
+	this(Config config) { this.config = config; }
 
-	auto ip = process.ip;
-
-	if (ip.canFind(':') || ip.split(".").length != 4)
+	override void check(PostProcess process, SpamResultHandler handler)
 	{
-		// Not an IPv4 address, skip StopForumSpam check
-		return handler(true, "Not an IPv4 address");
-	}
+		if (!config.key)
+			return handler(true, "ProjectHoneyPot is not set up");
 
-	httpGet("http://www.stopforumspam.com/api?ip=" ~ ip, (string result) {
-		import std.stream;
-		import std.datetime;
-		import ae.utils.xml;
-		import ae.utils.time : parseTime;
+		enum DAYS_THRESHOLD  =  7; // consider an IP match as a positive if it was last seen at most this many days ago
+		enum SCORE_THRESHOLD = 10; // consider an IP match as a positive if its ProjectHoneyPot score is at least this value
 
-		auto xml = new XmlDocument(new MemoryStream(cast(char[])result));
-		auto response = xml["response"];
-		if (response.attributes["success"] != "true")
+		struct PHPResult
 		{
-			string error = result;
-			auto errorNode = response.findChild("error");
-			if (errorNode)
-				error = errorNode.text;
-			enforce(false, "StopForumSpam API error: " ~ error);
+			bool present;
+			ubyte daysLastSeen, threatScore, type;
 		}
 
-		if (response["appears"].text == "no")
-			handler(true, null);
-		else
+		PHPResult phpCheck(string ip)
 		{
-			auto date = response["lastseen"].text.parseTime!"Y-m-d H:i:s"();
-			if (Clock.currTime() - date < dur!"days"(DAYS_THRESHOLD))
+			import std.socket;
+			string[] sections = split(ip, ".");
+			if (sections.length != 4) // IPv6
+				return PHPResult(false);
+			sections.reverse();
+			string addr = ([config.key] ~ sections ~ ["dnsbl.httpbl.org"]).join(".");
+			InternetHost ih = new InternetHost;
+			if (!ih.getHostByName(addr))
+				return PHPResult(false);
+			auto resultIP = cast(ubyte[])(&ih.addrList[0])[0..1];
+			resultIP.reverse();
+			enforce(resultIP[0] == 127, "PHP API error");
+			return PHPResult(true, resultIP[1], resultIP[2], resultIP[3]);
+		}
+
+		auto result = phpCheck(process.ip);
+		with (result)
+			if (present && daysLastSeen <= DAYS_THRESHOLD && threatScore >= SCORE_THRESHOLD)
 				handler(false, format(
-					"StopForumSpam thinks you may be a spammer (%s last seen: %s, frequency: %s)",
-					process.ip, response["lastseen"].text, response["frequency"].text));
+					"ProjectHoneyPot thinks you may be a spammer (%s last seen: %d days ago, threat score: %d/255, type: %s)",
+					process.ip,
+					daysLastSeen,
+					threatScore,
+					(
+						( type == 0      ? ["Search Engine"  ] : []) ~
+						((type & 0b0001) ? ["Suspicious"     ] : []) ~
+						((type & 0b0010) ? ["Harvester"      ] : []) ~
+						((type & 0b0100) ? ["Comment Spammer"] : [])
+					).join(", ")));
 			else
 				handler(true, null);
+	}
+
+}
+
+
+// **************************************************************************
+
+static import ae.utils.xml; // Issue 7016
+
+class StopForumSpam : SpamChecker
+{
+	override void check(PostProcess process, SpamResultHandler handler)
+	{
+		enum DAYS_THRESHOLD = 3; // consider an IP match as a positive if it was last seen at most this many days ago
+
+		auto ip = process.ip;
+
+		if (ip.canFind(':') || ip.split(".").length != 4)
+		{
+			// Not an IPv4 address, skip StopForumSpam check
+			return handler(true, "Not an IPv4 address");
 		}
-	}, (string errorMessage) {
-		handler(false, "StopForumSpam error: " ~ errorMessage);
-	});
+
+		httpGet("http://www.stopforumspam.com/api?ip=" ~ ip, (string result) {
+			import std.stream;
+			import std.datetime;
+			import ae.utils.xml;
+			import ae.utils.time : parseTime;
+
+			auto xml = new XmlDocument(new MemoryStream(cast(char[])result));
+			auto response = xml["response"];
+			if (response.attributes["success"] != "true")
+			{
+				string error = result;
+				auto errorNode = response.findChild("error");
+				if (errorNode)
+					error = errorNode.text;
+				enforce(false, "StopForumSpam API error: " ~ error);
+			}
+
+			if (response["appears"].text == "no")
+				handler(true, null);
+			else
+			{
+				auto date = response["lastseen"].text.parseTime!"Y-m-d H:i:s"();
+				if (Clock.currTime() - date < dur!"days"(DAYS_THRESHOLD))
+					handler(false, format(
+						"StopForumSpam thinks you may be a spammer (%s last seen: %s, frequency: %s)",
+						process.ip, response["lastseen"].text, response["frequency"].text));
+				else
+					handler(true, null);
+			}
+		}, (string errorMessage) {
+			handler(false, "StopForumSpam error: " ~ errorMessage);
+		});
+	}
 }
 
 // **************************************************************************
 
-void checkUserAgent(PostProcess process, SpamResultHandler handler)
+class SimpleChecker : SpamChecker
 {
-	auto ua = process.headers.get("User-Agent", "");
+	override void check(PostProcess process, SpamResultHandler handler)
+	{
+		auto ua = process.headers.get("User-Agent", "");
 
-	if (ua.startsWith("WWW-Mechanize"))
-		handler(false, "You seem to be posting using an unusual user-agent");
+		if (ua.startsWith("WWW-Mechanize"))
+			handler(false, "You seem to be posting using an unusual user-agent");
 
-	handler(true, null);
-}
+		auto subject = process.vars.get("subject", "").toLower();
+		foreach (keyword; ["kitchen", "spamtest"])
+			if (subject.contains(keyword))
+				return handler(false, "Your subject contains a suspicious keyword or character sequence");
 
-void checkKeywords(PostProcess process, SpamResultHandler handler)
-{
-	auto subject = process.vars.get("subject", "").toLower();
-	foreach (keyword; ["kitchen", "spamtest"])
-		if (subject.contains(keyword))
-			return handler(false, "Your subject contains a suspicious keyword or character sequence");
+		auto text = process.vars.get("text", "").toLower();
+		foreach (keyword; ["<a href=", "[url=", "[url]http"])
+			if (text.contains(keyword))
+				return handler(false, "Your post contains a suspicious keyword or character sequence");
 
-	auto text = process.vars.get("text", "").toLower();
-	foreach (keyword; ["<a href=", "[url=", "[url]http"])
-		if (text.contains(keyword))
-			return handler(false, "Your post contains a suspicious keyword or character sequence");
-
-	handler(true, null);
+		handler(true, null);
+	}
 }
 
 // **************************************************************************
 
-auto spamCheckers =
-[
-	&checkUserAgent,
-	&checkKeywords,
-	&checkProjectHoneyPot,
-	&checkAkismet,
-	&checkStopForumSpam,
-];
+SpamChecker[] spamCheckers;
 
-public auto spamFeedbackSenders =
-[
-	&sendAkismetFeedback,
-];
-
-// **************************************************************************
-
-struct Config
+void initSpamCheckers()
 {
-	AkismetConfig akismet;
-	ProjectHoneyPotConfig projecthoneypot;
-}
-const Config config;
+	assert(spamCheckers is null);
 
-import ae.utils.sini;
-shared static this() { config = loadIni!Config("config/spam.ini"); }
+	import common;
+	spamCheckers ~= new SimpleChecker();
+	if (auto c = createService!ProjectHoneyPot("apis/projecthoneypot"))
+		spamCheckers ~= c;
+	if (auto c = createService!Akismet("apis/akismet"))
+		spamCheckers ~= c;
+	spamCheckers ~= new StopForumSpam();
+}

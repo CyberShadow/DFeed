@@ -1,0 +1,29 @@
+# The groups, as displayed on the web interface's index page.
+
+# Groups are arranged in sets.
+[sets.example-set]
+
+# Long name (shown on index page)
+name=Example set
+
+# Short name (shown in navigation)
+shortName=Example set
+
+# Example group.
+[groups.example]
+
+# name is what appears on the web pages.
+name=example
+
+# urlName is what appears in URLs.
+urlName=example
+
+# description is displayed on the index page.
+description=Example group
+
+# ID (section name) of the set this group appears in.
+groupSet=example-set
+
+# alsoVia is an optional set of links for other ways to access this group.
+alsoVia.nntp.name=NNTP
+alsoVia.nntp.url=news://news.example.com/example

@@ -32,11 +32,13 @@ import ae.net.http.caching;
 import ae.net.http.responseex;
 import ae.net.http.server;
 import ae.net.ietf.headers;
+import ae.net.ietf.wrap;
 import ae.net.shutdown;
 import ae.sys.log;
 import ae.utils.array;
 import ae.utils.feed;
 import ae.utils.json;
+import ae.utils.meta;
 import ae.utils.text;
 import ae.utils.textout;
 import ae.utils.time;
@@ -45,6 +47,7 @@ import cache;
 import captcha;
 import common;
 import database;
+import groups;
 import list;
 //import mailhide;
 import message;
@@ -206,7 +209,7 @@ class WebUI
 						redirectNum = parameters["article_id"];
 					if (redirectGroup && redirectNum)
 					{
-						foreach (string id; query("SELECT `ID` FROM `Groups` WHERE `Group`=? AND `ArtNum`=?").iterate(redirectGroup, redirectNum))
+						foreach (string id; query!"SELECT `ID` FROM `Groups` WHERE `Group`=? AND `ArtNum`=?".iterate(redirectGroup, redirectNum))
 							return response.redirect(idToUrl(id), HttpStatusCode.MovedPermanently);
 						throw new NotFoundException("Legacy redirect - article not found");
 					}
@@ -214,7 +217,7 @@ class WebUI
 					if (redirectNum)
 					{
 						string[] ids;
-						foreach (string id; query("SELECT `ID` FROM `Groups` WHERE `ArtNum`=?").iterate(redirectNum))
+						foreach (string id; query!"SELECT `ID` FROM `Groups` WHERE `ArtNum`=?".iterate(redirectNum))
 							ids ~= id;
 						if (ids.length == 1)
 							return response.redirect(idToUrl(ids[0]), HttpStatusCode.MovedPermanently);
@@ -654,115 +657,6 @@ class WebUI
 
 	// ***********************************************************************
 
-	// TODO: Move out to configuration files
-
-	struct GroupInfo { string name, description, postMessage, alsoVia; }
-	struct GroupSet { string name, shortName; GroupInfo[] groups; }
-
-	static GroupSet makeGroupSet(string name, GroupInfo[] groups)
-	{
-		auto shortName = name;
-		shortName.eat("D Programming Language - ");
-		return GroupSet(name, shortName, groups);
-	}
-
-	static GroupInfo makeGroupInfo(string name, string archiveName, string mlName, string description, bool mlOnly, bool bugzilla)
-	{
-		auto info = GroupInfo(name, description.chomp(".").strip());
-		string[] alsoVia;
-		if (!mlOnly)
-			alsoVia ~= `<a href="news://news.digitalmars.com/`~name~`">NNTP</a>`;
-		if (mlName)
-			alsoVia ~= `<a href="http://lists.puremagic.com/cgi-bin/mailman/listinfo/`~mlName~`">mailing&nbsp;list</a>`;
-		if (mlOnly)
-			info.postMessage =
-				`You are viewing a mailing list archive.<br>`
-				`For information about posting, visit `
-					`<a href="http://lists.puremagic.com/cgi-bin/mailman/listinfo/`~name~`">`~name~`'s Mailman page</a>.`;
-		if (bugzilla)
-		{
-			alsoVia ~= `<a href="http://d.puremagic.com/issues/">Bugzilla</a>`;
-			info.postMessage =
-				`You are viewing a Bugzilla message archive.<br>`
-				`To report a bug, please visit the <a href="http://d.puremagic.com/issues/">D Bugzilla</a> or `
-					`<a href="/newpost/digitalmars.D">post to digitalmars.D</a>.`;
-		}
-		if (mlOnly)
-			alsoVia ~= `<a href="http://lists.puremagic.com/pipermail/`~name.toLower()~`/">archive</a>`;
-		else
-		if (archiveName)
-			alsoVia ~= `<a href="http://www.digitalmars.com/d/archives/`~archiveName~`/">archive</a>`;
-		info.alsoVia = alsoVia.join("<br>");
-		return info;
-	}
-
-	static GroupSet[] groupHierarchy = [
-	makeGroupSet("D Programming Language - New users", [
-		makeGroupInfo("digitalmars.D.learn"     , "digitalmars/D/learn"     , "digitalmars-d-learn"     , "Questions about learning D"                                       , false, false),
-	]),
-	makeGroupSet("D Programming Language - General", [
-		makeGroupInfo("digitalmars.D"           , "digitalmars/D"           , "digitalmars-d"           , "General discussion of the D programming language."                , false, false),
-		makeGroupInfo("digitalmars.D.announce"  , "digitalmars/D/announce"  , "digitalmars-d-announce"  , "Announcements for anything D related"                             , false, false),
-	]),
-	makeGroupSet("D Programming Language - Ecosystem", [
-		makeGroupInfo("D.gnu"                   , "D/gnu"                   , "d.gnu"                   , "GDC, the Gnu D Compiler "                                         , false, false),
-		makeGroupInfo("digitalmars.D.ldc"       , null                      , "digitalmars-d-ldc"       , "LDC, the LLVM-based D Compiler "                                  , false, false),
-
-		makeGroupInfo("digitalmars.D.debugger"  , "digitalmars/D/debugger"  , "digitalmars-d-debugger"  , "Debuggers for D"                                                  , false, false),
-		makeGroupInfo("digitalmars.D.ide"       , "digitalmars/D/ide"       , "digitalmars-d-ide"       , "Integrated Development Environments for D"                        , false, false),
-	]),
-	makeGroupSet("D Programming Language - Development", [
-		makeGroupInfo("digitalmars.D.bugs"      , "digitalmars/D/bugs"      , "digitalmars-d-bugs"      , "Bug reports for D compiler and library"                           , false, true ),
-		makeGroupInfo("dmd-beta"                , null                      , "dmd-beta"                , "Notify of and discuss beta versions"                              , true , false),
-		makeGroupInfo("dmd-concurrency"         , null                      , "dmd-concurrency"         , "Design of concurrency features in D and library"                  , true , false),
-		makeGroupInfo("dmd-internals"           , null                      , "dmd-internals"           , "dmd compiler internal design and implementation"                  , true , false),
-		makeGroupInfo("phobos"                  , null                      , "phobos"                  , "Phobos standard library design and implementation"                , true , false),
-		makeGroupInfo("D-runtime"               , null                      , "D-runtime"               , "Runtime library design and implementation"                        , true , false),
-	]),
-	makeGroupSet("Other", [
-		makeGroupInfo("digitalmars.D.dwt"       , "digitalmars/D/dwt"       , "digitalmars-d-dwt"       , "Developing the D Widget Toolkit"                                  , false, false),
-		makeGroupInfo("digitalmars.D.dtl"       , "digitalmars/D/dtl"       , "digitalmars-d-dtl"       , "Developing the D Template Library"                                , false, false),
-
-		makeGroupInfo("DMDScript"               , "DMDScript"               , null                      , "General discussion of DMDScript"                                  , false, false),
-		makeGroupInfo("digitalmars.empire"      , "digitalmars/empire"      , null                      , "General discussion of Empire, the Wargame of the Century"         , false, false),
-		makeGroupInfo("D"                       , ""                        , null                      , "Retired, use digitalmars.D instead"                               , false, false),
-	]),
-	makeGroupSet("C and C++", [
-		makeGroupInfo("c++"                     , "c++"                     , null                      , "General discussion of DMC++ compiler"                             , false, false),
-		makeGroupInfo("c++.announce"            , "c++/announce"            , null                      , "Announcements about C++"                                          , false, false),
-		makeGroupInfo("c++.atl"                 , "c++/atl"                 , null                      , "Microsoft's Advanced Template Library"                            , false, false),
-		makeGroupInfo("c++.beta"                , "c++/beta"                , null                      , "Test versions of various C++ products"                            , false, false),
-		makeGroupInfo("c++.chat"                , "c++/chat"                , null                      , "Off topic discussions"                                            , false, false),
-		makeGroupInfo("c++.command-line"        , "c++/command-line"        , null                      , "Command line tools"                                               , false, false),
-		makeGroupInfo("c++.dos"                 , "c++/dos"                 , null                      , "DMC++ and DOS"                                                    , false, false),
-		makeGroupInfo("c++.dos.16-bits"         , "c++/dos/16-bits"         , null                      , "16 bit DOS topics"                                                , false, false),
-		makeGroupInfo("c++.dos.32-bits"         , "c++/dos/32-bits"         , null                      , "32 bit extended DOS topics"                                       , false, false),
-		makeGroupInfo("c++.idde"                , "c++/idde"                , null                      , "The Digital Mars Integrated Development and Debugging Environment", false, false),
-		makeGroupInfo("c++.mfc"                 , "c++/mfc"                 , null                      , "Microsoft Foundation Classes"                                     , false, false),
-		makeGroupInfo("c++.rtl"                 , "c++/rtl"                 , null                      , "C++ Runtime Library"                                              , false, false),
-		makeGroupInfo("c++.stl"                 , "c++/stl"                 , null                      , "Standard Template Library"                                        , false, false),
-		makeGroupInfo("c++.stl.hp"              , "c++/stl/hp"              , null                      , "HP's Standard Template Library"                                   , false, false),
-		makeGroupInfo("c++.stl.port"            , "c++/stl/port"            , null                      , "STLPort Standard Template Library"                                , false, false),
-		makeGroupInfo("c++.stl.sgi"             , "c++/stl/sgi"             , null                      , "SGI's Standard Template Library"                                  , false, false),
-		makeGroupInfo("c++.stlsoft"             , "c++/stlsoft"             , null                      , "Stlsoft products"                                                 , false, false),
-		makeGroupInfo("c++.windows"             , "c++/windows"             , null                      , "Writing C++ code for Microsoft Windows"                           , false, false),
-		makeGroupInfo("c++.windows.16-bits"     , "c++/windows/16-bits"     , null                      , "16 bit Windows topics"                                            , false, false),
-		makeGroupInfo("c++.windows.32-bits"     , "c++/windows/32-bits"     , null                      , "32 bit Windows topics"                                            , false, false),
-		makeGroupInfo("c++.wxwindows"           , "c++/wxwindows"           , null                      , "wxWindows"                                                        , false, false),
-	]),
-	];
-
-	const(GroupInfo)* getGroupInfo(string name)
-	{
-		foreach (set; groupHierarchy)
-			foreach (ref group; set.groups)
-				if (group.name == name)
-					return &group;
-		return null;
-	}
-
-	// ***********************************************************************
-
 	enum MeasurePerformanceMixin =
 	q{
 		StopWatch performanceSW;
@@ -778,7 +672,7 @@ class WebUI
 	{
 		enum PERF_SCOPE = "getThreadCounts"; mixin(MeasurePerformanceMixin);
 		int[string] threadCounts;
-		foreach (string group, int count; query("SELECT `Group`, COUNT(*) FROM `Threads` GROUP BY `Group`").iterate())
+		foreach (string group, int count; query!"SELECT `Group`, COUNT(*) FROM `Threads` GROUP BY `Group`".iterate())
 			threadCounts[group] = count;
 		return threadCounts;
 	}
@@ -787,7 +681,7 @@ class WebUI
 	{
 		enum PERF_SCOPE = "getPostCounts"; mixin(MeasurePerformanceMixin);
 		int[string] postCounts;
-		foreach (string group, int count; query("SELECT `Group`, COUNT(*) FROM `Groups`  GROUP BY `Group`").iterate())
+		foreach (string group, int count; query!"SELECT `Group`, COUNT(*) FROM `Groups`  GROUP BY `Group`".iterate())
 			postCounts[group] = count;
 		return postCounts;
 	}
@@ -798,7 +692,7 @@ class WebUI
 		string[string] lastPosts;
 		foreach (set; groupHierarchy)
 			foreach (group; set.groups)
-				foreach (string id; query("SELECT `ID` FROM `Groups` WHERE `Group`=? ORDER BY `Time` DESC LIMIT 1").iterate(group.name))
+				foreach (string id; query!"SELECT `ID` FROM `Groups` WHERE `Group`=? ORDER BY `Time` DESC LIMIT 1".iterate(group.name))
 					lastPosts[group.name] = id;
 		return lastPosts;
 	}
@@ -843,7 +737,10 @@ class WebUI
 						`<td class="forum-index-col-lastpost">`, group.name in lastPosts    ? summarizePost(   lastPosts[group.name]) : `<div class="forum-no-data">-</div>`, `</td>`
 						`<td class="number-column">`,            group.name in threadCounts ? formatNumber (threadCounts[group.name]) : `-`, `</td>`
 						`<td class="number-column">`,            group.name in postCounts   ? formatNumber (  postCounts[group.name]) : `-`, `</td>`
-						`<td class="number-column">`, group.alsoVia, `</td>`
+						`<td class="number-column">`);
+				foreach (i, av; group.alsoVia.values)
+					html.put(i ? `<br>` : ``, `<a href="`, av.url, `">`, av.name, `</a>`);
+				html.put(`</td>`
 					`</tr>`,
 				);
 			}
@@ -859,17 +756,17 @@ class WebUI
 
 	ActiveDiscussion[] getActiveDiscussions()
 	{
-		enum PERF_SCOPE = "getLatestAnnouncements"; mixin(MeasurePerformanceMixin);
+		enum PERF_SCOPE = "getActiveDiscussions"; mixin(MeasurePerformanceMixin);
 		const groupFilter = ["digitalmars.D.announce", "digitalmars.D.bugs"]; // TODO: config
 		enum postCountLimit = 10;
 		ActiveDiscussion[] result;
-		foreach (string firstPostID, string group; query("SELECT [Threads].[ID], [Threads].[Group] FROM [Threads] JOIN [Posts] ON [Threads].[ID]=[Posts].[ID] ORDER BY [Posts].[Time] DESC").iterate())
+		foreach (string firstPostID, string group; query!"SELECT [Threads].[ID], [Threads].[Group] FROM [Threads] JOIN [Posts] ON [Threads].[ID]=[Posts].[ID] ORDER BY [Posts].[Time] DESC".iterate())
 		{
 			if (groupFilter.canFind(group))
 				continue;
 
 			int postCount;
-			foreach (int count; query("SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ?").iterate(firstPostID))
+			foreach (int count; query!"SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ?".iterate(firstPostID))
 				postCount = count;
 			if (postCount < postCountLimit)
 				continue;
@@ -883,10 +780,10 @@ class WebUI
 
 	string[] getLatestAnnouncements()
 	{
-		enum PERF_SCOPE = "getActiveDiscussions"; mixin(MeasurePerformanceMixin);
+		enum PERF_SCOPE = "getLatestAnnouncements"; mixin(MeasurePerformanceMixin);
 		enum group = "digitalmars.D.announce"; // TODO: config
 		string[] result;
-		foreach (string firstPostID; query("SELECT [Threads].[ID] FROM [Threads] JOIN [Posts] ON [Threads].[ID]=[Posts].[ID] WHERE [Threads].[Group] = ? ORDER BY [Posts].[Time] DESC LIMIT ?").iterate(group, framePostsLimit))
+		foreach (string firstPostID; query!"SELECT [Threads].[ID] FROM [Threads] JOIN [Posts] ON [Threads].[ID]=[Posts].[ID] WHERE [Threads].[Group] = ? ORDER BY [Posts].[Time] DESC LIMIT ?".iterate(group, framePostsLimit))
 			result ~= firstPostID;
 		return result;
 	}
@@ -895,7 +792,7 @@ class WebUI
 
 	string getAuthorEmail(string id)
 	{
-		foreach (int rowid, string postID, string message; query("SELECT `ROWID`, `ID`, `Message` FROM `Posts` WHERE `ID` = ?").iterate(id))
+		foreach (int rowid, string postID, string message; query!"SELECT `ROWID`, `ID`, `Message` FROM `Posts` WHERE `ID` = ?".iterate(id))
 			return new Rfc850Post(message, postID, rowid, id).authorEmail;
 		return null;
 	}
@@ -949,7 +846,7 @@ class WebUI
 	int[] getThreadPostIndexes(string id)
 	{
 		int[] result;
-		foreach (int rowid; query("SELECT `ROWID` FROM `Posts` WHERE `ThreadID` = ?").iterate(id))
+		foreach (int rowid; query!"SELECT `ROWID` FROM `Posts` WHERE `ThreadID` = ?".iterate(id))
 			result ~= rowid;
 		return result;
 	}
@@ -1073,8 +970,8 @@ class WebUI
 			return count;
 		}
 
-		foreach (string firstPostID, string lastPostID; query("SELECT `ID`, `LastPost` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?").iterate(group, THREADS_PER_PAGE, getPageOffset(page, THREADS_PER_PAGE)))
-			foreach (int count; query("SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ?").iterate(firstPostID))
+		foreach (string firstPostID, string lastPostID; query!"SELECT `ID`, `LastPost` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?".iterate(group, THREADS_PER_PAGE, getPageOffset(page, THREADS_PER_PAGE)))
+			foreach (int count; query!"SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ?".iterate(firstPostID))
 				threads ~= Thread(firstPostID, getPostInfo(firstPostID), getPostInfo(lastPostID), count, getUnreadPostCount(firstPostID));
 
 		void summarizeThread(string tid, PostInfo* info, bool isRead)
@@ -1139,7 +1036,7 @@ class WebUI
 	{
 		enum OFFSET_INIT = 1f;
 		enum OFFSET_MAX = 2f;
-		enum OFFSET_WIDTH = 37.5f;
+		enum OFFSET_WIDTH = 30f;
 		enum OFFSET_UNITS = "%";
 
 		class Post
@@ -1279,7 +1176,7 @@ class WebUI
 						`<td>`
 							`<div style="padding-left: `, format("%1.1f", OFFSET_INIT + level * offsetIncrement), OFFSET_UNITS, `">`
 								`<div class="thread-post-time">`, summarizeTime(post.info.time, true), `</div>`,
-								`<a class="postlink `, (user.isRead(post.info.rowid) ? "forum-read" : "forum-unread" ), `" href="`, encodeEntities(idToUrl(post.info.id)), `">`, truncateString(post.info.author, narrow ? 20 : 50), `</a>`
+								`<a class="postlink `, (user.isRead(post.info.rowid) ? "forum-read" : "forum-unread" ), `" href="`, encodeEntities(idToUrl(post.info.id)), `">`, truncateString(post.info.author, narrow ? 17 : 50), `</a>`
 							`</div>`
 						`</td>`
 					`</tr>`);
@@ -1315,11 +1212,11 @@ class WebUI
 	{
 		enforce(page >= 1, "Invalid page");
 
-		//foreach (string threadID; query("SELECT `ID` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?").iterate(group, THREADS_PER_PAGE, (page-1)*THREADS_PER_PAGE))
-		//	foreach (string id, string parent, string author, string subject, long stdTime; query("SELECT `ID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` = ?").iterate(threadID))
+		//foreach (string threadID; query!"SELECT `ID` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?".iterate(group, THREADS_PER_PAGE, (page-1)*THREADS_PER_PAGE))
+		//	foreach (string id, string parent, string author, string subject, long stdTime; query!"SELECT `ID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` = ?".iterate(threadID))
 		PostInfo*[] posts;
 		enum ViewSQL = "SELECT `ROWID`, `ID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` IN (SELECT `ID` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?)";
-		foreach (int rowid, string id, string parent, string author, string subject, long stdTime; query(ViewSQL).iterate(group, THREADS_PER_PAGE, getPageOffset(page, THREADS_PER_PAGE)))
+		foreach (int rowid, string id, string parent, string author, string subject, long stdTime; query!ViewSQL.iterate(group, THREADS_PER_PAGE, getPageOffset(page, THREADS_PER_PAGE)))
 			posts ~= [PostInfo(rowid, id, null, parent, author, subject, SysTime(stdTime, UTC()))].ptr; // TODO: optimize?
 
 		html.put(
@@ -1363,8 +1260,8 @@ class WebUI
 	{
 		int page = 0;
 
-		foreach (long time; query("SELECT `LastUpdated` FROM `Threads` WHERE `ID` = ? LIMIT 1").iterate(thread))
-			foreach (int threadIndex; query("SELECT COUNT(*) FROM `Threads` WHERE `Group` = ? AND `LastUpdated` > ? ORDER BY `LastUpdated` DESC").iterate(group, time))
+		foreach (long time; query!"SELECT `LastUpdated` FROM `Threads` WHERE `ID` = ? LIMIT 1".iterate(thread))
+			foreach (int threadIndex; query!"SELECT COUNT(*) FROM `Threads` WHERE `Group` = ? AND `LastUpdated` > ? ORDER BY `LastUpdated` DESC".iterate(group, time))
 				page = indexToPage(threadIndex, THREADS_PER_PAGE);
 
 		enforce(page > 0, "Can't find thread's page");
@@ -1543,7 +1440,7 @@ class WebUI
 					`</td>`
 					`<td class="post-body">`
 	//		); miniPostInfo(post, knownPosts); html.put(
-						`<pre class="post-text">`), formatBody(content), html.put(`</pre>`,
+						`<pre class="post-text">`), formatBody(post), html.put(`</pre>`,
 						(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``),
 					`</td>`
 				`</tr>`
@@ -1630,7 +1527,7 @@ class WebUI
 		}
 
 		string[] replies;
-		foreach (int rowid, string id, string author; query("SELECT `ROWID`, `ID`, `Author` FROM `Posts` WHERE ParentID = ?").iterate(post.id))
+		foreach (int rowid, string id, string author; query!"SELECT `ROWID`, `ID`, `Author` FROM `Posts` WHERE ParentID = ?".iterate(post.id))
 			replies ~= postLink(rowid, id, author);
 		if (replies.length)
 			infoRows ~= InfoRow("Replies", `<span class="avoid-wrap">` ~ replies.join(`,</span> <span class="avoid-wrap">`) ~ `</span>`);
@@ -1673,7 +1570,7 @@ class WebUI
 			html.put(
 					`</td></tr>`
 					`<tr class="post-layout-body"><td>`
-						`<pre class="post-text">`), formatBody(content), html.put(`</pre>`,
+						`<pre class="post-text">`), formatBody(post), html.put(`</pre>`,
 						(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``),
 					`</td></tr>`
 					`<tr class="post-layout-footer"><td>`
@@ -1716,14 +1613,14 @@ class WebUI
 
 	int getPostCount(string threadID)
 	{
-		foreach (int count; query("SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ?").iterate(threadID))
+		foreach (int count; query!"SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ?".iterate(threadID))
 			return count;
 		assert(0);
 	}
 
 	int getPostThreadIndex(string threadID, SysTime postTime)
 	{
-		foreach (int index; query("SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ? AND `Time` < ? ORDER BY `Time` ASC").iterate(threadID, postTime.stdTime))
+		foreach (int index; query!"SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ? AND `Time` < ? ORDER BY `Time` ASC".iterate(threadID, postTime.stdTime))
 			return index;
 		assert(0);
 	}
@@ -1737,7 +1634,7 @@ class WebUI
 
 	string getPostAtThreadIndex(string threadID, int index)
 	{
-		foreach (string id; query("SELECT `ID` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC LIMIT 1 OFFSET ?").iterate(threadID, index))
+		foreach (string id; query!"SELECT `ID` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC LIMIT 1 OFFSET ?".iterate(threadID, index))
 			return id;
 		throw new NotFoundException(format("Post #%d of thread %s not found", index, threadID));
 	}
@@ -1752,7 +1649,7 @@ class WebUI
 		if (nested) page = 1;
 
 		Rfc850Post[] posts;
-		foreach (int rowid, string postID, string message; query("SELECT `ROWID`, `ID`, `Message` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC LIMIT ? OFFSET ?").iterate(id, postsPerPage, (page-1)*postsPerPage))
+		foreach (int rowid, string postID, string message; query!"SELECT `ROWID`, `ID`, `Message` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC LIMIT ? OFFSET ?".iterate(id, postsPerPage, (page-1)*postsPerPage))
 			posts ~= new Rfc850Post(message, postID, rowid, id);
 
 		Rfc850Post[string] knownPosts;
@@ -1787,7 +1684,7 @@ class WebUI
 	{
 		PostInfo*[] posts;
 		enum ViewSQL = "SELECT `ROWID`, `ID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` = ?";
-		foreach (int rowid, string id, string parent, string author, string subject, long stdTime; query(ViewSQL).iterate(threadID))
+		foreach (int rowid, string id, string parent, string author, string subject, long stdTime; query!ViewSQL.iterate(threadID))
 			posts ~= [PostInfo(rowid, id, null, parent, author, subject, SysTime(stdTime, UTC()))].ptr;
 
 		html.put(
@@ -1811,7 +1708,7 @@ class WebUI
 
 	string discussionFirstUnread(string threadID)
 	{
-		foreach (int rowid, string id; query("SELECT `ROWID`, `ID` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC").iterate(threadID))
+		foreach (int rowid, string id; query!"SELECT `ROWID`, `ID` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC".iterate(threadID))
 			if (!user.isRead(rowid))
 				return idToUrl(id);
 		return idToUrl(threadID, "thread", getPageCount(getPostCount(threadID), POSTS_PER_PAGE));
@@ -2037,9 +1934,9 @@ class WebUI
 		foreach (line; post.message.splitAsciiLines())
 			deletionLog("> " ~ line);
 
-		foreach (string[string] values; query("SELECT * FROM `Posts` WHERE `ID` = ?").iterate(post.id))
+		foreach (string[string] values; query!"SELECT * FROM `Posts` WHERE `ID` = ?".iterate(post.id))
 			deletionLog("[Posts] row: " ~ values.toJson());
-		foreach (string[string] values; query("SELECT * FROM `Threads` WHERE `ID` = ?").iterate(post.id))
+		foreach (string[string] values; query!"SELECT * FROM `Threads` WHERE `ID` = ?".iterate(post.id))
 			deletionLog("[Threads] row: " ~ values.toJson());
 
 		if (vars.get("ban", "No") == "Yes")
@@ -2049,8 +1946,8 @@ class WebUI
 			html.put("User banned.<br>");
 		}
 
-		query("DELETE FROM `Posts` WHERE `ID` = ?").exec(post.id);
-		query("DELETE FROM `Threads` WHERE `ID` = ?").exec(post.id);
+		query!"DELETE FROM `Posts` WHERE `ID` = ?".exec(post.id);
+		query!"DELETE FROM `Threads` WHERE `ID` = ?".exec(post.id);
 
 		dbVersion++;
 		html.put("Post deleted.");
@@ -2247,7 +2144,7 @@ class WebUI
 
 	string resolvePostUrl(string id)
 	{
-		foreach (string threadID; query("SELECT `ThreadID` FROM `Posts` WHERE `ID` = ?").iterate(id))
+		foreach (string threadID; query!"SELECT `ThreadID` FROM `Posts` WHERE `ID` = ?".iterate(id))
 			return idToThreadUrl(id, threadID);
 
 		throw new NotFoundException("Post not found");
@@ -2260,7 +2157,7 @@ class WebUI
 
 	static Rfc850Post getPost(string id, uint[] partPath = null)
 	{
-		foreach (int rowid, string message, string threadID; query("SELECT `ROWID`, `Message`, `ThreadID` FROM `Posts` WHERE `ID` = ?").iterate(id))
+		foreach (int rowid, string message, string threadID; query!"SELECT `ROWID`, `Message`, `ThreadID` FROM `Posts` WHERE `ID` = ?".iterate(id))
 		{
 			auto post = new Rfc850Post(message, id, rowid, threadID);
 			while (partPath.length)
@@ -2276,7 +2173,7 @@ class WebUI
 
 	static string getPostSource(string id)
 	{
-		foreach (string message; query("SELECT `Message` FROM `Posts` WHERE `ID` = ?").iterate(id))
+		foreach (string message; query!"SELECT `Message` FROM `Posts` WHERE `ID` = ?".iterate(id))
 			return message;
 		return null;
 	}
@@ -2292,7 +2189,7 @@ class WebUI
 	PostInfo* retrievePostInfo(string id)
 	{
 		if (id.startsWith('<') && id.endsWith('>'))
-			foreach (int rowid, string threadID, string parentID, string author, string subject, long stdTime; query("SELECT `ROWID`, `ThreadID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ID` = ?").iterate(id))
+			foreach (int rowid, string threadID, string parentID, string author, string subject, long stdTime; query!"SELECT `ROWID`, `ThreadID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ID` = ?".iterate(id))
 				return [PostInfo(rowid, id, threadID, parentID, author, subject, SysTime(stdTime, UTC()))].ptr;
 		return null;
 	}
@@ -2302,28 +2199,33 @@ class WebUI
 	static Regex!char reUrl;
 	static this() { reUrl = regex(`\w+://[^<>\s]+[\w/\-=]`); }
 
-	void formatBody(string s)
+	void formatBody(Rfc850Message post)
 	{
-		auto lines = s.strip().fastSplit('\n');
-		bool wasQuoted = false, inSignature = false;
-		foreach (line; lines)
+		auto paragraphs = unwrapText(post.content, post.flowed, post.delsp);
+		bool inSignature = false;
+		int quoteLevel = 0;
+		foreach (paragraph; paragraphs)
 		{
-			if (line == "-- ")
-				inSignature = true;
-			auto isQuoted = inSignature || line.startsWith(">");
-			if (isQuoted && !wasQuoted)
-				html ~= `<span class="forum-quote">`;
-			else
-			if (!isQuoted && wasQuoted)
+			int paragraphQuoteLevel;
+			foreach (c; paragraph.quotePrefix)
+				if (c == '>')
+					paragraphQuoteLevel++;
+
+			for (; quoteLevel > paragraphQuoteLevel; quoteLevel--)
 				html ~= `</span>`;
-			wasQuoted = isQuoted;
+			for (; quoteLevel < paragraphQuoteLevel; quoteLevel++)
+				html ~= `<span class="forum-quote">`;
 
-			// Remove space-stuffing
-			if (line.startsWith(" "))
-				line = line[1..$];
+			if (!quoteLevel && paragraph.text == "-- ")
+			{
+				html ~= `<span class="forum-signature">`;
+				inSignature = true;
+			}
 
-			auto needsWrap = line.length > 70;
-			auto hasURL = line.contains("://");
+			import std.utf;
+			bool needsWrap = paragraph.text.byChar.splitter(' ').map!(s => s.length).I!(r => reduce!max(0, r)) > 70;
+
+			auto hasURL = paragraph.text.contains("://");
 
 			void processText(string s)
 			{
@@ -2367,10 +2269,14 @@ class WebUI
 				}
 			}
 
-			processWrap(line);
+			if (paragraph.quotePrefix.length)
+				html.put(`<span class="forum-quote-prefix">`, encodeEntities(paragraph.quotePrefix), `</span>`);
+			processWrap(paragraph.text);
 			html.put('\n');
 		}
-		if (wasQuoted)
+		for (; quoteLevel; quoteLevel--)
+			html ~= `</span>`;
+		if (inSignature)
 			html ~= `</span>`;
 	}
 
@@ -2545,14 +2451,14 @@ class WebUI
 		auto iterator =
 			group ?
 				threadsOnly ?
-					query("SELECT `Message` FROM `Posts` WHERE `ID` IN (SELECT `ID` FROM `Groups` WHERE `Time` > ? AND `Group` = ?) AND `ID` = `ThreadID`").iterate(since, group)
+					query!"SELECT `Message` FROM `Posts` WHERE `ID` IN (SELECT `ID` FROM `Groups` WHERE `Time` > ? AND `Group` = ?) AND `ID` = `ThreadID`".iterate(since, group)
 				:
-					query("SELECT `Message` FROM `Posts` WHERE `ID` IN (SELECT `ID` FROM `Groups` WHERE `Time` > ? AND `Group` = ?)").iterate(since, group)
+					query!"SELECT `Message` FROM `Posts` WHERE `ID` IN (SELECT `ID` FROM `Groups` WHERE `Time` > ? AND `Group` = ?)".iterate(since, group)
 			:
 				threadsOnly ?
-					query("SELECT `Message` FROM `Posts` WHERE `Time` > ? AND `ID` = `ThreadID`").iterate(since)
+					query!"SELECT `Message` FROM `Posts` WHERE `Time` > ? AND `ID` = `ThreadID`".iterate(since)
 				:
-					query("SELECT `Message` FROM `Posts` WHERE `Time` > ?").iterate(since)
+					query!"SELECT `Message` FROM `Posts` WHERE `Time` > ?".iterate(since)
 			;
 
 		foreach (string message; iterator)
@@ -2561,7 +2467,7 @@ class WebUI
 
 			html.clear();
 			html.put("<pre>");
-			formatBody(post.content);
+			formatBody(post);
 			html.put("</pre>");
 
 			auto url = "http://" ~ vhost ~ idToUrl(post.id);

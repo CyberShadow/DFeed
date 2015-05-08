@@ -1,0 +1,6 @@
+# This is a special source, currently used for
+# instant MediaWiki edit notifications,
+# but can be further expanded as needed.
+# See socket.d for details.
+#port = 12345
+#password = abcdefghij

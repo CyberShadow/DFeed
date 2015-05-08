@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -31,17 +31,22 @@ import bitly;
 
 class Reddit : WebPoller
 {
-	enum POLL_PERIOD = 60;
-
-	this(string subreddit, string filter)
+	static struct Config
 	{
-		this.subreddit = subreddit;
-		this.filter = regex(filter);
-		super("Reddit-"~subreddit, POLL_PERIOD);
+		string subreddit;
+		string filter;
+		int pollPeriod = 60;
+	}
+
+	this(Config config)
+	{
+		this.config = config;
+		this.filter = regex(config.filter);
+		super("Reddit-" ~ config.subreddit, config.pollPeriod);
 	}
 
 private:
-	string subreddit;
+	immutable Config config;
 	Regex!char filter;
 
 	static string getAuthor(string description)
@@ -76,7 +81,7 @@ private:
 protected:
 	override void getPosts()
 	{
-		httpGet("http://www.reddit.com/r/"~subreddit~"/.rss", (string result) {
+		httpGet("http://www.reddit.com/r/"~config.subreddit~"/.rss", (string result) {
 			auto data = new XmlDocument(new MemoryStream(cast(char[])result));
 			Post[string] r;
 
