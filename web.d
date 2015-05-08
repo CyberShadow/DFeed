@@ -2223,7 +2223,7 @@ class WebUI
 			}
 
 			import std.utf;
-			bool needsWrap = paragraph.text.byChar.splitter(' ').map!(s => s.length).I!(r => reduce!max(0, r)) > 70;
+			bool needsWrap = paragraph.text.byChar.splitter(' ').map!(s => s.length).I!(r => reduce!max(size_t.init, r)) > 70;
 
 			auto hasURL = paragraph.text.contains("://");
 
