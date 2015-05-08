@@ -756,7 +756,7 @@ class WebUI
 
 	ActiveDiscussion[] getActiveDiscussions()
 	{
-		enum PERF_SCOPE = "getLatestAnnouncements"; mixin(MeasurePerformanceMixin);
+		enum PERF_SCOPE = "getActiveDiscussions"; mixin(MeasurePerformanceMixin);
 		const groupFilter = ["digitalmars.D.announce", "digitalmars.D.bugs"]; // TODO: config
 		enum postCountLimit = 10;
 		ActiveDiscussion[] result;
@@ -780,7 +780,7 @@ class WebUI
 
 	string[] getLatestAnnouncements()
 	{
-		enum PERF_SCOPE = "getActiveDiscussions"; mixin(MeasurePerformanceMixin);
+		enum PERF_SCOPE = "getLatestAnnouncements"; mixin(MeasurePerformanceMixin);
 		enum group = "digitalmars.D.announce"; // TODO: config
 		string[] result;
 		foreach (string firstPostID; query!"SELECT [Threads].[ID] FROM [Threads] JOIN [Posts] ON [Threads].[ID]=[Posts].[ID] WHERE [Threads].[Group] = ? ORDER BY [Posts].[Time] DESC LIMIT ?".iterate(group, framePostsLimit))
