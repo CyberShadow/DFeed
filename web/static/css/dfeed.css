@@ -417,6 +417,27 @@ tr.mini-post-info-cell > td {
 	color: #706666;
 }
 
+.forum-quote {
+	display: block;
+	border-left: 4px solid #D0D0D0;
+	padding-left: 4px;
+	/* HACK: 0.6 (instead of 0.5) fixes Chrome without affecting Firefox. */
+	border-left: 0.6ch solid #D0D0D0;
+	padding-left: 0.5ch;
+}
+
+.forum-quote-prefix {
+	/*
+		Make it so the quote prefix is invisible and has zero width,
+		but is still copied when the user selects and copies text
+		from the web page.
+		https://thejh.net/misc/website-terminal-copy-paste
+	*/
+	position: absolute;
+	left: -1000px;
+	top: -1000px;
+}
+
 .forcewrap {
 	word-break: break-all;
 }
