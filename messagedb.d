@@ -52,32 +52,32 @@ protected:
 		mixin(DB_TRANSACTION);
 
 		long rowid = -1;
-		foreach (long postRowid; query("SELECT `ROWID` FROM `Posts` WHERE `ID` = ?").iterate(message.id))
+		foreach (long postRowid; query!"SELECT `ROWID` FROM `Posts` WHERE `ID` = ?".iterate(message.id))
 			rowid = postRowid;
 
 		if (rowid >= 0)
 			log(format("Message %s already present with ROWID=%d", message.id, rowid));
 		else
 		{
-			query("INSERT INTO `Posts` (`ID`, `Message`, `Author`, `Subject`, `Time`, `ParentID`, `ThreadID`) VALUES (?, ?, ?, ?, ?, ?, ?)")
+			query!"INSERT INTO `Posts` (`ID`, `Message`, `Author`, `Subject`, `Time`, `ParentID`, `ThreadID`) VALUES (?, ?, ?, ?, ?, ?, ?)"
 				.exec(message.id, message.message, message.author, message.subject, message.time.stdTime, message.parentID, message.threadID);
 			log(format("Message %s saved with ROWID=%d", message.id, db.lastInsertRowID));
 		}
 
 		foreach (xref; message.xref)
 		{
-			query("INSERT OR IGNORE INTO `Groups` (`Group`, `ArtNum`, `ID`, `Time`) VALUES (?, ?, ?, ?)")
+			query!"INSERT OR IGNORE INTO `Groups` (`Group`, `ArtNum`, `ID`, `Time`) VALUES (?, ?, ?, ?)"
 				.exec(xref.group, xref.num, message.id, message.time.stdTime);
 
 			long threadIndex = 0, lastUpdated;
-			foreach (long rowid, long updated; query("SELECT `ROWID`, `LastUpdated` FROM `Threads` WHERE `ID` = ? AND `Group` = ?").iterate(message.threadID, xref.group))
+			foreach (long rowid, long updated; query!"SELECT `ROWID`, `LastUpdated` FROM `Threads` WHERE `ID` = ? AND `Group` = ?".iterate(message.threadID, xref.group))
 				threadIndex = rowid, lastUpdated = updated;
 
 			if (!threadIndex) // new thread
-				query("INSERT INTO `Threads` (`Group`, `ID`, `LastPost`, `LastUpdated`) VALUES (?, ?, ?, ?)").exec(xref.group, message.threadID, message.id, message.time.stdTime);
+				query!"INSERT INTO `Threads` (`Group`, `ID`, `LastPost`, `LastUpdated`) VALUES (?, ?, ?, ?)".exec(xref.group, message.threadID, message.id, message.time.stdTime);
 			else
 			if (lastUpdated < message.time.stdTime)
-				query("UPDATE `Threads` SET `LastPost` = ?, `LastUpdated` = ? WHERE `ROWID` = ?").exec(message.id, message.time.stdTime, threadIndex);
+				query!"UPDATE `Threads` SET `LastPost` = ?, `LastUpdated` = ? WHERE `ROWID` = ?".exec(message.id, message.time.stdTime, threadIndex);
 		}
 	}
 
@@ -86,7 +86,7 @@ public:
 	{
 		log(format("Updating message %s (%s)", message.id, message.where));
 
-		query("UPDATE `Posts` SET `Message`=?, `Author`=?, `Subject`=?, `Time`=?, `ParentID`=?, `ThreadID`=? WHERE `ID` = ?")
+		query!"UPDATE `Posts` SET `Message`=?, `Author`=?, `Subject`=?, `Time`=?, `ParentID`=?, `ThreadID`=? WHERE `ID` = ?"
 			.exec(message.message, message.author, message.subject, message.time.stdTime, message.parentID, message.threadID, message.id);
 	}
 }
@@ -101,7 +101,7 @@ string getThreadID(string id)
 		return *pcached;
 
 	string result = id;
-	foreach (string threadID; query("SELECT [ThreadID] FROM [Posts] WHERE [ID] = ?").iterate(id))
+	foreach (string threadID; query!"SELECT [ThreadID] FROM [Posts] WHERE [ID] = ?".iterate(id))
 		result = threadID;
 
 	if (result != id)

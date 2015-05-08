@@ -23,9 +23,16 @@ public import ae.sys.sqlite3 : SQLiteException;
 
 SQLite db;
 
+SQLite.PreparedStatement query(string sql)()
+{
+	static SQLite.PreparedStatement statement = null;
+	if (!statement)
+		statement = db.prepare(sql).enforce("Statement compilation failed: " ~ sql);
+	return statement;
+}
+
 SQLite.PreparedStatement query(string sql)
 {
-	// TODO: find out if the overhead of a sqlite3_prepare_v2 is larger than an associative array lookup
 	static SQLite.PreparedStatement[const(void)*] cache;
 	auto pstatement = sql.ptr in cache;
 	if (pstatement)
@@ -51,9 +58,9 @@ shared static this()
 int transactionDepth;
 
 enum DB_TRANSACTION = q{
-	if (transactionDepth++ == 0) query("BEGIN TRANSACTION").exec();
-	scope(failure) if (--transactionDepth == 0) query("ROLLBACK TRANSACTION").exec();
-	scope(success) if (--transactionDepth == 0) query("COMMIT TRANSACTION").exec();
+	if (transactionDepth++ == 0) query!"BEGIN TRANSACTION".exec();
+	scope(failure) if (--transactionDepth == 0) query!"ROLLBACK TRANSACTION".exec();
+	scope(success) if (--transactionDepth == 0) query!"COMMIT TRANSACTION".exec();
 };
 
 bool flushTransactionEvery(int count)
@@ -64,8 +71,8 @@ bool flushTransactionEvery(int count)
 
 	if (count && ++calls % count == 0 && transactionDepth == 1)
 	{
-		query("COMMIT TRANSACTION");
-		query("BEGIN TRANSACTION");
+		query!"COMMIT TRANSACTION";
+		query!"BEGIN TRANSACTION";
 		return true;
 	}
 	else
@@ -83,7 +90,7 @@ enum schemaFileName = "schema.sql";
 void dumpSchema()
 {
 	string schema;
-	foreach (string type, string name, string tbl_name, string sql; query("SELECT `type`, `name`, `tbl_name`, `sql` FROM `sqlite_master`").iterate())
+	foreach (string type, string name, string tbl_name, string sql; query!"SELECT `type`, `name`, `tbl_name`, `sql` FROM `sqlite_master`".iterate())
 		if (!name.startsWith("sqlite_"))
 		{
 			if (name == tbl_name)

@@ -97,7 +97,7 @@ class MLDownloader : NewsSource
 					msg = "List-ID: " ~ list ~ "\n" ~ msg;
 					scope(failure) std.file.write("errormsg", msg);
 					auto post = new Rfc850Post(msg);
-					foreach (int n; query("SELECT COUNT(*) FROM `Posts` WHERE `ID` = ?").iterate(post.id))
+					foreach (int n; query!"SELECT COUNT(*) FROM `Posts` WHERE `ID` = ?".iterate(post.id))
 						if (n == 0)
 						{
 							log("Found new post: " ~ post.id);

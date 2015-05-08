@@ -37,7 +37,7 @@ class DatabaseSource : NewsSource
 		Message[] messages;
 
 		log("Loading...");
-		foreach (string message, string id; query("SELECT `Message`, `ID` FROM Posts").iterate())
+		foreach (string message, string id; query!"SELECT `Message`, `ID` FROM Posts".iterate())
 			messages ~= Message(message, id);
 
 		mixin(DB_TRANSACTION);

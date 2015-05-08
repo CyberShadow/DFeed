@@ -208,7 +208,7 @@ class WebUI
 						redirectNum = parameters["article_id"];
 					if (redirectGroup && redirectNum)
 					{
-						foreach (string id; query("SELECT `ID` FROM `Groups` WHERE `Group`=? AND `ArtNum`=?").iterate(redirectGroup, redirectNum))
+						foreach (string id; query!"SELECT `ID` FROM `Groups` WHERE `Group`=? AND `ArtNum`=?".iterate(redirectGroup, redirectNum))
 							return response.redirect(idToUrl(id), HttpStatusCode.MovedPermanently);
 						throw new NotFoundException("Legacy redirect - article not found");
 					}
@@ -216,7 +216,7 @@ class WebUI
 					if (redirectNum)
 					{
 						string[] ids;
-						foreach (string id; query("SELECT `ID` FROM `Groups` WHERE `ArtNum`=?").iterate(redirectNum))
+						foreach (string id; query!"SELECT `ID` FROM `Groups` WHERE `ArtNum`=?".iterate(redirectNum))
 							ids ~= id;
 						if (ids.length == 1)
 							return response.redirect(idToUrl(ids[0]), HttpStatusCode.MovedPermanently);
@@ -780,7 +780,7 @@ class WebUI
 	{
 		enum PERF_SCOPE = "getThreadCounts"; mixin(MeasurePerformanceMixin);
 		int[string] threadCounts;
-		foreach (string group, int count; query("SELECT `Group`, COUNT(*) FROM `Threads` GROUP BY `Group`").iterate())
+		foreach (string group, int count; query!"SELECT `Group`, COUNT(*) FROM `Threads` GROUP BY `Group`".iterate())
 			threadCounts[group] = count;
 		return threadCounts;
 	}
@@ -789,7 +789,7 @@ class WebUI
 	{
 		enum PERF_SCOPE = "getPostCounts"; mixin(MeasurePerformanceMixin);
 		int[string] postCounts;
-		foreach (string group, int count; query("SELECT `Group`, COUNT(*) FROM `Groups`  GROUP BY `Group`").iterate())
+		foreach (string group, int count; query!"SELECT `Group`, COUNT(*) FROM `Groups`  GROUP BY `Group`".iterate())
 			postCounts[group] = count;
 		return postCounts;
 	}
@@ -800,7 +800,7 @@ class WebUI
 		string[string] lastPosts;
 		foreach (set; groupHierarchy)
 			foreach (group; set.groups)
-				foreach (string id; query("SELECT `ID` FROM `Groups` WHERE `Group`=? ORDER BY `Time` DESC LIMIT 1").iterate(group.name))
+				foreach (string id; query!"SELECT `ID` FROM `Groups` WHERE `Group`=? ORDER BY `Time` DESC LIMIT 1".iterate(group.name))
 					lastPosts[group.name] = id;
 		return lastPosts;
 	}
@@ -865,13 +865,13 @@ class WebUI
 		const groupFilter = ["digitalmars.D.announce", "digitalmars.D.bugs"]; // TODO: config
 		enum postCountLimit = 10;
 		ActiveDiscussion[] result;
-		foreach (string firstPostID, string group; query("SELECT [Threads].[ID], [Threads].[Group] FROM [Threads] JOIN [Posts] ON [Threads].[ID]=[Posts].[ID] ORDER BY [Posts].[Time] DESC").iterate())
+		foreach (string firstPostID, string group; query!"SELECT [Threads].[ID], [Threads].[Group] FROM [Threads] JOIN [Posts] ON [Threads].[ID]=[Posts].[ID] ORDER BY [Posts].[Time] DESC".iterate())
 		{
 			if (groupFilter.canFind(group))
 				continue;
 
 			int postCount;
-			foreach (int count; query("SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ?").iterate(firstPostID))
+			foreach (int count; query!"SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ?".iterate(firstPostID))
 				postCount = count;
 			if (postCount < postCountLimit)
 				continue;
@@ -888,7 +888,7 @@ class WebUI
 		enum PERF_SCOPE = "getActiveDiscussions"; mixin(MeasurePerformanceMixin);
 		enum group = "digitalmars.D.announce"; // TODO: config
 		string[] result;
-		foreach (string firstPostID; query("SELECT [Threads].[ID] FROM [Threads] JOIN [Posts] ON [Threads].[ID]=[Posts].[ID] WHERE [Threads].[Group] = ? ORDER BY [Posts].[Time] DESC LIMIT ?").iterate(group, framePostsLimit))
+		foreach (string firstPostID; query!"SELECT [Threads].[ID] FROM [Threads] JOIN [Posts] ON [Threads].[ID]=[Posts].[ID] WHERE [Threads].[Group] = ? ORDER BY [Posts].[Time] DESC LIMIT ?".iterate(group, framePostsLimit))
 			result ~= firstPostID;
 		return result;
 	}
@@ -897,7 +897,7 @@ class WebUI
 
 	string getAuthorEmail(string id)
 	{
-		foreach (int rowid, string postID, string message; query("SELECT `ROWID`, `ID`, `Message` FROM `Posts` WHERE `ID` = ?").iterate(id))
+		foreach (int rowid, string postID, string message; query!"SELECT `ROWID`, `ID`, `Message` FROM `Posts` WHERE `ID` = ?".iterate(id))
 			return new Rfc850Post(message, postID, rowid, id).authorEmail;
 		return null;
 	}
@@ -951,7 +951,7 @@ class WebUI
 	int[] getThreadPostIndexes(string id)
 	{
 		int[] result;
-		foreach (int rowid; query("SELECT `ROWID` FROM `Posts` WHERE `ThreadID` = ?").iterate(id))
+		foreach (int rowid; query!"SELECT `ROWID` FROM `Posts` WHERE `ThreadID` = ?".iterate(id))
 			result ~= rowid;
 		return result;
 	}
@@ -1075,8 +1075,8 @@ class WebUI
 			return count;
 		}
 
-		foreach (string firstPostID, string lastPostID; query("SELECT `ID`, `LastPost` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?").iterate(group, THREADS_PER_PAGE, getPageOffset(page, THREADS_PER_PAGE)))
-			foreach (int count; query("SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ?").iterate(firstPostID))
+		foreach (string firstPostID, string lastPostID; query!"SELECT `ID`, `LastPost` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?".iterate(group, THREADS_PER_PAGE, getPageOffset(page, THREADS_PER_PAGE)))
+			foreach (int count; query!"SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ?".iterate(firstPostID))
 				threads ~= Thread(firstPostID, getPostInfo(firstPostID), getPostInfo(lastPostID), count, getUnreadPostCount(firstPostID));
 
 		void summarizeThread(string tid, PostInfo* info, bool isRead)
@@ -1317,11 +1317,11 @@ class WebUI
 	{
 		enforce(page >= 1, "Invalid page");
 
-		//foreach (string threadID; query("SELECT `ID` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?").iterate(group, THREADS_PER_PAGE, (page-1)*THREADS_PER_PAGE))
-		//	foreach (string id, string parent, string author, string subject, long stdTime; query("SELECT `ID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` = ?").iterate(threadID))
+		//foreach (string threadID; query!"SELECT `ID` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?".iterate(group, THREADS_PER_PAGE, (page-1)*THREADS_PER_PAGE))
+		//	foreach (string id, string parent, string author, string subject, long stdTime; query!"SELECT `ID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` = ?".iterate(threadID))
 		PostInfo*[] posts;
 		enum ViewSQL = "SELECT `ROWID`, `ID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` IN (SELECT `ID` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?)";
-		foreach (int rowid, string id, string parent, string author, string subject, long stdTime; query(ViewSQL).iterate(group, THREADS_PER_PAGE, getPageOffset(page, THREADS_PER_PAGE)))
+		foreach (int rowid, string id, string parent, string author, string subject, long stdTime; query!ViewSQL.iterate(group, THREADS_PER_PAGE, getPageOffset(page, THREADS_PER_PAGE)))
 			posts ~= [PostInfo(rowid, id, null, parent, author, subject, SysTime(stdTime, UTC()))].ptr; // TODO: optimize?
 
 		html.put(
@@ -1365,8 +1365,8 @@ class WebUI
 	{
 		int page = 0;
 
-		foreach (long time; query("SELECT `LastUpdated` FROM `Threads` WHERE `ID` = ? LIMIT 1").iterate(thread))
-			foreach (int threadIndex; query("SELECT COUNT(*) FROM `Threads` WHERE `Group` = ? AND `LastUpdated` > ? ORDER BY `LastUpdated` DESC").iterate(group, time))
+		foreach (long time; query!"SELECT `LastUpdated` FROM `Threads` WHERE `ID` = ? LIMIT 1".iterate(thread))
+			foreach (int threadIndex; query!"SELECT COUNT(*) FROM `Threads` WHERE `Group` = ? AND `LastUpdated` > ? ORDER BY `LastUpdated` DESC".iterate(group, time))
 				page = indexToPage(threadIndex, THREADS_PER_PAGE);
 
 		enforce(page > 0, "Can't find thread's page");
@@ -1632,7 +1632,7 @@ class WebUI
 		}
 
 		string[] replies;
-		foreach (int rowid, string id, string author; query("SELECT `ROWID`, `ID`, `Author` FROM `Posts` WHERE ParentID = ?").iterate(post.id))
+		foreach (int rowid, string id, string author; query!"SELECT `ROWID`, `ID`, `Author` FROM `Posts` WHERE ParentID = ?".iterate(post.id))
 			replies ~= postLink(rowid, id, author);
 		if (replies.length)
 			infoRows ~= InfoRow("Replies", `<span class="avoid-wrap">` ~ replies.join(`,</span> <span class="avoid-wrap">`) ~ `</span>`);
@@ -1718,14 +1718,14 @@ class WebUI
 
 	int getPostCount(string threadID)
 	{
-		foreach (int count; query("SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ?").iterate(threadID))
+		foreach (int count; query!"SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ?".iterate(threadID))
 			return count;
 		assert(0);
 	}
 
 	int getPostThreadIndex(string threadID, SysTime postTime)
 	{
-		foreach (int index; query("SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ? AND `Time` < ? ORDER BY `Time` ASC").iterate(threadID, postTime.stdTime))
+		foreach (int index; query!"SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ? AND `Time` < ? ORDER BY `Time` ASC".iterate(threadID, postTime.stdTime))
 			return index;
 		assert(0);
 	}
@@ -1739,7 +1739,7 @@ class WebUI
 
 	string getPostAtThreadIndex(string threadID, int index)
 	{
-		foreach (string id; query("SELECT `ID` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC LIMIT 1 OFFSET ?").iterate(threadID, index))
+		foreach (string id; query!"SELECT `ID` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC LIMIT 1 OFFSET ?".iterate(threadID, index))
 			return id;
 		throw new NotFoundException(format("Post #%d of thread %s not found", index, threadID));
 	}
@@ -1754,7 +1754,7 @@ class WebUI
 		if (nested) page = 1;
 
 		Rfc850Post[] posts;
-		foreach (int rowid, string postID, string message; query("SELECT `ROWID`, `ID`, `Message` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC LIMIT ? OFFSET ?").iterate(id, postsPerPage, (page-1)*postsPerPage))
+		foreach (int rowid, string postID, string message; query!"SELECT `ROWID`, `ID`, `Message` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC LIMIT ? OFFSET ?".iterate(id, postsPerPage, (page-1)*postsPerPage))
 			posts ~= new Rfc850Post(message, postID, rowid, id);
 
 		Rfc850Post[string] knownPosts;
@@ -1789,7 +1789,7 @@ class WebUI
 	{
 		PostInfo*[] posts;
 		enum ViewSQL = "SELECT `ROWID`, `ID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` = ?";
-		foreach (int rowid, string id, string parent, string author, string subject, long stdTime; query(ViewSQL).iterate(threadID))
+		foreach (int rowid, string id, string parent, string author, string subject, long stdTime; query!ViewSQL.iterate(threadID))
 			posts ~= [PostInfo(rowid, id, null, parent, author, subject, SysTime(stdTime, UTC()))].ptr;
 
 		html.put(
@@ -1813,7 +1813,7 @@ class WebUI
 
 	string discussionFirstUnread(string threadID)
 	{
-		foreach (int rowid, string id; query("SELECT `ROWID`, `ID` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC").iterate(threadID))
+		foreach (int rowid, string id; query!"SELECT `ROWID`, `ID` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC".iterate(threadID))
 			if (!user.isRead(rowid))
 				return idToUrl(id);
 		return idToUrl(threadID, "thread", getPageCount(getPostCount(threadID), POSTS_PER_PAGE));
@@ -2039,9 +2039,9 @@ class WebUI
 		foreach (line; post.message.splitAsciiLines())
 			deletionLog("> " ~ line);
 
-		foreach (string[string] values; query("SELECT * FROM `Posts` WHERE `ID` = ?").iterate(post.id))
+		foreach (string[string] values; query!"SELECT * FROM `Posts` WHERE `ID` = ?".iterate(post.id))
 			deletionLog("[Posts] row: " ~ values.toJson());
-		foreach (string[string] values; query("SELECT * FROM `Threads` WHERE `ID` = ?").iterate(post.id))
+		foreach (string[string] values; query!"SELECT * FROM `Threads` WHERE `ID` = ?".iterate(post.id))
 			deletionLog("[Threads] row: " ~ values.toJson());
 
 		if (vars.get("ban", "No") == "Yes")
@@ -2051,8 +2051,8 @@ class WebUI
 			html.put("User banned.<br>");
 		}
 
-		query("DELETE FROM `Posts` WHERE `ID` = ?").exec(post.id);
-		query("DELETE FROM `Threads` WHERE `ID` = ?").exec(post.id);
+		query!"DELETE FROM `Posts` WHERE `ID` = ?".exec(post.id);
+		query!"DELETE FROM `Threads` WHERE `ID` = ?".exec(post.id);
 
 		dbVersion++;
 		html.put("Post deleted.");
@@ -2249,7 +2249,7 @@ class WebUI
 
 	string resolvePostUrl(string id)
 	{
-		foreach (string threadID; query("SELECT `ThreadID` FROM `Posts` WHERE `ID` = ?").iterate(id))
+		foreach (string threadID; query!"SELECT `ThreadID` FROM `Posts` WHERE `ID` = ?".iterate(id))
 			return idToThreadUrl(id, threadID);
 
 		throw new NotFoundException("Post not found");
@@ -2262,7 +2262,7 @@ class WebUI
 
 	static Rfc850Post getPost(string id, uint[] partPath = null)
 	{
-		foreach (int rowid, string message, string threadID; query("SELECT `ROWID`, `Message`, `ThreadID` FROM `Posts` WHERE `ID` = ?").iterate(id))
+		foreach (int rowid, string message, string threadID; query!"SELECT `ROWID`, `Message`, `ThreadID` FROM `Posts` WHERE `ID` = ?".iterate(id))
 		{
 			auto post = new Rfc850Post(message, id, rowid, threadID);
 			while (partPath.length)
@@ -2278,7 +2278,7 @@ class WebUI
 
 	static string getPostSource(string id)
 	{
-		foreach (string message; query("SELECT `Message` FROM `Posts` WHERE `ID` = ?").iterate(id))
+		foreach (string message; query!"SELECT `Message` FROM `Posts` WHERE `ID` = ?".iterate(id))
 			return message;
 		return null;
 	}
@@ -2294,7 +2294,7 @@ class WebUI
 	PostInfo* retrievePostInfo(string id)
 	{
 		if (id.startsWith('<') && id.endsWith('>'))
-			foreach (int rowid, string threadID, string parentID, string author, string subject, long stdTime; query("SELECT `ROWID`, `ThreadID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ID` = ?").iterate(id))
+			foreach (int rowid, string threadID, string parentID, string author, string subject, long stdTime; query!"SELECT `ROWID`, `ThreadID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ID` = ?".iterate(id))
 				return [PostInfo(rowid, id, threadID, parentID, author, subject, SysTime(stdTime, UTC()))].ptr;
 		return null;
 	}
@@ -2556,14 +2556,14 @@ class WebUI
 		auto iterator =
 			group ?
 				threadsOnly ?
-					query("SELECT `Message` FROM `Posts` WHERE `ID` IN (SELECT `ID` FROM `Groups` WHERE `Time` > ? AND `Group` = ?) AND `ID` = `ThreadID`").iterate(since, group)
+					query!"SELECT `Message` FROM `Posts` WHERE `ID` IN (SELECT `ID` FROM `Groups` WHERE `Time` > ? AND `Group` = ?) AND `ID` = `ThreadID`".iterate(since, group)
 				:
-					query("SELECT `Message` FROM `Posts` WHERE `ID` IN (SELECT `ID` FROM `Groups` WHERE `Time` > ? AND `Group` = ?)").iterate(since, group)
+					query!"SELECT `Message` FROM `Posts` WHERE `ID` IN (SELECT `ID` FROM `Groups` WHERE `Time` > ? AND `Group` = ?)".iterate(since, group)
 			:
 				threadsOnly ?
-					query("SELECT `Message` FROM `Posts` WHERE `Time` > ? AND `ID` = `ThreadID`").iterate(since)
+					query!"SELECT `Message` FROM `Posts` WHERE `Time` > ? AND `ID` = `ThreadID`".iterate(since)
 				:
-					query("SELECT `Message` FROM `Posts` WHERE `Time` > ?").iterate(since)
+					query!"SELECT `Message` FROM `Posts` WHERE `Time` > ?".iterate(since)
 			;
 
 		foreach (string message; iterator)
