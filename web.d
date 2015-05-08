@@ -47,6 +47,7 @@ import cache;
 import captcha;
 import common;
 import database;
+import groups;
 import list;
 //import mailhide;
 import message;
@@ -656,115 +657,6 @@ class WebUI
 
 	// ***********************************************************************
 
-	// TODO: Move out to configuration files
-
-	struct GroupInfo { string name, description, postMessage, alsoVia; }
-	struct GroupSet { string name, shortName; GroupInfo[] groups; }
-
-	static GroupSet makeGroupSet(string name, GroupInfo[] groups)
-	{
-		auto shortName = name;
-		shortName.eat("D Programming Language - ");
-		return GroupSet(name, shortName, groups);
-	}
-
-	static GroupInfo makeGroupInfo(string name, string archiveName, string mlName, string description, bool mlOnly, bool bugzilla)
-	{
-		auto info = GroupInfo(name, description.chomp(".").strip());
-		string[] alsoVia;
-		if (!mlOnly)
-			alsoVia ~= `<a href="news://news.digitalmars.com/`~name~`">NNTP</a>`;
-		if (mlName)
-			alsoVia ~= `<a href="http://lists.puremagic.com/cgi-bin/mailman/listinfo/`~mlName~`">mailing&nbsp;list</a>`;
-		if (mlOnly)
-			info.postMessage =
-				`You are viewing a mailing list archive.<br>`
-				`For information about posting, visit `
-					`<a href="http://lists.puremagic.com/cgi-bin/mailman/listinfo/`~name~`">`~name~`'s Mailman page</a>.`;
-		if (bugzilla)
-		{
-			alsoVia ~= `<a href="http://d.puremagic.com/issues/">Bugzilla</a>`;
-			info.postMessage =
-				`You are viewing a Bugzilla message archive.<br>`
-				`To report a bug, please visit the <a href="http://d.puremagic.com/issues/">D Bugzilla</a> or `
-					`<a href="/newpost/digitalmars.D">post to digitalmars.D</a>.`;
-		}
-		if (mlOnly)
-			alsoVia ~= `<a href="http://lists.puremagic.com/pipermail/`~name.toLower()~`/">archive</a>`;
-		else
-		if (archiveName)
-			alsoVia ~= `<a href="http://www.digitalmars.com/d/archives/`~archiveName~`/">archive</a>`;
-		info.alsoVia = alsoVia.join("<br>");
-		return info;
-	}
-
-	static GroupSet[] groupHierarchy = [
-	makeGroupSet("D Programming Language - New users", [
-		makeGroupInfo("digitalmars.D.learn"     , "digitalmars/D/learn"     , "digitalmars-d-learn"     , "Questions about learning D"                                       , false, false),
-	]),
-	makeGroupSet("D Programming Language - General", [
-		makeGroupInfo("digitalmars.D"           , "digitalmars/D"           , "digitalmars-d"           , "General discussion of the D programming language."                , false, false),
-		makeGroupInfo("digitalmars.D.announce"  , "digitalmars/D/announce"  , "digitalmars-d-announce"  , "Announcements for anything D related"                             , false, false),
-	]),
-	makeGroupSet("D Programming Language - Ecosystem", [
-		makeGroupInfo("D.gnu"                   , "D/gnu"                   , "d.gnu"                   , "GDC, the Gnu D Compiler "                                         , false, false),
-		makeGroupInfo("digitalmars.D.ldc"       , null                      , "digitalmars-d-ldc"       , "LDC, the LLVM-based D Compiler "                                  , false, false),
-
-		makeGroupInfo("digitalmars.D.debugger"  , "digitalmars/D/debugger"  , "digitalmars-d-debugger"  , "Debuggers for D"                                                  , false, false),
-		makeGroupInfo("digitalmars.D.ide"       , "digitalmars/D/ide"       , "digitalmars-d-ide"       , "Integrated Development Environments for D"                        , false, false),
-	]),
-	makeGroupSet("D Programming Language - Development", [
-		makeGroupInfo("digitalmars.D.bugs"      , "digitalmars/D/bugs"      , "digitalmars-d-bugs"      , "Bug reports for D compiler and library"                           , false, true ),
-		makeGroupInfo("dmd-beta"                , null                      , "dmd-beta"                , "Notify of and discuss beta versions"                              , true , false),
-		makeGroupInfo("dmd-concurrency"         , null                      , "dmd-concurrency"         , "Design of concurrency features in D and library"                  , true , false),
-		makeGroupInfo("dmd-internals"           , null                      , "dmd-internals"           , "dmd compiler internal design and implementation"                  , true , false),
-		makeGroupInfo("phobos"                  , null                      , "phobos"                  , "Phobos standard library design and implementation"                , true , false),
-		makeGroupInfo("D-runtime"               , null                      , "D-runtime"               , "Runtime library design and implementation"                        , true , false),
-	]),
-	makeGroupSet("Other", [
-		makeGroupInfo("digitalmars.D.dwt"       , "digitalmars/D/dwt"       , "digitalmars-d-dwt"       , "Developing the D Widget Toolkit"                                  , false, false),
-		makeGroupInfo("digitalmars.D.dtl"       , "digitalmars/D/dtl"       , "digitalmars-d-dtl"       , "Developing the D Template Library"                                , false, false),
-
-		makeGroupInfo("DMDScript"               , "DMDScript"               , null                      , "General discussion of DMDScript"                                  , false, false),
-		makeGroupInfo("digitalmars.empire"      , "digitalmars/empire"      , null                      , "General discussion of Empire, the Wargame of the Century"         , false, false),
-		makeGroupInfo("D"                       , ""                        , null                      , "Retired, use digitalmars.D instead"                               , false, false),
-	]),
-	makeGroupSet("C and C++", [
-		makeGroupInfo("c++"                     , "c++"                     , null                      , "General discussion of DMC++ compiler"                             , false, false),
-		makeGroupInfo("c++.announce"            , "c++/announce"            , null                      , "Announcements about C++"                                          , false, false),
-		makeGroupInfo("c++.atl"                 , "c++/atl"                 , null                      , "Microsoft's Advanced Template Library"                            , false, false),
-		makeGroupInfo("c++.beta"                , "c++/beta"                , null                      , "Test versions of various C++ products"                            , false, false),
-		makeGroupInfo("c++.chat"                , "c++/chat"                , null                      , "Off topic discussions"                                            , false, false),
-		makeGroupInfo("c++.command-line"        , "c++/command-line"        , null                      , "Command line tools"                                               , false, false),
-		makeGroupInfo("c++.dos"                 , "c++/dos"                 , null                      , "DMC++ and DOS"                                                    , false, false),
-		makeGroupInfo("c++.dos.16-bits"         , "c++/dos/16-bits"         , null                      , "16 bit DOS topics"                                                , false, false),
-		makeGroupInfo("c++.dos.32-bits"         , "c++/dos/32-bits"         , null                      , "32 bit extended DOS topics"                                       , false, false),
-		makeGroupInfo("c++.idde"                , "c++/idde"                , null                      , "The Digital Mars Integrated Development and Debugging Environment", false, false),
-		makeGroupInfo("c++.mfc"                 , "c++/mfc"                 , null                      , "Microsoft Foundation Classes"                                     , false, false),
-		makeGroupInfo("c++.rtl"                 , "c++/rtl"                 , null                      , "C++ Runtime Library"                                              , false, false),
-		makeGroupInfo("c++.stl"                 , "c++/stl"                 , null                      , "Standard Template Library"                                        , false, false),
-		makeGroupInfo("c++.stl.hp"              , "c++/stl/hp"              , null                      , "HP's Standard Template Library"                                   , false, false),
-		makeGroupInfo("c++.stl.port"            , "c++/stl/port"            , null                      , "STLPort Standard Template Library"                                , false, false),
-		makeGroupInfo("c++.stl.sgi"             , "c++/stl/sgi"             , null                      , "SGI's Standard Template Library"                                  , false, false),
-		makeGroupInfo("c++.stlsoft"             , "c++/stlsoft"             , null                      , "Stlsoft products"                                                 , false, false),
-		makeGroupInfo("c++.windows"             , "c++/windows"             , null                      , "Writing C++ code for Microsoft Windows"                           , false, false),
-		makeGroupInfo("c++.windows.16-bits"     , "c++/windows/16-bits"     , null                      , "16 bit Windows topics"                                            , false, false),
-		makeGroupInfo("c++.windows.32-bits"     , "c++/windows/32-bits"     , null                      , "32 bit Windows topics"                                            , false, false),
-		makeGroupInfo("c++.wxwindows"           , "c++/wxwindows"           , null                      , "wxWindows"                                                        , false, false),
-	]),
-	];
-
-	const(GroupInfo)* getGroupInfo(string name)
-	{
-		foreach (set; groupHierarchy)
-			foreach (ref group; set.groups)
-				if (group.name == name)
-					return &group;
-		return null;
-	}
-
-	// ***********************************************************************
-
 	enum MeasurePerformanceMixin =
 	q{
 		StopWatch performanceSW;
@@ -845,7 +737,10 @@ class WebUI
 						`<td class="forum-index-col-lastpost">`, group.name in lastPosts    ? summarizePost(   lastPosts[group.name]) : `<div class="forum-no-data">-</div>`, `</td>`
 						`<td class="number-column">`,            group.name in threadCounts ? formatNumber (threadCounts[group.name]) : `-`, `</td>`
 						`<td class="number-column">`,            group.name in postCounts   ? formatNumber (  postCounts[group.name]) : `-`, `</td>`
-						`<td class="number-column">`, group.alsoVia, `</td>`
+						`<td class="number-column">`);
+				foreach (i, av; group.alsoVia.values)
+					html.put(i ? `<br>` : ``, `<a href="`, av.url, `">`, av.name, `</a>`);
+				html.put(`</td>`
 					`</tr>`,
 				);
 			}
