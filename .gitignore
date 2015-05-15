@@ -12,6 +12,7 @@
 *.suo
 *.ilk
 *-opt
+*.jar
 
 /core
 /bad-zlib.z

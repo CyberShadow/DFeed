@@ -1,6 +1,9 @@
-HTMLTOOL=java -jar ~/htmlcompressor-*.jar --compress-js --compress-css
-JSTOOL=java -jar ~/yuicompressor-*.jar --type js
-CSSTOOL=java -jar ~/yuicompressor-*.jar --type css
+HTMLCOMPRESSOR=htmlcompressor-1.5.3.jar
+YUICOMPRESSOR=yuicompressor-2.4.8.jar
+
+HTMLTOOL=java -jar $(HTMLCOMPRESSOR) --compress-css
+JSTOOL=java -jar $(YUICOMPRESSOR) --type js
+CSSTOOL=java -jar $(YUICOMPRESSOR) --type css
 
 TARGETS : \
 	web/skel.htt-opt \
@@ -9,16 +12,16 @@ TARGETS : \
 	web/static/js/dfeed.js-opt \
 	dlang.org/css/cssmenu.css
 
-%.htt-opt : %.htt
-	$(HTMLTOOL) < $^ > $@.tmp
+%.htt-opt : %.htt $(HTMLCOMPRESSOR) $(YUICOMPRESSOR)
+	$(HTMLTOOL) < $< > $@.tmp
 	mv $@.tmp $@
 
-%.js-opt : %.js
-	$(JSTOOL) < $^ > $@.tmp
+%.js-opt : %.js $(YUICOMPRESSOR)
+	$(JSTOOL) < $< > $@.tmp
 	mv $@.tmp $@
 
-%.css-opt : %.css
-	$(CSSTOOL) < $^ > $@.tmp
+%.css-opt : %.css $(YUICOMPRESSOR)
+	$(CSSTOOL) < $< > $@.tmp
 	mv $@.tmp $@
 
 web/skel.htt : dlang.org/forum-template.html
@@ -30,3 +33,9 @@ dlang.org/forum-template.html : dlang.org/forum-template.dd
 
 dlang.org/css/cssmenu.css : dlang.org/css/cssmenu.css.dd
 	dmd -o- -D $^ -Df$@
+
+$(HTMLCOMPRESSOR) :
+	wget http://htmlcompressor.googlecode.com/files/$(HTMLCOMPRESSOR)
+
+$(YUICOMPRESSOR) :
+	wget https://github.com/yui/yuicompressor/releases/download/v2.4.8/$(YUICOMPRESSOR)
