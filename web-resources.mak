@@ -8,21 +8,21 @@ CSSTOOL=java -jar $(YUICOMPRESSOR) --type css
 DLANG=web/static/dlang.org
 
 TARGETS : \
-	web/skel.htt-opt \
-	web/help.htt-opt \
-	web/static/css/dfeed.css-opt \
-	web/static/js/dfeed.js-opt \
+	web/skel.min.htt \
+	web/help.min.htt \
+	web/static/css/dfeed.min.css \
+	web/static/js/dfeed.min.js \
 	$(DLANG)/css/cssmenu.css
 
-%.htt-opt : %.htt $(HTMLCOMPRESSOR) $(YUICOMPRESSOR)
+%.min.htt : %.htt $(HTMLCOMPRESSOR) $(YUICOMPRESSOR)
 	$(HTMLTOOL) < $< > $@.tmp
 	mv $@.tmp $@
 
-%.js-opt : %.js $(YUICOMPRESSOR)
+%.min.js : %.js $(YUICOMPRESSOR)
 	$(JSTOOL) < $< > $@.tmp
 	mv $@.tmp $@
 
-%.css-opt : %.css $(YUICOMPRESSOR)
+%.min.css : %.css $(YUICOMPRESSOR)
 	$(CSSTOOL) < $< > $@.tmp
 	mv $@.tmp $@
 

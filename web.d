@@ -17,6 +17,7 @@
 module web;
 
 import std.file;
+import std.path;
 import std.string;
 import std.conv;
 import std.exception;
@@ -92,14 +93,15 @@ class WebUI
 		return "/static/" ~ text(timeLastModified("web/static" ~ path).stdTime) ~ path;
 	}
 
-	string optimizedPath(string base, string path)
+	string optimizedPath(string base, string resource)
 	{
-		auto origPath = base ~ path;
-		auto optiPath = base ~ path ~ "-opt";
+	    string optimizedResource = resource.stripExtension ~ ".min" ~ resource.extension;
+		auto origPath = base ~ resource;
+		auto optiPath = base ~ optimizedResource;
 		if (exists(origPath) && exists(optiPath) && timeLastModified(optiPath) >= timeLastModified(origPath))
-			return path ~ "-opt";
+			return optimizedResource;
 		else
-			return path;
+			return resource;
 	}
 
 	HttpResponseEx serveFile(HttpResponseEx response, string path)

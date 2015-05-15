@@ -11,7 +11,7 @@
 *.mem
 *.suo
 *.ilk
-*-opt
+*.min.*
 *.jar
 
 /core
