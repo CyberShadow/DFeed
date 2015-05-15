@@ -5,12 +5,14 @@ HTMLTOOL=java -jar $(HTMLCOMPRESSOR) --compress-css
 JSTOOL=java -jar $(YUICOMPRESSOR) --type js
 CSSTOOL=java -jar $(YUICOMPRESSOR) --type css
 
+DLANG=web/static/dlang.org
+
 TARGETS : \
 	web/skel.htt-opt \
 	web/help.htt-opt \
 	web/static/css/dfeed.css-opt \
 	web/static/js/dfeed.js-opt \
-	dlang.org/css/cssmenu.css
+	$(DLANG)/css/cssmenu.css
 
 %.htt-opt : %.htt $(HTMLCOMPRESSOR) $(YUICOMPRESSOR)
 	$(HTMLTOOL) < $< > $@.tmp
@@ -24,14 +26,14 @@ TARGETS : \
 	$(CSSTOOL) < $< > $@.tmp
 	mv $@.tmp $@
 
-web/skel.htt : dlang.org/forum-template.html
+web/skel.htt : $(DLANG)/forum-template.html
 	cp $^ $@
 
-dlang.org/forum-template.html : dlang.org/forum-template.dd
-	# cd dlang.org && make --debug -f posix.mak forum-template.html DMD=$(shell which dmd) LATEST=latest DOC_OUTPUT_DIR=.
-	dmd -o- -c -D dlang.org/macros.ddoc dlang.org/html.ddoc dlang.org/dlang.org.ddoc dlang.org/windows.ddoc dlang.org/doc.ddoc $^ -Df$@
+$(DLANG)/forum-template.html : $(DLANG)/forum-template.dd
+	# cd $(DLANG) && make --debug -f posix.mak forum-template.html DMD=$(shell which dmd) LATEST=latest DOC_OUTPUT_DIR=.
+	dmd -o- -c -D $(DLANG)/macros.ddoc $(DLANG)/html.ddoc $(DLANG)/dlang.org.ddoc $(DLANG)/windows.ddoc $(DLANG)/doc.ddoc $^ -Df$@
 
-dlang.org/css/cssmenu.css : dlang.org/css/cssmenu.css.dd
+$(DLANG)/css/cssmenu.css : $(DLANG)/css/cssmenu.css.dd
 	dmd -o- -D $^ -Df$@
 
 $(HTMLCOMPRESSOR) :
