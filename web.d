@@ -634,7 +634,7 @@ class WebUI
 
 		response.disableCache();
 
-		auto page = readText("web/skel.htt");
+		auto page = readText(optimizedPath(null, "web/skel.htt"));
 		//scope(failure) std.file.write("bad-tpl.html", page);
 		page = renderNav(page);
 		page = HttpResponseEx.parseTemplate(page, vars);
