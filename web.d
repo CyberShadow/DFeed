@@ -16,6 +16,8 @@
 
 module web;
 
+import core.time;
+
 import std.file;
 import std.path;
 import std.string;
@@ -87,6 +89,32 @@ class WebUI
 	}
 
 	// ***********************************************************************
+
+	/// Caching wrapper
+	SysTime timeLastModified(string path)
+	{
+		static if (is(MonoTimeImpl!(ClockType.coarse)))
+			alias CoarseTime = MonoTimeImpl!(ClockType.coarse);
+		else
+			alias CoarseTime = MonoTime;
+
+		static SysTime[string] cache;
+		static CoarseTime cacheTime;
+
+		enum expiration = isDebug ? 1.seconds : 5.seconds;
+
+		auto now = CoarseTime.currTime();
+		if (now - cacheTime > expiration)
+		{
+			cacheTime = now;
+			cache = null;
+		}
+
+		auto pcache = path in cache;
+		if (pcache)
+			return *pcache;
+		return cache[path] = std.file.timeLastModified(path);
+	}
 
 	string staticPath(string path)
 	{
