@@ -52,7 +52,7 @@ function showNav(hidden) {
 function selectMessage(path) {
 	var id = idFromPath(path);
 	if (id && findInTree(path)) {
-		window.history.pushState(null, id, path);
+		window.history.replaceState(null, id, path);
 		onPopState();
 		return true;
 	}
