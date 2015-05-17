@@ -45,6 +45,7 @@ import ae.utils.meta;
 import ae.utils.text;
 import ae.utils.textout;
 import ae.utils.time;
+import ae.utils.xmllite : putEncodedEntities;
 
 import cache;
 import captcha;
@@ -762,15 +763,15 @@ class WebUI
 		foreach (set; groupHierarchy)
 		{
 			html.put(
-				`<tr><th colspan="5">`, encodeEntities(set.name), `</th></tr>`
+				`<tr><th colspan="5">`), html.putEncodedEntities(set.name), html.put(`</th></tr>`
 				`<tr class="subheader"><th>Forum</th><th>Last Post</th><th>Threads</th><th>Posts</th><th>Also via</th></tr>`);
 			foreach (group; set.groups)
 			{
 				html.put(
 					`<tr>`
 						`<td class="forum-index-col-forum">`
-							`<a href="/group/`, encodeEntities(group.name), `">`, encodeEntities(group.name), `</a>`
-							`<div class="truncated forum-index-description" title="`, encodeEntities(group.description), `">`, encodeEntities(group.description), `</div>`
+							`<a href="/group/`), html.putEncodedEntities(group.name), html.put(`">`), html.putEncodedEntities(group.name), html.put(`</a>`
+							`<div class="truncated forum-index-description" title="`), html.putEncodedEntities(group.description), html.put(`">`), html.putEncodedEntities(group.description), html.put(`</div>`
 						`</td>`
 						`<td class="forum-index-col-lastpost">`, group.name in lastPosts    ? summarizePost(   lastPosts[group.name]) : `<div class="forum-no-data">-</div>`, `</td>`
 						`<td class="number-column">`,            group.name in threadCounts ? formatNumber (threadCounts[group.name]) : `-`, `</td>`
@@ -894,7 +895,7 @@ class WebUI
 	void newPostButton(string group)
 	{
 		html.put(
-			`<form name="new-post-form" method="get" action="/newpost/`, encodeEntities(group), `">`
+			`<form name="new-post-form" method="get" action="/newpost/`), html.putEncodedEntities(group), html.put(`">`
 				`<div class="header-tools">`
 					`<input class="btn" type="submit" value="Create thread">`
 					`<input class="img" type="image" src="`, staticPath("/images/newthread.png"), `" alt="Create thread">`
@@ -1016,10 +1017,13 @@ class WebUI
 		{
 			if (info)
 				with (*info)
-					return html.put(
+				{
+					html.put(
 					//	`<!-- Thread ID: ` ~ encodeEntities(threadID) ~ ` | First Post ID: ` ~ encodeEntities(id) ~ `-->` ~
-						`<div class="truncated"><a class="forum-postsummary-subject `, (isRead ? "forum-read" : "forum-unread"), `" href="`, encodeEntities(idToUrl(tid, "thread")), `" title="`, encodeEntities(subject), `">`, encodeEntities(subject), `</a></div>`
-						`<div class="truncated">by <span class="forum-postsummary-author" title="`, encodeEntities(author), `">`, encodeEntities(author), `</span></div>`);
+						`<div class="truncated"><a class="forum-postsummary-subject `, (isRead ? "forum-read" : "forum-unread"), `" href="`), html.putEncodedEntities(idToUrl(tid, "thread")), html.put(`" title="`), html.putEncodedEntities(subject), html.put(`">`), html.putEncodedEntities(subject), html.put(`</a></div>`
+						`<div class="truncated">by <span class="forum-postsummary-author" title="`), html.putEncodedEntities(author), html.put(`">`), html.putEncodedEntities(author), html.put(`</span></div>`);
+					return;
+				}
 
 			html.put(`<div class="forum-no-data">-</div>`);
 		}
@@ -1028,10 +1032,12 @@ class WebUI
 		{
 			if (info)
 				with (*info)
-					return html.put(
-						`<a class="forum-postsummary-time `, user.isRead(rowid) ? "forum-read" : "forum-unread", `" href="`, encodeEntities(idToUrl(id)), `">`, summarizeTime(time), `</a>`
-						`<div class="truncated">by <span class="forum-postsummary-author" title="`, encodeEntities(author), `">`, encodeEntities(author), `</span></div>`);
-
+				{
+					html.put(
+						`<a class="forum-postsummary-time `, user.isRead(rowid) ? "forum-read" : "forum-unread", `" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`">`, summarizeTime(time), `</a>`
+						`<div class="truncated">by <span class="forum-postsummary-author" title="`), html.putEncodedEntities(author), html.put(`">`), html.putEncodedEntities(author), html.put(`</span></div>`);
+					return;
+				}
 			html.put(`<div class="forum-no-data">-</div>`);
 		}
 
@@ -1051,7 +1057,7 @@ class WebUI
 		html.put(
 			`<table id="group-index" class="forum-table">`
 			`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(3), `</tr>` // Fixed layout dummies
-			`<tr class="group-index-header"><th colspan="3"><div class="header-with-tools">`), newPostButton(group), html.put(encodeEntities(group), `</div></th></tr>`
+			`<tr class="group-index-header"><th colspan="3"><div class="header-with-tools">`), newPostButton(group), html.putEncodedEntities(group), html.put(`</div></th></tr>`
 			`<tr class="subheader"><th>Thread / Thread Starter</th><th>Last Post</th><th>Replies</th>`);
 		foreach (thread; threads)
 			html.put(
@@ -1214,7 +1220,7 @@ class WebUI
 						`<td>`
 							`<div style="padding-left: `, format("%1.1f", OFFSET_INIT + level * offsetIncrement), OFFSET_UNITS, `">`
 								`<div class="thread-post-time">`, summarizeTime(post.info.time, true), `</div>`,
-								`<a class="postlink `, (user.isRead(post.info.rowid) ? "forum-read" : "forum-unread" ), `" href="`, encodeEntities(idToUrl(post.info.id)), `">`, truncateString(post.info.author, narrow ? 17 : 50), `</a>`
+								`<a class="postlink `, (user.isRead(post.info.rowid) ? "forum-read" : "forum-unread" ), `" href="`), html.putEncodedEntities(idToUrl(post.info.id)), html.put(`">`, truncateString(post.info.author, narrow ? 17 : 50), `</a>`
 							`</div>`
 						`</td>`
 					`</tr>`);
@@ -1232,7 +1238,7 @@ class WebUI
 					html.put(
 						`<tr><td style="padding-left: `, offsetStr, `">`
 						`<table class="thread-start">`
-							`<tr><th>`, encodeEntities(post.subject), `</th></tr>`);
+							`<tr><th>`), html.putEncodedEntities(post.subject), html.put(`</th></tr>`);
                     formatPost(post, 0);
 					html.put(
 						`</table>`
@@ -1258,8 +1264,8 @@ class WebUI
 			posts ~= [PostInfo(rowid, id, null, parent, author, subject, SysTime(stdTime, UTC()))].ptr; // TODO: optimize?
 
 		html.put(
-			`<table id="group-index-threaded" class="forum-table group-wrapper viewmode-`, encodeEntities(user.get("groupviewmode", "basic")), `">`
-			`<tr class="group-index-header"><th><div>`), newPostButton(group), html.put(encodeEntities(group), `</div></th></tr>`,
+			`<table id="group-index-threaded" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(user.get("groupviewmode", "basic")), html.put(`">`
+			`<tr class="group-index-header"><th><div>`), newPostButton(group), html.putEncodedEntities(group), html.put(`</div></th></tr>`,
 		//	`<tr class="group-index-captions"><th>Subject / Author</th><th>Time</th>`,
 			`<tr><td class="group-threads-cell"><div class="group-threads"><table>`);
 		formatThreadedPosts(posts, narrow);
@@ -1361,13 +1367,13 @@ class WebUI
 		auto id = msg.id;
 		if (user.get("groupviewmode", "basic") == "basic")
 			html.put(
-				`<a class="actionlink permalink" href="`, encodeEntities(idToUrl(id)), `" `
+				`<a class="actionlink permalink" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" `
 					`title="Canonical link to this post. See &quot;Canonical links&quot; on the Help page for more information.">`
 					`<img src="`, staticPath("/images/link.png"), `">Permalink`
 				`</a>`);
 		if (true)
 			html.put(
-				`<a class="actionlink replylink" href="`, encodeEntities(idToUrl(id, "reply")), `">`
+				`<a class="actionlink replylink" href="`), html.putEncodedEntities(idToUrl(id, "reply")), html.put(`">`
 					`<img src="`, staticPath("/images/reply.png"), `">Reply`
 				`</a>`);
 /*
@@ -1380,12 +1386,12 @@ class WebUI
 */
 		if (user.getLevel() >= User.Level.hasRawLink)
 			html.put(
-				`<a class="actionlink sourcelink" href="`, encodeEntities(idToUrl(id, "source")), `">`
+				`<a class="actionlink sourcelink" href="`), html.putEncodedEntities(idToUrl(id, "source")), html.put(`">`
 					`<img src="`, staticPath("/images/source.png"), `">Source`
 				`</a>`);
 		if (user.getLevel() >= User.Level.canDeletePosts)
 			html.put(
-				`<a class="actionlink deletelink" href="`, encodeEntities(idToUrl(id, "delete")), `">`
+				`<a class="actionlink deletelink" href="`), html.putEncodedEntities(idToUrl(id, "delete")), html.put(`">`
 					`<img src="`, staticPath("/images/delete.png"), `">Delete`
 				`</a>`);
 	}
@@ -1443,11 +1449,11 @@ class WebUI
 		{
 			html.put(
 				`<div class="post-wrapper">`
-				`<table class="post forum-table`, (post.children ? ` with-children` : ``), `" id="`, encodeEntities(idToFragment(id)), `">`
+				`<table class="post forum-table`, (post.children ? ` with-children` : ``), `" id="`), html.putEncodedEntities(idToFragment(id)), html.put(`">`
 				`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(2), `</tr>` // Fixed layout dummies
 				`<tr class="post-header"><th colspan="2">`
 					`<div class="post-time">`, summarizeTime(time), `</div>`
-					`<a title="Permanent link to this post" href="`, encodeEntities(idToUrl(id)), `" class="`, (user.isRead(post.rowid) ? "forum-read" : "forum-unread"), `">`,
+					`<a title="Permanent link to this post" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" class="`, (user.isRead(post.rowid) ? "forum-read" : "forum-unread"), `">`,
 						encodeEntities(rawSubject),
 					`</a>`
 				`</th></tr>`
@@ -1458,8 +1464,8 @@ class WebUI
 				`</tr>`
 				`<tr>`
 					`<td class="post-info">`
-						`<div class="post-author">`, encodeEntities(author), `</div>`
-						`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`, encodeEntities(author), `'s Gravatar profile">`
+						`<div class="post-author">`), html.putEncodedEntities(author), html.put(`</div>`
+						`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`), html.putEncodedEntities(author), html.put(`'s Gravatar profile">`
 							`<img alt="Gravatar" class="post-gravatar" width="80" height="80" src="http://www.gravatar.com/avatar/`, gravatarHash, `?d=identicon">`
 						`</a><br>`);
 			if (infoBits.length)
@@ -1490,7 +1496,7 @@ class WebUI
 				html.put(
 					`<table class="post-nester"><tr>`
 					`<td class="post-nester-bar" title="`, /* for IE */ repliesTitle, `">`
-						`<a href="#`, encodeEntities(idToFragment(id)), `" `
+						`<a href="#`), html.putEncodedEntities(idToFragment(id)), html.put(`" `
 							`title="`, repliesTitle, `"></a>`
 					`</td>`
 					`<td>`);
@@ -1514,12 +1520,12 @@ class WebUI
 			html.put(
 				`<table class="mini-post-info"><tr>`
 					`<td class="mini-post-info-avatar">`
-						`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`, encodeEntities(author), `'s Gravatar profile">`
+						`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`), html.putEncodedEntities(author), html.put(`'s Gravatar profile">`
 							`<img alt="Gravatar" class="post-gravatar" width="32" height="32" src="http://www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&s=32">`
 						`</a>`
 					`</td>`
 					`<td>`
-						`Posted by <b>`, encodeEntities(author), `</b>`,
+						`Posted by <b>`), html.putEncodedEntities(author), html.put(`</b>`,
 						parentLink ? `<br>in reply to ` ~ parentLink : null,
 					`</td>`
 					`<td class="post-info-actions">`); postActions(post.msg); html.put(`</td>`
@@ -1580,17 +1586,17 @@ class WebUI
 		{
 			html.put(
 				`<div class="post-wrapper">`
-				`<table class="split-post forum-table" id="`, encodeEntities(idToFragment(id)), `">`
+				`<table class="split-post forum-table" id="`), html.putEncodedEntities(idToFragment(id)), html.put(`">`
 				`<tr class="post-header"><th>`
 					`<div class="post-time">`, summarizeTime(time), `</div>`
-					`<a title="Permanent link to this post" href="`, encodeEntities(idToUrl(id)), `" class="`, (user.isRead(post.rowid) ? "forum-read" : "forum-unread"), `">`,
+					`<a title="Permanent link to this post" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" class="`, (user.isRead(post.rowid) ? "forum-read" : "forum-unread"), `">`,
 						encodeEntities(rawSubject),
 					`</a>`
 				`</th></tr>`
 				`<tr><td class="horizontal-post-info">`
 					`<table><tr>`
 						`<td class="post-info-avatar" rowspan="`, text(infoRows.length), `">`
-							`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`, encodeEntities(author), `'s Gravatar profile">`
+							`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`), html.putEncodedEntities(author), html.put(`'s Gravatar profile">`
 								`<img alt="Gravatar" class="post-gravatar" width="48" height="48" src="http://www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&s=48">`
 							`</a>`
 						`</td>`
@@ -1726,7 +1732,7 @@ class WebUI
 			posts ~= [PostInfo(rowid, id, null, parent, author, subject, SysTime(stdTime, UTC()))].ptr;
 
 		html.put(
-			`<table id="thread-index" class="forum-table group-wrapper viewmode-`, encodeEntities(user.get("groupviewmode", "basic")), `">`
+			`<table id="thread-index" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(user.get("groupviewmode", "basic")), html.put(`">`
 			`<tr class="group-index-header"><th><div>Thread overview</div></th></tr>`,
 			`<tr><td class="group-threads-cell"><div class="group-threads"><table>`);
 		formatThreadedPosts(posts, false, selectedID);
@@ -1777,13 +1783,13 @@ class WebUI
 			html.put(`<div class="form-error">` ~ encodeEntities(error.message) ~ `</div>`);
 
 		if (postTemplate.reply)
-			html.put(`<input type="hidden" name="parent" value="`, encodeEntities(postTemplate.parentID), `">`);
+			html.put(`<input type="hidden" name="parent" value="`), html.putEncodedEntities(postTemplate.parentID), html.put(`">`);
 		else
-			html.put(`<input type="hidden" name="where" value="`, encodeEntities(postTemplate.where), `">`);
+			html.put(`<input type="hidden" name="where" value="`), html.putEncodedEntities(postTemplate.where), html.put(`">`);
 
 		html.put(
 			`<div id="postform-info">`
-				`Posting to <b>`, encodeEntities(postTemplate.where), `</b>`,
+				`Posting to <b>`), html.putEncodedEntities(postTemplate.where), html.put(`</b>`,
 				(postTemplate.reply
 					? ` in reply to ` ~ postLink(getPostInfo(postTemplate.parentID))
 					: getGroupInfo(postTemplate.where)
@@ -1792,13 +1798,13 @@ class WebUI
 			`</div>`
 			`<input type="hidden" name="secret" value="`, getUserSecret(), `">`
 			`<label for="postform-name">Your name:</label>`
-			`<input id="postform-name" name="name" size="40" value="`, encodeEntities(user.get("name", "")), `">`
+			`<input id="postform-name" name="name" size="40" value="`), html.putEncodedEntities(user.get("name", "")), html.put(`">`
 			`<label for="postform-email">Your email address (<a href="/help#email">?</a>):</label>`
-			`<input id="postform-email" name="email" size="40" value="`, encodeEntities(user.get("email", "")), `">`
+			`<input id="postform-email" name="email" size="40" value="`), html.putEncodedEntities(user.get("email", "")), html.put(`">`
 			`<label for="postform-subject">Subject:</label>`
-			`<input id="postform-subject" name="subject" size="80" value="`, encodeEntities(postTemplate.subject), `">`
+			`<input id="postform-subject" name="subject" size="80" value="`), html.putEncodedEntities(postTemplate.subject), html.put(`">`
 			`<label for="postform-text">Message:</label>`
-			`<textarea id="postform-text" name="text" rows="25" cols="80" autofocus="autofocus">`, encodeEntities(postTemplate.content), `</textarea>`);
+			`<textarea id="postform-text" name="text" rows="25" cols="80" autofocus="autofocus">`), html.putEncodedEntities(postTemplate.content), html.put(`</textarea>`);
 
 		if (showCaptcha)
 			html.put(`<div id="postform-captcha">`, theCaptcha.getChallengeHtml(error.captchaError), `</div>`);
@@ -1942,12 +1948,12 @@ class WebUI
 	{
 		html.put(
 			`<form action="/dodelete" method="post" class="forum-form delete-form" id="deleteform">`
-			`<input type="hidden" name="id" value="`, encodeEntities(post.id), `">`
+			`<input type="hidden" name="id" value="`), html.putEncodedEntities(post.id), html.put(`">`
 			`<div id="deleteform-info">`
 				`Are you sure you want to delete this post from DFeed's database?`
 			`</div>`
 			`<input type="hidden" name="secret" value="`, getUserSecret(), `">`
-			`<textarea id="deleteform-message" readonly="readonly" rows="25" cols="80">`, encodeEntities(post.message), `</textarea><br>`
+			`<textarea id="deleteform-message" readonly="readonly" rows="25" cols="80">`), html.putEncodedEntities(post.message), html.put(`</textarea><br>`
 			`Reason: <input name="reason" value="spam"></input><br>`,
 			 findPostingLog(post.id)
 				? `<input type="checkbox" name="ban" value="Yes" id="deleteform-ban"></input><label for="deleteform-ban">Also ban the poster from accessing the forum</label><br>`
@@ -2117,17 +2123,17 @@ class WebUI
 				`<tr><td class="loginform-cell">`);
 
 		if ("url" in parameters)
-			html.put(`<input type="hidden" name="url" value="`, encodeEntities(parameters["url"]), `">`);
+			html.put(`<input type="hidden" name="url" value="`), html.putEncodedEntities(parameters["url"]), html.put(`">`);
 
 		html.put(
 				`<label for="loginform-username">Username:</label>`
-				`<input id="loginform-username" name="username" value="`, encodeEntities(parameters.get("username", "")), `">`
+				`<input id="loginform-username" name="username" value="`), html.putEncodedEntities(parameters.get("username", "")), html.put(`">`
 				`<label for="loginform-password">Password:</label>`
-				`<input id="loginform-password" type="password" name="password" value="`, encodeEntities(parameters.get("password", "")), `">`
+				`<input id="loginform-password" type="password" name="password" value="`), html.putEncodedEntities(parameters.get("password", "")), html.put(`">`
 				`<input type="submit" value="Log in">`
 			`</td></tr>`);
 		if (errorMessage)
-			html.put(`<tr><td class="loginform-info"><div class="form-error loginform-error">`, encodeEntities(errorMessage), `</div></td></tr>`);
+			html.put(`<tr><td class="loginform-info"><div class="form-error loginform-error">`), html.putEncodedEntities(errorMessage), html.put(`</div></td></tr>`);
 		else
 			html.put(
 				`<tr><td class="loginform-info">`
@@ -2151,19 +2157,19 @@ class WebUI
 				`<tr><td class="loginform-cell">`);
 
 		if ("url" in parameters)
-			html.put(`<input type="hidden" name="url" value="`, encodeEntities(parameters["url"]), `">`);
+			html.put(`<input type="hidden" name="url" value="`), html.putEncodedEntities(parameters["url"]), html.put(`">`);
 
 		html.put(
 			`<label for="loginform-username">Username:</label>`
-			`<input id="loginform-username" name="username" value="`, encodeEntities(parameters.get("username", "")), `">`
+			`<input id="loginform-username" name="username" value="`), html.putEncodedEntities(parameters.get("username", "")), html.put(`">`
 			`<label for="loginform-password">Password:</label>`
-			`<input id="loginform-password" type="password" name="password" value="`, encodeEntities(parameters.get("password", "")), `">`
+			`<input id="loginform-password" type="password" name="password" value="`), html.putEncodedEntities(parameters.get("password", "")), html.put(`">`
 			`<label for="loginform-password2">Confirm:</label>`
-			`<input id="loginform-password2" type="password" name="password2" value="`, encodeEntities(parameters.get("password2", "")), `">`
+			`<input id="loginform-password2" type="password" name="password2" value="`), html.putEncodedEntities(parameters.get("password2", "")), html.put(`">`
 			`<input type="submit" value="Register">`
 			`</td></tr>`);
 		if (errorMessage)
-			html.put(`<tr><td class="loginform-info"><div class="form-error loginform-error">`, encodeEntities(errorMessage), `</div></td></tr>`);
+			html.put(`<tr><td class="loginform-info"><div class="form-error loginform-error">`), html.putEncodedEntities(errorMessage), html.put(`</div></td></tr>`);
 		else
 			html.put(
 				`<tr><td class="loginform-info">`
@@ -2308,7 +2314,7 @@ class WebUI
 			}
 
 			if (paragraph.quotePrefix.length)
-				html.put(`<span class="forum-quote-prefix">`, encodeEntities(paragraph.quotePrefix), `</span>`);
+				html.put(`<span class="forum-quote-prefix">`), html.putEncodedEntities(paragraph.quotePrefix), html.put(`</span>`);
 			processWrap(paragraph.text);
 			html.put('\n');
 		}
