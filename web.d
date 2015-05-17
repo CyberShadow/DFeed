@@ -110,20 +110,6 @@ class WebUI
 		return response.serveFile(optimizedPath("web/static/", path), "web/static/");
 	}
 
-	Cached!(string[string]) staticFilesCache;
-
-	string[string] getStaticFiles()
-	{
-		string[string] result;
-		foreach (string fn; dirEntries("web/static", SpanMode.depth))
-			if (isFile(fn))
-			{
-				auto path = fn["web/static".length..$].replace(`\`, `/`);
-				result[path] = staticPath(path);
-			}
-		return result;
-	}
-
 	// ***********************************************************************
 
 	void onRequest(HttpRequest request, HttpServerConnection conn)
@@ -613,31 +599,31 @@ class WebUI
 				break;
 			}
 
-		string[string] vars = [
-			"title" : encodeEntities(title),
-			"content" : htmlStr,
-			"breadcrumb1" : breadcrumb1,
-			"breadcrumb2" : breadcrumb2,
-			"extraheaders" : extraHeaders.join("\n"),
-			"extrascripts" : extraScripts.join("\n"),
-			"bodyclass" : bodyClass,
-			"tools" : toolStr,
-			"dlang-org-root" : "/dlang.org",
-		];
-
-		debug
-			auto staticFiles = getStaticFiles();
-		else
-			auto staticFiles = staticFilesCache(getStaticFiles());
-		foreach (path, res; staticFiles)
-			vars["static:" ~ path] = res;
+		string getVar(string name)
+		{
+			switch (name)
+			{
+				case "title"        : return encodeEntities(title);
+				case "content"      : return htmlStr;
+				case "breadcrumb1"  : return breadcrumb1;
+				case "breadcrumb2"  : return breadcrumb2;
+				case "extraheaders" : return extraHeaders.join("\n");
+				case "extrascripts" : return extraScripts.join("\n");
+				case "bodyclass"    : return bodyClass;
+				case "tools"        : return toolStr;
+				default:
+					if (name.startsWith("static:"))
+						return staticPath(name[7..$]);
+					throw new Exception("Unknown variable in template: " ~ name);
+			}
+		}
 
 		response.disableCache();
 
 		auto page = readText(optimizedPath(null, "web/skel.htt"));
 		//scope(failure) std.file.write("bad-tpl.html", page);
 		page = renderNav(page);
-		page = HttpResponseEx.parseTemplate(page, vars);
+		page = parseTemplate(page, &getVar);
 		response.serveData(page);
 
 		response.setStatus(status);
@@ -655,6 +641,28 @@ class WebUI
 				["/group/" ~ group.name, group.name]
 			).array)]
 		).array);
+	}
+
+	static string parseTemplate(string data, string delegate(string) dictionary)
+	{
+		import ae.utils.textout;
+		StringBuilder sb;
+		sb.preallocate(data.length / 100 * 110);
+		while (true)
+		{
+			auto startpos = data.indexOf("<?");
+			if (startpos==-1)
+				break;
+			auto endpos = data.indexOf("?>");
+			if (endpos<startpos+2)
+				throw new Exception("Bad syntax in template");
+			string token = data[startpos+2 .. endpos];
+			auto value = dictionary(token);
+			sb.put(data[0 .. startpos], value);
+			data = data[endpos+2 .. $];
+		}
+		sb.put(data);
+		return sb.get();
 	}
 
 	// ***********************************************************************
