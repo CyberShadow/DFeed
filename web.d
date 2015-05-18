@@ -799,7 +799,7 @@ class WebUI
 		const groupFilter = ["digitalmars.D.announce", "digitalmars.D.bugs"]; // TODO: config
 		enum postCountLimit = 10;
 		ActiveDiscussion[] result;
-		foreach (string firstPostID, string group; query!"SELECT [Threads].[ID], [Threads].[Group] FROM [Threads] JOIN [Posts] ON [Threads].[ID]=[Posts].[ID] ORDER BY [Posts].[Time] DESC".iterate())
+		foreach (string group, string firstPostID; query!"SELECT [Group], [Threads].[ID] FROM [Threads] INNER JOIN (SELECT [ID] FROM [Posts] WHERE [ID]=[ThreadID] ORDER BY [Time] DESC LIMIT 100) AS [ThreadPosts] ON [ThreadPosts].[ID]==[Threads].[ID] LIMIT 100".iterate())
 		{
 			if (groupFilter.canFind(group))
 				continue;
