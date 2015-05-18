@@ -720,11 +720,6 @@ td.post-footer-nav a {
 	overflow: hidden;
 }
 
-body.widedoc #content,
-body.widedoc #top {
-	max-width: none !important;
-}
-
 #keyboardhelp {
 	width: auto !important;
 	margin: 0 auto;

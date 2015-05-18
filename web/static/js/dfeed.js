@@ -1,6 +1,5 @@
 $(document).ready(function() {
 	if ($('#group-split').length) {
-		$('body').removeClass('narrowdoc').addClass('widedoc');
 
 		$('.postlink').live('click', function() {
 			var path = $(this).attr('href');
