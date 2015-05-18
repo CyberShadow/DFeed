@@ -550,20 +550,24 @@ tr.mini-post-info-cell > td {
 	float: right;
 }
 
+#thread-index         .focused > td > div,
 #group-index-threaded .focused > td > div {
 	outline: 1px solid #89F !important;
 	background-color: #EEF;
 }
 
+#thread-index         .selected > td > div,
 #group-index-threaded .selected > td > div {
 	background-color: #45F;
 	color: white;
 }
 
+#thread-index         .selected a,
 #group-index-threaded .selected a {
 	color: inherit;
 }
 
+#thread-index         .selected .thread-post-time span,
 #group-index-threaded .selected .thread-post-time span {
 	color: inherit !important;
 }

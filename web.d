@@ -1217,7 +1217,7 @@ class WebUI
 				if (post.ghost)
 					return formatPosts(post.children, level, post.subject, false);
 				html.put(
-					`<tr class="thread-post-row`, (post.info && post.info.id==selectedID ? ` thread-post-focused thread-post-selected` : ``), `">`
+					`<tr class="thread-post-row`, (post.info && post.info.id==selectedID ? ` focused selected` : ``), `">`
 						`<td>`
 							`<div style="padding-left: `, format("%1.1f", OFFSET_INIT + level * offsetIncrement), OFFSET_UNITS, `">`
 								`<div class="thread-post-time">`, summarizeTime(post.info.time, true), `</div>`,
