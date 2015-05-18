@@ -2267,8 +2267,11 @@ class WebUI
 				inSignature = true;
 			}
 
+			enum forceWrapThreshold = 30;
+			enum forceWrapChunkSize = 10;
+
 			import std.utf;
-			bool needsWrap = paragraph.text.byChar.splitter(' ').map!(s => s.length).I!(r => reduce!max(size_t.init, r)) > 70;
+			bool needsWrap = paragraph.text.byChar.splitter(' ').map!(s => s.length).I!(r => reduce!max(size_t.init, r)) > forceWrapThreshold;
 
 			auto hasURL = paragraph.text.contains("://");
 
@@ -2306,11 +2309,15 @@ class WebUI
 				auto segments = s.segmentByWhitespace();
 				foreach (ref segment; segments)
 				{
-					if (segment.length > 50)
+					if (segment.length > forceWrapThreshold)
+					{
 						html.put(`<span class="forcewrap">`);
+						foreach (i; 0..segment.length/forceWrapChunkSize)
+							html.put(segment[i*forceWrapChunkSize..(i+1)*forceWrapChunkSize], `</span><span class="forcewrap">`);
+						html.put(segment[$/forceWrapChunkSize*forceWrapChunkSize..$], `</span>`);
+					}
+					else
 					next(segment);
-					if (segment.length > 50)
-						html.put(`</span>`);
 				}
 			}
 

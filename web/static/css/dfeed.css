@@ -457,6 +457,7 @@ tr.mini-post-info-cell > td {
 
 .forcewrap {
 	word-break: break-all;
+	display: inline-block;
 }
 
 /* Threading */
