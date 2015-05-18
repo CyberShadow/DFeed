@@ -277,6 +277,8 @@ function getSelectables() {
 		return $('tr.thread-post-row');
 	} else if ($('#forum-index').length) {
 		return $('#forum-index > tbody > tr.group-row');
+	} else if ($('#group-index').length) {
+		return $('#group-index > tbody > tr.thread-row');
 	} else {
 		return [];
 	}
@@ -285,7 +287,7 @@ function getSelectables() {
 function getSelectablesContainer() {
 	if ($('#group-split').length) {
 		return $('.group-threads')[0];
-	} else if ($('#forum-index').length) {
+	} else /*if ($('#forum-index').length)*/ {
 		return window;
 	}
 }

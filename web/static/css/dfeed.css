@@ -274,14 +274,6 @@ div#footernav a {
 
 /*************** Discussion index ***************/
 
-#forum-index .focused {
-	outline: 1px solid #89F !important;
-	background-color: #EEF;
-}
-#forum-index .focused > td {
-	background: none !important;
-}
-
 #forum-index > tbody > tr > td:nth-child(even) {
 	background-color: #F0F0F0;
 }
@@ -305,6 +297,14 @@ div#footernav a {
 	text-align: right;
 }
 
+#forum-index .focused {
+	outline: 1px solid #89F !important;
+	background-color: #EEF;
+}
+#forum-index .focused > td {
+	background: none !important;
+}
+
 /*************** Group index ***************/
 
 #group-index > tbody > tr > td:nth-child(even) {
@@ -321,6 +321,14 @@ div#footernav a {
 
 .group-index-col-last {
 	text-align: right;
+}
+
+#group-index .focused {
+	outline: 1px solid #89F !important;
+	background-color: #EEF;
+}
+#group-index .focused > td {
+	background: none !important;
 }
 
 /*************** Thread view, individual posts ***************/

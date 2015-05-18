@@ -1062,7 +1062,7 @@ class WebUI
 			`<tr class="subheader"><th>Thread / Thread Starter</th><th>Last Post</th><th>Replies</th>`);
 		foreach (thread; threads)
 			html.put(
-				`<tr>`
+				`<tr class="thread-row">`
 					`<td class="group-index-col-first">`), summarizeThread(thread.id, thread.firstPost, thread.isRead), html.put(`</td>`
 					`<td class="group-index-col-last">`), summarizeLastPost(thread.lastPost), html.put(`</td>`
 					`<td class="number-column">`), summarizePostCount(thread), html.put(`</td>`
