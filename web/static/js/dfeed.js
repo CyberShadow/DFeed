@@ -11,14 +11,6 @@ $(document).ready(function() {
 			return true;
 		}).css('cursor', 'default');
 
-		if ($.browser.webkit) {
-			// Chrome does not pass Ctrl+keys to keypress - but in many
-			// other browsers keydown does not repeat
-			$(document).keydown(onKeyPress);
-		} else {
-			$(document).keypress(onKeyPress);
-		}
-
 		$(window).resize(onResize);
 		updateSize();
 		focusRow($('tr.thread-post-row').last());
@@ -33,6 +25,14 @@ $(document).ready(function() {
 		);
 
 		showNav(localStorage.getItem('navhidden') == 'true');
+	}
+
+	if ($.browser.webkit) {
+		// Chrome does not pass Ctrl+keys to keypress - but in many
+		// other browsers keydown does not repeat
+		$(document).keydown(onKeyPress);
+	} else {
+		$(document).keypress(onKeyPress);
 	}
 });
 
@@ -99,8 +99,8 @@ function onPopState() {
 			currentRequest = null;
 		}
 
-		$('.group-threads .thread-post-selected').removeClass('thread-post-selected');
-		row.addClass('thread-post-selected');
+		$('.group-threads .selected').removeClass('selected');
+		row.addClass('selected');
 		focusRow(row, true);
 		currentID = id;
 
@@ -154,7 +154,7 @@ var resizeTimeout = null;
 function updateSize() {
 	resizeTimeout = null;
 
-	var focused = $('.thread-post-focused');
+	var focused = $('.focused');
 	var wasFocusedInView = false;
 	if (focused.length)
 		wasFocusedInView = isRowInView(focused);
@@ -218,6 +218,7 @@ function onResize() {
 // **************************************************************************
 
 function nestedOffset(element, container) {
+    if (element === document.body) element = window;
 	if (element.offsetParent === container)
 		return element.offsetTop;
 	else
@@ -258,26 +259,52 @@ function scrollIntoView(element, container, withMargin) {
 // **************************************************************************
 
 function isRowInView(row) {
-	return isInView(row[0], $('.group-threads')[0]);
+	return isInView(row[0], getSelectablesContainer());
 }
 
 function focusRow(row, withMargin) {
-	$('.group-threads .thread-post-focused').removeClass('thread-post-focused');
-	row.addClass('thread-post-focused');
-	scrollIntoView(row[0], $('.group-threads')[0], withMargin);
+	$('.focused').removeClass('focused');
+	row.addClass('focused');
+	scrollIntoView(row[0], getSelectablesContainer(), withMargin);
 }
 
 function selectRow(row) {
-	return row.find('a.postlink').click();
+	return getSelectableLink(row)[0].click();
+}
+
+function getSelectables() {
+	if ($('#group-split').length) {
+		return $('tr.thread-post-row');
+	} else if ($('#forum-index').length) {
+		return $('#forum-index > tbody > tr.group-row');
+	} else {
+		return [];
+	}
+}
+
+function getSelectablesContainer() {
+	if ($('#group-split').length) {
+		return $('.group-threads')[0];
+	} else if ($('#forum-index').length) {
+		return window;
+	}
+}
+
+function getSelectableLink(row) {
+	if ($('#group-split').length) {
+		return row.find('a.postlink');
+	} else {
+		return row.find('a').first();
+	}
 }
 
 function focusNext(offset, onlyUnread) {
 	if (typeof onlyUnread == 'undefined')
 		onlyUnread = false;
 
-	var all = $('tr.thread-post-row');
+	var all = getSelectables();
 	var count = all.length;
-	var current = $('.thread-post-focused');
+	var current = $('.focused');
 	var index;
 	if (current.length == 0) {
 		index = offset>0 ? offset-1 : count-offset;
@@ -308,7 +335,7 @@ function focusNext(offset, onlyUnread) {
 }
 
 function selectFocused() {
-	var focused = $('.thread-post-focused');
+	var focused = $('.focused');
 	if (focused.length) {
 		selectRow(focused);
 		return true;
@@ -317,7 +344,7 @@ function selectFocused() {
 }
 
 function markUnread() {
-	var focused = $('.thread-post-focused');
+	var focused = $('.focused');
 	if (focused.length && focused.find('.forum-read').length > 0) {
 		var path = focused.find('a.postlink').attr('href').replace("/post/", "/mark-unread/");
 		$.get(path, function(result) {
@@ -355,6 +382,7 @@ function onKeyPress(e) {
 			case ' ':
 			{
 				var p = $('.post-body');
+				if (!p.length) return true;
 				var dest = p.scrollTop()+p.height();
 				if (dest < p[0].scrollHeight) {
 					p.animate({scrollTop : dest}, 200);

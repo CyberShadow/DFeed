@@ -274,6 +274,14 @@ div#footernav a {
 
 /*************** Discussion index ***************/
 
+#forum-index .focused {
+	outline: 1px solid #89F !important;
+	background-color: #EEF;
+}
+#forum-index .focused > td {
+	background: none !important;
+}
+
 #forum-index > tbody > tr > td:nth-child(even) {
 	background-color: #F0F0F0;
 }
@@ -528,24 +536,21 @@ tr.mini-post-info-cell > td {
 	float: right;
 }
 
-.thread-post-focused > td > div {
-/*
-	outline: 1px dotted #45F !important;
-*/
+#group-index-threaded .focused > td > div {
 	outline: 1px solid #89F !important;
 	background-color: #EEF;
 }
 
-.thread-post-selected > td > div {
+#group-index-threaded .selected > td > div {
 	background-color: #45F;
 	color: white;
 }
 
-.thread-post-selected a {
+#group-index-threaded .selected a {
 	color: inherit;
 }
 
-.thread-post-selected .thread-post-time span {
+#group-index-threaded .selected .thread-post-time span {
 	color: inherit !important;
 }
 

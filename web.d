@@ -768,7 +768,7 @@ class WebUI
 			foreach (group; set.groups)
 			{
 				html.put(
-					`<tr>`
+					`<tr class="group-row">`
 						`<td class="forum-index-col-forum">`
 							`<a href="/group/`), html.putEncodedEntities(group.name), html.put(`">`), html.putEncodedEntities(group.name), html.put(`</a>`
 							`<div class="truncated forum-index-description" title="`), html.putEncodedEntities(group.description), html.put(`">`), html.putEncodedEntities(group.description), html.put(`</div>`
