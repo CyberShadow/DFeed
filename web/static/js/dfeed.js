@@ -203,7 +203,7 @@ function updateSize() {
 	}
 
 	//console.log($('#content').outerHeight(true));
-	console.log([resizees[0].outer.outerHeight(true), resizees[1].outer.outerHeight(true)]);
+	//console.log([resizees[0].outer.outerHeight(true), resizees[1].outer.outerHeight(true)]);
 
 	if (focused.length && wasFocusedInView)
 		focusRow(focused, true);
