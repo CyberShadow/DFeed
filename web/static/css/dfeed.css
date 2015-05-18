@@ -460,6 +460,10 @@ tr.mini-post-info-cell > td {
 	display: inline-block;
 }
 
+a > .forcewrap {
+	text-decoration: underline;
+}
+
 /* Threading */
 
 .post-nester {

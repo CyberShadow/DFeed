@@ -2280,9 +2280,35 @@ class WebUI
 				html.put(encodeEntities(s));
 			}
 
-			void processURLs(string s)
+			void processWrap(string s)
 			{
 				alias processText next;
+
+				if (!needsWrap)
+					return next(s);
+
+				auto segments = s.segmentByWhitespace();
+				foreach (ref segment; segments)
+				{
+					if (segment.length > forceWrapThreshold)
+					{
+						html.put(`<span class="forcewrap">`);
+						foreach (i; 0..segment.length/forceWrapChunkSize)
+						{
+							next(segment[i*forceWrapChunkSize..(i+1)*forceWrapChunkSize]);
+							html.put(`</span><span class="forcewrap">`);
+						}
+						next(segment[$/forceWrapChunkSize*forceWrapChunkSize..$]);
+						html.put(`</span>`);
+					}
+					else
+					next(segment);
+				}
+			}
+
+			void processURLs(string s)
+			{
+				alias processWrap next;
 
 				if (!hasURL)
 					return next(s);
@@ -2299,31 +2325,9 @@ class WebUI
 				next(s[pos..$]);
 			}
 
-			void processWrap(string s)
-			{
-				alias processURLs next;
-
-				if (!needsWrap)
-					return next(s);
-
-				auto segments = s.segmentByWhitespace();
-				foreach (ref segment; segments)
-				{
-					if (segment.length > forceWrapThreshold)
-					{
-						html.put(`<span class="forcewrap">`);
-						foreach (i; 0..segment.length/forceWrapChunkSize)
-							html.put(segment[i*forceWrapChunkSize..(i+1)*forceWrapChunkSize], `</span><span class="forcewrap">`);
-						html.put(segment[$/forceWrapChunkSize*forceWrapChunkSize..$], `</span>`);
-					}
-					else
-					next(segment);
-				}
-			}
-
 			if (paragraph.quotePrefix.length)
 				html.put(`<span class="forum-quote-prefix">`), html.putEncodedEntities(paragraph.quotePrefix), html.put(`</span>`);
-			processWrap(paragraph.text);
+			processURLs(paragraph.text);
 			html.put('\n');
 		}
 		for (; quoteLevel; quoteLevel--)
