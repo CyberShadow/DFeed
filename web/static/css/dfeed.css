@@ -494,6 +494,12 @@ tr.mini-post-info-cell > td {
 	margin-top: 10px;
 }
 
+/* Keyboard navigation */
+
+.post.focused {
+	border-left-color: #89F;
+}
+
 /*************** Threaded group view ***************/
 
 .forum-table > tbody > tr > td.group-threads-cell {

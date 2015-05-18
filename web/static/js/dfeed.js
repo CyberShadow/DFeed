@@ -279,6 +279,8 @@ function getSelectables() {
 		return $('#forum-index > tbody > tr.group-row');
 	} else if ($('#group-index').length) {
 		return $('#group-index > tbody > tr.thread-row');
+	} else if ($('.post').length) {
+		return $('.post');
 	} else {
 		return [];
 	}
@@ -297,6 +299,14 @@ function getSelectableLink(row) {
 		return row.find('a.postlink');
 	} else {
 		return row.find('a').first();
+	}
+}
+
+function getReplyLink() {
+	if ($('#group-split').length) {
+		return $('a.replylink');
+	} else {
+		return $('.focused a.replylink');
 	}
 }
 
@@ -394,7 +404,7 @@ function onKeyPress(e) {
 			}
 			case 'r':
 			{
-				var replyLink = $('a.replylink');
+				var replyLink = getReplyLink();
 				if (replyLink.length) {
 					document.location.href = replyLink.attr('href');
 					return false;
