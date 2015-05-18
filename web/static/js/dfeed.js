@@ -279,6 +279,8 @@ function getSelectables() {
 		return $('#forum-index > tbody > tr.group-row');
 	} else if ($('#group-index').length) {
 		return $('#group-index > tbody > tr.thread-row');
+	} else if ($('#group-index-threaded').length) {
+		return $('#group-index-threaded tr.thread-post-row');
 	} else if ($('#thread-index').length) {
 		return $('#thread-index tr.thread-post-row');
 	} else if ($('.post').length) {
