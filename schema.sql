@@ -69,3 +69,6 @@ CREATE UNIQUE INDEX [UserSetting] on [UserSettings] ( [User], [Name] );
 -- Index `GroupArtNum` on table `Groups`
 CREATE INDEX [GroupArtNum] ON [Groups] ( [Group], [ArtNum] );
 
+-- Index `PostTime` on table `Posts`
+CREATE INDEX [PostTime] ON [Posts] ( [Time] DESC );
+
