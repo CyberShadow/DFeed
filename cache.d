@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -42,6 +42,7 @@ struct Cached(T)
 		{
 			cachedData = dataSource;
 			cacheVersion = dbVersion;
+			debug(NOCACHE) cacheVersion = -1;
 		}
 		return cachedData;
 	}
