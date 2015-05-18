@@ -112,6 +112,22 @@ class Rfc850Post : Post
 		headers["User-Agent"] = "DFeed";
 	}
 
+	string originalText;
+
+	void setText(string text)
+	{
+		originalText = text;
+		msg.setText(text);
+	}
+
+	string getText()
+	{
+		if (originalText !is null)
+			return originalText;
+		else
+			return msg.content;
+	}
+
 	override void formatForIRC(void delegate(string) handler)
 	{
 		if (isImportant() && url && !shortURL)

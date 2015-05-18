@@ -1805,7 +1805,7 @@ class WebUI
 			`<label for="postform-subject">Subject:</label>`
 			`<input id="postform-subject" name="subject" size="80" value="`), html.putEncodedEntities(postTemplate.subject), html.put(`">`
 			`<label for="postform-text">Message:</label>`
-			`<textarea id="postform-text" name="text" rows="25" cols="80" autofocus="autofocus">`), html.putEncodedEntities(postTemplate.content), html.put(`</textarea>`);
+			`<textarea id="postform-text" name="text" rows="25" cols="80" autofocus="autofocus">`), html.putEncodedEntities(postTemplate.getText()), html.put(`</textarea>`);
 
 		if (showCaptcha)
 			html.put(`<div id="postform-captcha">`, theCaptcha.getChallengeHtml(error.captchaError), `</div>`);
