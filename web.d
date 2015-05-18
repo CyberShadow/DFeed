@@ -836,20 +836,23 @@ class WebUI
 		return null;
 	}
 
-	string summarizeFrameThread(PostInfo* info, string infoText)
+	void summarizeFrameThread(PostInfo* info, string infoText)
 	{
 		if (info)
 			with (*info)
-				return
-					`<a target="_top" class="forum-postsummary-gravatar" href="` ~ encodeEntities(idToUrl(id)) ~ `">`
-						`<img alt="Gravatar" class="post-gravatar" src="http://www.gravatar.com/avatar/` ~ getGravatarHash(authorEmailCache(id, getAuthorEmail(id))) ~ `?d=identicon">`
+			{
+				html.put(
+					`<a target="_top" class="forum-postsummary-gravatar" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`">`
+						`<img alt="Gravatar" class="post-gravatar" src="http://www.gravatar.com/avatar/`, getGravatarHash(authorEmailCache(id, getAuthorEmail(id))), `?d=identicon">`
 					`</a>`
-					`<a target="_top" class="forum-postsummary-subject ` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `" href="` ~ encodeEntities(idToUrl(id)) ~ `">` ~ encodeEntities(subject) ~ `</a><br>` ~
-					`<div class="forum-postsummary-info">` ~ infoText ~ `</div>`
-					`by <span class="forum-postsummary-author">` ~ encodeEntities(author) ~ `</span>`
-				;
+					`<a target="_top" class="forum-postsummary-subject `, (user.isRead(rowid) ? "forum-read" : "forum-unread"), `" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`">`), html.putEncodedEntities(subject), html.put(`</a><br>`
+					`<div class="forum-postsummary-info">`, infoText, `</div>`
+					`by <span class="forum-postsummary-author">`), html.putEncodedEntities(author), html.put(`</span>`
+				);
+				return;
+			}
 
-		return `<div class="forum-no-data">-</div>`;
+		html.put(`<div class="forum-no-data">-</div>`);
 	}
 
 	void discussionFrameAnnouncements()
@@ -863,9 +866,7 @@ class WebUI
 		foreach (row; latestAnnouncements)
 		{
 			auto info = getPostInfo(row);
-			html.put(
-				`<tr><td>`, summarizeFrameThread(info, summarizeTime(info.time)), `</td></tr>`
-			);
+			html.put(`<tr><td>`), summarizeFrameThread(info, summarizeTime(info.time)), html.put(`</td></tr>`);
 		}
 		html.put(`</tbody></table>`);
 	}
@@ -876,7 +877,7 @@ class WebUI
 
 		html.put(`<table class="forum-table"><thead><tr><th><a target="_top" href="/">Active discussions</a></th></tr></thead><tbody>`);
 		foreach (row; activeDiscussions)
-			html.put(`<tr><td>`, summarizeFrameThread(getPostInfo(row.id), "%d posts".format(row.postCount)), `</td></tr>`);
+			html.put(`<tr><td>`), summarizeFrameThread(getPostInfo(row.id), "%d posts".format(row.postCount)), html.put(`</td></tr>`);
 		html.put(`</tbody></table>`);
 	}
 
@@ -1780,7 +1781,7 @@ class WebUI
 		html.put(`<form action="/send" method="post" class="forum-form post-form" id="postform">`);
 
 		if (error.message)
-			html.put(`<div class="form-error">` ~ encodeEntities(error.message) ~ `</div>`);
+			html.put(`<div class="form-error">`), html.putEncodedEntities(error.message), html.put(`</div>`);
 
 		if (postTemplate.reply)
 			html.put(`<input type="hidden" name="parent" value="`), html.putEncodedEntities(postTemplate.parentID), html.put(`">`);
