@@ -505,6 +505,21 @@ a > .forcewrap {
 	border-left-color: #89F;
 }
 
+.linknav:after {
+	content: "[" attr(data-num) "]";
+	vertical-align: top;
+	font-size: 75%;
+/*
+	position: absolute;
+	margin-left: -1.5em;
+	display: inline-block;
+	background-color: #FEA;
+	border: 1px solid #DC8;
+*/
+}
+
+.linknav:after
+
 /*************** Threaded group view ***************/
 
 .forum-table > tbody > tr > td.group-threads-cell {

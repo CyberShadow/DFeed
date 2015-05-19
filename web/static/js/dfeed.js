@@ -131,6 +131,7 @@ function showPost(postHtml) {
 		.html(postHtml)
 		.removeClass('group-split-message-none');
 	updateSize();
+	addLinkNavigation();
 }
 
 function showText(text) {
@@ -266,6 +267,9 @@ function focusRow(row, withMargin) {
 	$('.focused').removeClass('focused');
 	row.addClass('focused');
 	scrollIntoView(row[0], getSelectablesContainer(), withMargin);
+
+	if ($('#group-split').length == 0)
+		addLinkNavigation();
 }
 
 function selectRow(row) {
@@ -287,6 +291,16 @@ function getSelectables() {
 		return $('.post');
 	} else {
 		return [];
+	}
+}
+
+function getSelectedPost() {
+	if ($('.split-post').length) {
+		return $('.split-post pre.post-text');
+	} else if ($('.focused.post').length) {
+		return $('.focused.post pre.post-text');
+	} else {
+		return null;
 	}
 }
 
@@ -372,6 +386,32 @@ function markUnread() {
 	return false;
 }
 
+function addLinkNavigation() {
+	$post = getSelectedPost();
+	if (!$post)
+		return;
+
+	$('.linknav').remove();
+	var counter = 1;
+	$post.find('a').each(function() {
+		if (counter > 9) return;
+		$(this).after(
+			$('<span>')
+			.addClass('linknav')
+			.attr('data-num', counter++)
+		);
+	});
+}
+
+function followLink(n) {
+	var url = $('.linknav[data-num='+n+']').prev('a').attr('href');
+	if (url) {
+		window.open(url, '_blank');
+		return true;
+	}
+	return false;
+}
+
 var keyboardHelp =
 	'<table id="keyboardhelp">' +
 		'<tr><td><kbd>j</kbd> / <kbd>Ctrl</kbd><kbd title="Down Arrow">&darr;</kbd></td><td>Select next message</td></tr>' +
@@ -417,6 +457,16 @@ function onKeyPress(e) {
 			}
 			case 'u':
 				return !markUnread();
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				return !followLink(c);
 		}
 	}
 
