@@ -362,7 +362,7 @@ function selectFocused() {
 function markUnread() {
 	var focused = $('.focused');
 	if (focused.length && focused.find('.forum-read').length > 0) {
-		var path = focused.find('a.postlink').attr('href').replace("/post/", "/mark-unread/");
+		var path = focused.find('a.postlink, a.permalink').attr('href').replace("/post/", "/mark-unread/");
 		$.get(path, function(result) {
 			if (result == "OK")
 				focused.find('.forum-read').removeClass('forum-read').addClass('forum-unread');
