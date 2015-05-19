@@ -4,6 +4,6 @@
 [submodule "dcaptcha"]
 	path = dcaptcha
 	url = https://github.com/CyberShadow/dcaptcha
-[submodule "dlang.org"]
-	path = dlang.org
+[submodule "web/static/dlang.org"]
+	path = web/static/dlang.org
 	url = https://github.com/D-Programming-Language/dlang.org
