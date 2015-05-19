@@ -34,6 +34,11 @@ $(document).ready(function() {
 	} else {
 		$(document).keypress(onKeyPress);
 	}
+
+	if ('localStorage' in window && localStorage.getItem('usingKeyNav')) {
+		initKeyNav();
+		localStorage.removeItem('usingKeyNav');
+	}
 });
 
 function toggleNav() {
@@ -386,6 +391,13 @@ function markUnread() {
 	return false;
 }
 
+// Show keyboard navigation UI immediately if we got to this page via keynav
+function initKeyNav() {
+	addLinkNavigation();
+	if ($('.focused').length == 0)
+		focusNext(+1);
+}
+
 function addLinkNavigation() {
 	$post = getSelectedPost();
 	if (!$post)
@@ -424,6 +436,8 @@ var keyboardHelp =
 
 function onKeyPress(e) {
 	var result = onKeyPressImpl(e);
+	if (result && 'localStorage' in window)
+		localStorage.setItem('usingKeyNav', 'true');
 	return !result; // event handlers return "false" if the event was handled
 }
 
