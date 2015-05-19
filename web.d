@@ -566,10 +566,6 @@ class WebUI
 					enforce(path.length > 2);
 					return serveFile(response, path[2..$].join("/"));
 
-				case "dlang.org":
-					enforce(path.length > 1);
-					return response.serveFile(path[1..$].join("/"), "dlang.org/");
-
 				default:
 					return response.writeError(HttpStatusCode.NotFound);
 			}
