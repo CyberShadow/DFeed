@@ -146,7 +146,13 @@ void main()
 	f.writeln("baseURL = http://lists.puremagic.com/pipermail/");
 	auto lists = groupHierarchy.map!(set => set.groups).joiner.filter!(group => group.mlOnly).map!(group => group.mlName).filter!(a=>a).array;
 	f.writeln("lists = ", lists.join(","));
+	f.writeln();
 	f.writeln("[shadowLists]");
 	foreach (group; groupHierarchy.map!(set => set.groups).joiner.filter!(group => group.mlName && !group.mlOnly))
-		f.writefln("%s = %s", group.mlName, group.name);
+	{
+		auto name = group.mlName.replace(".", "-").toLower();
+		f.writefln("%s.list = %s" , name, group.mlName);
+		f.writefln("%s.group = %s", name, group.name);
+		f.writeln();
+	}
 }

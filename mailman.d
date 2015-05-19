@@ -43,11 +43,16 @@ class Mailman : NewsSource
 {
 	int maxConnections = 5;
 
+	struct ShadowList
+	{
+		string list, group;
+	}
+
 	struct Config
 	{
 		string baseURL;
 		string lists;
-		string[string] shadowLists;
+		ShadowList[string] shadowLists;
 	}
 	Config config;
 
@@ -122,7 +127,7 @@ private:
 	void downloadList(string list)
 	{
 		if (stopping) return;
-		getURL(config.baseURL ~ list ~ "/",
+		getURL(config.baseURL ~ list.toLower() ~ "/",
 			(string fn, bool fresh)
 			{
 				log("Got list index: " ~ list);
@@ -145,7 +150,7 @@ private:
 	void downloadFile(string list, string fn)
 	{
 		if (stopping) return;
-		auto url = config.baseURL ~ list ~ "/" ~ fn;
+		auto url = config.baseURL ~ list.toLower() ~ "/" ~ fn;
 		getURL(url,
 			(string datafn, bool fresh)
 			{
