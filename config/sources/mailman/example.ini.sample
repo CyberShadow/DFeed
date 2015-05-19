@@ -1,0 +1,3 @@
+# Mailman HTTP archives.
+baseURL = http://lists.example.com/pipermail/
+lists = general,announcements

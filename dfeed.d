@@ -32,6 +32,7 @@ import stackoverflow;
 import feed;
 import reddit;
 import socket;
+import mailman;
 
 // Sinks
 import ircsink;
@@ -49,6 +50,7 @@ void main()
 	createServices!StackOverflow("sources/stackoverflow");
 	createServices!Reddit       ("sources/reddit");
 	createServices!SocketSource ("sources/socket");
+	createServices!Mailman      ("sources/mailman");
 
 	// Create sinks
 	createServices!IrcSink("sinks/irc");

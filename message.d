@@ -84,6 +84,16 @@ class Rfc850Post : Post
 				author = author[0 .. $ - suffix.length];
 		}
 
+		if ("X-DFeed-List" in headers && !xref.length)
+			xref = [Xref(headers["X-DFeed-List"])];
+
+		if ("List-ID" in headers && subject.startsWith("[") && xref.length == 1)
+		{
+			auto p = subject.indexOf("] ");
+			if (p >= 0 && !icmp(subject[1..p], xref[0].group))
+				subject = subject[p+2..$];
+		}
+
 		if (subject.startsWith("[Issue "))
 		{
 			auto urlBase = headers.get("X-Bugzilla-URL", "http://d.puremagic.com/issues/");
