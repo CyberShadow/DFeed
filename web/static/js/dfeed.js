@@ -423,6 +423,13 @@ var keyboardHelp =
 	'</table>';
 
 function onKeyPress(e) {
+	var result = onKeyPressImpl(e);
+	return !result; // event handlers return "false" if the event was handled
+}
+
+// Return true if the event was handled,
+// and false if it wasn't and it should be processed by the browser.
+function onKeyPressImpl(e) {
 	var c = String.fromCharCode(e.which);
 	if ($.browser.webkit) c = c.toLowerCase();
 	var pageSize = $('.group-threads').height() / $('.thread-post-row').eq(0).height();
@@ -430,33 +437,33 @@ function onKeyPress(e) {
 	if (!e.ctrlKey && !e.shiftKey && !e.altKey) {
 		switch (c) {
 			case 'j':
-				return !focusNext(+1);
+				return focusNext(+1);
 			case 'k':
-				return !focusNext(-1);
+				return focusNext(-1);
 			case '\x0D':
-				return !selectFocused();
+				return selectFocused();
 			case ' ':
 			{
 				var p = $('.post-body');
-				if (!p.length) return true;
+				if (!p.length) return false;
 				var dest = p.scrollTop()+p.height();
 				if (dest < p[0].scrollHeight) {
 					p.animate({scrollTop : dest}, 200);
-					return false;
+					return true;
 				}
-				return !(focusNext(+1, true) && selectFocused());
+				return focusNext(+1, true) && selectFocused();
 			}
 			case 'r':
 			{
 				var replyLink = getReplyLink();
 				if (replyLink.length) {
 					document.location.href = replyLink.attr('href');
-					return false;
+					return true;
 				}
-				return true;
+				return false;
 			}
 			case 'u':
-				return !markUnread();
+				return markUnread();
 			case '1':
 			case '2':
 			case '3':
@@ -466,39 +473,39 @@ function onKeyPress(e) {
 			case '7':
 			case '8':
 			case '9':
-				return !followLink(c);
+				return followLink(c);
 		}
 	}
 
 	if (!e.ctrlKey && e.shiftKey && !e.altKey) {
 		switch (c) {
 			case 'J':
-				return !(focusNext(+1) && selectFocused());
+				return focusNext(+1) && selectFocused();
 			case 'K':
-				return !(focusNext(-1) && selectFocused());
+				return focusNext(-1) && selectFocused();
 		}
 	}
 
 	if (e.ctrlKey && !e.shiftKey && !e.altKey) {
 		switch (e.keyCode) {
 			case 13: // ctrl+enter == enter
-				return !selectFocused();
+				return selectFocused();
 			case 38: // up arrow
-				return !focusNext(-1);
+				return focusNext(-1);
 			case 40: // down arrow
-				return !focusNext(+1);
+				return focusNext(+1);
 			case 33: // page up
-				return !focusNext(-pageSize);
+				return focusNext(-pageSize);
 			case 34: // page down
-				return !focusNext(+pageSize);
+				return focusNext(+pageSize);
 			case 36: // home
-				return !focusNext(-Infinity);
+				return focusNext(-Infinity);
 			case 35: // end
-				return !focusNext(+Infinity);
+				return focusNext(+Infinity);
 		}
 	}
 
-	return true; // event handlers return "false" if the event was handled
+	return false;
 }
 
 /* These are linked to in responsive horizontal-split post footer */
