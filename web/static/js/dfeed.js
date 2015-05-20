@@ -437,7 +437,8 @@ function followLink(n) {
 }
 
 var keyboardHelp =
-	'<table id="keyboardhelp">' +
+	'<table class="keyboardhelp">' +
+		'<tr><th colspan="2">Keyboard shortcuts</th></tr>' +
 		'<tr><td><kbd>j</kbd> / <kbd>Ctrl</kbd><kbd title="Down Arrow">&darr;</kbd></td><td>Select next message</td></tr>' +
 		'<tr><td><kbd>k</kbd> / <kbd>Ctrl</kbd><kbd title="Up Arrow">&uarr;</kbd></td><td>Select previous message</td></tr>' +
 		'<tr><td><kbd title="Enter / Return">&crarr;</kbd></td><td>Open selected message</td></tr>' +
@@ -446,6 +447,20 @@ var keyboardHelp =
 		'<tr><td><kbd>u</kbd></td><td>Mark as unread</td></tr>' +
 		'<tr><td><kbd title="Space Bar" style="width: 70px">&nbsp;</kbd></td><td>Scroll message / Open next unread message</td></tr>' +
 	'</table>';
+
+function showHelp() {
+	$('<div class="keyboardhelp-popup">')
+		.html(keyboardHelp)
+		.click(closeHelp)
+		.appendTo($('body'))
+		.hide()
+		.fadeIn();
+	return true;
+}
+
+function closeHelp() {
+	$('.keyboardhelp-popup').fadeOut(function() { $('.keyboardhelp-popup').remove(); });
+}
 
 function onKeyPress(e) {
 	var result = onKeyPressImpl(e);
@@ -457,6 +472,11 @@ function onKeyPress(e) {
 // Return true if the event was handled,
 // and false if it wasn't and it should be processed by the browser.
 function onKeyPressImpl(e) {
+	if ($('.keyboardhelp-popup').length) {
+		closeHelp();
+		return true;
+	}
+
 	var c = String.fromCharCode(e.which);
 	if ($.browser.webkit) c = c.toLowerCase();
 	var pageSize = $('.group-threads').height() / $('.thread-post-row').eq(0).height();
@@ -517,6 +537,8 @@ function onKeyPressImpl(e) {
 				return focusNext(+1) && selectFocused();
 			case 'K':
 				return focusNext(-1) && selectFocused();
+			case '?':
+				return showHelp();
 		}
 	}
 
