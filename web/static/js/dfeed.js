@@ -441,6 +441,7 @@ var keyboardHelp =
 		'<tr><td><kbd>j</kbd> / <kbd>Ctrl</kbd><kbd title="Down Arrow">&darr;</kbd></td><td>Select next message</td></tr>' +
 		'<tr><td><kbd>k</kbd> / <kbd>Ctrl</kbd><kbd title="Up Arrow">&uarr;</kbd></td><td>Select previous message</td></tr>' +
 		'<tr><td><kbd title="Enter / Return">&crarr;</kbd></td><td>Open selected message</td></tr>' +
+		'<tr><td><kbd>n</kbd></td><td>Create thread</td></tr>' +
 		'<tr><td><kbd>r</kbd></td><td>Reply</td></tr>' +
 		'<tr><td><kbd>u</kbd></td><td>Mark as unread</td></tr>' +
 		'<tr><td><kbd title="Space Bar" style="width: 70px">&nbsp;</kbd></td><td>Scroll message / Open next unread message</td></tr>' +
@@ -478,6 +479,13 @@ function onKeyPressImpl(e) {
 					return true;
 				}
 				return focusNext(+1, true) && selectFocused();
+			}
+			case 'n':
+			{
+				var $form = $('form[name=new-post-form]');
+				console.log($form);
+				$form.submit();
+				return $form.length > 0;
 			}
 			case 'r':
 			{
