@@ -1871,43 +1871,43 @@ class WebUI
 		PostError error = process.error;
 		switch (process.status)
 		{
-			case PostingStatus.SpamCheck:
+			case PostingStatus.spamCheck:
 				discussionPostStatusMessage("Checking for spam...");
 				refresh = true;
 				return;
-			case PostingStatus.Captcha:
+			case PostingStatus.captcha:
 				discussionPostStatusMessage("Verifying reCAPTCHA...");
 				refresh = true;
 				return;
-			case PostingStatus.Connecting:
+			case PostingStatus.connecting:
 				discussionPostStatusMessage("Connecting to NNTP server...");
 				refresh = true;
 				return;
-			case PostingStatus.Posting:
+			case PostingStatus.posting:
 				discussionPostStatusMessage("Sending message to NNTP server...");
 				refresh = true;
 				return;
-			case PostingStatus.Waiting:
+			case PostingStatus.waiting:
 				discussionPostStatusMessage("Message sent.<br>Waiting for message announcement...");
 				refresh = true;
 				return;
 
-			case PostingStatus.Posted:
+			case PostingStatus.posted:
 				redirectTo = idToUrl(process.post.id);
 				discussionPostStatusMessage(`Message posted! Redirecting...`);
 				refresh = true;
 				return;
 
-			case PostingStatus.CaptchaFailed:
+			case PostingStatus.captchaFailed:
 				discussionPostForm(process.post, true, error);
 				form = true;
 				return;
-			case PostingStatus.SpamCheckFailed:
+			case PostingStatus.spamCheckFailed:
 				error.message = format("%s. Please solve a CAPTCHA to continue.", error.message);
 				discussionPostForm(process.post, true, error);
 				form = true;
 				return;
-			case PostingStatus.NntpError:
+			case PostingStatus.nntpError:
 				discussionPostForm(process.post, false, error);
 				form = true;
 				return;

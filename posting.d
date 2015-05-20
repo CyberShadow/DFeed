@@ -34,19 +34,19 @@ import spam;
 
 enum PostingStatus
 {
-	None,
-	Captcha,
-	SpamCheck,
-	Connecting,
-	Posting,
-	Waiting,
-	Posted,
+	none,
+	captcha,
+	spamCheck,
+	connecting,
+	posting,
+	waiting,
+	posted,
 
-	CaptchaFailed,
-	SpamCheckFailed,
-	NntpError,
+	captchaFailed,
+	spamCheckFailed,
+	nntpError,
 
-	Redirect,
+	redirect,
 }
 
 struct PostError
@@ -93,7 +93,7 @@ final class PostProcess
 			string original = postsByContent[allContent];
 			log("Duplicate post, redirecting to " ~ original);
 			pid = original;
-			status = PostingStatus.Redirect;
+			status = PostingStatus.redirect;
 			return;
 		}
 		else
@@ -153,13 +153,13 @@ final class PostProcess
 		if (captchaPresent)
 		{
 			log("Checking CAPTCHA");
-			status = PostingStatus.Captcha;
+			status = PostingStatus.captcha;
 			theCaptcha.verify(vars, ip, &onCaptchaResult);
 		}
 		else
 		{
 			log("Checking for spam");
-			status = PostingStatus.SpamCheck;
+			status = PostingStatus.spamCheck;
 			spamCheck(this, &onSpamResult);
 		}
 	}
@@ -202,7 +202,7 @@ private:
 	{
 		if (!ok)
 		{
-			this.status = PostingStatus.CaptchaFailed;
+			this.status = PostingStatus.captchaFailed;
 			this.error = PostError("CAPTCHA error: " ~ errorMessage, errorData);
 			log("CAPTCHA failed: " ~ errorMessage);
 			if (errorData) log("CAPTCHA error data: " ~ errorData.toString());
@@ -218,7 +218,7 @@ private:
 	{
 		if (!ok)
 		{
-			this.status = PostingStatus.SpamCheckFailed;
+			this.status = PostingStatus.spamCheckFailed;
 			this.error = PostError(errorMessage);
 			log("Spam check failed: " ~ errorMessage);
 			log.close();
@@ -235,7 +235,7 @@ private:
 
 	void postMessage()
 	{
-		status = PostingStatus.Connecting;
+		status = PostingStatus.connecting;
 
 		nntp = new NntpClient(log);
 		nntp.handleDisconnect = &onDisconnect;
@@ -244,7 +244,7 @@ private:
 
 	void onDisconnect(string reason, DisconnectType type)
 	{
-		this.status = PostingStatus.NntpError;
+		this.status = PostingStatus.nntpError;
 		this.error = PostError("NNTP connection error: " ~ reason);
 		log("NNTP connection error: " ~ reason);
 		log.close();
@@ -252,7 +252,7 @@ private:
 
 	void onError(string error)
 	{
-		this.status = PostingStatus.NntpError;
+		this.status = PostingStatus.nntpError;
 		this.error = PostError("NNTP error: " ~ error);
 		nntp.handleDisconnect = null;
 		nntp.disconnect();
@@ -262,14 +262,14 @@ private:
 
 	void onConnect()
 	{
-		this.status = PostingStatus.Posting;
+		this.status = PostingStatus.posting;
 		nntp.postMessage(post.message.splitAsciiLines(), &onPosted, &onError);
 	}
 
 	void onPosted()
 	{
-		if (this.status == PostingStatus.Posting)
-			this.status = PostingStatus.Waiting;
+		if (this.status == PostingStatus.posting)
+			this.status = PostingStatus.waiting;
 		nntp.handleDisconnect = null;
 		nntp.disconnect();
 		log("Message posted successfully.");
@@ -293,7 +293,7 @@ final class PostingNotifySink : NewsSink
 				auto pid = id.split("@")[0][1..$];
 				if (pid in postProcesses)
 				{
-					postProcesses[pid].status = PostingStatus.Posted;
+					postProcesses[pid].status = PostingStatus.posted;
 					postProcesses[pid].post.url = rfc850post.url;
 				}
 			}
