@@ -248,6 +248,12 @@ th .forum-read:visited {
 	margin-top: 0.75em !important;
 	display: block;
 }
+.post-form textarea {
+	display: block;
+}
+.forum-form input[type=submit] {
+	display: inline-block;
+}
 
 .form-error {
 	border: 2px dotted red;

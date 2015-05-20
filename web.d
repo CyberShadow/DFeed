@@ -390,7 +390,7 @@ class WebUI
 					title = "Posting to " ~ group;
 					breadcrumb1 = `<a href="/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>`;
 					breadcrumb2 = `<a href="/newpost/`~encodeEntities(group)~`">New thread</a>`;
-					if (discussionPostForm(Rfc850Post.newPostTemplate(group)))
+					if (discussionPostForm(newPostDraft(group)))
 						bodyClass ~= " formdoc";
 					break;
 				}
@@ -402,16 +402,16 @@ class WebUI
 					title = `Replying to "` ~ post.subject ~ `"`; // "
 					breadcrumb1 = `<a href="` ~ encodeEntities(idToUrl(post.id)) ~ `">` ~ encodeEntities(post.subject) ~ `</a>`;
 					breadcrumb2 = `<a href="/reply/`~pathX~`">Post reply</a>`;
-					if (discussionPostForm(post.replyTemplate()))
+					if (discussionPostForm(newReplyDraft(post)))
 						bodyClass = "formdoc";
 					break;
 				}
 				case "send":
 				{
 					auto postVars = request.decodePostData();
-					auto process = discussionSend(postVars, cast(string[string])request.headers);
-					if (process)
-						return response.redirect("/poststatus/" ~ process.pid);
+					auto processID = discussionSend(postVars, cast(string[string])request.headers);
+					if (processID)
+						return response.redirect("/poststatus/" ~ processID);
 
 					title = breadcrumb1 = `Posting error`;
 					bodyClass ~= " formdoc";
@@ -1350,6 +1350,16 @@ class WebUI
 		return email.toLower().strip().md5Of().toHexString!(LetterCase.lower)().idup; // Issue 9279
 	}
 
+	/// A unique ID used to recognize both logged-in and anonymous users.
+	string getUserID()
+	{
+		if ("id" !in user)
+			user["id"] = randomString();
+		return user["id"];
+	}
+
+	/// Secret token used for CSRF protection.
+	/// Visible in URLs.
 	string getUserSecret()
 	{
 		if ("secret" !in user)
@@ -1757,11 +1767,63 @@ class WebUI
 
 	// ***********************************************************************
 
-	bool discussionPostForm(Rfc850Post postTemplate, bool showCaptcha=false, PostError error=PostError.init)
+	void createDraft(string pid, string[string] serverVars)
 	{
-		auto info = getGroupInfo(postTemplate.xref[0].group);
+		query!"INSERT INTO [Drafts] ([ID], [UserID], [ServerVars], [Time]) VALUES (?, ?, ?, ?)".exec(pid, getUserID(), serverVars.toJson, Clock.currTime.stdTime);
+	}
+
+	PostDraft getDraft(string pid)
+	{
+		string[string] parse(string json) { return json ? json.jsonParse!(string[string]) : null; }
+		foreach (string clientVars, string serverVars; query!"SELECT [ClientVars], [ServerVars] FROM [Drafts] WHERE [ID] == ?".iterate(pid))
+			return PostDraft(parse(clientVars), parse(serverVars));
+		throw new Exception("Can't find this message draft");
+	}
+
+	void saveDraft(string[string] clientVars)
+	{
+		auto pid = clientVars.get("pid", null);
+		query!"UPDATE [Drafts] SET [ClientVars]=?, [Time]=? WHERE [ID] == ?".exec(clientVars.toJson, Clock.currTime.stdTime, pid);
+	}
+
+	PostDraft newPostDraft(string where)
+	{
+		auto pid = randomString();
+		auto draft = PostDraft([
+			"pid" : pid,
+			"name" : user.get("name", null),
+			"email" : user.get("email", null),
+		], [
+			"where" : where,
+		]);
+		createDraft(pid, draft.serverVars);
+		return draft;
+	}
+
+	PostDraft newReplyDraft(Rfc850Post post)
+	{
+		auto postTemplate = post.replyTemplate();
+		auto pid = randomString();
+		auto draft = PostDraft([
+			"pid" : pid,
+			"name" : user.get("name", null),
+			"email" : user.get("email", null),
+			"subject" : postTemplate.subject,
+			"text" : postTemplate.content,
+		], [
+			"where" : post.where,
+			"parent" : post.id,
+		]);
+		createDraft(pid, draft.serverVars);
+		return draft;
+	}
+
+	bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error=PostError.init)
+	{
+		auto where = draft.serverVars.get("where", null);
+		auto info = getGroupInfo(where);
 		if (!info)
-			throw new Exception("Unknown group");
+			throw new Exception("Unknown group " ~ where);
 		if (info.postMessage)
 		{
 			html.put(
@@ -1779,81 +1841,101 @@ class WebUI
 		if (error.message)
 			html.put(`<div class="form-error">`), html.putEncodedEntities(error.message), html.put(`</div>`);
 
-		if (postTemplate.reply)
-			html.put(`<input type="hidden" name="parent" value="`), html.putEncodedEntities(postTemplate.parentID), html.put(`">`);
+		auto parent = draft.serverVars.get("parent", null);
+		if (parent)
+			html.put(`<input type="hidden" name="parent" value="`), html.putEncodedEntities(parent), html.put(`">`);
 		else
-			html.put(`<input type="hidden" name="where" value="`), html.putEncodedEntities(postTemplate.where), html.put(`">`);
+			html.put(`<input type="hidden" name="where" value="`), html.putEncodedEntities(where), html.put(`">`);
 
 		html.put(
 			`<div id="postform-info">`
-				`Posting to <b>`), html.putEncodedEntities(postTemplate.where), html.put(`</b>`,
-				(postTemplate.reply
-					? ` in reply to ` ~ postLink(getPostInfo(postTemplate.parentID))
-					: getGroupInfo(postTemplate.where)
-						? `:<br>(<b>` ~ encodeEntities(getGroupInfo(postTemplate.where).description) ~ `</b>)`
+				`Posting to <b>`), html.putEncodedEntities(info.name), html.put(`</b>`,
+				(parent
+					? ` in reply to ` ~ postLink(getPostInfo(parent))
+					: info
+						? `:<br>(<b>` ~ encodeEntities(info.description) ~ `</b>)`
 						: ``),
 			`</div>`
 			`<input type="hidden" name="secret" value="`, getUserSecret(), `">`
+			`<input type="hidden" name="pid" value="`), html.putEncodedEntities(draft.clientVars.get("pid", null)), html.put(`">`
 			`<label for="postform-name">Your name:</label>`
-			`<input id="postform-name" name="name" size="40" value="`), html.putEncodedEntities(user.get("name", "")), html.put(`">`
+			`<input id="postform-name" name="name" size="40" value="`), html.putEncodedEntities(draft.clientVars.get("name", null)), html.put(`">`
 			`<label for="postform-email">Your email address (<a href="/help#email">?</a>):</label>`
-			`<input id="postform-email" name="email" size="40" value="`), html.putEncodedEntities(user.get("email", "")), html.put(`">`
+			`<input id="postform-email" name="email" size="40" value="`), html.putEncodedEntities(draft.clientVars.get("email", null)), html.put(`">`
 			`<label for="postform-subject">Subject:</label>`
-			`<input id="postform-subject" name="subject" size="80" value="`), html.putEncodedEntities(postTemplate.subject), html.put(`">`
+			`<input id="postform-subject" name="subject" size="80" value="`), html.putEncodedEntities(draft.clientVars.get("subject", null)), html.put(`">`
 			`<label for="postform-text">Message:</label>`
-			`<textarea id="postform-text" name="text" rows="25" cols="80" autofocus="autofocus">`), html.putEncodedEntities(postTemplate.getText()), html.put(`</textarea>`);
+			`<textarea id="postform-text" name="text" rows="25" cols="80" autofocus="autofocus">`), html.putEncodedEntities(draft.clientVars.get("text", null)), html.put(`</textarea>`);
 
 		if (showCaptcha)
 			html.put(`<div id="postform-captcha">`, theCaptcha.getChallengeHtml(error.captchaError), `</div>`);
 
 		html.put(
-			`<input type="submit" value="Send">`
+			`<input name="action-save" type="submit" value="Save and preview"><input name="action-send" type="submit" value="Send">`
 		`</form>`);
 		return true;
 	}
 
 	SysTime[string] lastPostAttempt;
 
-	PostProcess discussionSend(string[string] vars, string[string] headers)
+	string discussionSend(string[string] clientVars, string[string] headers)
 	{
-		Rfc850Post post = PostProcess.createPost(vars, headers, ip, id => getPost(id));
+		auto draft = getDraft(clientVars.get("pid", null));
 
 		try
 		{
-			if (vars.get("secret", "") != getUserSecret())
+			if (clientVars.get("secret", "") != getUserSecret())
 				throw new Exception("XSRF secret verification failed. Are your cookies enabled?");
 
-			user["name"] = aaGet(vars, "name");
-			user["email"] = aaGet(vars, "email");
+			saveDraft(clientVars);
+			draft.clientVars = clientVars;
+			Rfc850Post post = PostProcess.createPost(draft, headers, ip, id => getPost(id));
 
-			auto now = Clock.currTime();
-
-			if (ip in lastPostAttempt && now - lastPostAttempt[ip] < 15.seconds)
+			if ("action-save" in clientVars)
 			{
-				discussionPostForm(post, false, PostError("Your last post was less than 15 seconds ago. Please wait a few seconds before trying again."));
+				discussionPostForm(draft);
+				// Show preview
+				formatPost(post, null);
 				return null;
 			}
-
-			bool captchaPresent = theCaptcha.isPresent(vars);
-			if (!captchaPresent)
+			else
+			if ("action-send" in clientVars)
 			{
-				if (ip in lastPostAttempt && now - lastPostAttempt[ip] < 1.minutes)
+				user["name"] = aaGet(clientVars, "name");
+				user["email"] = aaGet(clientVars, "email");
+
+				auto now = Clock.currTime();
+
+				if (ip in lastPostAttempt && now - lastPostAttempt[ip] < 15.seconds)
 				{
-					discussionPostForm(post, true, PostError("Your last post was less than a minute ago. Please solve a CAPTCHA to continue."));
+					discussionPostForm(draft, false, PostError("Your last post was less than 15 seconds ago. Please wait a few seconds before trying again."));
 					return null;
 				}
-			}
 
-			auto process = new PostProcess(post, vars, ip, headers);
-			process.run();
-			lastPostAttempt[ip] = Clock.currTime();
-			return process;
+				bool captchaPresent = theCaptcha.isPresent(clientVars);
+				if (!captchaPresent)
+				{
+					if (ip in lastPostAttempt && now - lastPostAttempt[ip] < 1.minutes)
+					{
+						discussionPostForm(draft, true, PostError("Your last post was less than a minute ago. Please solve a CAPTCHA to continue."));
+						return null;
+					}
+				}
+
+				auto process = new PostProcess(post, draft, getUserID(), ip, headers);
+				process.run();
+				lastPostAttempt[ip] = Clock.currTime();
+				return process.pid;
+			}
 		}
 		catch (Exception e)
 		{
-			discussionPostForm(post, false, PostError(e.msg));
+			auto error = isDebug ? e.toString() : e.msg;
+			discussionPostForm(draft, false, PostError(error));
 			return null;
 		}
+
+		assert(false);
 	}
 
 	void discussionPostStatusMessage(string messageHtml)
@@ -1899,16 +1981,16 @@ class WebUI
 				return;
 
 			case PostingStatus.captchaFailed:
-				discussionPostForm(process.post, true, error);
+				discussionPostForm(process.draft, true, error);
 				form = true;
 				return;
 			case PostingStatus.spamCheckFailed:
 				error.message = format("%s. Please solve a CAPTCHA to continue.", error.message);
-				discussionPostForm(process.post, true, error);
+				discussionPostForm(process.draft, true, error);
 				form = true;
 				return;
 			case PostingStatus.nntpError:
-				discussionPostForm(process.post, false, error);
+				discussionPostForm(process.draft, false, error);
 				form = true;
 				return;
 
@@ -2008,7 +2090,7 @@ class WebUI
 		auto pp = new PostProcess(fn);
 		string[] keys;
 		keys ~= pp.ip;
-		keys ~= pp.vars.get("secret", null);
+		keys ~= pp.draft.clientVars.get("secret", null);
 		foreach (cookie; pp.headers.get("Cookie", null).split("; "))
 		{
 			auto p = cookie.indexOf("=");

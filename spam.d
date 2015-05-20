@@ -111,9 +111,9 @@ class Akismet : SpamChecker
 			"user_ip"              : process.ip,
 			"user_agent"           : process.headers.get("User-Agent", ""),
 			"referrer"             : process.headers.get("Referer", ""),
-			"comment_author"       : process.vars.get("name", ""),
-			"comment_author_email" : process.vars.get("email", ""),
-			"comment_content"      : process.vars.get("text", ""),
+			"comment_author"       : process.draft.clientVars.get("name", ""),
+			"comment_author_email" : process.draft.clientVars.get("email", ""),
+			"comment_content"      : process.draft.clientVars.get("text", ""),
 		];
 
 		return httpPost("http://" ~ config.key ~ ".rest.akismet.com/1.1/comment-check", params, (string result) {
@@ -139,9 +139,9 @@ class Akismet : SpamChecker
 			"user_ip"              : process.ip,
 			"user_agent"           : process.headers.get("User-Agent", ""),
 			"referrer"             : process.headers.get("Referer", ""),
-			"comment_author"       : process.vars.get("name", ""),
-			"comment_author_email" : process.vars.get("email", ""),
-			"comment_content"      : process.vars.get("text", ""),
+			"comment_author"       : process.draft.clientVars.get("name", ""),
+			"comment_author_email" : process.draft.clientVars.get("email", ""),
+			"comment_content"      : process.draft.clientVars.get("text", ""),
 		];
 
 		string[SpamFeedback] names = [ SpamFeedback.spam : "spam", SpamFeedback.ham : "ham" ];
@@ -280,12 +280,12 @@ class SimpleChecker : SpamChecker
 		if (ua.startsWith("WWW-Mechanize"))
 			handler(false, "You seem to be posting using an unusual user-agent");
 
-		auto subject = process.vars.get("subject", "").toLower();
+		auto subject = process.draft.clientVars.get("subject", "").toLower();
 		foreach (keyword; ["kitchen", "spamtest"])
 			if (subject.contains(keyword))
 				return handler(false, "Your subject contains a suspicious keyword or character sequence");
 
-		auto text = process.vars.get("text", "").toLower();
+		auto text = process.draft.clientVars.get("text", "").toLower();
 		foreach (keyword; ["<a href=", "[url=", "[url]http"])
 			if (text.contains(keyword))
 				return handler(false, "Your post contains a suspicious keyword or character sequence");

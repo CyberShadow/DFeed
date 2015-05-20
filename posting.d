@@ -17,6 +17,7 @@
 module posting;
 
 import std.algorithm;
+import std.datetime;
 import std.exception;
 import std.string;
 import std.file;
@@ -31,6 +32,11 @@ import common;
 import message;
 import site;
 import spam;
+
+struct PostDraft
+{
+	string[string] clientVars, serverVars;
+}
 
 enum PostingStatus
 {
@@ -57,37 +63,41 @@ struct PostError
 
 final class PostProcess
 {
+	PostDraft draft;
 	string pid, ip;
-	string[string] vars, headers;
+	string[string] headers;
 	Rfc850Post post;
 	PostingStatus status;
 	PostError error;
 	bool captchaPresent;
 
-	this(Rfc850Post post, string[string] vars, string ip, string[string] headers)
+	this(Rfc850Post post, PostDraft draft, string userID, string ip, string[string] headers)
 	{
 		this.post = post;
-		this.vars = vars;
+		this.draft = draft;
 		this.ip = ip;
 		this.headers = headers;
 
-		enforce(vars.get("name", "").length, "Please enter a name");
-		enforce(vars.get("email", "").length, "Please enter an email address");
-		enforce(vars.get("text", "").length, "Please enter a message");
+		enforce(draft.clientVars.get("name", "").length, "Please enter a name");
+		enforce(draft.clientVars.get("email", "").length, "Please enter an email address");
+		enforce(draft.clientVars.get("text", "").length, "Please enter a message");
 
-		pid = randomString();
+		this.pid = draft.clientVars["pid"];
 		postProcesses[pid] = this;
 
 		log = createLogger("PostProcess-" ~ pid);
 		log("IP: " ~ ip);
-		foreach (name, value; vars)
+		foreach (name, value; draft.clientVars)
 			foreach (line; splitAsciiLines(value))
 				log("[Form] " ~ name ~ ": " ~ line);
+		foreach (name, value; draft.serverVars)
+			foreach (line; splitAsciiLines(value))
+				log("[ServerVar] " ~ name ~ ": " ~ line);
 		foreach (name, value; headers)
 			log("[Header] " ~ name ~ ": " ~ value);
 
 		// Discard duplicate posts (redirect to original)
-		string allContent = vars.values.sort().release().join("\0");
+		string allContent = draft.clientVars.values.sort().release().join("\0");
 		if (allContent in postsByContent)
 		{
 			string original = postsByContent[allContent];
@@ -99,7 +109,6 @@ final class PostProcess
 		else
 			postsByContent[allContent] = pid;
 
-		post.id = format("<%s@%s>", pid, site.config.host);
 		post.compile();
 	}
 
@@ -124,10 +133,19 @@ final class PostProcess
 			if (line.eat("[Form] "))
 			{
 				auto var = line.eatUntil(": ");
-				if (var in vars)
-					vars[var] ~= "\n" ~ line;
+				if (var in draft.clientVars)
+					draft.clientVars[var] ~= "\n" ~ line;
 				else
-					vars[var] = line;
+					draft.clientVars[var] = line;
+			}
+			else
+			if (line.eat("[ServerVar] "))
+			{
+				auto var = line.eatUntil(": ");
+				if (var in draft.serverVars)
+					draft.serverVars[var] ~= "\n" ~ line;
+				else
+					draft.serverVars[var] = line;
 			}
 			else
 			if (line.eat("[Header] "))
@@ -142,19 +160,19 @@ final class PostProcess
 			if (line.eat("< Message-ID: <"))
 				pid = line.eatUntil("@");
 		}
-		post = createPost(vars, headers, ip, null);
+		post = createPost(draft, headers, ip, null);
 		post.id = format("<%s@%s>", pid, site.config.host);
 		post.compile();
 	}
 
 	void run()
 	{
-		captchaPresent = theCaptcha.isPresent(vars);
+		captchaPresent = theCaptcha.isPresent(draft.clientVars);
 		if (captchaPresent)
 		{
 			log("Checking CAPTCHA");
 			status = PostingStatus.captcha;
-			theCaptcha.verify(vars, ip, &onCaptchaResult);
+			theCaptcha.verify(draft.clientVars, ip, &onCaptchaResult);
 		}
 		else
 		{
@@ -164,14 +182,14 @@ final class PostProcess
 		}
 	}
 
-	static Rfc850Post createPost(string[string] vars, string[string] headers, string ip, Rfc850Post delegate(string id) getPost)
+	static Rfc850Post createPost(PostDraft draft, string[string] headers, string ip, Rfc850Post delegate(string id) getPost)
 	{
 		Rfc850Post post;
-		if ("parent" in vars)
+		if ("parent" in draft.serverVars)
 		{
 			if (getPost)
 			{
-				auto parent = getPost(vars["parent"]);
+				auto parent = getPost(draft.serverVars["parent"]);
 				enforce(parent, "Can't find post to reply to.");
 				post = parent.replyTemplate();
 			}
@@ -179,16 +197,19 @@ final class PostProcess
 				post = Rfc850Post.newPostTemplate(null);
 		}
 		else
-		if ("where" in vars)
-			post = Rfc850Post.newPostTemplate(vars["where"]);
+		if ("where" in draft.serverVars)
+			post = Rfc850Post.newPostTemplate(draft.serverVars["where"]);
 
-		post.author = aaGet(vars, "name");
-		post.authorEmail = aaGet(vars, "email");
-		post.subject = aaGet(vars, "subject");
-		post.setText(aaGet(vars, "text"));
+		post.author = aaGet(draft.clientVars, "name");
+		post.authorEmail = aaGet(draft.clientVars, "email");
+		post.subject = post.rawSubject = aaGet(draft.clientVars, "subject");
+		post.setText(aaGet(draft.clientVars, "text"));
 
 		post.headers["X-Web-User-Agent"] = aaGet(headers, "User-Agent");
 		post.headers["X-Web-Originating-IP"] = ip;
+
+		post.id = format("<%s@%s>", draft.clientVars["pid"], site.config.host);
+		post.msg.time = post.time;
 
 		return post;
 	}
