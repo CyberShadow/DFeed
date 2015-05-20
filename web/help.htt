@@ -61,6 +61,20 @@
   Additionally, you can create a Gravatar profile, which will be accessible by clicking on your avatar.
 </p>
 
+<h2 id="profiles">User profiles and signatures</h2>
+
+<p>
+  Since messages can come from a variety of sources, this discussion board does not have customizable user profiles.
+  Instead, you can create a <a href="http://en.gravatar.com/">Gravatar</a> profile, as described in the <a href="#avatars">Avatars</a> section above.
+  Click a user's avatar to go to their Gravatar profile page, assuming they have created one.
+</p>
+
+<p id="signatures">
+  For similar reasons, this discussion board does not allow configuring a signature.
+  Signatures are not as useful in messages on the web today, and often devolve to a low signal-to-noise ratio.
+  Instead, you can put relevant information on your Gravatar profile, or on your website (and link to it from your Gravatar profile).
+</p>
+
 <h2 id="canonical">Canonical links</h2>
 
 <p>
