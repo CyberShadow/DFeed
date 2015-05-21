@@ -194,7 +194,7 @@ function updateSize() {
 	var usedWindowSpace  = contentBottom;
 	if ($('#copyright:visible').length)
 		usedWindowSpace += $('#copyright').position().top + $('#copyright').outerHeight(true) - contentBottom + 10 /*???*/;
-	usedWindowSpace = Math.trunc(usedWindowSpace);
+	usedWindowSpace = Math.floor(usedWindowSpace);
 	var totalWindowSpace = $(window).height();
 	var freeWindowSpace  = totalWindowSpace - usedWindowSpace;
 
