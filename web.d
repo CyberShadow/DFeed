@@ -1889,12 +1889,17 @@ class WebUI
 			return false;
 		}
 
+		auto parent = draft.serverVars.get("parent", null);
+		auto parentInfo	= parent ? getPostInfo(parent) : null;
+		if (parentInfo && Clock.currTime - parentInfo.time > 2.weeks)
+			html.put(`<div class="forum-notice">Warning: the post you are replying to is from `,
+				formatDuration(Clock.currTime - parentInfo.time), ` (`, formatShortTime(parentInfo.time, false), `).</div>`);
+
 		html.put(`<form action="/send" method="post" class="forum-form post-form" id="postform">`);
 
 		if (error.message)
 			html.put(`<div class="form-error">`), html.putEncodedEntities(error.message), html.put(`</div>`);
 
-		auto parent = draft.serverVars.get("parent", null);
 		if (parent)
 			html.put(`<input type="hidden" name="parent" value="`), html.putEncodedEntities(parent), html.put(`">`);
 		else
@@ -1904,7 +1909,7 @@ class WebUI
 			`<div id="postform-info">`
 				`Posting to <b>`), html.putEncodedEntities(info.name), html.put(`</b>`,
 				(parent
-					? ` in reply to ` ~ postLink(getPostInfo(parent))
+					? ` in reply to ` ~ postLink(parentInfo)
 					: info
 						? `:<br>(<b>` ~ encodeEntities(info.description) ~ `</b>)`
 						: ``),
@@ -2557,38 +2562,11 @@ class WebUI
 		if (!time.stdTime)
 			return "-";
 
-		string ago(long amount, string units)
-		{
-			assert(amount > 0);
-			return format("%s %s%s ago", amount, units, amount==1 ? "" : "s");
-		}
-
 		auto now = Clock.currTime(UTC());
 		auto duration = now - time;
 
-		if (duration < dur!"seconds"(0))
-			return "from the future";
-		else
-		if (duration < dur!"seconds"(1))
-			return "just now";
-		else
-		if (duration < dur!"minutes"(1))
-			return ago(duration.total!"seconds", "second");
-		else
-		if (duration < dur!"hours"(1))
-			return ago(duration.total!"minutes", "minute");
-		else
-		if (duration < dur!"days"(1))
-			return ago(duration.total!"hours", "hour");
-		else
-		/*if (duration < dur!"days"(2))
-			return "yesterday";
-		else
-		if (duration < dur!"days"(6))
-			return formatTime("l", time);
-		else*/
 		if (duration < dur!"days"(7))
-			return ago(duration.total!"days", "day");
+			return formatDuration(duration);
 		else
 		if (duration < dur!"days"(300))
 			if (shorter)
@@ -2600,6 +2578,47 @@ class WebUI
 				return time.formatTime!"M d, Y"();
 			else
 				return time.formatTime!"F d, Y"();
+	}
+
+	string formatDuration(Duration duration)
+	{
+		string ago(long amount, string units)
+		{
+			assert(amount > 0);
+			return format("%s %s%s ago", amount, units, amount==1 ? "" : "s");
+		}
+
+		if (duration < 0.seconds)
+			return "from the future";
+		else
+		if (duration < 1.seconds)
+			return "just now";
+		else
+		if (duration < 1.minutes)
+			return ago(duration.total!"seconds", "second");
+		else
+		if (duration < 1.hours)
+			return ago(duration.total!"minutes", "minute");
+		else
+		if (duration < 1.days)
+			return ago(duration.total!"hours", "hour");
+		else
+		/*if (duration < dur!"days"(2))
+			return "yesterday";
+		else
+		if (duration < dur!"days"(6))
+			return formatTime("l", time);
+		else*/
+		if (duration < 7.days)
+			return ago(duration.total!"days", "day");
+		else
+		if (duration < 4.weeks)
+			return ago(duration.total!"weeks", "week");
+		else
+		if (duration < 365.weeks)
+			return ago(duration.total!"days" / 30, "month");
+		else
+			return ago(duration.total!"days" / 365, "year");
 	}
 
 	string formatLongTime(SysTime time)
