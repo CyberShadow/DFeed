@@ -855,6 +855,10 @@ kbd { /* stolen from http://en.wikipedia.org/wiki/Template:Key_press */
 	float: right;
 }
 
+.autosave-notice {
+	margin-left: 1em;
+}
+
 /*************** Login ***************/
 
 .loginform {

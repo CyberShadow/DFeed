@@ -443,6 +443,14 @@ class WebUI
 					}
 					break;
 				}
+				case "auto-save":
+				{
+					auto postVars = request.decodePostData();
+					if (postVars.get("secret", "") != getUserSecret())
+						throw new Exception("XSRF secret verification failed");
+					autoSaveDraft(postVars);
+					return response.serveText("OK");
+				}
 				case "delete":
 				{
 					enforce(user.getLevel() >= User.Level.canDeletePosts, "You can't delete posts");
@@ -1802,6 +1810,13 @@ class WebUI
 		auto draftID = draft.clientVars.get("did", null);
 		query!"UPDATE [Drafts] SET [ClientVars]=?, [ServerVars]=?, [Time]=?, [Status]=? WHERE [ID] == ?"
 			.exec(draft.clientVars.toJson, draft.serverVars.toJson, Clock.currTime.stdTime, draft.status, draftID);
+	}
+
+	void autoSaveDraft(string[string] clientVars)
+	{
+		auto draftID = clientVars.get("did", null);
+		query!"UPDATE [Drafts] SET [ClientVars]=?, [Time]=?, [Status]=? WHERE [ID] == ?"
+			.exec(clientVars.toJson, Clock.currTime.stdTime, PostDraft.Status.edited, draftID);
 	}
 
 	PostDraft newPostDraft(string where)

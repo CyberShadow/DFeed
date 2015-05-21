@@ -7,9 +7,11 @@ $(document).ready(function() {
 		$(document).keypress(onKeyPress);
 	}
 
-	if ($('#group-split').length) {
+	if ($('#group-split').length)
 		initSplitView();
-	}
+
+	if ($('#postform').length)
+		initAutoSave();
 
 	if ('localStorage' in window && localStorage.getItem('usingKeyNav')) {
 		initKeyNav();
@@ -567,3 +569,37 @@ function onKeyPressImpl(e) {
 /* These are linked to in responsive horizontal-split post footer */
 function navPrev() { focusNext(-1) && selectFocused(); }
 function navNext() { focusNext(+1) && selectFocused(); }
+
+// **************************************************************************
+// Auto save
+
+function initAutoSave() {
+	var autoSaveCooldown = 2500;
+
+	var $textarea = $('#postform textarea');
+	var oldValue = $textarea.val();
+	var timer = 0;
+
+	function autoSave() {
+		timer = 0;
+		$('.autosave-notice').remove();
+		$.post('/auto-save', $('#postform').serialize(), function(data, status, xhr) {
+			$('<span>')
+				.text(xhr.status == 200 ? 'Draft saved.' : 'Error auto-saving draft.')
+				.addClass('autosave-notice')
+				.insertAfter($('#postform input[name=action-send]'))
+				.fadeOut(autoSaveCooldown)
+		});
+	}
+
+	$textarea.bind('input propertychange', function() {
+		var value = $textarea.val();
+		if (value != oldValue) {
+			oldValue = value;
+			$('.autosave-notice').remove();
+			if (timer)
+				clearTimeout(timer);
+			timer = setTimeout(autoSave, autoSaveCooldown);
+		}
+	});
+}
