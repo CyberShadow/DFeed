@@ -20,6 +20,7 @@ import core.time;
 
 import std.file;
 import std.path;
+import std.range;
 import std.string;
 import std.conv;
 import std.exception;
@@ -2435,7 +2436,9 @@ class WebUI
 			}
 
 			enum forceWrapThreshold = 30;
-			enum forceWrapChunkSize = 10;
+			enum forceWrapMinChunkSize =  5;
+			enum forceWrapMaxChunkSize = 15;
+			static assert(forceWrapMaxChunkSize > forceWrapMinChunkSize * 2);
 
 			import std.utf;
 			bool needsWrap = paragraph.text.byChar.splitter(' ').map!(s => s.length).I!(r => reduce!max(size_t.init, r)) > forceWrapThreshold;
@@ -2459,17 +2462,37 @@ class WebUI
 				{
 					if (segment.length > forceWrapThreshold)
 					{
-						html.put(`<span class="forcewrap">`);
-						foreach (i; 0..segment.length/forceWrapChunkSize)
+						void chunkify(string s, string delimiters)
 						{
-							next(segment[i*forceWrapChunkSize..(i+1)*forceWrapChunkSize]);
-							html.put(`</span><span class="forcewrap">`);
+							if (s.length < forceWrapMaxChunkSize)
+							{
+								html.put(`<span class="forcewrap">`);
+								next(s);
+								html.put(`</span>`);
+							}
+							else
+							if (!delimiters.length)
+							{
+								chunkify(s[0..$/2], null);
+								chunkify(s[$/2..$], null);
+							}
+							else
+							{
+								foreach (i; iota(forceWrapMinChunkSize, s.length-forceWrapMinChunkSize).radial)
+									if (s[i] == delimiters[0])
+									{
+										chunkify(s[0..i+1], delimiters);
+										chunkify(s[i+1..$], delimiters);
+										return;
+									}
+								chunkify(s, delimiters[1..$]);
+							}
 						}
-						next(segment[$/forceWrapChunkSize*forceWrapChunkSize..$]);
-						html.put(`</span>`);
+
+						chunkify(segment, "/&=.-+,;:_\\|`'\"~!@#$%^*()[]{}");
 					}
 					else
-					next(segment);
+						next(segment);
 				}
 			}
 
