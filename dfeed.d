@@ -58,7 +58,7 @@ void main()
 	new MessageDBSink();
 
 	// Start web server
-	new WebUI();
+	startWebUI();
 
 	startNewsSources();
 	socketManager.loop();
