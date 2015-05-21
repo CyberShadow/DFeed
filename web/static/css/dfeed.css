@@ -838,7 +838,7 @@ kbd { /* stolen from http://en.wikipedia.org/wiki/Template:Key_press */
 
 #postform {
 	display: block;
-	width: 50em;
+	max-width: 50em;
 }
 
 #postform textarea,
@@ -941,6 +941,10 @@ kbd { /* stolen from http://en.wikipedia.org/wiki/Template:Key_press */
 	.forum-form {
 		display: block;
 		margin: 0 0.5em;
+	}
+
+	#postform {
+		max-width: 100%;
 	}
 
 	#forum-index > tbody > tr > *:nth-child(3),
