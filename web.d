@@ -294,7 +294,7 @@ class WebUI
 
 					string pageStr = page==1 ? "" : format(" (page %d)", page);
 					string group, subject;
-					discussionThread(threadID, page, group, subject);
+					discussionThread(threadID, page, group, subject, viewMode == "basic");
 					title = subject ~ pageStr;
 					breadcrumb1 = `<a href="/group/` ~encodeEntities(group)~`">` ~ encodeEntities(group  ) ~ `</a>`;
 					breadcrumb2 = `<a href="/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a>` ~ pageStr;
@@ -1456,7 +1456,7 @@ class WebUI
 		return null;
 	}
 
-	void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts)
+	void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts, bool markAsRead = true)
 	{
 		string gravatarHash = getGravatarHash(post.authorEmail);
 
@@ -1539,7 +1539,8 @@ class WebUI
 			}
 		}
 
-		user.setRead(post.rowid, true);
+		if (post.rowid && markAsRead)
+			user.setRead(post.rowid, true);
 	}
 
 	void miniPostInfo(Rfc850Post post, Rfc850Post[string] knownPosts)
@@ -1715,7 +1716,7 @@ class WebUI
 		throw new NotFoundException(format("Post #%d of thread %s not found", index, threadID));
 	}
 
-	void discussionThread(string id, int page, out string group, out string title)
+	void discussionThread(string id, int page, out string group, out string title, bool markAsRead)
 	{
 		auto viewMode = user.get("threadviewmode", "flat"); // legacy
 		bool nested = viewMode == "nested" || viewMode == "threaded";
@@ -1741,7 +1742,7 @@ class WebUI
 			posts = Rfc850Post.threadify(posts);
 
 		foreach (post; posts)
-			formatPost(post, knownPosts);
+			formatPost(post, knownPosts, markAsRead);
 
 		if (!nested)
 		{
