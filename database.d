@@ -47,7 +47,7 @@ T selectValue(T, Iter)(Iter iter)
 {
 	foreach (T val; iter)
 		return val;
-	throw new Exception("No results for query: " ~ sql);
+	throw new Exception("No results for query");
 }
 
 shared static this()
