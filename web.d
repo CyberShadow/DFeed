@@ -409,32 +409,38 @@ class WebUI
 				case "send":
 				{
 					auto postVars = request.decodePostData();
-					auto processID = discussionSend(postVars, cast(string[string])request.headers);
-					if (processID)
-						return response.redirect("/poststatus/" ~ processID);
+					auto redirectTo = discussionSend(postVars, cast(string[string])request.headers);
+					if (redirectTo)
+						return response.redirect(redirectTo);
 
 					title = breadcrumb1 = `Posting error`;
 					bodyClass ~= " formdoc";
 					break;
 				}
-				case "poststatus":
+				case "posting":
 				{
-					enforce(path.length > 1, "No PID specified");
+					enforce(path.length > 1, "No post ID specified");
 					auto pid = pathX;
-					enforce(pid in postProcesses, "Sorry, this is not a post I know of.");
-
-					bool refresh, form;
-					string redirectTo;
-					discussionPostStatus(postProcesses[pid], refresh, redirectTo, form);
-					if (refresh)
-						response.setRefresh(1, redirectTo);
-					if (form)
+					if (pid in postProcesses)
 					{
-						title = breadcrumb1 = `Posting error`;
-						bodyClass ~= " formdoc";
+						bool refresh, form;
+						string redirectTo;
+						discussionPostStatus(postProcesses[pid], refresh, redirectTo, form);
+						if (refresh)
+							response.setRefresh(1, redirectTo);
+						if (form)
+						{
+							title = breadcrumb1 = `Posting error`;
+							bodyClass ~= " formdoc";
+						}
+						else
+							title = breadcrumb1 = `Posting status`;
 					}
 					else
-						title = breadcrumb1 = `Posting status`;
+					{
+						discussionPostForm(getDraft(pid));
+						title = "Composing message";
+					}
 					break;
 				}
 				case "delete":
@@ -613,6 +619,16 @@ class WebUI
 			`<div id="forum-tools-right">` ~ toolStr ~ `</div>`
 			`<div style="clear: both"></div>`;
 		string htmlStr = cast(string) html.get(); // html contents will be overwritten on next request
+
+		{
+			auto draftID = user.get("draft-deleted-notice", null);
+			if (draftID)
+			{
+				htmlStr =
+					`<div class="forum-notice">Draft discarded. <a href="/posting/` ~ encodeEntities(draftID) ~ `">Undo</a></div>` ~ htmlStr;
+				user.remove("draft-deleted-notice");
+			}
+		}
 
 		cookies = user.save();
 		foreach (cookie; cookies)
@@ -1767,45 +1783,47 @@ class WebUI
 
 	// ***********************************************************************
 
-	void createDraft(string pid, string[string] serverVars)
+	void createDraft(PostDraft draft)
 	{
-		query!"INSERT INTO [Drafts] ([ID], [UserID], [ServerVars], [Time]) VALUES (?, ?, ?, ?)".exec(pid, getUserID(), serverVars.toJson, Clock.currTime.stdTime);
+		query!"INSERT INTO [Drafts] ([ID], [UserID], [Status], [ClientVars], [ServerVars], [Time]) VALUES (?, ?, ?, ?, ?, ?)"
+			.exec(draft.clientVars["did"], getUserID(), draft.status, draft.clientVars.toJson, draft.serverVars.toJson, Clock.currTime.stdTime);
 	}
 
-	PostDraft getDraft(string pid)
+	PostDraft getDraft(string draftID)
 	{
 		string[string] parse(string json) { return json ? json.jsonParse!(string[string]) : null; }
-		foreach (string clientVars, string serverVars; query!"SELECT [ClientVars], [ServerVars] FROM [Drafts] WHERE [ID] == ?".iterate(pid))
-			return PostDraft(parse(clientVars), parse(serverVars));
+		foreach (int status, string clientVars, string serverVars; query!"SELECT [Status], [ClientVars], [ServerVars] FROM [Drafts] WHERE [ID] == ?".iterate(draftID))
+			return PostDraft(status, parse(clientVars), parse(serverVars));
 		throw new Exception("Can't find this message draft");
 	}
 
-	void saveDraft(string[string] clientVars)
+	void saveDraft(PostDraft draft)
 	{
-		auto pid = clientVars.get("pid", null);
-		query!"UPDATE [Drafts] SET [ClientVars]=?, [Time]=? WHERE [ID] == ?".exec(clientVars.toJson, Clock.currTime.stdTime, pid);
+		auto draftID = draft.clientVars.get("did", null);
+		query!"UPDATE [Drafts] SET [ClientVars]=?, [ServerVars]=?, [Time]=?, [Status]=? WHERE [ID] == ?"
+			.exec(draft.clientVars.toJson, draft.serverVars.toJson, Clock.currTime.stdTime, draft.status, draftID);
 	}
 
 	PostDraft newPostDraft(string where)
 	{
-		auto pid = randomString();
-		auto draft = PostDraft([
-			"pid" : pid,
+		auto draftID = randomString();
+		auto draft = PostDraft(PostDraft.Status.reserved, [
+			"did" : draftID,
 			"name" : user.get("name", null),
 			"email" : user.get("email", null),
 		], [
 			"where" : where,
 		]);
-		createDraft(pid, draft.serverVars);
+		createDraft(draft);
 		return draft;
 	}
 
 	PostDraft newReplyDraft(Rfc850Post post)
 	{
 		auto postTemplate = post.replyTemplate();
-		auto pid = randomString();
-		auto draft = PostDraft([
-			"pid" : pid,
+		auto draftID = randomString();
+		auto draft = PostDraft(PostDraft.Status.reserved, [
+			"did" : draftID,
 			"name" : user.get("name", null),
 			"email" : user.get("email", null),
 			"subject" : postTemplate.subject,
@@ -1814,12 +1832,30 @@ class WebUI
 			"where" : post.where,
 			"parent" : post.id,
 		]);
-		createDraft(pid, draft.serverVars);
+		createDraft(draft);
 		return draft;
+	}
+
+	void draftNotices(string except = null)
+	{
+		foreach (string id, long time; query!"SELECT [ID], [Time] FROM [Drafts] WHERE [UserID]==? AND [Status]==?".iterate(getUserID(), PostDraft.Status.edited))
+		{
+			if (id == except)
+				continue;
+			auto t = SysTime(time, UTC());
+			html.put(`<div class="forum-notice">You have an <a href="/posting/`, id, `">unsent draft message from `, formatShortTime(t, false), `</a>.</div>`);
+		}
 	}
 
 	bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error=PostError.init)
 	{
+		auto draftID = draft.clientVars.get("did", null);
+		draftNotices(draftID);
+
+		// Immediately resurrect discarded posts when user clicks "Undo" or "Back"
+		if (draft.status == PostDraft.Status.discarded)
+			query!"UPDATE [Drafts] SET [Status]=? WHERE [ID]=?".exec(PostDraft.Status.edited, draftID);
+
 		auto where = draft.serverVars.get("where", null);
 		auto info = getGroupInfo(where);
 		if (!info)
@@ -1857,7 +1893,7 @@ class WebUI
 						: ``),
 			`</div>`
 			`<input type="hidden" name="secret" value="`, getUserSecret(), `">`
-			`<input type="hidden" name="pid" value="`), html.putEncodedEntities(draft.clientVars.get("pid", null)), html.put(`">`
+			`<input type="hidden" name="did" value="`), html.putEncodedEntities(draftID), html.put(`">`
 			`<label for="postform-name">Your name:</label>`
 			`<input id="postform-name" name="name" size="40" value="`), html.putEncodedEntities(draft.clientVars.get("name", null)), html.put(`">`
 			`<label for="postform-email">Your email address (<a href="/help#email">?</a>):</label>`
@@ -1871,7 +1907,14 @@ class WebUI
 			html.put(`<div id="postform-captcha">`, theCaptcha.getChallengeHtml(error.captchaError), `</div>`);
 
 		html.put(
-			`<input name="action-save" type="submit" value="Save and preview"><input name="action-send" type="submit" value="Send">`
+			`<div class="postform-action-left">`
+				`<input name="action-save" type="submit" value="Save and preview">`
+				`<input name="action-send" type="submit" value="Send">`
+			`</div>`
+			`<div class="postform-action-right">`
+				`<input name="action-discard" type="submit" value="Discard draft">`
+			`</div>`
+			`<div style="clear:both"></div>`
 		`</form>`);
 		return true;
 	}
@@ -1880,15 +1923,27 @@ class WebUI
 
 	string discussionSend(string[string] clientVars, string[string] headers)
 	{
-		auto draft = getDraft(clientVars.get("pid", null));
+		auto draftID = clientVars.get("did", null);
+		auto draft = getDraft(draftID);
 
 		try
 		{
+			if (draft.status == PostDraft.Status.sent)
+			{
+				// Redirect if we know where to
+				if ("pid" in draft.serverVars)
+					return idToUrl(PostProcess.pidToMessageID(draft.serverVars["pid"]));
+				else
+					throw new Exception("This message has already been sent.");
+			}
+
 			if (clientVars.get("secret", "") != getUserSecret())
 				throw new Exception("XSRF secret verification failed. Are your cookies enabled?");
 
-			saveDraft(clientVars);
 			draft.clientVars = clientVars;
+			draft.status = PostDraft.Status.edited;
+			scope(exit) saveDraft(draft);
+
 			Rfc850Post post = PostProcess.createPost(draft, headers, ip, id => getPost(id));
 
 			if ("action-save" in clientVars)
@@ -1925,8 +1980,28 @@ class WebUI
 				auto process = new PostProcess(post, draft, getUserID(), ip, headers);
 				process.run();
 				lastPostAttempt[ip] = Clock.currTime();
-				return process.pid;
+				draft.serverVars["pid"] = process.pid;
+				return "/posting/" ~ process.pid;
 			}
+			else
+			if ("action-discard" in clientVars)
+			{
+				// Show undo notice
+				user.set("draft-deleted-notice", draftID);
+				// Mark as deleted
+				draft.status = PostDraft.Status.discarded;
+				// Redirect to relevant page
+				if ("parent" in draft.serverVars)
+					return idToUrl(draft.serverVars["parent"]);
+				else
+				if ("where" in draft.serverVars)
+					return "/group/" ~ draft.serverVars["where"];
+				else
+					return "/";
+			}
+			else
+				throw new Exception("Unknown action");
+
 		}
 		catch (Exception e)
 		{
@@ -1934,8 +2009,6 @@ class WebUI
 			discussionPostForm(draft, false, PostError(error));
 			return null;
 		}
-
-		assert(false);
 	}
 
 	void discussionPostStatusMessage(string messageHtml)

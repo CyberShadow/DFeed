@@ -43,6 +43,13 @@ SQLite.PreparedStatement query(string sql)
 	return cache[sql.ptr] = statement;
 }
 
+T selectValue(T, Iter)(Iter iter)
+{
+	foreach (T val; iter)
+		return val;
+	throw new Exception("No results for query: " ~ sql);
+}
+
 shared static this()
 {
 	auto dbFileName = "data/dfeed.s3db";

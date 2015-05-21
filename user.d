@@ -27,6 +27,7 @@ abstract class User
 {
 	abstract string get(string name, string defaultValue);
 	abstract void set(string name, string value);
+	abstract void remove(string name);
 	abstract string[] save();
 
 	abstract void logIn(string username, string password);
@@ -186,6 +187,11 @@ final class GuestUser : User
 		newCookies[name] = value;
 	}
 
+	override void remove(string name)
+	{
+		newCookies[name] = null;
+	}
+
 	override string[] save()
 	{
 		finalize();
@@ -193,11 +199,21 @@ final class GuestUser : User
 		string[] result;
 		foreach (name, value; newCookies)
 		{
-			if (name in cookies && cookies[name] == value)
-				continue;
+			if (value is null)
+			{
+				if (name !in cookies)
+					continue;
 
-			// TODO Expires
-			result ~= "dfeed_" ~ name ~ "=" ~ value ~ "; Expires=Wed, 09 Jun 2021 10:18:14 GMT; Path=/";
+				result ~= "dfeed_" ~ name ~ "=deleted; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/";
+			}
+			else
+			{
+				if (name in cookies && cookies[name] == value)
+					continue;
+
+				// TODO Expires
+				result ~= "dfeed_" ~ name ~ "=" ~ value ~ "; Expires=Wed, 09 Jun 2021 10:18:14 GMT; Path=/";
+			}
 		}
 		return result;
 	}
@@ -283,16 +299,31 @@ final class RegisteredUser : User
 		newSettings[name] = value;
 	}
 
+	override void remove(string name)
+	{
+		newSettings[name] = null;
+	}
+
 	override string[] save()
 	{
 		finalize();
 
 		foreach (name, value; newSettings)
 		{
-			if (name in settings && settings[name] == value)
-				continue;
+			if (value is null)
+			{
+				if (name !in settings)
+					continue;
 
-			query!"INSERT OR REPLACE INTO `UserSettings` (`User`, `Name`, `Value`) VALUES (?, ?, ?)".exec(username, name, value);
+				query!"DELETE FROM `UserSettings` WHERE `User` = ? AND `Name` = ?".exec(username, name);
+			}
+			else
+			{
+				if (name in settings && settings[name] == value)
+					continue;
+
+				query!"INSERT OR REPLACE INTO `UserSettings` (`User`, `Name`, `Value`) VALUES (?, ?, ?)".exec(username, name, value);
+			}
 		}
 
 		return null;

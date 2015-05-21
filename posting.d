@@ -29,13 +29,24 @@ import ae.net.nntp.client;
 
 import captcha;
 import common;
+import database;
 import message;
 import site;
 import spam;
 
 struct PostDraft
 {
+	int status;
 	string[string] clientVars, serverVars;
+
+	// Fake enum (force the type to be int)
+	struct Status
+	{
+		enum reserved  = 0;
+		enum edited    = 1;
+		enum sent      = 2;
+		enum discarded = 3;
+	}
 }
 
 enum PostingStatus
@@ -82,7 +93,7 @@ final class PostProcess
 		enforce(draft.clientVars.get("email", "").length, "Please enter an email address");
 		enforce(draft.clientVars.get("text", "").length, "Please enter a message");
 
-		this.pid = draft.clientVars["pid"];
+		this.pid = randomString();
 		postProcesses[pid] = this;
 
 		log = createLogger("PostProcess-" ~ pid);
@@ -161,8 +172,13 @@ final class PostProcess
 				pid = line.eatUntil("@");
 		}
 		post = createPost(draft, headers, ip, null);
-		post.id = format("<%s@%s>", pid, site.config.host);
+		post.id = pidToMessageID(pid);
 		post.compile();
+	}
+
+	static string pidToMessageID(string pid)
+	{
+		return format("<%s@%s>", pid, site.config.host);
 	}
 
 	void run()
@@ -208,7 +224,7 @@ final class PostProcess
 		post.headers["X-Web-User-Agent"] = aaGet(headers, "User-Agent");
 		post.headers["X-Web-Originating-IP"] = ip;
 
-		post.id = format("<%s@%s>", draft.clientVars["pid"], site.config.host);
+		post.id = format("<draft-%s@%s>", draft.clientVars["did"], site.config.host);
 		post.msg.time = post.time;
 
 		return post;
@@ -316,6 +332,7 @@ final class PostingNotifySink : NewsSink
 				{
 					postProcesses[pid].status = PostingStatus.posted;
 					postProcesses[pid].post.url = rfc850post.url;
+					query!"UPDATE [Drafts] SET [Status]=? WHERE [ID]=?".exec(PostDraft.Status.sent, pid);
 				}
 			}
 		}

@@ -251,7 +251,7 @@ th .forum-read:visited {
 .post-form textarea {
 	display: block;
 }
-.forum-form input[type=submit] {
+.post-form input[type=submit] {
 	display: inline-block;
 }
 
@@ -836,6 +836,25 @@ kbd { /* stolen from http://en.wikipedia.org/wiki/Template:Key_press */
 	display: inline-block;
 	margin-left: 0 !important;
 */
+}
+
+#postform {
+	display: block;
+	width: 50em;
+}
+
+#postform textarea,
+#postform-subject {
+	box-sizing: border-box;
+	width: 100%;
+}
+
+.postform-action-left {
+	float: left;
+}
+
+.postform-action-right {
+	float: right;
 }
 
 /*************** Login ***************/
