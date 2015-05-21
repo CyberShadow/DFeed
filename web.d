@@ -2042,7 +2042,8 @@ class WebUI
 		switch (process.status)
 		{
 			case PostingStatus.spamCheck:
-				discussionPostStatusMessage("Checking for spam...");
+				//discussionPostStatusMessage("Checking for spam...");
+				discussionPostStatusMessage("Validating...");
 				refresh = true;
 				return;
 			case PostingStatus.captcha:
