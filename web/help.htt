@@ -90,6 +90,20 @@
   Each post's title is also a canonical link to the post in question in any view mode.
 </p>
 
+<h2 id="drafts">Drafts</h2>
+
+<p>
+  When you click "Save and preview", a draft of your message will be saved on the server.
+  If JavaScript is enabled, this will also occur periodically as you are typing the message.
+</p>
+
+<p>
+  If you accidentally close the browser tab with the message, you can restore it by opening a posting form
+  (by clicking "Create thread" or replying to a post).
+  A notice will appear before the form if there are any unsent drafts.
+  To discard a draft, click the "Discard draft" button at the bottom of the posting form.
+</p>
+
 <h2 id="about">About</h2>
 
 <p>
