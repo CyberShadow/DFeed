@@ -440,7 +440,10 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				}
 				else
 				{
-					discussionPostForm(getDraft(pid));
+					auto draftID = pid;
+					foreach (string id; query!"SELECT [ID] FROM [Drafts] WHERE [PostID]=?".iterate(pid))
+						draftID = id;
+					discussionPostForm(getDraft(draftID));
 					title = "Composing message";
 				}
 				break;
@@ -1811,8 +1814,9 @@ PostDraft getDraft(string draftID)
 void saveDraft(PostDraft draft)
 {
 	auto draftID = draft.clientVars.get("did", null);
-	query!"UPDATE [Drafts] SET [ClientVars]=?, [ServerVars]=?, [Time]=?, [Status]=? WHERE [ID] == ?"
-		.exec(draft.clientVars.toJson, draft.serverVars.toJson, Clock.currTime.stdTime, draft.status, draftID);
+	auto postID = draft.serverVars.get("pid", null);
+	query!"UPDATE [Drafts] SET [PostID]=?, [ClientVars]=?, [ServerVars]=?, [Time]=?, [Status]=? WHERE [ID] == ?"
+		.exec(postID, draft.clientVars.toJson, draft.serverVars.toJson, Clock.currTime.stdTime, draft.status, draftID);
 }
 
 void autoSaveDraft(string[string] clientVars)
