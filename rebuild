@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 MODEL=64
-DFLAGS="-m$MODEL -g"
+DFLAGS="-m$MODEL -g -L-lcurl"
 #DFLAGS="$DFLAGS -debug"
 #DFLAGS="$DFLAGS -debug=ASOCKETS"
 #DFLAGS="$DFLAGS -version=LIBEV"

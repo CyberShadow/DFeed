@@ -34,6 +34,7 @@ import common;
 import database;
 import groups;
 import message;
+import newsgroups;
 import site;
 import spam;
 
@@ -335,7 +336,6 @@ private:
 
 		status = PostingStatus.connecting;
 
-		import newsgroups;
 		auto config = loadIni!NntpConfig("config/sources/nntp/" ~ name ~ ".ini");
 
 		nntp = new NntpClient(log);
