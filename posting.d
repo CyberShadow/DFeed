@@ -91,6 +91,7 @@ final class PostProcess
 
 		enforce(draft.clientVars.get("name", "").length, "Please enter a name");
 		enforce(draft.clientVars.get("email", "").length, "Please enter an email address");
+		enforce(draft.clientVars.get("subject", "").length, "Please enter a message subject");
 		enforce(draft.clientVars.get("text", "").length, "Please enter a message");
 
 		this.pid = randomString();
@@ -144,10 +145,11 @@ final class PostProcess
 			if (line.eat("[Form] "))
 			{
 				auto var = line.eatUntil(": ");
-				if (var in draft.clientVars)
-					draft.clientVars[var] ~= "\n" ~ line;
+				auto target = (var=="where" || var=="parent") ? &draft.serverVars : &draft.clientVars;
+				if (var in *target)
+					(*target)[var] ~= "\n" ~ line;
 				else
-					draft.clientVars[var] = line;
+					(*target)[var] = line;
 			}
 			else
 			if (line.eat("[ServerVar] "))
@@ -215,16 +217,19 @@ final class PostProcess
 		else
 		if ("where" in draft.serverVars)
 			post = Rfc850Post.newPostTemplate(draft.serverVars["where"]);
+		else
+			assert(false, "No 'parent' or 'where'");
 
-		post.author = aaGet(draft.clientVars, "name");
-		post.authorEmail = aaGet(draft.clientVars, "email");
-		post.subject = post.rawSubject = aaGet(draft.clientVars, "subject");
-		post.setText(aaGet(draft.clientVars, "text"));
+		post.author = draft.clientVars.get("name", null);
+		post.authorEmail = draft.clientVars.get("email", null);
+		post.subject = post.rawSubject = draft.clientVars.get("subject", null);
+		post.setText(draft.clientVars.get("text", null));
 
 		post.headers["X-Web-User-Agent"] = aaGet(headers, "User-Agent");
 		post.headers["X-Web-Originating-IP"] = ip;
 
-		post.id = format("<draft-%s@%s>", draft.clientVars["did"], site.config.host);
+		if ("did" in draft.clientVars)
+			post.id = format("<draft-%s@%s>", draft.clientVars["did"], site.config.host);
 		post.msg.time = post.time;
 
 		return post;
