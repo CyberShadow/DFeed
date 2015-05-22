@@ -274,49 +274,54 @@ private:
 
 	// **********************************************************************
 
-	NntpClient nntp;
-
 	void postMessage()
 	{
+		nntpSend();
+	}
+
+	void nntpSend()
+	{
+		NntpClient nntp;
+
+		void onDisconnect(string reason, DisconnectType type)
+		{
+			this.status = PostingStatus.nntpError;
+			this.error = PostError("NNTP connection error: " ~ reason);
+			log("NNTP connection error: " ~ reason);
+			log.close();
+		}
+
+		void onError(string error)
+		{
+			this.status = PostingStatus.nntpError;
+			this.error = PostError("NNTP error: " ~ error);
+			nntp.handleDisconnect = null;
+			nntp.disconnect();
+			log("NNTP error: " ~ error);
+			log.close();
+		}
+
+		void onPosted()
+		{
+			if (this.status == PostingStatus.posting)
+				this.status = PostingStatus.waiting;
+			nntp.handleDisconnect = null;
+			nntp.disconnect();
+			log("Message posted successfully.");
+			log.close();
+		}
+
+		void onConnect()
+		{
+			this.status = PostingStatus.posting;
+			nntp.postMessage(post.message.splitAsciiLines(), &onPosted, &onError);
+		}
+
 		status = PostingStatus.connecting;
 
 		nntp = new NntpClient(log);
 		nntp.handleDisconnect = &onDisconnect;
 		nntp.connect("news.digitalmars.com", &onConnect);
-	}
-
-	void onDisconnect(string reason, DisconnectType type)
-	{
-		this.status = PostingStatus.nntpError;
-		this.error = PostError("NNTP connection error: " ~ reason);
-		log("NNTP connection error: " ~ reason);
-		log.close();
-	}
-
-	void onError(string error)
-	{
-		this.status = PostingStatus.nntpError;
-		this.error = PostError("NNTP error: " ~ error);
-		nntp.handleDisconnect = null;
-		nntp.disconnect();
-		log("NNTP error: " ~ error);
-		log.close();
-	}
-
-	void onConnect()
-	{
-		this.status = PostingStatus.posting;
-		nntp.postMessage(post.message.splitAsciiLines(), &onPosted, &onError);
-	}
-
-	void onPosted()
-	{
-		if (this.status == PostingStatus.posting)
-			this.status = PostingStatus.waiting;
-		nntp.handleDisconnect = null;
-		nntp.disconnect();
-		log("Message posted successfully.");
-		log.close();
 	}
 }
 
