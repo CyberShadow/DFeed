@@ -38,6 +38,7 @@ import ae.net.http.caching;
 import ae.net.http.responseex;
 import ae.net.http.server;
 import ae.net.ietf.headers;
+import ae.net.ietf.url;
 import ae.net.ietf.wrap;
 import ae.net.shutdown;
 import ae.sys.log;
@@ -169,7 +170,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	string bodyClass = "narrowdoc";
 	string returnPage = request.resource;
 	html.clear();
-	string[] tools, extraHeaders, extraScripts;
+	string[] tools, extraHeaders;
 	auto status = HttpStatusCode.OK;
 
 	// Redirect to canonical domain name
@@ -177,9 +178,6 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	host = request.headers.get("X-Forwarded-Host", host);
 	if (host != vhost && host != "localhost" && ip != "127.0.0.1")
 		return response.redirect("http://" ~ vhost ~ request.resource, HttpStatusCode.MovedPermanently);
-
-	extraScripts ~=
-		`<script src="` ~ staticPath("/js/dfeed.js") ~ `"></script>`;
 
 	auto canonicalHeader =
 		`<link rel="canonical" href="http://`~vhost~request.resource~`"/>`;
@@ -584,6 +582,9 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			case "static":
 				enforce(path.length > 2);
 				return serveFile(response, path[2..$].join("/"));
+			case "static-bundle":
+				enforce(path.length > 2);
+				return makeBundle(path[1], path[2..$].join("/"));
 
 			default:
 				return response.writeError(HttpStatusCode.NotFound);
@@ -662,7 +663,6 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			case "breadcrumb1"  : return breadcrumb1;
 			case "breadcrumb2"  : return breadcrumb2;
 			case "extraheaders" : return extraHeaders.join("\n");
-			case "extrascripts" : return extraScripts.join("\n");
 			case "bodyclass"    : return bodyClass;
 			case "tools"        : return toolStr;
 			default:
@@ -678,10 +678,69 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	//scope(failure) std.file.write("bad-tpl.html", page);
 	page = renderNav(page);
 	page = parseTemplate(page, &getVar);
+	page = createBundles(page, re!`<link rel="stylesheet" href="(/[^"]*?)" ?/?>`);
+	page = createBundles(page, re!`<script type="text/javascript" src="(/[^"]*?\.js)"></script>`);
 	response.serveData(page);
 
 	response.setStatus(status);
 	return response;
+}
+
+string createBundles(string page, Regex!char re)
+{
+	string[] paths;
+	foreach (m; page.matchAll(re))
+		paths ~= m.captures[1];
+	auto maxTime = paths.map!(path => path[8..26].to!long).reduce!max;
+	string bundleUrl = "/static-bundle/%d/%-(%s+%)".format(maxTime, paths.map!(path => path[27..$]));
+	int index;
+	page = page.replaceAll!(captures => index++ ? null : captures[0].replace(captures[1], bundleUrl))(re);
+	return page;
+}
+
+HttpResponseEx makeBundle(string time, string url)
+{
+	static struct Bundle
+	{
+		string time;
+		HttpResponseEx response;
+	}
+	static Bundle[string] cache;
+
+	if (url !in cache || cache[url].time != time)
+	{
+		auto bundlePaths = url.split("+");
+		enforce(bundlePaths.length > 0, "Empty bundle");
+		HttpResponseEx bundleResponse;
+		foreach (bundlePath; bundlePaths)
+		{
+			auto pathResponse = new HttpResponseEx;
+			serveFile(pathResponse, bundlePath);
+			assert(pathResponse.data.length == 1);
+			if (bundlePath.endsWith(".css"))
+			{
+				auto oldText = cast(string)pathResponse.data[0].contents;
+				auto newText = fixCSS(oldText, bundlePath);
+				if (oldText !is newText)
+					pathResponse.data = [Data(newText)];
+			}
+			if (!bundleResponse)
+				bundleResponse = pathResponse;
+			else
+				bundleResponse.data ~= pathResponse.data;
+		}
+		cache[url] = Bundle(time, bundleResponse);
+	}
+	return cache[url].response;
+}
+
+string fixCSS(string css, string path)
+{
+	return css.replaceAll!(captures =>
+		captures[2].canFind("//")
+		? captures[0]
+		: captures[0].replace(captures[2], staticPath(buildNormalizedPath(dirName("/" ~ path), captures[2]).replace(`\`, `/`)))
+	)(re!`\burl\(('?)(.*?)\1\)`);
 }
 
 string renderNav(string html)
