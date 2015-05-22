@@ -2511,7 +2511,7 @@ void formatBody(Rfc850Message post)
 		for (; quoteLevel < paragraphQuoteLevel; quoteLevel++)
 			html ~= `<span class="forum-quote">`;
 
-		if (!quoteLevel && paragraph.text == "-- ")
+		if (!quoteLevel && (paragraph.text == "-- " || paragraph.text == "_______________________________________________"))
 		{
 			html ~= `<span class="forum-signature">`;
 			inSignature = true;
