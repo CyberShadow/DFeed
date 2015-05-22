@@ -2615,7 +2615,7 @@ string formatDuration(Duration duration)
 	if (duration < 4.weeks)
 		return ago(duration.total!"weeks", "week");
 	else
-	if (duration < 365.weeks)
+	if (duration < 365.days)
 		return ago(duration.total!"days" / 30, "month");
 	else
 		return ago(duration.total!"days" / 365, "year");
