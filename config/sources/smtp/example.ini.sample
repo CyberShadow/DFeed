@@ -1,0 +1,13 @@
+# Mailing list "source" for sent messages.
+
+# Mailing list domain name (part after @ for email addresses).
+domain = example.com
+
+# MX server (telnet to this host and port 25 should succeed).
+server = mail.example.com
+
+# Port (default = 25).
+port = 25
+
+# URL base for list info
+listInfo = http://lists.example.com/cgi-bin/mailman/

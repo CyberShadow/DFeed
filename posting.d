@@ -22,14 +22,17 @@ import std.exception;
 import std.string;
 import std.file;
 
+import ae.utils.sini;
 import ae.utils.text;
 import ae.utils.array;
 import ae.sys.log;
 import ae.net.nntp.client;
+import ae.net.smtp.client;
 
 import captcha;
 import common;
 import database;
+import groups;
 import message;
 import site;
 import spam;
@@ -61,7 +64,7 @@ enum PostingStatus
 
 	captchaFailed,
 	spamCheckFailed,
-	nntpError,
+	serverError,
 
 	redirect,
 }
@@ -276,16 +279,29 @@ private:
 
 	void postMessage()
 	{
-		nntpSend();
+		auto group = getGroupInfo(post.where.split(",")[0]);
+		switch (group.sinkType)
+		{
+			case null:
+				throw new Exception("You can't post to this group.");
+			case "nntp":
+				nntpSend(group.sinkName);
+				break;
+			case "smtp":
+				smtpSend(group);
+				break;
+			default:
+				assert(false, "Unknown sinkType: " ~ group.sinkType);
+		}
 	}
 
-	void nntpSend()
+	void nntpSend(string name)
 	{
 		NntpClient nntp;
 
 		void onDisconnect(string reason, DisconnectType type)
 		{
-			this.status = PostingStatus.nntpError;
+			this.status = PostingStatus.serverError;
 			this.error = PostError("NNTP connection error: " ~ reason);
 			log("NNTP connection error: " ~ reason);
 			log.close();
@@ -293,7 +309,7 @@ private:
 
 		void onError(string error)
 		{
-			this.status = PostingStatus.nntpError;
+			this.status = PostingStatus.serverError;
 			this.error = PostError("NNTP error: " ~ error);
 			nntp.handleDisconnect = null;
 			nntp.disconnect();
@@ -319,10 +335,62 @@ private:
 
 		status = PostingStatus.connecting;
 
+		import newsgroups;
+		auto config = loadIni!NntpConfig("config/sources/nntp/" ~ name ~ ".ini");
+
 		nntp = new NntpClient(log);
 		nntp.handleDisconnect = &onDisconnect;
-		nntp.connect("news.digitalmars.com", &onConnect);
+		nntp.connect(config.host, &onConnect);
 	}
+
+	void smtpSend(in groups.Config.Group* group)
+	{
+		SmtpClient smtp;
+
+		void onError(string error)
+		{
+			this.status = PostingStatus.serverError;
+			this.error = PostError("SMTP error: " ~ error);
+			log("SMTP error: " ~ error);
+			log.close();
+		}
+
+		void onSent()
+		{
+			if (this.status == PostingStatus.posting)
+				this.status = PostingStatus.waiting;
+			log("Message posted successfully.");
+			log.close();
+		}
+
+		void onStateChanged()
+		{
+			if (smtp.state == SmtpClient.State.mailFrom)
+				status = PostingStatus.posting;
+		}
+
+		status = PostingStatus.connecting;
+
+		auto config = loadIni!SmtpConfig("config/sources/smtp/" ~ group.sinkName ~ ".ini");
+
+		smtp = new SmtpClient(log, site.config.host, config.server, config.port);
+		smtp.handleSent = &onSent;
+		smtp.handleError = &onError;
+		smtp.handleStateChanged = &onStateChanged;
+		smtp.sendMessage(
+			"<" ~ post.authorEmail ~ ">",
+			"<" ~ toLower(group.name) ~ "@" ~ config.domain ~ ">",
+			post.message.splitAsciiLines()
+		);
+	}
+}
+
+struct SmtpConfig
+{
+	string domain;
+	string server;
+	ushort port = 25;
+	string listInfo;
 }
 
 PostProcess[string] postProcesses;

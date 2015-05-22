@@ -1889,6 +1889,15 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 			`</table>`);
 		return false;
 	}
+	if (info.sinkType == "smtp")
+	{
+		auto config = loadIni!SmtpConfig("config/sources/smtp/" ~ info.sinkName ~ ".ini");
+		html.put(`<div class="forum-notice">Note: you are posting to a mailing list.<br>`
+			`Your message will not go through unless you `
+			`<a href="`), html.putEncodedEntities(config.listInfo), html.putEncodedEntities(info.name), html.put(`">subscribe to the mailing list</a> first.<br>`
+			`You must then use the same email address when posting here as the one you used to subscribe to the list.<br>`
+			`If you do not want to receive mailing list mail, you can disable mail delivery at the above link.</div>`);
+	}
 
 	auto parent = draft.serverVars.get("parent", null);
 	auto parentInfo	= parent ? getPostInfo(parent) : null;
@@ -2121,11 +2130,11 @@ void discussionPostStatus(PostProcess process, out bool refresh, out string redi
 			refresh = true;
 			return;
 		case PostingStatus.connecting:
-			discussionPostStatusMessage("Connecting to NNTP server...");
+			discussionPostStatusMessage("Connecting to server...");
 			refresh = true;
 			return;
 		case PostingStatus.posting:
-			discussionPostStatusMessage("Sending message to NNTP server...");
+			discussionPostStatusMessage("Sending message to server...");
 			refresh = true;
 			return;
 		case PostingStatus.waiting:
@@ -2148,7 +2157,7 @@ void discussionPostStatus(PostProcess process, out bool refresh, out string redi
 			discussionPostForm(process.draft, true, error);
 			form = true;
 			return;
-		case PostingStatus.nntpError:
+		case PostingStatus.serverError:
 			discussionPostForm(process.draft, false, error);
 			form = true;
 			return;

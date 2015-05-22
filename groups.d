@@ -33,7 +33,7 @@ struct Config
 
 	struct Group
 	{
-		string name, urlName, groupSet, description, postMessage;
+		string name, urlName, groupSet, description, postMessage, sinkType, sinkName;
 		OrderedMap!(string, AlsoVia) alsoVia;
 	}
 	OrderedMap!(string, Group) groups;

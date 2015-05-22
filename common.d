@@ -137,6 +137,12 @@ unittest
 
 import ae.utils.sini;
 import std.file;
+import std.path;
+
+template services(C)
+{
+	C[string] services;
+}
 
 /// Create a Class instance if the corresponding .ini file exists.
 Class createService(Class)(string configName)
@@ -157,6 +163,6 @@ void createServices(Class, Args...)(string configDir, Args args)
 	foreach (de; dir.dirEntries("*.ini", SpanMode.breadth))
 	{
 		auto config = loadIni!(Class.Config)(de.name);
-		new Class(config, args);
+		services!Class[de.baseName.stripExtension] = new Class(config, args);
 	}
 }

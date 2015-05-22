@@ -31,11 +31,6 @@ DGroupInfo makeDGroupInfo(string name, string archiveName, string mlName, string
 		info.mlName = mlName;
 		info.alsoVia["02-ml"] = DAlsoVia("mailing list", `http://lists.puremagic.com/cgi-bin/mailman/listinfo/` ~ mlName);
 	}
-	if (mlOnly)
-		info.postMessage =
-			`You are viewing a mailing list archive.<br>`
-			`For information about posting, visit `
-				`<a href="http://lists.puremagic.com/cgi-bin/mailman/listinfo/`~name~`">`~name~`'s Mailman page</a>.`;
 	if (bugzilla)
 	{
 		info.alsoVia["03-bugzilla"] = DAlsoVia("Bugzilla", `http://d.puremagic.com/issues/`);
@@ -132,6 +127,16 @@ void main()
 			f.writeln("description=", group.description);
 			if (group.postMessage)
 				f.writeln("postMessage=", group.postMessage);
+			if (group.mlOnly)
+			{
+				f.writeln("sinkType=smtp");
+				f.writeln("sinkName=puremagic");
+			}
+			else
+			{
+				f.writeln("sinkType=nntp");
+				f.writeln("sinkName=digitalmars");
+			}
 			foreach (k; group.alsoVia.keys.sort())
 			{
 				auto av = group.alsoVia[k];
