@@ -14,7 +14,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-module mailinglists;
+module mailrelay;
 
 import ae.net.asockets;
 import ae.utils.text;
@@ -23,7 +23,7 @@ import common;
 import message;
 
 /// Listen for email messages piped by a helper script to a socket.
-class MailingLists : NewsSource
+class MailRelay : NewsSource
 {
 	static struct Config
 	{
@@ -33,7 +33,7 @@ class MailingLists : NewsSource
 
 	this(Config config)
 	{
-		super("MailingList");
+		super("MailRelay");
 
 		this.config = config;
 

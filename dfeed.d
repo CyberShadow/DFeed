@@ -28,7 +28,7 @@ import web;
 
 // Sources
 import newsgroups;
-import mailinglists;
+import mailrelay;
 import stackoverflow;
 import feed;
 import reddit;
@@ -46,7 +46,7 @@ void main()
 {
 	// Create sources
 	createServices!NntpSource   ("sources/nntp");
-	createServices!MailingLists ("sources/mailrelay");
+	createServices!MailRelay    ("sources/mailrelay");
 	createServices!Feed         ("sources/feeds");
 	createServices!StackOverflow("sources/stackoverflow");
 	createServices!Reddit       ("sources/reddit");
