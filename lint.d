@@ -386,9 +386,10 @@ class ShortLinkRule : LintRule
 
 	static Regex!char re;
 
-	static this()
+	this()
 	{
-		re = regex(`https?://(` ~ urlShorteners.map!escapeRE.join("|") ~ `)/\w+`);
+		if (re.empty)
+			re = regex(`https?://(` ~ urlShorteners.map!escapeRE.join("|") ~ `)/\w+`);
 	}
 
 	static string expandURLImpl(string url)
@@ -466,18 +467,27 @@ class LinkInSubjectRule : LintRule
 	}
 }
 
-LintRule[] lintRules;
-
-static this()
+@property LintRule[] lintRules()
 {
-	lintRules = [
-		new NotQuotingRule,
-		new WrongParentRule,
-		new NoParentRule,
-		new MultiParentRule,
-		new TopPostingRule,
-		new OverquotingRule,
-		new ShortLinkRule,
-		new LinkInSubjectRule,
-	];
+	static LintRule[] result;
+	if (!result.length)
+		result = [
+			new NotQuotingRule,
+			new WrongParentRule,
+			new NoParentRule,
+			new MultiParentRule,
+			new TopPostingRule,
+			new OverquotingRule,
+			new ShortLinkRule,
+			new LinkInSubjectRule,
+		];
+	return result;
+}
+
+LintRule getLintRule(string id)
+{
+	foreach (rule; lintRules)
+		if (rule.id == id)
+			return rule;
+	throw new Exception("Unknown lint rule: " ~ id);
 }

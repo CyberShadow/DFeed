@@ -262,6 +262,15 @@ th .forum-read:visited {
 	margin-bottom: 0.75em;
 }
 
+.forum-form .form-error input[type=submit],
+.forum-form .forum-notice input[type=submit] {
+	margin: 0 !important;
+}
+
+.form-error .lint-description {
+	color: black;
+}
+
 /* Notice */
 
 .forum-notice {

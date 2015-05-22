@@ -55,6 +55,7 @@ import captcha;
 import common;
 import database;
 import groups;
+import lint;
 import list;
 //import mailhide;
 import message;
@@ -1898,7 +1899,8 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 	html.put(`<form action="/send" method="post" class="forum-form post-form" id="postform">`);
 
 	if (error.message)
-		html.put(`<div class="form-error">`), html.putEncodedEntities(error.message), html.put(`</div>`);
+		html.put(`<div class="form-error">`), html.putEncodedEntities(error.message), html.put(error.extraHTML, `</div>`);
+	html.put(draft.clientVars.get("html-top", null));
 
 	if (parent)
 		html.put(`<input type="hidden" name="parent" value="`), html.putEncodedEntities(parent), html.put(`">`);
@@ -1968,62 +1970,123 @@ string discussionSend(string[string] clientVars, string[string] headers)
 
 		Rfc850Post post = PostProcess.createPost(draft, headers, ip, id => getPost(id));
 
-		if ("action-save" in clientVars)
+		auto action = clientVars.byKey.filter!(key => key.startsWith("action-")).chain("action-none".only).front[7..$];
+
+		bool lintDetails;
+		if (action.startsWith("lint-ignore-"))
 		{
+			draft.serverVars[action] = null;
+			action = "send";
+		}
+		else
+		if (action.startsWith("lint-fix-"))
+		{
+			auto ruleID = action[9..$];
+			try
+			{
+				draft.serverVars["lint-undo"] = draft.clientVars.get("text", null);
+				getLintRule(ruleID).fix(draft);
+				draft.clientVars["html-top"] = `<div class="forum-notice">Automatic fix applied. `
+					`<input name="action-lint-undo" type="submit" value="Undo"></div>`;
+			}
+			catch (Exception e)
+			{
+				draft.serverVars["lint-ignore-" ~ ruleID] = null;
+				html.put(`<div class="forum-notice">Sorry, a problem occurred while attempting to fix your post `
+					`(`), html.putEncodedEntities(e.msg), html.put(`).</div>`);
+			}
 			discussionPostForm(draft);
-			// Show preview
-			formatPost(post, null);
 			return null;
 		}
 		else
-		if ("action-send" in clientVars)
+		if (action == "lint-undo")
 		{
-			user["name"] = aaGet(clientVars, "name");
-			user["email"] = aaGet(clientVars, "email");
+			enforce("lint-undo" in draft.serverVars, "No undo information..?");
+			draft.clientVars["text"] = draft.serverVars["lint-undo"];
+			draft.serverVars.remove("lint-undo");
+			html.put(`<div class="forum-notice">Automatic fix undone.</div>`);
+			discussionPostForm(draft);
+			return null;
+		}
+		else
+		if (action == "lint-explain")
+		{
+			lintDetails = true;
+			action = "send";
+		}
 
-			auto now = Clock.currTime();
-
-			if (ip in lastPostAttempt && now - lastPostAttempt[ip] < 15.seconds)
+		switch (action)
+		{
+			case "save":
 			{
-				discussionPostForm(draft, false, PostError("Your last post was less than 15 seconds ago. Please wait a few seconds before trying again."));
+				discussionPostForm(draft);
+				// Show preview
+				formatPost(post, null);
 				return null;
 			}
-
-			bool captchaPresent = theCaptcha.isPresent(clientVars);
-			if (!captchaPresent)
+			case "send":
 			{
-				if (ip in lastPostAttempt && now - lastPostAttempt[ip] < 1.minutes)
+				user["name"] = aaGet(clientVars, "name");
+				user["email"] = aaGet(clientVars, "email");
+
+				foreach (rule; lintRules)
+					if ("lint-ignore-" ~ rule.id !in draft.serverVars && rule.check(draft))
+					{
+						PostError error;
+						error.message = "There is a problem with your post: " ~ rule.shortDescription();
+						error.extraHTML ~= ` <input name="action-lint-ignore-` ~ rule.id ~ `" type="submit" value="Ignore">`;
+						if (!lintDetails)
+							error.extraHTML ~= ` <input name="action-lint-explain" type="submit" value="Explain">`;
+						if (rule.canFix(draft))
+							error.extraHTML ~= ` <input name="action-lint-fix-` ~ rule.id ~ `" type="submit" value="Fix it for me">`;
+						if (lintDetails)
+							error.extraHTML ~= `<div class="lint-description">` ~ rule.longDescription() ~ `</div>`;
+						discussionPostForm(draft, false, error);
+						return null;
+					}
+
+				auto now = Clock.currTime();
+
+				if (ip in lastPostAttempt && now - lastPostAttempt[ip] < 15.seconds)
 				{
-					discussionPostForm(draft, true, PostError("Your last post was less than a minute ago. Please solve a CAPTCHA to continue."));
+					discussionPostForm(draft, false, PostError("Your last post was less than 15 seconds ago. Please wait a few seconds before trying again."));
 					return null;
 				}
+
+				bool captchaPresent = theCaptcha.isPresent(clientVars);
+				if (!captchaPresent)
+				{
+					if (ip in lastPostAttempt && now - lastPostAttempt[ip] < 1.minutes)
+					{
+						discussionPostForm(draft, true, PostError("Your last post was less than a minute ago. Please solve a CAPTCHA to continue."));
+						return null;
+					}
+				}
+
+				auto process = new PostProcess(post, draft, getUserID(), ip, headers);
+				process.run();
+				lastPostAttempt[ip] = Clock.currTime();
+				draft.serverVars["pid"] = process.pid;
+				return "/posting/" ~ process.pid;
 			}
-
-			auto process = new PostProcess(post, draft, getUserID(), ip, headers);
-			process.run();
-			lastPostAttempt[ip] = Clock.currTime();
-			draft.serverVars["pid"] = process.pid;
-			return "/posting/" ~ process.pid;
+			case "discard":
+			{
+				// Show undo notice
+				user.set("draft-deleted-notice", draftID);
+				// Mark as deleted
+				draft.status = PostDraft.Status.discarded;
+				// Redirect to relevant page
+				if ("parent" in draft.serverVars)
+					return idToUrl(draft.serverVars["parent"]);
+				else
+				if ("where" in draft.serverVars)
+					return "/group/" ~ draft.serverVars["where"];
+				else
+					return "/";
+			}
+			default:
+				throw new Exception("Unknown action");
 		}
-		else
-		if ("action-discard" in clientVars)
-		{
-			// Show undo notice
-			user.set("draft-deleted-notice", draftID);
-			// Mark as deleted
-			draft.status = PostDraft.Status.discarded;
-			// Redirect to relevant page
-			if ("parent" in draft.serverVars)
-				return idToUrl(draft.serverVars["parent"]);
-			else
-			if ("where" in draft.serverVars)
-				return "/group/" ~ draft.serverVars["where"];
-			else
-				return "/";
-		}
-		else
-			throw new Exception("Unknown action");
-
 	}
 	catch (Exception e)
 	{

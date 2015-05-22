@@ -70,6 +70,7 @@ struct PostError
 {
 	string message;
 	CaptchaErrorData captchaError;
+	string extraHTML;
 }
 
 final class PostProcess
