@@ -327,6 +327,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 					title = group ~ " index" ~ pageStr;
 					breadcrumb1 = `<a href="/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
 					tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
+					extraHeaders ~= `<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Open+Sans:400,600">`;
 
 					break;
 				}
