@@ -21,6 +21,7 @@ import std.file;
 import std.functional;
 import std.process;
 
+import ae.net.shutdown;
 import ae.sys.file;
 import ae.sys.log;
 import ae.sys.timing;
@@ -33,7 +34,8 @@ Logger log;
 static this()
 {
 	log = createLogger("Backup");
-	setInterval(toDelegate(&checkBackup), 1.minutes);
+	auto backupTask = setInterval(toDelegate(&checkBackup), 1.minutes);
+	addShutdownHandler({ backupTask.cancel(); });
 }
 
 void checkBackup()
