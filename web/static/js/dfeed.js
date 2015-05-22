@@ -11,7 +11,7 @@ $(document).ready(function() {
 		initSplitView();
 
 	if ($('#postform').length)
-		initAutoSave();
+		initPosting();
 
 	if ('localStorage' in window && localStorage.getItem('usingKeyNav')) {
 		initKeyNav();
@@ -571,7 +571,24 @@ function navPrev() { focusNext(-1) && selectFocused(); }
 function navNext() { focusNext(+1) && selectFocused(); }
 
 // **************************************************************************
-// Auto save
+// Posting
+
+// http://stackoverflow.com/a/4716021/21501
+function moveCaretToEnd(el) {
+	el.focus();
+	if (typeof el.selectionStart == "number") {
+		el.selectionStart = el.selectionEnd = el.value.length;
+	} else if (typeof el.createTextRange != "undefined") {
+		var range = el.createTextRange();
+		range.collapse(false);
+		range.select();
+	}
+}
+
+function initPosting() {
+	initAutoSave();
+	moveCaretToEnd($('#postform textarea')[0]);
+}
 
 function initAutoSave() {
 	var autoSaveCooldown = 2500;
