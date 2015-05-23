@@ -1109,3 +1109,8 @@ body.frame .post-gravatar {
 	-webkit-border-radius: 5px;
 	border-radius: 5px;
 }
+
+#cssmenu > ul > li:first-child > a {
+	/* https://github.com/D-Programming-Language/dlang.org/pull/995 */
+	font-family: 'Ubuntu', "Lucida Grande", "Helvetica Neue", Roboto, "Segoe UI", Calibri, Arial, sans-serif;
+}
