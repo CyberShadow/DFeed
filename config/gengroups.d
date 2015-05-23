@@ -82,6 +82,7 @@ void main()
 			makeDGroupInfo("digitalmars.empire"      , "digitalmars/empire"      , null                      , "General discussion of Empire, the Wargame of the Century"         , false, false),
 			makeDGroupInfo("D"                       , ""                        , null                      , "Retired, use digitalmars.D instead"                               , false, false),
 		]),
+	/*
 		makeDGroupSet("C and C++", [
 			makeDGroupInfo("c++"                     , "c++"                     , null                      , "General discussion of DMC++ compiler"                             , false, false),
 			makeDGroupInfo("c++.announce"            , "c++/announce"            , null                      , "Announcements about C++"                                          , false, false),
@@ -105,6 +106,7 @@ void main()
 			makeDGroupInfo("c++.windows.32-bits"     , "c++/windows/32-bits"     , null                      , "32 bit Windows topics"                                            , false, false),
 			makeDGroupInfo("c++.wxwindows"           , "c++/wxwindows"           , null                      , "wxWindows"                                                        , false, false),
 		]),
+	*/
 	];
 
 	auto f = File("groups.ini", "wb");
