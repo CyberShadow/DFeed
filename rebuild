@@ -12,5 +12,5 @@ do
 	echo OK.
 done
 echo Rebuilding resources...
-make -sf web-resources.mak
+make -s
 echo Done.
