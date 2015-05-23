@@ -30,9 +30,11 @@ TARGETS : \
 web/skel.htt : $(DLANG)/forum-template.html
 	cp $^ $@
 
-$(DLANG)/forum-template.html : $(DLANG)/forum-template.dd
+DDOC=$(DLANG)/macros.ddoc $(DLANG)/html.ddoc $(DLANG)/dlang.org.ddoc $(DLANG)/windows.ddoc $(DLANG)/doc.ddoc
+
+$(DLANG)/forum-template.html : $(DLANG)/forum-template.dd $(DDOC)
 	@# cd $(DLANG) && make --debug -f posix.mak forum-template.html DMD=$(shell which dmd) LATEST=latest DOC_OUTPUT_DIR=.
-	dmd -o- -c -D $(DLANG)/macros.ddoc $(DLANG)/html.ddoc $(DLANG)/dlang.org.ddoc $(DLANG)/windows.ddoc $(DLANG)/doc.ddoc $^ -Df$@
+	dmd -o- -c -D $(DDOC) $^ -Df$@
 
 $(DLANG)/css/cssmenu.css : $(DLANG)/css/cssmenu.css.dd
 	dmd -o- -D $^ -Df$@
