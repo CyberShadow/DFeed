@@ -49,6 +49,54 @@ table td:not(:last-child), table th:not(:last-child) {
 	padding-right: 0;
 }
 
+/* Navigation menu */
+
+body.forum #cssmenu > ul > li:first-child > a {
+	/* https://github.com/D-Programming-Language/dlang.org/pull/995 */
+	font-family: 'Ubuntu', "Lucida Grande", "Helvetica Neue", Roboto, "Segoe UI", Calibri, Arial, sans-serif;
+}
+
+body.forum #cssmenu > ul > li.has-sub > a span {
+	background: none;
+}
+
+body.forum.have-javascript #cssmenu ul ul {
+	display: block;
+}
+
+body.forum #cssmenu li,
+body.forum #cssmenu ul {
+	background: transparent;
+	border: none;
+}
+
+body.forum #cssmenu a {
+	border: none;
+}
+
+body.forum #cssmenu a:before {
+	color: #888;
+}
+
+body.forum #cssmenu ul ul a {
+	margin-left: 1em;
+	color: #EEE;
+}
+
+body.forum #cssmenu > ul > li > a:hover,
+body.forum #cssmenu > ul > li > ul > li:hover {
+	background-color: #444;
+}
+
+body.forum #cssmenu > ul > li > a {
+	transition: none;
+}
+
+body.forum #cssmenu ul ul a,
+body.forum #cssmenu ul ul h7 {
+	font-size: 100%;
+}
+
 /*************** Navigation toggle ***************/
 
 body.navhidden #top,
@@ -1108,9 +1156,4 @@ body.frame .post-gravatar {
 	-moz-border-radius: 5px;
 	-webkit-border-radius: 5px;
 	border-radius: 5px;
-}
-
-#cssmenu > ul > li:first-child > a {
-	/* https://github.com/D-Programming-Language/dlang.org/pull/995 */
-	font-family: 'Ubuntu', "Lucida Grande", "Helvetica Neue", Roboto, "Segoe UI", Calibri, Arial, sans-serif;
 }
