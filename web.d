@@ -708,7 +708,7 @@ HttpResponseEx makeBundle(string time, string url)
 	}
 	static Bundle[string] cache;
 
-	if (url !in cache || cache[url].time != time)
+	if (url !in cache || cache[url].time != time || isDebug)
 	{
 		auto bundlePaths = url.split("+");
 		enforce(bundlePaths.length > 0, "Empty bundle");
