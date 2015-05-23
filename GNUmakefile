@@ -47,4 +47,4 @@ $(YUICOMPRESSOR) :
 	wget https://github.com/yui/yuicompressor/releases/download/v2.4.8/$(YUICOMPRESSOR)
 
 config/groups.ini : config/gengroups.d
-	cd config && rdmd gengroups
+	cd config && rdmd -I.. gengroups
