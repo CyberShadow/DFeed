@@ -13,7 +13,8 @@ TARGETS : \
 	web/static/css/dfeed.min.css \
 	web/static/js/dfeed.min.js \
 	$(patsubst %.css,%.min.css,$(filter-out $(wildcard $(DLANG)/css/*.min.css), $(wildcard $(DLANG)/css/*.css))) \
-	$(patsubst %.js, %.min.js, $(filter-out $(wildcard $(DLANG)/js/*.min.js  ), $(wildcard $(DLANG)/js/*.js  )))
+	$(patsubst %.js, %.min.js, $(filter-out $(wildcard $(DLANG)/js/*.min.js  ), $(wildcard $(DLANG)/js/*.js  ))) \
+	config/groups.ini
 
 %.min.htt : %.htt $(HTMLCOMPRESSOR) $(YUICOMPRESSOR)
 	$(HTMLTOOL) < $< > $@.tmp
@@ -44,3 +45,6 @@ $(HTMLCOMPRESSOR) :
 
 $(YUICOMPRESSOR) :
 	wget https://github.com/yui/yuicompressor/releases/download/v2.4.8/$(YUICOMPRESSOR)
+
+config/groups.ini : config/gengroups.d
+	cd config && rdmd gengroups
