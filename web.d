@@ -181,6 +181,8 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 
 	auto canonicalHeader =
 		`<link rel="canonical" href="http://`~vhost~request.resource~`"/>`;
+	enum horizontalSplitHeaders =
+		`<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Open+Sans:400,600">`;
 
 	try
 	{
@@ -272,7 +274,10 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				if (viewMode == "threaded")
 					discussionGroupThreaded(group, page);
 				else
+				{
 					discussionGroupSplit(group, page);
+					extraHeaders ~= horizontalSplitHeaders;
+				}
 				//tools ~= viewModeTool(["basic", "threaded"], "group");
 				tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
 				foreach (what; ["posts", "threads"])
@@ -327,7 +332,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 					title = group ~ " index" ~ pageStr;
 					breadcrumb1 = `<a href="/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
 					tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
-					extraHeaders ~= `<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Open+Sans:400,600">`;
+					extraHeaders ~= horizontalSplitHeaders;
 
 					break;
 				}
