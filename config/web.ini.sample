@@ -1,3 +1,7 @@
+# Optional additional cookie-less domain used for static resources.
+# Should not be a subdomain of the main domain.
+#staticDomain = example-static.com
+
 # HTTP socket parameters.
 [listen]
 

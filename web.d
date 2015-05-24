@@ -122,7 +122,10 @@ SysTime timeLastModified(string path)
 
 string staticPath(string path)
 {
-	return "/static/" ~ text(timeLastModified("web/static" ~ path).stdTime) ~ path;
+	auto url = "/static/" ~ text(timeLastModified("web/static" ~ path).stdTime) ~ path;
+	if (config.staticDomain !is null)
+		url = "//" ~ config.staticDomain ~ url;
+	return url;
 }
 
 string optimizedPath(string base, string resource)
@@ -2907,6 +2910,7 @@ struct ListenConfig
 struct Config
 {
 	ListenConfig listen;
+	string staticDomain = null;
 }
 const Config config;
 
