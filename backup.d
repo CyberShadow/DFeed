@@ -31,7 +31,7 @@ import database;
 
 Logger log;
 
-static this()
+void startBackup()
 {
 	log = createLogger("Backup");
 	auto backupTask = setInterval(toDelegate(&checkBackup), 1.minutes);

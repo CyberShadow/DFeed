@@ -61,6 +61,8 @@ void main()
 	startWebUI();
 
 	startNewsSources();
+	startBackup();
+
 	socketManager.loop();
 
 	if (!common.quiet)
