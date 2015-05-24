@@ -2009,14 +2009,16 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 		html.put(`<div id="postform-captcha">`, theCaptcha.getChallengeHtml(error.captchaError), `</div>`);
 
 	html.put(
-		`<div class="postform-action-left">`
-			`<input name="action-send" type="submit" value="Send">`
-			`<input name="action-save" type="submit" value="Save and preview">`
+		`<div>`
+			`<div class="postform-action-left">`
+				`<input name="action-send" type="submit" value="Send">`
+				`<input name="action-save" type="submit" value="Save and preview">`
+			`</div>`
+			`<div class="postform-action-right">`
+				`<input name="action-discard" type="submit" value="Discard draft">`
+			`</div>`
+			`<div style="clear:right"></div>`
 		`</div>`
-		`<div class="postform-action-right">`
-			`<input name="action-discard" type="submit" value="Discard draft">`
-		`</div>`
-		`<div style="clear:both"></div>`
 	`</form>`);
 	return true;
 }

@@ -999,7 +999,7 @@ kbd { /* stolen from http://en.wikipedia.org/wiki/Template:Key_press */
 
 	.forum-form {
 		display: block;
-		margin: 0 0.5em;
+		margin: 0 0.5em 0.5em 0.5em;
 	}
 
 	#postform {
