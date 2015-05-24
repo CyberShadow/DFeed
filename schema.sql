@@ -73,14 +73,14 @@ CREATE INDEX [GroupArtNum] ON [Groups] ( [Group], [ArtNum] );
 CREATE INDEX [PostTime] ON [Posts] ( [Time] DESC );
 
 -- Table `Drafts`
-CREATE TABLE [Drafts] ([UserID] VARCHAR(20) NOT NULL, [ID] VARCHAR(20) NOT NULL, [PostID] VARCHAR(20) NOT NULL, [Status] INTEGER NOT NULL, [ClientVars] TEXT NOT NULL, [ServerVars] TEXT NULL, [Time] INTEGER NOT NULL);
+CREATE TABLE [Drafts] ([UserID] VARCHAR(20) NOT NULL, [ID] VARCHAR(20) NOT NULL, [PostID] VARCHAR(20) NULL, [Status] INTEGER NOT NULL, [ClientVars] TEXT NOT NULL, [ServerVars] TEXT NULL, [Time] INTEGER NOT NULL);
 
 -- Index `DraftID` on table `Drafts`
-CREATE INDEX [DraftID] ON [Drafts] ([ID]);
+CREATE UNIQUE INDEX [DraftID] ON [Drafts] ([ID]);
 
 -- Index `DraftUserID` on table `Drafts`
 CREATE INDEX [DraftUserID] ON [Drafts] ([UserID], [Status]);
 
 -- Index `DraftPostID` on table `Drafts`
-CREATE INDEX [DraftPostID] ON [Drafts] ([PostID]);
+CREATE UNIQUE INDEX [DraftPostID] ON [Drafts] ([PostID]);
 
