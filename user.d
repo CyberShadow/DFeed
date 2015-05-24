@@ -22,6 +22,7 @@ import std.exception;
 import std.base64;
 import ae.net.shutdown;
 import ae.sys.data;
+import ae.sys.log;
 import ae.sys.timing;
 import ae.utils.text;
 import ae.utils.zlib;
@@ -364,62 +365,73 @@ final class RegisteredUser : User
 
 	// ***************************************************************************
 
-	// Keep read posts for registered users in memory,
-	// and flush them out to the database periodically.
+	/// Keep read posts for registered users in memory,
+	/// and flush them out to the database periodically.
 
-	static struct ReadPostsCache
+	static class ReadPostsCache
 	{
-		Data* readPosts;
-		bool dirty;
-	}
+		static struct Entry
+		{
+			Data* readPosts;
+			bool dirty;
+		}
+		Entry[string] entries;
+		Logger log;
 
-	static ReadPostsCache[string] readPostsCache;
+		this()
+		{
+			auto flushTimer = setInterval(&flushReadPostCache, 5.minutes);
+			addShutdownHandler({ flushTimer.cancel(); flushReadPostCache(); });
+			log = createLogger("ReadPostsCache");
+		}
+
+		int counter;
+
+		void flushReadPostCache()
+		{
+			mixin(DB_TRANSACTION);
+			foreach (username, ref cacheEntry; entries)
+				if (cacheEntry.dirty)
+				{
+					log("Flushing " ~ username);
+					auto user = new RegisteredUser(username);
+					user.set("readposts", encodeReadPosts(cacheEntry.readPosts));
+					user.save();
+					cacheEntry.dirty = false;
+				}
+			if (++counter % 100 == 0)
+			{
+				log("Clearing cache.");
+				entries = null;
+			}
+		}
+	}
+	static ReadPostsCache readPostsCache;
 
 	override void getReadPosts()
 	{
-		auto pcache = username in readPostsCache;
+		if (!readPostsCache) readPostsCache = new ReadPostsCache();
+		auto pcache = username in readPostsCache.entries;
 		if (pcache)
 			readPosts = pcache.readPosts;
 		else
 		{
 			super.getReadPosts();
-			readPostsCache[username] = ReadPostsCache(readPosts, false);
+			readPostsCache.entries[username] = ReadPostsCache.Entry(readPosts, false);
 		}
 	}
 
 	override void saveReadPosts()
 	{
-		auto pcache = username in readPostsCache;
+		if (!readPostsCache) readPostsCache = new ReadPostsCache();
+		auto pcache = username in readPostsCache.entries;
 		if (pcache)
 		{
 			assert(readPosts is pcache.readPosts);
 			pcache.dirty = true;
 		}
 		else
-			readPostsCache[username] = ReadPostsCache(readPosts, true);
-		if (!flushTimer)
-			startFlushTimer();
-	}
-
-	static TimerTask flushTimer;
-
-	static void startFlushTimer()
-	{
-		flushTimer = setInterval(toDelegate(&flushReadPostCache), 1.minutes);
-		addShutdownHandler({ flushTimer.cancel(); flushReadPostCache(); });
-	}
-
-	static void flushReadPostCache()
-	{
-		mixin(DB_TRANSACTION);
-		foreach (username, ref cacheEntry; readPostsCache)
-			if (cacheEntry.dirty)
-			{
-				auto user = new RegisteredUser(username);
-				user.set("readposts", encodeReadPosts(cacheEntry.readPosts));
-				user.save();
-				cacheEntry.dirty = false;
-			}
+			readPostsCache.entries[username] = ReadPostsCache.Entry(readPosts, true);
 	}
 }
 
