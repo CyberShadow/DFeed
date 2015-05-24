@@ -16,10 +16,13 @@
 
 module user;
 
+import std.functional;
 import std.string;
 import std.exception;
 import std.base64;
+import ae.net.shutdown;
 import ae.sys.data;
+import ae.sys.timing;
 import ae.utils.text;
 import ae.utils.zlib;
 
@@ -67,12 +70,57 @@ protected:
 	/// Save misc data to string settings
 	final void finalize()
 	{
-		encodeReadPosts();
+		flushReadPosts();
 	}
 
 	// ***********************************************************************
 
-private:
+	void getReadPosts()
+	in  { assert(!this.readPosts); }
+	out { assert( this.readPosts); }
+	body
+	{
+		auto b64 = get("readposts", null);
+		if (b64.length)
+		{
+			// Temporary hack to catch Phobos bug
+			ubyte[] zcode;
+
+			enum advice = "Try clearing your browser's cookies. Create an account to avoid repeated incidents.";
+
+			try
+				zcode = Base64.decode(b64);
+			catch
+			{
+				import std.file; write("bad-base64.txt", b64);
+				throw new Exception("Malformed Base64 in read post history cookie. " ~ advice);
+			}
+
+			try
+				readPosts = [uncompress(Data(zcode))].ptr;
+			catch (ZlibException e)
+			{
+				import std.file; write("bad-zlib.z", zcode);
+				throw new Exception("Malformed deflated data in read post history cookie (" ~ e.msg ~ "). " ~ advice);
+			}
+		}
+		else
+			readPosts = new Data();
+	}
+
+	static string encodeReadPosts(Data* readPosts)
+	{
+		auto b64 = Base64.encode(cast(ubyte[])compress(*readPosts, 1).contents);
+		return assumeUnique(b64);
+	}
+
+	void saveReadPosts()
+	in  { assert(readPosts && readPosts.length && readPostsDirty); }
+	body
+	{
+		set("readposts", encodeReadPosts(readPosts));
+	}
+
 	Data* readPosts;
 	bool readPostsDirty;
 
@@ -80,43 +128,13 @@ final:
 	void needReadPosts()
 	{
 		if (!readPosts)
-		{
-			auto b64 = get("readposts", null);
-			if (b64.length)
-			{
-				// Temporary hack to catch Phobos bug
-				ubyte[] zcode;
-
-				enum advice = "Try clearing your browser's cookies. Create an account to avoid repeated incidents.";
-
-				try
-					zcode = Base64.decode(b64);
-				catch
-				{
-					import std.file; write("bad-base64.txt", b64);
-					throw new Exception("Malformed Base64 in read post history cookie. " ~ advice);
-				}
-
-				try
-					readPosts = [uncompress(Data(zcode))].ptr;
-				catch (ZlibException e)
-				{
-					import std.file; write("bad-zlib.z", zcode);
-					throw new Exception("Malformed deflated data in read post history cookie (" ~ e.msg ~ "). " ~ advice);
-				}
-			}
-			else
-				readPosts = new Data();
-		}
+			getReadPosts();
 	}
 
-	void encodeReadPosts()
+	void flushReadPosts()
 	{
 		if (readPosts && readPosts.length && readPostsDirty)
-		{
-			auto b64 = Base64.encode(cast(ubyte[])compress(*readPosts, 1).contents);
-			set("readposts", assumeUnique(b64));
-		}
+			saveReadPosts();
 	}
 
 	public bool isRead(size_t post)
@@ -150,6 +168,8 @@ final:
 		readPostsDirty = true;
 	}
 }
+
+// ***************************************************************************
 
 final class GuestUser : User
 {
@@ -260,6 +280,8 @@ final class GuestUser : User
 	override bool isLoggedIn() { return false; }
 }
 
+// ***************************************************************************
+
 import database;
 
 final class RegisteredUser : User
@@ -339,7 +361,69 @@ final class RegisteredUser : User
 	{
 		query!"UPDATE `Users` SET `Session` = ? WHERE `Username` = ?".exec(randomString(), username);
 	}
+
+	// ***************************************************************************
+
+	// Keep read posts for registered users in memory,
+	// and flush them out to the database periodically.
+
+	static struct ReadPostsCache
+	{
+		Data* readPosts;
+		bool dirty;
+	}
+
+	static ReadPostsCache[string] readPostsCache;
+
+	override void getReadPosts()
+	{
+		auto pcache = username in readPostsCache;
+		if (pcache)
+			readPosts = pcache.readPosts;
+		else
+		{
+			super.getReadPosts();
+			readPostsCache[username] = ReadPostsCache(readPosts, false);
+		}
+	}
+
+	override void saveReadPosts()
+	{
+		auto pcache = username in readPostsCache;
+		if (pcache)
+		{
+			assert(readPosts is pcache.readPosts);
+			pcache.dirty = true;
+		}
+		else
+			readPostsCache[username] = ReadPostsCache(readPosts, true);
+		if (!flushTimer)
+			startFlushTimer();
+	}
+
+	static TimerTask flushTimer;
+
+	static void startFlushTimer()
+	{
+		flushTimer = setInterval(toDelegate(&flushReadPostCache), 1.minutes);
+		addShutdownHandler({ flushTimer.cancel(); flushReadPostCache(); });
+	}
+
+	static void flushReadPostCache()
+	{
+		mixin(DB_TRANSACTION);
+		foreach (username, ref cacheEntry; readPostsCache)
+			if (cacheEntry.dirty)
+			{
+				auto user = new RegisteredUser(username);
+				user.set("readposts", encodeReadPosts(cacheEntry.readPosts));
+				user.save();
+				cacheEntry.dirty = false;
+			}
+	}
 }
+
+// ***************************************************************************
 
 User getUser(string cookieHeader)
 {
@@ -352,7 +436,7 @@ User getUser(string cookieHeader)
 	return guest;
 }
 
-// **************************************************************************
+// ***************************************************************************
 
 struct Config
 {
