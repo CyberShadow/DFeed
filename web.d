@@ -2051,8 +2051,6 @@ string discussionSend(string[string] clientVars, string[string] headers)
 		draft.status = PostDraft.Status.edited;
 		scope(exit) saveDraft(draft);
 
-		Rfc850Post post = PostProcess.createPost(draft, headers, ip, id => getPost(id));
-
 		auto action = clientVars.byKey.filter!(key => key.startsWith("action-")).chain("action-none".only).front[7..$];
 
 		bool lintDetails;
@@ -2104,6 +2102,8 @@ string discussionSend(string[string] clientVars, string[string] headers)
 			{
 				discussionPostForm(draft);
 				// Show preview
+				auto parent = "parent" in draft.serverVars ? getPost(draft.serverVars["parent"]) : null;
+				auto post = PostProcess.createPost(draft, headers, ip, parent);
 				formatPost(post, null);
 				return null;
 			}
@@ -2146,7 +2146,8 @@ string discussionSend(string[string] clientVars, string[string] headers)
 					}
 				}
 
-				auto process = new PostProcess(post, draft, getUserID(), ip, headers);
+				auto parent = "parent" in draft.serverVars ? getPost(draft.serverVars["parent"]) : null;
+				auto process = new PostProcess(draft, getUserID(), ip, headers, parent);
 				process.run();
 				lastPostAttempt[ip] = Clock.currTime();
 				draft.serverVars["pid"] = process.pid;

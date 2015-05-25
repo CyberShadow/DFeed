@@ -87,12 +87,13 @@ final class PostProcess
 	PostError error;
 	bool captchaPresent;
 
-	this(Rfc850Post post, PostDraft draft, string userID, string ip, string[string] headers)
+	this(PostDraft draft, string userID, string ip, string[string] headers, Rfc850Post parent)
 	{
-		this.post = post;
 		this.draft = draft;
 		this.ip = ip;
 		this.headers = headers;
+
+		this.post = createPost(draft, headers, ip, parent);
 
 		enforce(draft.clientVars.get("name", "").length, "Please enter a name");
 		enforce(draft.clientVars.get("email", "").length, "Please enter an email address");
@@ -101,6 +102,7 @@ final class PostProcess
 
 		this.pid = randomString();
 		postProcesses[pid] = this;
+		this.post.id = pidToMessageID(pid);
 
 		log = createLogger("PostProcess-" ~ pid);
 		log("IP: " ~ ip);
@@ -205,25 +207,29 @@ final class PostProcess
 		}
 	}
 
-	static Rfc850Post createPost(PostDraft draft, string[string] headers, string ip, Rfc850Post delegate(string id) getPost)
+	static Rfc850Post createPost(PostDraft draft, string[string] headers, string ip, Rfc850Post parent = null)
 	{
 		Rfc850Post post;
 		if ("parent" in draft.serverVars)
 		{
-			if (getPost)
+			if (parent)
 			{
-				auto parent = getPost(draft.serverVars["parent"]);
-				enforce(parent, "Can't find post to reply to.");
+				auto parentID = draft.serverVars["parent"];
+				assert(parent.id == parentID, "Invalid parent ID");
 				post = parent.replyTemplate();
 			}
 			else
 				post = Rfc850Post.newPostTemplate(null);
 		}
 		else
-		if ("where" in draft.serverVars)
-			post = Rfc850Post.newPostTemplate(draft.serverVars["where"]);
-		else
-			assert(false, "No 'parent' or 'where'");
+		{
+			assert(parent is null, "Parent specified but not parent in serverVars");
+
+			if ("where" in draft.serverVars)
+				post = Rfc850Post.newPostTemplate(draft.serverVars["where"]);
+			else
+				assert(false, "No 'parent' or 'where'");
+		}
 
 		post.author = draft.clientVars.get("name", null);
 		post.authorEmail = draft.clientVars.get("email", null);
