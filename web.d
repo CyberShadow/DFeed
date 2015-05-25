@@ -2449,7 +2449,7 @@ void discussionLoginForm(string[string] parameters, string errorMessage = null)
 
 	html.put(
 			`<label for="loginform-username">Username:</label>`
-			`<input id="loginform-username" name="username" value="`), html.putEncodedEntities(parameters.get("username", "")), html.put(`">`
+			`<input id="loginform-username" name="username" value="`), html.putEncodedEntities(parameters.get("username", "")), html.put(`" autofocus>`
 			`<label for="loginform-password">Password:</label>`
 			`<input id="loginform-password" type="password" name="password" value="`), html.putEncodedEntities(parameters.get("password", "")), html.put(`">`
 			`<input type="submit" value="Log in">`
@@ -2483,7 +2483,7 @@ void discussionRegisterForm(string[string] parameters, string errorMessage = nul
 
 	html.put(
 		`<label for="loginform-username">Username:</label>`
-		`<input id="loginform-username" name="username" value="`), html.putEncodedEntities(parameters.get("username", "")), html.put(`">`
+		`<input id="loginform-username" name="username" value="`), html.putEncodedEntities(parameters.get("username", "")), html.put(`" autofocus>`
 		`<label for="loginform-password">Password:</label>`
 		`<input id="loginform-password" type="password" name="password" value="`), html.putEncodedEntities(parameters.get("password", "")), html.put(`">`
 		`<label for="loginform-password2">Confirm:</label>`
