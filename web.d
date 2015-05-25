@@ -2116,7 +2116,7 @@ string discussionSend(string[string] clientVars, string[string] headers)
 					if ("lint-ignore-" ~ rule.id !in draft.serverVars && rule.check(draft))
 					{
 						PostError error;
-						error.message = "There is a problem with your post: " ~ rule.shortDescription();
+						error.message = "Warning: " ~ rule.shortDescription();
 						error.extraHTML ~= ` <input name="action-lint-ignore-` ~ rule.id ~ `" type="submit" value="Ignore">`;
 						if (!lintDetails)
 							error.extraHTML ~= ` <input name="action-lint-explain" type="submit" value="Explain">`;
