@@ -1,3 +1,5 @@
+var cssmenu_no_js = 1;
+
 $(document).ready(function() {
 	if ($.browser.webkit) {
 		// Chrome does not pass Ctrl+keys to keypress - but in many
