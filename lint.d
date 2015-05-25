@@ -56,7 +56,7 @@ class NotQuotingRule : LintRule
 	override @property string shortDescription() { return "Parent post is not quoted."; }
 	override @property string longDescription() { return
 		"<p>When replying to someone's post, you should provide some context for your replies by quoting the revelant parts of their post.</p>"
-		"<p>Depending on the software (or its configuration) used to read your message, it may not be obvious to which post you're replying.</p>"
+		"<p>Depending on the software (or its configuration) used to read your message, it may not be obvious which post you're replying to.</p>"
 		"<p>Thus, when writing a reply, don't delete all quoted text: instead, leave just enough to provide context for your reply. "
 		   "You can also insert your replies inline (interleaved with quoted text) to address specific parts of the parent post.</p>";
 	}
@@ -143,7 +143,7 @@ class NoParentRule : LintRule
 	override @property string shortDescription() { return "Parent post is not indicated."; }
 	override @property string longDescription() { return
 		"<p>When quoting someone's post, you should leave the \"On (date), (author) wrote:\" line.</p>"
-		"<p>Depending on the software (or its configuration) used to read your message, it may not be obvious to which post you're replying.</p>"
+		"<p>Depending on the software (or its configuration) used to read your message, it may not be obvious which post you're replying to.</p>"
 		"<p>Thus, this line provides important context for your replies regarding the structure of the conversation.</p>";
 	}
 
@@ -151,7 +151,7 @@ class NoParentRule : LintRule
 	{
 		if (!hasParent(draft))
 			return false;
-		return getWroteLines(draft).length == 0;
+		return getWroteLines(draft).length == 0 && getLines(draft).canFind!(line => line.startsWith(">"));
 	}
 
 	override bool canFix(PostDraft draft) { return true; }
