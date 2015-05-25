@@ -474,6 +474,10 @@ function onKeyPress(e) {
 // Return true if the event was handled,
 // and false if it wasn't and it should be processed by the browser.
 function onKeyPressImpl(e) {
+	if ($(e.target).is('input, textarea')) {
+		return false;
+	}
+
 	if ($('.keyboardhelp-popup').length) {
 		closeHelp();
 		return true;
