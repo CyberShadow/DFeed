@@ -25,6 +25,7 @@ SQLite db;
 
 SQLite.PreparedStatement query(string sql)()
 {
+	debug(DATABASE) std.stdio.writeln(sql);
 	static SQLite.PreparedStatement statement = null;
 	if (!statement)
 		statement = db.prepare(sql).enforce("Statement compilation failed: " ~ sql);
@@ -33,6 +34,7 @@ SQLite.PreparedStatement query(string sql)()
 
 SQLite.PreparedStatement query(string sql)
 {
+	debug(DATABASE) std.stdio.writeln(sql);
 	static SQLite.PreparedStatement[const(void)*] cache;
 	auto pstatement = sql.ptr in cache;
 	if (pstatement)
