@@ -6,8 +6,15 @@
   <ul>
     <li><b>Basic</b> - A forum-like view with paged linear threads.</li>
     <li><b>Threaded</b> - Threaded group overview with single post display, similar to mailing list archives.</li>
-    <li><b>Horizontal-split</b> - JavaScript-powered interface with a split view and keyboard shortcuts, similar to a mail or newsgroup client.</li>
+    <li><b>Horizontal-split</b> - JavaScript-powered interface with a split view, similar to a mail or newsgroup client.</li>
   </ul>
+
+<h2 id="keynav">Keyboard navigation</h2>
+
+<p>
+  Keyboard shortcuts are available for all view modes (in thread and post listing pages, as well as the board index).
+  If JavaScript is enabled, press <kbd>?</kbd> to view a list of shortcuts.
+</p>
 
 <h2 id="read-post-history">Read post history</h2>
 
