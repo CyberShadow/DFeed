@@ -35,7 +35,7 @@ private:
     Logger log;
 
 protected:
-	override void handlePost(Post post)
+	override void handlePost(Post post, Fresh fresh)
 	{
 		auto message = cast(Rfc850Post)post;
 		if (!message)

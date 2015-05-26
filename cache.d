@@ -25,7 +25,7 @@ int dbVersion = 1;
 
 final class CacheSink : NewsSink
 {
-	override void handlePost(Post post)
+	override void handlePost(Post post, Fresh fresh)
 	{
 		dbVersion++;
 	}

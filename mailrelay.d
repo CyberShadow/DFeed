@@ -72,7 +72,7 @@ private:
 				log("> " ~ line);
 			log("* Disconnected");
 
-			announcePost(new Rfc850Post(text));
+			announcePost(new Rfc850Post(text), Fresh.yes);
 		};
 	}
 }

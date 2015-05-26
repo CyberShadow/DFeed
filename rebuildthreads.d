@@ -52,7 +52,7 @@ class DatabaseSource : NewsSource
 		{
 			auto post = new Rfc850Post(message, id);
 			log("Announcing: " ~ id);
-			announcePost(post);
+			announcePost(post, Fresh.no);
 			sink.updatePost(post);
 
 			if (flushTransactionEvery(50))

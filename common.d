@@ -17,6 +17,7 @@
 module common;
 
 import std.datetime;
+public import std.typecons;
 
 import ae.sys.log;
 import ae.net.shutdown;
@@ -61,6 +62,8 @@ public:
 	string name;
 }
 
+alias Fresh = Flag!q{Fresh};
+
 abstract class NewsSink
 {
 	this()
@@ -68,7 +71,7 @@ abstract class NewsSink
 		newsSinks ~= this;
 	}
 
-	abstract void handlePost(Post p);
+	abstract void handlePost(Post p, Fresh fresh);
 }
 
 private NewsSource[string] newsSources;
@@ -85,10 +88,10 @@ void startNewsSources()
 	});
 }
 
-void announcePost(Post p)
+void announcePost(Post p, Fresh fresh)
 {
 	foreach (sink; newsSinks)
-		sink.handlePost(p);
+		sink.handlePost(p, fresh);
 }
 
 // ***************************************************************************

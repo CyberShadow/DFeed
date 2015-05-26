@@ -101,7 +101,7 @@ class MLDownloader : NewsSource
 						if (n == 0)
 						{
 							log("Found new post: " ~ post.id);
-							announcePost(post);
+							announcePost(post, Fresh.no);
 						}
 						else if (update)
 						{

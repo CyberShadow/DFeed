@@ -404,7 +404,7 @@ string[string] postsByContent;
 
 final class PostingNotifySink : NewsSink
 {
-	override void handlePost(Post post)
+	override void handlePost(Post post, Fresh fresh)
 	{
 		auto rfc850post = cast(Rfc850Post)post;
 		if (rfc850post)

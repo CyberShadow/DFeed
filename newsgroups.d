@@ -78,7 +78,7 @@ private:
 
 	void onMessage(string[] lines, string num, string id)
 	{
-		announcePost(new Rfc850Post(lines.join("\n"), id));
+		announcePost(new Rfc850Post(lines.join("\n"), id), Fresh.yes);
 	}
 }
 
@@ -255,7 +255,7 @@ private:
 	void onMessage(string[] lines, string num, string id)
 	{
 		log(format("Got message %s (%s)", num, id));
-		announcePost(new Rfc850Post(lines.join("\n"), id));
+		announcePost(new Rfc850Post(lines.join("\n"), id), Fresh.no);
 	}
 
 	void onDisconnect(string reason, DisconnectType type)

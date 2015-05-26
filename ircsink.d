@@ -69,8 +69,11 @@ final class IrcSink : NewsSink
 	}
 
 protected:
-	override void handlePost(Post post)
+	override void handlePost(Post post, Fresh fresh)
 	{
+		if (!fresh)
+			return;
+
 		if (post.time < Clock.currTime() - dur!"days"(1))
 			return; // ignore posts older than a day old (e.g. StackOverflow question activity bumps the questions)
 

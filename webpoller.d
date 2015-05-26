@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -96,7 +96,7 @@ protected:
 		foreach (pair; newPostList)
 		{
 			log(format("Announcing %s", pair.key));
-			announcePost(pair.value);
+			announcePost(pair.value, Fresh.yes);
 		}
 
 		scheduleNextRequest();

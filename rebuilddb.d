@@ -38,7 +38,7 @@ class DatabaseSource : NewsSource
 		foreach (string message, string id; query!"SELECT `Message`, `ID` FROM old.Posts".iterate())
 		{
 			log("Announcing: " ~ id);
-			announcePost(new Rfc850Post(message, id));
+			announcePost(new Rfc850Post(message, id), Fresh.no);
 			if (flushTransactionEvery(flushInterval))
 				log("Transaction flushed");
 		}
