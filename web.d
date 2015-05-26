@@ -270,7 +270,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				string pageStr = page==1 ? "" : format(" (page %d)", page);
 				title = group ~ " index" ~ pageStr;
 				breadcrumb1 = `<a href="/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
-				auto viewMode = user.get("groupviewmode", "basic");
+				auto viewMode = user.get("groupviewmode", defaultViewMode);
 				if (viewMode == "basic")
 					discussionGroup(group, page);
 				else
@@ -281,8 +281,6 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 					discussionGroupSplit(group, page);
 					extraHeaders ~= horizontalSplitHeaders;
 				}
-				//tools ~= viewModeTool(["basic", "threaded"], "group");
-				tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
 				foreach (what; ["posts", "threads"])
 					extraHeaders ~= `<link rel="alternate" type="application/atom+xml" title="New `~what~` on `~encodeEntities(group)~`" href="/feed/`~what~`/`~encodeEntities(group)~`" />`;
 				break;
@@ -294,7 +292,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				string threadID = '<' ~ urlDecode(pathX) ~ '>';
 
 				auto firstPostUrl = idToUrl(getPostAtThreadIndex(threadID, getPageOffset(page, POSTS_PER_PAGE)));
-				auto viewMode = user.get("groupviewmode", "basic");
+				auto viewMode = user.get("groupviewmode", defaultViewMode);
 				if (viewMode != "basic")
 					html.put(`<div class="forum-notice">Viewing thread in basic view mode &ndash; click a post's title to open it in `, encodeEntities(viewMode), ` view mode</div>`);
 				returnPage = firstPostUrl;
@@ -305,24 +303,21 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				title = subject ~ pageStr;
 				breadcrumb1 = `<a href="/group/` ~encodeEntities(group)~`">` ~ encodeEntities(group  ) ~ `</a>`;
 				breadcrumb2 = `<a href="/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a>` ~ pageStr;
-				//tools ~= viewModeTool(["flat", "nested"], "thread");
-				tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
 				extraHeaders ~= canonicalHeader; // Google confuses /post/ URLs with threads
 				break;
 			}
 			case "post":
 				enforce(path.length > 1, "No post specified");
-				if (user.get("groupviewmode", "basic") == "basic")
+				if (user.get("groupviewmode", defaultViewMode) == "basic")
 					return response.redirect(resolvePostUrl('<' ~ urlDecode(pathX) ~ '>'));
 				else
-				if (user.get("groupviewmode", "basic") == "threaded")
+				if (user.get("groupviewmode", defaultViewMode) == "threaded")
 				{
 					string group, subject;
 					discussionSinglePost('<' ~ urlDecode(pathX) ~ '>', group, subject);
 					title = subject;
 					breadcrumb1 = `<a href="/group/` ~encodeEntities(group)~`">` ~ encodeEntities(group  ) ~ `</a>`;
 					breadcrumb2 = `<a href="/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a> (view single post)`;
-					tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
 					break;
 				}
 				else
@@ -334,7 +329,6 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 					string pageStr = page==1 ? "" : format(" (page %d)", page);
 					title = group ~ " index" ~ pageStr;
 					breadcrumb1 = `<a href="/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
-					tools ~= viewModeTool(["basic", "threaded", "horizontal-split"], "group");
 					extraHeaders ~= horizontalSplitHeaders;
 
 					break;
@@ -549,6 +543,10 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				else
 					return response.serveText("OK");
 			}
+			case "settings":
+				title = "Settings";
+				discussionSettings(parameters, request.method == "POST" ? request.decodePostData() : null);
+				break;
 			case "help":
 				title = breadcrumb1 = "Help";
 				html.put(readText(optimizedPath(null, "web/help.htt")));
@@ -631,6 +629,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		tools ~= `<a href="/logout?url=__URL__">Log out ` ~ encodeEntities(user.getName()) ~ `</a>`;
 	else
 		tools ~= `<a href="/loginform?url=__URL__">Log in</a>`;
+	tools ~= `<a href="/settings">Settings</a>`;
 	tools ~= `<a href="/help">Help</a>`;
 
 	string toolStr = tools.join(" &middot; ");
@@ -1249,7 +1248,7 @@ void formatThreadedPosts(PostInfo*[] postInfos, bool narrow, string selectedID =
 			posts[parent].children ~= post;
 		}
 
-	bool reversed = user.get("groupviewmode", "basic") == "threaded";
+	bool reversed = user.get("groupviewmode", defaultViewMode) == "threaded";
 	foreach (post; posts)
 	{
 		post.calcStats();
@@ -1358,7 +1357,7 @@ void discussionGroupThreaded(string group, int page, bool narrow = false)
 		posts ~= [PostInfo(rowid, id, null, parent, author, subject, SysTime(stdTime, UTC()))].ptr; // TODO: optimize?
 
 	html.put(
-		`<table id="group-index-threaded" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(user.get("groupviewmode", "basic")), html.put(`">`
+		`<table id="group-index-threaded" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(user.get("groupviewmode", defaultViewMode)), html.put(`">`
 		`<tr class="group-index-header"><th><div>`), newPostButton(group), html.putEncodedEntities(group), html.put(`</div></th></tr>`,
 	//	`<tr class="group-index-captions"><th>Subject / Author</th><th>Time</th>`,
 		`<tr><td class="group-threads-cell"><div class="group-threads"><table>`);
@@ -1469,7 +1468,7 @@ enum maxPostActions = 3;
 void postActions(Rfc850Message msg)
 {
 	auto id = msg.id;
-	if (user.get("groupviewmode", "basic") == "basic")
+	if (user.get("groupviewmode", defaultViewMode) == "basic")
 		html.put(
 			`<a class="actionlink permalink" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" `
 				`title="Canonical link to this post. See &quot;Canonical links&quot; on the Help page for more information.">`
@@ -1837,7 +1836,7 @@ void discussionThreadOverview(string threadID, string selectedID)
 		posts ~= [PostInfo(rowid, id, null, parent, author, subject, SysTime(stdTime, UTC()))].ptr;
 
 	html.put(
-		`<table id="thread-index" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(user.get("groupviewmode", "basic")), html.put(`">`
+		`<table id="thread-index" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(user.get("groupviewmode", defaultViewMode)), html.put(`">`
 		`<tr class="group-index-header"><th><div>Thread overview</div></th></tr>`,
 		`<tr><td class="group-threads-cell"><div class="group-threads"><table>`);
 	formatThreadedPosts(posts, false, selectedID);
@@ -2508,6 +2507,32 @@ void discussionRegister(string[string] parameters)
 
 // ***********************************************************************
 
+const defaultViewMode = "basic";
+
+void discussionSettings(string[string] getVars, string[string] postVars)
+{
+	if (postVars)
+	{
+		foreach (setting; ["groupviewmode"])
+			if (setting in postVars)
+				user.set(setting, postVars[setting]);
+		html.put(`<div class="forum-notice">Settings saved.</div>`);
+	}
+
+	html.put(`<form method="post" id="settings-form">`);
+	html.put(`<h2>User Interface</h2>`);
+
+	html.put(`View mode: <select name="groupviewmode">`);
+	auto currentMode = user.get("groupviewmode", defaultViewMode);
+	foreach (mode; ["basic", "threaded", "horizontal-split"])
+		html.put(`<option value="`, mode, `"`, mode == currentMode ? ` selected` : null, `>`, mode, `</option>`);
+	html.put(`</select><br>`);
+
+	html.put(`<input type="submit" value="Save"></form>`);
+}
+
+// ***********************************************************************
+
 string resolvePostUrl(string id)
 {
 	foreach (string threadID; query!"SELECT `ThreadID` FROM `Posts` WHERE `ID` = ?".iterate(id))
@@ -2817,17 +2842,6 @@ static string encodeEntities(string s)
 
 	result.put(s[start..$]);
 	return result.get();
-}
-
-string viewModeTool(string[] modes, string what)
-{
-	auto currentMode = user.get(what ~ "viewmode", modes[0]);
-	return "View mode: " ~
-		array(map!((string mode) {
-			return mode == currentMode
-				? `<span class="viewmode-active" title="Viewing in ` ~ mode ~ ` mode">` ~ mode ~ `</span>`
-				: `<a title="Switch to ` ~ mode ~ ` ` ~ what ~ ` view mode" href="` ~ encodeEntities(setOptionLink(what ~ "viewmode", mode)) ~ `">` ~ mode ~ `</a>`;
-		})(modes)).join(" / ");
 }
 
 /// Generate a link to set a user preference
