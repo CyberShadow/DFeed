@@ -9,11 +9,18 @@
     <li><b>Horizontal-split</b> - JavaScript-powered interface with a split view, similar to a mail or newsgroup client.</li>
   </ul>
 
+  The view mode can be changed on the <a href="/settings">settings page</a>.
+</p>
+
 <h2 id="keynav">Keyboard navigation</h2>
 
 <p>
   Keyboard shortcuts are available for all view modes (in thread and post listing pages, as well as the board index).
   If JavaScript is enabled, press <kbd>?</kbd> to view a list of shortcuts.
+</p>
+
+<p>
+  If you wish, you can disable keyboard shortcuts on the <a href="/settings">settings page</a>.
 </p>
 
 <h2 id="read-post-history">Read post history</h2>

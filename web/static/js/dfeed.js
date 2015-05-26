@@ -1,12 +1,14 @@
 var cssmenu_no_js = 1;
 
 $(document).ready(function() {
-	if ($.browser.webkit) {
-		// Chrome does not pass Ctrl+keys to keypress - but in many
-		// other browsers keydown does not repeat
-		$(document).keydown(onKeyPress);
-	} else {
-		$(document).keypress(onKeyPress);
+	if (enableKeyNav) {
+		if ($.browser.webkit) {
+			// Chrome does not pass Ctrl+keys to keypress - but in many
+			// other browsers keydown does not repeat
+			$(document).keydown(onKeyPress);
+		} else {
+			$(document).keypress(onKeyPress);
+		}
 	}
 
 	if ($('#group-split').length)

@@ -174,6 +174,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	string returnPage = request.resource;
 	html.clear();
 	string[] tools, extraHeaders;
+	string[string] jsVars;
 	auto status = HttpStatusCode.OK;
 
 	// Redirect to canonical domain name
@@ -633,9 +634,9 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	tools ~= `<a href="/help">Help</a>`;
 
 	string toolStr = tools.join(" &middot; ");
+	jsVars["toolsTemplate"] = toJson(toolStr);
 	toolStr =
-		toolStr.replace("__URL__",  encodeUrlParameter(returnPage)) ~
-		`<script type="text/javascript">var toolsTemplate = ` ~ toJson(toolStr) ~ `;</script>`;
+		toolStr.replace("__URL__",  encodeUrlParameter(returnPage));
 	toolStr =
 		`<div id="forum-tools-left"></div>`
 		`<div id="forum-tools-right">` ~ toolStr ~ `</div>`
@@ -651,6 +652,12 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			user.remove("draft-deleted-notice");
 		}
 	}
+
+	jsVars["enableKeyNav"] = user.get("enable-keynav", `true`);
+
+	string[] extraJS;
+	if (jsVars.length)
+		extraJS ~= "var %-(%s,%);".format(jsVars.byKeyValue.map!(pair => pair.key ~ "=" ~ pair.value));
 
 	cookies = user.save();
 	foreach (cookie; cookies)
@@ -670,7 +677,8 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			case "content"      : return htmlStr;
 			case "breadcrumb1"  : return breadcrumb1;
 			case "breadcrumb2"  : return breadcrumb2;
-			case "extraheaders" : return extraHeaders.join("\n");
+			case "extraheaders" : return extraHeaders.join();
+			case "extrajs"      : return extraJS.join();
 			case "bodyclass"    : return bodyClass;
 			case "tools"        : return toolStr;
 			default:
@@ -1789,7 +1797,8 @@ string getPostAtThreadIndex(string threadID, int index)
 
 void discussionThread(string id, int page, out string group, out string title, bool markAsRead)
 {
-	auto viewMode = user.get("threadviewmode", "flat"); // legacy
+	//auto viewMode = user.get("threadviewmode", "flat"); // legacy
+	auto viewMode = "flat";
 	bool nested = viewMode == "nested" || viewMode == "threaded";
 
 	enforce(page >= 1, "Invalid page");
@@ -2513,9 +2522,14 @@ void discussionSettings(string[string] getVars, string[string] postVars)
 {
 	if (postVars)
 	{
+		// Inputs
 		foreach (setting; ["groupviewmode"])
 			if (setting in postVars)
 				user.set(setting, postVars[setting]);
+		// Checkboxes
+		foreach (setting; ["enable-keynav"])
+			user.set(setting, setting in postVars ? "true" : "false");
+
 		html.put(`<div class="forum-notice">Settings saved.</div>`);
 	}
 
@@ -2527,6 +2541,9 @@ void discussionSettings(string[string] getVars, string[string] postVars)
 	foreach (mode; ["basic", "threaded", "horizontal-split"])
 		html.put(`<option value="`, mode, `"`, mode == currentMode ? ` selected` : null, `>`, mode, `</option>`);
 	html.put(`</select><br>`);
+
+	html.put(`<input type="checkbox" name="enable-keynav" id="enable-keynav"`, user.get("enable-keynav", "true") == "true" ? ` checked` : null, `>`
+		`<label for="enable-keynav">Enable <a href="/help#keynav">keyboard shortcuts</a></label><br>`);
 
 	html.put(`<input type="submit" value="Save"></form>`);
 }
