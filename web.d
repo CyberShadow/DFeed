@@ -598,6 +598,8 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				return response.writeError(HttpStatusCode.NotFound);
 		}
 	}
+	catch (Redirect r)
+		return response.redirect(r.url);
 	catch (Exception e)
 	{
 		//return response.writeError(HttpStatusCode.InternalServerError, "Unprocessed exception: " ~ e.msg);
@@ -2924,6 +2926,12 @@ CachedResource makeFeed(string feedUrl, string group, bool threadsOnly, int hour
 	feed.endFeed();
 
 	return new CachedResource([Data(feed.xml.output.get())], "application/atom+xml");
+}
+
+class Redirect : Throwable
+{
+	string url;
+	this(string url) { this.url = url; super("Uncaught redirect"); }
 }
 
 class NotFoundException : Exception
