@@ -377,7 +377,8 @@ class ShortLinkRule : LintRule
 		   "In other circumstances, however, they provide little benefit, and have the significant disadvantage of being opaque: "
 		   "readers can only guess where the link will lead to before they click it.</p>"
 		"<p>Additionally, URL shortening services come and go - your link may work today, but might not in a year or two.</p>"
-		"<p>Thus, do not use URL shorteners when posting messages online - post the full link instead, even if it seems exceedingly long.</p>";
+		"<p>Thus, do not use URL shorteners when posting messages online - post the full link instead, even if it seems exceedingly long. "
+		   "If it is too long to be inserted inline, add it as a footnote instead.</p>";
 	}
 
 	// http://longurl.org/services
