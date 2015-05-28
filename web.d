@@ -2585,7 +2585,7 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 			enforce(subscriptionExists(subscriptionID), "This subscription doesn't exist.");
 
 			html.put(
-				`<div class="forum-notice">Subscription deleted.`
+				`<div class="forum-notice">Subscription deleted. `
 				`<input type="submit" name="action-subscription-undelete" value="Undo" form="subscription-form">`
 				`</div>`
 				`<div style="display:none">`
@@ -2621,7 +2621,7 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 		`</select><br>`
 
 		`<input type="checkbox" name="enable-keynav" id="enable-keynav"`, user.get("enable-keynav", "true") == "true" ? ` checked` : null, `>`
-		`<label for="enable-keynav">Enable <a href="/help#keynav">keyboard shortcuts</a></label><br>`
+		`<label for="enable-keynav">Enable keyboard shortcuts</label> (<a href="/help#keynav">?</a>)<br>`
 
 		`<h2>Subscriptions</h2>`
 	);
