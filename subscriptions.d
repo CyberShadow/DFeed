@@ -498,7 +498,7 @@ void checkPost(Rfc850Post post)
 				getSubscription(subscriptionID).runActions(post);
 
 	// ThreadTrigger
-	foreach (string subscriptionID; query!"SELECT [SubscriptionID] FROM [ThreadTriggers] WHERE [Email] = ?".iterate(post.threadID))
+	foreach (string subscriptionID; query!"SELECT [SubscriptionID] FROM [ThreadTriggers] WHERE [ThreadID] = ?".iterate(post.threadID))
 		getSubscription(subscriptionID).runActions(post);
 
 	// ContentTrigger
