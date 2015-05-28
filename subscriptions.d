@@ -89,15 +89,21 @@ struct Subscription
 	void remove()
 	{
 		mixin(DB_TRANSACTION);
-		trigger.cleanup();
-		foreach (action; actions)
-			action.cleanup();
+		foreach (section; sections)
+			section.cleanup();
 		query!`DELETE FROM [Subscriptions] WHERE [ID] = ?`.exec(id);
 	}
 
 	void runActions(Rfc850Post post)
 	{
 		log("Running subscription %s (%s trigger) actions for post %s".format(id, trigger.type, post.id));
+		string email = getUserEmail(userName);
+		if (email && email == post.authorEmail)
+		{
+			log("Post created by author, ignoring");
+			return;
+		}
+
 		foreach (action; actions)
 			action.run(this, post);
 	}
@@ -210,9 +216,7 @@ final class ReplyTrigger : Trigger
 
 	override void save()
 	{
-		string email;
-		foreach (string userEmail; query!`SELECT [Value] FROM [UserSettings] WHERE [User] = ? AND [Name] = "email"`.iterate())
-			email = userEmail;
+		string email = getUserEmail(userName);
 		if (email)
 			query!`INSERT OR REPLACE INTO [ReplyTriggers] ([SubscriptionID], [Email]) VALUES (?, ?)`.exec(subscriptionID, email);
 	}
@@ -582,4 +586,13 @@ Action[] getActions(string userName, UrlParameters data)
 	foreach (ActionType; TypeTuple!(DatabaseAction))
 		result ~= new ActionType(userName, data);
 	return result;
+}
+
+// ***********************************************************************
+
+private string getUserEmail(string userName)
+{
+	foreach (string userEmail; query!`SELECT [Value] FROM [UserSettings] WHERE [User] = ? AND [Name] = "email"`.iterate(userName))
+		return userEmail;
+	return null;
 }
