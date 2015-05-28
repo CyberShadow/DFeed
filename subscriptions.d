@@ -235,16 +235,23 @@ final class ThreadTrigger : Trigger
 
 	override @property string type() const { return "thread"; }
 
-	override void putDescription(ref StringBuffer html)
+	final void putThreadName(ref StringBuffer html)
 	{
 		auto post = getPost(threadID);
-		html.put("Replies to the thread <b>"), html.putEncodedEntities(post ? post.subject : threadID), html.put(`</b>`);
+		html.put(`<a href="`), html.putEncodedEntities(idToUrl(threadID)), html.put(`"><b>`),
+		html.putEncodedEntities(post ? post.subject : threadID),
+		html.put(`</b></a>`);
+	}
+
+	override void putDescription(ref StringBuffer html)
+	{
+		html.put(`Replies to the thread `), putThreadName(html);
 	}
 
 	override void putEditHTML(ref StringBuffer html)
 	{
 		auto post = getPost(threadID);
-		html.put("When someone posts replies to the thread <b>"), html.putEncodedEntities(post ? post.subject : threadID), html.put(`</b>:`);
+		html.put("When someone posts a reply to the thread "), putThreadName(html), html.put(`:`);
 	}
 
 	override void serialize(ref UrlParameters data)
