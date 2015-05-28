@@ -417,7 +417,7 @@ final class PostingNotifySink : NewsSink
 				{
 					postProcesses[pid].status = PostingStatus.posted;
 					postProcesses[pid].post.url = rfc850post.url;
-					query!"UPDATE [Drafts] SET [Status]=? WHERE [ID]=?".exec(PostDraft.Status.sent, pid);
+					query!"UPDATE [Drafts] SET [Status]=? WHERE [ID]=?".exec(PostDraft.Status.sent, postProcesses[pid].draft.clientVars.get("did", pid));
 				}
 			}
 		}
