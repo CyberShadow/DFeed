@@ -195,7 +195,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 
 		auto pathStr = request.resource;
 		enforce(pathStr.startsWith('/'), "Invalid path");
-		string[string] parameters;
+		UrlParameters parameters;
 		if (pathStr.indexOf('?') >= 0)
 		{
 			auto p = pathStr.indexOf('?');
@@ -413,7 +413,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			case "send":
 			{
 				auto postVars = request.decodePostData();
-				auto redirectTo = discussionSend(postVars, cast(string[string])request.headers);
+				auto redirectTo = discussionSend(postVars, request.headers);
 				if (redirectTo)
 					return response.redirect(redirectTo);
 
@@ -546,7 +546,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			}
 			case "settings":
 				title = "Settings";
-				discussionSettings(parameters, request.method == "POST" ? request.decodePostData() : null);
+				discussionSettings(parameters, request.method == "POST" ? request.decodePostData() : UrlParameters.init);
 				break;
 			case "help":
 				title = breadcrumb1 = "Help";
@@ -1883,9 +1883,9 @@ void createDraft(PostDraft draft)
 
 PostDraft getDraft(string draftID)
 {
-	string[string] parse(string json) { return json ? json.jsonParse!(string[string]) : null; }
+	T parse(T)(string json) { return json ? json.jsonParse!T : T.init; }
 	foreach (int status, string clientVars, string serverVars; query!"SELECT [Status], [ClientVars], [ServerVars] FROM [Drafts] WHERE [ID] == ?".iterate(draftID))
-		return PostDraft(status, parse(clientVars), parse(serverVars));
+		return PostDraft(status, parse!UrlParameters(clientVars), parse!(string[string])(serverVars));
 	throw new Exception("Can't find this message draft");
 }
 
@@ -1897,7 +1897,7 @@ void saveDraft(PostDraft draft)
 		.exec(postID, draft.clientVars.toJson, draft.serverVars.toJson, Clock.currTime.stdTime, draft.status, draftID);
 }
 
-void autoSaveDraft(string[string] clientVars)
+void autoSaveDraft(UrlParameters clientVars)
 {
 	auto draftID = clientVars.get("did", null);
 	query!"UPDATE [Drafts] SET [ClientVars]=?, [Time]=?, [Status]=? WHERE [ID] == ?"
@@ -1907,11 +1907,11 @@ void autoSaveDraft(string[string] clientVars)
 PostDraft newPostDraft(string where)
 {
 	auto draftID = randomString();
-	auto draft = PostDraft(PostDraft.Status.reserved, [
+	auto draft = PostDraft(PostDraft.Status.reserved, UrlParameters([
 		"did" : draftID,
 		"name" : user.get("name", null),
 		"email" : user.get("email", null),
-	], [
+	]), [
 		"where" : where,
 	]);
 	createDraft(draft);
@@ -1922,13 +1922,13 @@ PostDraft newReplyDraft(Rfc850Post post)
 {
 	auto postTemplate = post.replyTemplate();
 	auto draftID = randomString();
-	auto draft = PostDraft(PostDraft.Status.reserved, [
+	auto draft = PostDraft(PostDraft.Status.reserved, UrlParameters([
 		"did" : draftID,
 		"name" : user.get("name", null),
 		"email" : user.get("email", null),
 		"subject" : postTemplate.subject,
 		"text" : postTemplate.content,
-	], [
+	]), [
 		"where" : post.where,
 		"parent" : post.id,
 	]);
@@ -2038,7 +2038,7 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 
 SysTime[string] lastPostAttempt;
 
-string discussionSend(string[string] clientVars, string[string] headers)
+string discussionSend(UrlParameters clientVars, Headers headers)
 {
 	auto draftID = clientVars.get("did", null);
 	auto draft = getDraft(draftID);
@@ -2294,7 +2294,7 @@ void discussionDeleteForm(Rfc850Post post)
 	`</form>`);
 }
 
-void deletePost(string[string] vars)
+void deletePost(UrlParameters vars)
 {
 	if (vars.get("secret", "") != getUserSecret())
 		throw new Exception("XSRF secret verification failed. Are your cookies enabled?");
@@ -2446,7 +2446,7 @@ bool banCheck(string ip, HttpRequest request)
 
 // ***********************************************************************
 
-void discussionLoginForm(string[string] parameters, string errorMessage = null)
+void discussionLoginForm(UrlParameters parameters, string errorMessage = null)
 {
 
 	html.put(`<form action="/login" method="post" id="loginform" class="forum-form loginform">`
@@ -2476,12 +2476,12 @@ void discussionLoginForm(string[string] parameters, string errorMessage = null)
 	html.put(`</table></form>`);
 }
 
-void discussionLogin(string[string] parameters)
+void discussionLogin(UrlParameters parameters)
 {
 	user.logIn(aaGet(parameters, "username"), aaGet(parameters, "password"));
 }
 
-void discussionRegisterForm(string[string] parameters, string errorMessage = null)
+void discussionRegisterForm(UrlParameters parameters, string errorMessage = null)
 {
 	html.put(`<form action="/register" method="post" id="registerform" class="forum-form loginform">`
 		`<table class="forum-table">`
@@ -2510,7 +2510,7 @@ void discussionRegisterForm(string[string] parameters, string errorMessage = nul
 	html.put(`</table></form>`);
 }
 
-void discussionRegister(string[string] parameters)
+void discussionRegister(UrlParameters parameters)
 {
 	enforce(aaGet(parameters, "password") == aaGet(parameters, "password2"), "Passwords do not match");
 	user.register(aaGet(parameters, "username"), aaGet(parameters, "password"));
@@ -2520,7 +2520,7 @@ void discussionRegister(string[string] parameters)
 
 const defaultViewMode = "basic";
 
-void discussionSettings(string[string] getVars, string[string] postVars)
+void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 {
 	if (postVars)
 	{
@@ -2866,7 +2866,7 @@ static string encodeEntities(string s)
 /// Generate a link to set a user preference
 string setOptionLink(string name, string value)
 {
-	return "/set?" ~ encodeUrlParameters([name : value, "url" : "__URL__", "secret" : getUserSecret()]);
+	return "/set?" ~ encodeUrlParameters(UrlParameters([name : value, "url" : "__URL__", "secret" : getUserSecret()]));
 }
 
 // ***********************************************************************

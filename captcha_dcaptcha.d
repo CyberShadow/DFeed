@@ -55,12 +55,12 @@ final class Dcaptcha : Captcha
 		;
 	}
 
-	override bool isPresent(string[string] fields)
+	override bool isPresent(UrlParameters fields)
 	{
 		return "dcaptcha_challenge_field" in fields && "dcaptcha_response_field" in fields;
 	}
 
-	override void verify(string[string] fields, string ip, void delegate(bool success, string errorMessage, CaptchaErrorData errorData) handler)
+	override void verify(UrlParameters fields, string ip, void delegate(bool success, string errorMessage, CaptchaErrorData errorData) handler)
 	{
 		assert(isPresent(fields));
 

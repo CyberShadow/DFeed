@@ -1,4 +1,4 @@
-/*  Copyright (C) 2012, 2014  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2012, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -16,6 +16,8 @@
 
 module captcha;
 
+import ae.net.ietf.url : UrlParameters;
+
 class Captcha
 {
 	/// Get a HTML fragment to insert into the HTML form to present a challenge to the user.
@@ -25,11 +27,11 @@ class Captcha
 
 	/// Check whether a CAPTCHA attempt is included in the form
 	/// (check for the presence of fields added by getChallengeHtml).
-	abstract bool isPresent(string[string] fields);
+	abstract bool isPresent(UrlParameters fields);
 
 	/// Verify the correctness of the user's CAPTCHA solution.
 	/// handler can be called asynchronously.
-	abstract void verify(string[string] fields, string ip, void delegate(bool success, string errorMessage, CaptchaErrorData errorData) handler);
+	abstract void verify(UrlParameters fields, string ip, void delegate(bool success, string errorMessage, CaptchaErrorData errorData) handler);
 }
 
 /// Opaque class for preserving error data.

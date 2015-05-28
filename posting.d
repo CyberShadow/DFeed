@@ -22,12 +22,14 @@ import std.exception;
 import std.string;
 import std.file;
 
-import ae.utils.sini;
-import ae.utils.text;
-import ae.utils.array;
-import ae.sys.log;
+import ae.net.ietf.headers;
+import ae.net.ietf.url;
 import ae.net.nntp.client;
 import ae.net.smtp.client;
+import ae.sys.log;
+import ae.utils.array;
+import ae.utils.sini;
+import ae.utils.text;
 
 import captcha;
 import common;
@@ -41,7 +43,8 @@ import spam;
 struct PostDraft
 {
 	int status;
-	string[string] clientVars, serverVars;
+	UrlParameters clientVars;
+	string[string] serverVars;
 
 	// Fake enum (force the type to be int)
 	struct Status
@@ -81,13 +84,13 @@ final class PostProcess
 {
 	PostDraft draft;
 	string pid, ip;
-	string[string] headers;
+	Headers headers;
 	Rfc850Post post;
 	PostingStatus status;
 	PostError error;
 	bool captchaPresent;
 
-	this(PostDraft draft, string userID, string ip, string[string] headers, Rfc850Post parent)
+	this(PostDraft draft, string userID, string ip, Headers headers, Rfc850Post parent)
 	{
 		this.draft = draft;
 		this.ip = ip;
@@ -149,23 +152,27 @@ final class PostProcess
 				continue;
 			line = line[26..$]; // trim timestamp
 
+			static void addLine(T)(ref T aa, string var, string line)
+			{
+				if (var in aa)
+					aa[var] ~= "\n" ~ line;
+				else
+					aa[var] = line;
+			}
+
 			if (line.eat("[Form] "))
 			{
 				auto var = line.eatUntil(": ");
-				auto target = (var=="where" || var=="parent") ? &draft.serverVars : &draft.clientVars;
-				if (var in *target)
-					(*target)[var] ~= "\n" ~ line;
+				if (var=="where" || var=="parent")
+					addLine(draft.serverVars, var, line);
 				else
-					(*target)[var] = line;
+					addLine(draft.clientVars, var, line);
 			}
 			else
 			if (line.eat("[ServerVar] "))
 			{
 				auto var = line.eatUntil(": ");
-				if (var in draft.serverVars)
-					draft.serverVars[var] ~= "\n" ~ line;
-				else
-					draft.serverVars[var] = line;
+				addLine(draft.serverVars, var, line);
 			}
 			else
 			if (line.eat("[Header] "))
@@ -207,7 +214,7 @@ final class PostProcess
 		}
 	}
 
-	static Rfc850Post createPost(PostDraft draft, string[string] headers, string ip, Rfc850Post parent = null)
+	static Rfc850Post createPost(PostDraft draft, Headers headers, string ip, Rfc850Post parent = null)
 	{
 		Rfc850Post post;
 		if ("parent" in draft.serverVars)

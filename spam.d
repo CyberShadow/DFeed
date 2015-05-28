@@ -116,7 +116,7 @@ class Akismet : SpamChecker
 			"comment_content"      : process.draft.clientVars.get("text", ""),
 		];
 
-		return httpPost("http://" ~ config.key ~ ".rest.akismet.com/1.1/comment-check", params, (string result) {
+		return httpPost("http://" ~ config.key ~ ".rest.akismet.com/1.1/comment-check", UrlParameters(params), (string result) {
 			if (result == "false")
 				handler(true, null);
 			else
@@ -145,7 +145,7 @@ class Akismet : SpamChecker
 		];
 
 		string[SpamFeedback] names = [ SpamFeedback.spam : "spam", SpamFeedback.ham : "ham" ];
-		return httpPost("http://" ~ config.key ~ ".rest.akismet.com/1.1/submit-" ~ names[feedback], params, (string result) {
+		return httpPost("http://" ~ config.key ~ ".rest.akismet.com/1.1/submit-" ~ names[feedback], UrlParameters(params), (string result) {
 			if (result == "Thanks for making the web a better place.")
 				handler(true, null);
 			else
