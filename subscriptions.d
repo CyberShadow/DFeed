@@ -529,7 +529,12 @@ protected:
 		if (!message)
 			return;
 
-		checkPost(message);
+		log("Checking post " ~ message.id);
+		try
+			checkPost(message);
+		catch (Exception e)
+			foreach (line; e.toString().splitLines())
+				log("* " ~ line);
 	}
 }
 
