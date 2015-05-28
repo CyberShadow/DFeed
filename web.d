@@ -2623,6 +2623,11 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 		`<input type="checkbox" name="enable-keynav" id="enable-keynav"`, user.get("enable-keynav", "true") == "true" ? ` checked` : null, `>`
 		`<label for="enable-keynav">Enable keyboard shortcuts</label> (<a href="/help#keynav">?</a>)<br>`
 
+		`<p>`
+			`<input type="submit" name="action-save" value="Save">`
+			`<input type="submit" name="action-cancel" value="Cancel">`
+		`</p>`
+
 		`<h2>Subscriptions</h2>`
 	);
 	if (user.isLoggedIn())
@@ -2656,10 +2661,6 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 		html.put(`<p>Please <a href="/loginform">log in</a> to manage your subscriptions.</p>`);
 
 	html.put(
-		`<p>`
-			`<input type="submit" name="action-save" value="Save">`
-			`<input type="submit" name="action-cancel" value="Cancel">`
-		`</p>`
 		`</form>`
 
 		`<form method="post" id="subscriptions-form">`
