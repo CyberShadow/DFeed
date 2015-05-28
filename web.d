@@ -501,10 +501,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				{
 					parameters = request.decodePostData();
 					discussionLogin(parameters);
-					if ("url" in parameters)
-						return response.redirect(parameters["url"]);
-					else
-						return response.serveText("OK");
+					return response.redirect(parameters.get("url", "/"));
 				}
 				catch (Exception e)
 				{
@@ -521,10 +518,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				{
 					parameters = request.decodePostData();
 					discussionRegister(parameters);
-					if ("url" in parameters)
-						return response.redirect(parameters["url"]);
-					else
-						return response.serveText("OK");
+					return response.redirect(parameters.get("url", "/"));
 				}
 				catch (Exception e)
 				{
