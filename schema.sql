@@ -84,3 +84,47 @@ CREATE INDEX [DraftUserID] ON [Drafts] ([UserID], [Status]);
 -- Index `DraftPostID` on table `Drafts`
 CREATE UNIQUE INDEX [DraftPostID] ON [Drafts] ([PostID]);
 
+-- Table `Subscriptions`
+CREATE TABLE [Subscriptions] (
+[ID] VARCHAR(20) NOT NULL,
+[Username] VARCHAR(50) NOT NULL,
+[Data] TEXT NULL
+);
+
+-- Index `SubscriptionID` on table `Subscriptions`
+CREATE UNIQUE INDEX [SubscriptionID] ON [Subscriptions] ([ID]);
+
+-- Table `ReplyTriggers`
+CREATE TABLE [ReplyTriggers] ([Email] VARCHAR(50) NOT NULL, [SubscriptionID] VARCHAR(20) NOT NULL);
+
+-- Index `ReplyTriggerSubscripion` on table `ReplyTriggers`
+CREATE UNIQUE INDEX [ReplyTriggerSubscripion] ON [ReplyTriggers] ([SubscriptionID]);
+
+-- Index `ReplyTriggerEmail` on table `ReplyTriggers`
+CREATE INDEX [ReplyTriggerEmail] ON [ReplyTriggers] ([Email]);
+
+-- Table `ThreadTriggers`
+CREATE TABLE [ThreadTriggers] ([ThreadID] VARCHAR(50) NOT NULL, [SubscriptionID] VARCHAR(20) NOT NULL);
+
+-- Index `ThreadTriggerSubscription` on table `ThreadTriggers`
+CREATE UNIQUE INDEX [ThreadTriggerSubscription] ON [ThreadTriggers] ([SubscriptionID]);
+
+-- Index `ThreadTriggerThreadID` on table `ThreadTriggers`
+CREATE INDEX [ThreadTriggerThreadID] ON [ThreadTriggers] ([ThreadID]);
+
+-- Table `ContentTriggers`
+CREATE TABLE [ContentTriggers] ([SubscriptionID] VARCHAR(20) NOT NULL);
+
+-- Index `ContentTriggerSubscription` on table `ContentTriggers`
+CREATE UNIQUE INDEX [ContentTriggerSubscription] ON [ContentTriggers] ([SubscriptionID]);
+
+-- Table `SubscriptionPosts`
+CREATE TABLE [SubscriptionPosts] (
+[SubscriptionID] VARCHAR(20) NOT NULL,
+[MessageID] VARCHAR(50) NOT NULL,
+[Time] INTEGER NOT NULL
+);
+
+-- Index `SubscriptionPostID` on table `SubscriptionPosts`
+CREATE INDEX [SubscriptionPostID] ON [SubscriptionPosts] ([SubscriptionID], [Time] DESC);
+

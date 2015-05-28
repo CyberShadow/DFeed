@@ -950,6 +950,20 @@ kbd { /* stolen from http://en.wikipedia.org/wiki/Template:Key_press */
 	margin: 50px 30px 0 30px;
 }
 
+/*************** Settings ***************/
+
+table#subscriptions td:first-child {
+	width: 100%;
+}
+
+select[name=trigger-content-groups] {
+}
+
+#trigger-content input[type=checkbox] {
+	position: relative;
+	top: 0.1em;
+}
+
 /*************** Responsive overrides ***************/
 
 @media only screen and (max-width: 60em) {
