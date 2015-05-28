@@ -1178,7 +1178,7 @@ void formatThreadedPosts(PostInfo*[] postInfos, bool narrow, string selectedID =
 {
 	enum OFFSET_INIT = 1f;
 	enum OFFSET_MAX = 2f;
-	enum OFFSET_WIDTH = 30f;
+	enum OFFSET_WIDTH = 25f;
 	enum OFFSET_UNITS = "%";
 
 	class Post
