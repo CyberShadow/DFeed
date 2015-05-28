@@ -17,6 +17,7 @@
 module subscriptions;
 
 import std.algorithm;
+import std.ascii;
 import std.exception;
 import std.format;
 import std.regex;
@@ -36,6 +37,7 @@ import ae.utils.xmllite : putEncodedEntities;
 import common;
 import database;
 import groups;
+import ircsink;
 import message;
 import messagedb : threadID;
 import web : getPost;
@@ -152,7 +154,7 @@ Subscription createSubscription(string userName, string triggerType)
 
 	Subscription subscription;
 	subscription.userName = userName;
-	subscription.id = randomString();
+	subscription.id = data["id"] = randomString();
 	subscription.trigger = getTrigger(userName, data);
 	subscription.actions = getActions(userName, data);
 	return subscription;
@@ -195,6 +197,9 @@ class Trigger : FormSection
 
 	/// HTML description shown in the subscription list.
 	abstract void putDescription(ref StringBuffer html);
+
+	/// Short description for IRC and email subjects.
+	abstract string getShortDescription(Rfc850Post post);
 }
 
 final class ReplyTrigger : Trigger
@@ -204,6 +209,11 @@ final class ReplyTrigger : Trigger
 	override @property string type() const { return "reply"; }
 
 	override void putDescription(ref StringBuffer html) { html.put("Replies to your posts"); }
+
+	override string getShortDescription(Rfc850Post post)
+	{
+		return "%s replied to your post in the thread \"%s\"".format(post.author, post.subject);
+	}
 
 	override void putEditHTML(ref StringBuffer html)
 	{
@@ -250,6 +260,11 @@ final class ThreadTrigger : Trigger
 	override void putDescription(ref StringBuffer html)
 	{
 		html.put(`Replies to the thread `), putThreadName(html);
+	}
+
+	override string getShortDescription(Rfc850Post post)
+	{
+		return "%s replied to the thread \"%s\"".format(post.author, post.subject);
 	}
 
 	override void putEditHTML(ref StringBuffer html)
@@ -340,6 +355,16 @@ final class ContentTrigger : Trigger
 		putStringFilter("from email", authorEmailFilter);
 		putStringFilter("titled", subjectFilter);
 		putStringFilter("containing", messageFilter);
+	}
+
+	override string getShortDescription(Rfc850Post post)
+	{
+		return "%s %s thread \"%s\" in %s".format(
+			post.author,
+			post.references.length ? "replied to the" : "created",
+			post.subject,
+			post.xref[0].group,
+		);
 	}
 
 	override void putEditHTML(ref StringBuffer html)
@@ -552,6 +577,69 @@ class Action : FormSection
 	abstract void run(ref Subscription subscription, Rfc850Post post);
 }
 
+final class IrcAction : Action
+{
+	bool enabled;
+	string nick;
+	string network;
+
+	this(string userName, UrlParameters data)
+	{
+		super(userName, data);
+		enabled = !!("saction-irc-enabled" in data);
+		nick = data.get("saction-irc-nick", null);
+		network = data.get("saction-irc-network", null);
+	}
+
+	override void putEditHTML(ref StringBuffer html)
+	{
+		html.put(
+			`<p>`
+				`<input type="checkbox" name="saction-irc-enabled"`, enabled ? ` checked` : ``, `> `
+				`Send a private message to <input name="saction-irc-nick" value="`), html.putEncodedEntities(nick), html.put(`"> on `
+				`<select name="sactin-irc-server">`);
+		foreach (irc; services!IrcSink)
+		{
+			html.put(
+					`<option value="`), html.putEncodedEntities(irc.network), html.put(`"`, network == irc.network ? ` selected` : ``, `>`),
+						html.putEncodedEntities(irc.network),
+					html.put(`</option>`);
+		}
+		html.put(
+				`</select> `
+			`</p>`
+		);
+	}
+
+	override void serialize(ref UrlParameters data)
+	{
+		if (enabled) data["saction-irc-enabled"] = "on";
+		data["saction-irc-nick"] = nick;
+		data["saction-irc-network"] = network;
+	}
+
+	override void run(ref Subscription subscription, Rfc850Post post)
+	{
+		foreach (irc; services!IrcSink)
+			if (irc.network == network)
+				irc.sendMessage(nick, subscription.trigger.getShortDescription(post) ~ ": " ~ post.url);
+	}
+
+	override void validate()
+	{
+		if (!enabled)
+			return;
+		enforce(nick.length, "No nickname indicated");
+		foreach (c; nick)
+			if (!(isAlphaNum(c) || c.isOneOf(r"-_|\[]{}`")))
+				throw new Exception("Invalid character in nickname.");
+	}
+
+	override void save() {}
+
+	override void cleanup() {}
+}
+
 final class DatabaseAction : Action
 {
 	mixin GenerateContructorProxies;
@@ -583,7 +671,7 @@ final class DatabaseAction : Action
 Action[] getActions(string userName, UrlParameters data)
 {
 	Action[] result;
-	foreach (ActionType; TypeTuple!(DatabaseAction))
+	foreach (ActionType; TypeTuple!(IrcAction, DatabaseAction))
 		result ~= new ActionType(userName, data);
 	return result;
 }

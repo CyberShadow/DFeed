@@ -41,6 +41,7 @@ final class IrcSink : NewsSink
 {
 	static struct Config
 	{
+		string network;
 		string server;
 		ushort port = 6667;
 		string nick;
@@ -54,18 +55,28 @@ final class IrcSink : NewsSink
 			config.channel = '#' ~ config.channel;
 		if (config.channel2.length && !config.channel2.startsWith("#"))
 			config.channel2 = '#' ~ config.channel2;
+		if (!config.network)
+			config.network = config.server.split(".")[max(2, $)-2].capitalize();
 		this.config = config;
 
 		tcp = new TcpConnection();
 		irc = new IrcClient(tcp);
 		irc.encoder = irc.decoder = &nullStringTransform;
 		irc.exactNickname = true;
-		irc.log = createLogger("IRC");
+		irc.log = createLogger("IRC-"~config.network);
 		irc.handleConnect = &onConnect;
 		irc.handleDisconnect = &onDisconnect;
 		connect();
 
 		addShutdownHandler({ stopping = true; if (connecting || connected) irc.disconnect("DFeed shutting down"); });
+	}
+
+	@property string network() { return config.network; }
+
+	void sendMessage(string recipient, string message)
+	{
+		if (connected)
+			irc.message(recipient, message);
 	}
 
 protected:
