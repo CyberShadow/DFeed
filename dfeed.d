@@ -38,6 +38,7 @@ import mailman;
 // Sinks
 import ircsink;
 import messagedb;
+import subscriptions;
 
 // Captcha
 import captcha_dcaptcha;
@@ -56,6 +57,7 @@ void main()
 	// Create sinks
 	createServices!IrcSink("sinks/irc");
 	new MessageDBSink();
+	new SubscriptionSink();
 
 	// Start web server
 	startWebUI();

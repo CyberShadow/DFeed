@@ -25,6 +25,7 @@ import std.typecons;
 import std.typetuple;
 
 import ae.net.ietf.url : UrlParameters;
+import ae.sys.log;
 import ae.utils.array;
 import ae.utils.json;
 import ae.utils.meta;
@@ -32,11 +33,18 @@ import ae.utils.text;
 import ae.utils.textout;
 import ae.utils.xmllite : putEncodedEntities;
 
+import common;
 import database;
 import groups;
 import message;
 import messagedb : threadID;
 import web : getPost;
+
+void log(string s)
+{
+	static Logger log;
+	(log ? log : (log=createLogger("Subscription")))(s);
+}
 
 struct Subscription
 {
@@ -89,6 +97,7 @@ struct Subscription
 
 	void runActions(Rfc850Post post)
 	{
+		log("Running subscription %s (%s trigger) actions for post %s".format(id, trigger.type, post.id));
 		foreach (action; actions)
 			action.run(this, post);
 	}
@@ -478,6 +487,8 @@ body
 	}
 }
 
+// ***********************************************************************
+
 void checkPost(Rfc850Post post)
 {
 	// ReplyTrigger
@@ -496,6 +507,22 @@ void checkPost(Rfc850Post post)
 		auto subscription = getSubscription(subscriptionID);
 		if ((cast(ContentTrigger)subscription.trigger).checkPost(post))
 			subscription.runActions(post);
+	}
+}
+
+final class SubscriptionSink : NewsSink
+{
+protected:
+	override void handlePost(Post post, Fresh fresh)
+	{
+		if (!fresh)
+			return;
+
+		auto message = cast(Rfc850Post)post;
+		if (!message)
+			return;
+
+		checkPost(message);
 	}
 }
 
