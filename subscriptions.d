@@ -304,22 +304,22 @@ final class ContentTrigger : Trigger
 				html.put(i ? `, ` : ``, `<b>`), html.putEncodedEntities(group), html.put(`</b>`);
 		}
 
-		int count;
-		void putStringFilter(string name, ref StringFilter filter)
+		void putStringFilter(string preface, ref StringFilter filter)
 		{
 			if (filter.enabled)
 				html.put(
-					count++ ? ` and the ` : ` for which the `,
-					name,
-					filter.isRegex ? ` matches ` : ` contains `,
-					`<b>`), html.putEncodedEntities(filter.str), html.put(`</b>`
+					` `, preface, ` `,
+					filter.isRegex ? `/` : ``,
+					`<b>`), html.putEncodedEntities(filter.str), html.put(`</b>`,
+					filter.isRegex ? `/` : ``,
+					filter.isRegex && !filter.caseSensitive ? `i` : ``,
 				);
 		}
 
-		putStringFilter("author name", authorNameFilter);
-		putStringFilter("author email", authorEmailFilter);
-		putStringFilter("subject", subjectFilter);
-		putStringFilter("message", messageFilter);
+		putStringFilter("from", authorNameFilter);
+		putStringFilter("from email", authorEmailFilter);
+		putStringFilter("titled", subjectFilter);
+		putStringFilter("containing", messageFilter);
 	}
 
 	override void putEditHTML(ref StringBuffer html)
