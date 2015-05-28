@@ -407,7 +407,7 @@ final class ContentTrigger : Trigger
 		{
 			if (filter.enabled)
 			{
-				enforce(filter.str.length, "No %s search term specified");
+				enforce(filter.str.length, "No %s search term specified".format(name));
 				try
 					auto re = regex(filter.str);
 				catch (Exception e)
