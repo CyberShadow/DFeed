@@ -214,11 +214,18 @@ class Trigger : FormSection
 	/// HTML description shown in the subscription list.
 	abstract void putDescription(ref StringBuffer html);
 
+	final string getDescription()
+	{
+		StringBuffer description;
+		putDescription(description);
+		return description.get().assumeUnique();
+	}
+
 	/// Short description for IRC and email subjects.
-	abstract string getShortDescription(Rfc850Post post);
+	abstract string getShortPostDescription(Rfc850Post post);
 
 	/// Longer description emails.
-	abstract string getLongDescription(Rfc850Post post);
+	abstract string getLongPostDescription(Rfc850Post post);
 }
 
 final class ReplyTrigger : Trigger
@@ -229,12 +236,12 @@ final class ReplyTrigger : Trigger
 
 	override void putDescription(ref StringBuffer html) { html.put("Replies to your posts"); }
 
-	override string getShortDescription(Rfc850Post post)
+	override string getShortPostDescription(Rfc850Post post)
 	{
 		return "%s replied to your post in the thread \"%s\"".format(post.author, post.subject);
 	}
 
-	override string getLongDescription(Rfc850Post post)
+	override string getLongPostDescription(Rfc850Post post)
 	{
 		return "%s has just replied to your %s post in the thread titled \"%s\" in the %s group of %s.".format(
 			post.author,
@@ -292,12 +299,12 @@ final class ThreadTrigger : Trigger
 		html.put(`Replies to the thread `), putThreadName(html);
 	}
 
-	override string getShortDescription(Rfc850Post post)
+	override string getShortPostDescription(Rfc850Post post)
 	{
 		return "%s replied to the thread \"%s\"".format(post.author, post.subject);
 	}
 
-	override string getLongDescription(Rfc850Post post)
+	override string getLongPostDescription(Rfc850Post post)
 	{
 		return "%s has just replied to a thread you have subscribed to titled \"%s\" in the %s group of %s.".format(
 			post.author,
@@ -403,7 +410,7 @@ final class ContentTrigger : Trigger
 		putStringFilter("containing", messageFilter);
 	}
 
-	override string getShortDescription(Rfc850Post post)
+	override string getShortPostDescription(Rfc850Post post)
 	{
 		return "%s %s thread \"%s\" in %s".format(
 			post.author,
@@ -413,11 +420,8 @@ final class ContentTrigger : Trigger
 		);
 	}
 
-	override string getLongDescription(Rfc850Post post)
+	override string getLongPostDescription(Rfc850Post post)
 	{
-		StringBuffer description;
-		putDescription(description);
-
 		return "%s has just %s a thread titled \"%s\" in the %s group of %s.\n\nThis %s matches a content alert subscription you have created (%s).".format(
 			post.author,
 			post.references.length ? "created" : "replied to",
@@ -425,7 +429,7 @@ final class ContentTrigger : Trigger
 			post.xref[0].group,
 			site.config.host,
 			post.references.length ? "post" : "thread",
-			description.get(),
+			getDescription(),
 		);
 	}
 
@@ -687,7 +691,7 @@ final class IrcAction : Action
 		static string[string][string] queue;
 		static TimerTask queueTask;
 
-		queue[network][nick] = subscription.trigger.getShortDescription(post) ~ ": " ~ post.url;
+		queue[network][nick] = subscription.trigger.getShortPostDescription(post) ~ ": " ~ post.url;
 		if (!queueTask)
 			queueTask = setTimeout({
 				queueTask = null;
@@ -764,7 +768,7 @@ final class EmailAction : Action
 			return;
 		}
 		queue[address] = Email([
-			"-s", subscription.trigger.getShortDescription(post),
+			"-s", subscription.trigger.getShortPostDescription(post),
 			"-r", "%s <no-reply@%s>".format(site.config.host, site.config.host),
 			address], formatMessage(subscription, post));
 
@@ -819,7 +823,7 @@ http://%s/settings
 EOF"
 		.format(
 			getUserSetting(subscription.userName, "name").split(" ")[0],
-			subscription.trigger.getLongDescription(post),
+			subscription.trigger.getLongPostDescription(post),
 			post.references.length ? "post" : "thread",
 			post.url,
 			post.content.strip.splitAsciiLines.map!(line => line.startsWith('.') ? '.' ~ line : line),
