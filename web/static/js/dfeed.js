@@ -451,6 +451,7 @@ var keyboardHelp =
 		'<tr><td><kbd>n</kbd></td><td>Create thread</td></tr>' +
 		'<tr><td><kbd>r</kbd></td><td>Reply</td></tr>' +
 		'<tr><td><kbd>u</kbd></td><td>Mark as unread</td></tr>' +
+		'<tr><td><kbd>1</kbd> &middot;&middot;&middot; <kbd>9</kbd></td><td>Open link [1] &hellip; [9]</td></tr>' +
 		'<tr><td><kbd title="Space Bar" style="width: 70px">&nbsp;</kbd></td><td>Scroll message / Open next unread message</td></tr>' +
 	'</table>';
 
