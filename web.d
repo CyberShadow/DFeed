@@ -451,6 +451,25 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				}
 				break;
 			}
+			case "subscribe":
+			{
+				enforce(path.length > 1, "No post specified");
+				enforce(user.isLoggedIn(), "Please log in to do that");
+				auto id = '<' ~ urlDecode(pathX) ~ '>';
+				Subscription threadSubscription;
+				foreach (subscription; getUserSubscriptions(user.getName()))
+					if (auto threadTrigger = cast(ThreadTrigger)subscription.trigger)
+						if (threadTrigger.threadID == id)
+						{
+							threadSubscription = subscription;
+							break;
+						}
+				if (!threadSubscription.trigger)
+					threadSubscription = createSubscription(user.getName(), "thread", ["trigger-thread-id" : id]);
+				title = "Subscribe to thread";
+				discussionSubscriptionEdit(threadSubscription);
+				break;
+			}
 			case "auto-save":
 			{
 				auto postVars = request.decodePostData();
@@ -1468,7 +1487,7 @@ string getUserSecret()
 	return user["secret"];
 }
 
-enum maxPostActions = 3;
+enum maxPostActions = 4;
 
 void postActions(Rfc850Message msg)
 {
@@ -1481,7 +1500,7 @@ void postActions(Rfc850Message msg)
 			`</a>`);
 	if (true)
 		html.put(
-			`<a class="actionlink replylink" href="`), html.putEncodedEntities(idToUrl(id, "reply")), html.put(`">`
+			`<a class="actionlink replylink" href="`), html.putEncodedEntities(idToUrl(id, "reply")), html.put(`" title="Reply to this post">`
 				`<img src="`, staticPath("/images/reply.png"), `">Reply`
 			`</a>`);
 /*
@@ -1492,6 +1511,11 @@ void postActions(Rfc850Message msg)
 				`<img src="`, staticPath("/images/email.png"), `">Email`
 			`</a>`);
 */
+	if (user.isLoggedIn() && msg.references.length == 0)
+		html.put(
+			`<a class="actionlink sourcelink" href="`), html.putEncodedEntities(idToUrl(id, "subscribe")), html.put(`" title="Subscribe to this thread">`
+				`<img src="`, staticPath("/images/star.png"), `">Subscribe`
+			`</a>`);
 	if (user.getLevel() >= User.Level.hasRawLink)
 		html.put(
 			`<a class="actionlink sourcelink" href="`), html.putEncodedEntities(idToUrl(id, "source")), html.put(`">`
@@ -2674,7 +2698,7 @@ void discussionSubscriptionEdit(Subscription subscription)
 {
 	html.put(
 		`<h1>Edit subscription</h1>`
-		`<form method="post" id="subscription-form">`
+		`<form action="/settings" method="post" id="subscription-form">`
 		`<input type="hidden" name="secret" value="`, getUserSecret(), `">`
 		`<input type="hidden" name="id" value="`, subscription.id, `">`
 

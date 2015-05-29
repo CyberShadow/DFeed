@@ -163,9 +163,9 @@ void createReplySubscription(string userName)
 	subscription.save();
 }
 
-Subscription createSubscription(string userName, string triggerType)
+Subscription createSubscription(string userName, string triggerType, string[string] extraData = null)
 {
-	UrlParameters data;
+	UrlParameters data = extraData;
 	data["trigger-type"] = triggerType;
 
 	Subscription subscription;
@@ -310,7 +310,10 @@ final class ThreadTrigger : Trigger
 	override void putEditHTML(ref StringBuffer html)
 	{
 		auto post = getPost(threadID);
-		html.put("When someone posts a reply to the thread "), putThreadName(html), html.put(`:`);
+		html.put(
+			`<input type="hidden" name="trigger-thread-id" value="`), html.putEncodedEntities(threadID), html.put(`">`
+			`When someone posts a reply to the thread `), putThreadName(html), html.put(`:`
+		);
 	}
 
 	override void serialize(ref UrlParameters data)
@@ -318,7 +321,10 @@ final class ThreadTrigger : Trigger
 		data["trigger-thread-id"] = threadID;
 	}
 
-	override void validate() {}
+	override void validate()
+	{
+		enforce(getPost(threadID), "No such post");
+	}
 
 	override void save()
 	{
