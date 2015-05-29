@@ -1,3 +1,7 @@
+# The name of the website. Used in emails.
+
+name = Example Forum
+
 # The canonical domain name for your instance.
 # This is used in a number of places:
 # - Requests coming to other domain names will be redirected to the canonical one.

@@ -18,6 +18,7 @@ module site;
 
 struct Config
 {
+	string name;
 	string host = "localhost";
 }
 immutable Config config;
