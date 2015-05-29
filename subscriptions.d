@@ -99,8 +99,10 @@ struct Subscription
 	void runActions(Rfc850Post post)
 	{
 		log("Running subscription %s (%s trigger) actions for post %s".format(id, trigger.type, post.id));
-		string email = getUserEmail(userName);
-		if (email && email == post.authorEmail)
+		string name = getUserSetting(userName, "name");
+		string email = getUserSetting(userName, "email");
+		if ((name  && !icmp(name, post.author))
+		 || (email && !icmp(email, post.authorEmail)))
 		{
 			log("Post created by author, ignoring");
 			return;
@@ -226,7 +228,7 @@ final class ReplyTrigger : Trigger
 
 	override void save()
 	{
-		string email = getUserEmail(userName);
+		string email = getUserSetting(userName, "email");
 		if (email)
 			query!`INSERT OR REPLACE INTO [ReplyTriggers] ([SubscriptionID], [Email]) VALUES (?, ?)`.exec(subscriptionID, email);
 	}
@@ -678,9 +680,9 @@ Action[] getActions(string userName, UrlParameters data)
 
 // ***********************************************************************
 
-private string getUserEmail(string userName)
+private string getUserSetting(string userName, string setting)
 {
-	foreach (string userEmail; query!`SELECT [Value] FROM [UserSettings] WHERE [User] = ? AND [Name] = "email"`.iterate(userName))
-		return userEmail;
+	foreach (string value; query!`SELECT [Value] FROM [UserSettings] WHERE [User] = ? AND [Name] = `.iterate(userName, setting))
+		return value;
 	return null;
 }
