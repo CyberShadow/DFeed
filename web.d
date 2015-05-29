@@ -1072,7 +1072,7 @@ static int getPageOffset(int page, int perPage) { return (page-1) * perPage; }
 void threadPager(string group, int page, int maxWidth = 40)
 {
 	auto threadCounts = threadCountCache(getThreadCounts());
-	enforce(group in threadCounts, "Empty or unknown group");
+	enforce(group in threadCounts, "Empty or unknown group: " ~ group);
 	auto threadCount = threadCounts[group];
 	auto pageCount = getPageCount(threadCount, THREADS_PER_PAGE);
 

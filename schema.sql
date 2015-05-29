@@ -86,13 +86,10 @@ CREATE UNIQUE INDEX [DraftPostID] ON [Drafts] ([PostID]);
 
 -- Table `Subscriptions`
 CREATE TABLE [Subscriptions] (
-[ID] VARCHAR(20) NOT NULL,
+[ID] VARCHAR(20) NOT NULL PRIMARY KEY,
 [Username] VARCHAR(50) NOT NULL,
 [Data] TEXT NULL
 );
-
--- Index `SubscriptionID` on table `Subscriptions`
-CREATE UNIQUE INDEX [SubscriptionID] ON [Subscriptions] ([ID]);
 
 -- Table `ReplyTriggers`
 CREATE TABLE [ReplyTriggers] ([Email] VARCHAR(50) NOT NULL, [SubscriptionID] VARCHAR(20) NOT NULL);
@@ -113,15 +110,13 @@ CREATE UNIQUE INDEX [ThreadTriggerSubscription] ON [ThreadTriggers] ([Subscripti
 CREATE INDEX [ThreadTriggerThreadID] ON [ThreadTriggers] ([ThreadID]);
 
 -- Table `ContentTriggers`
-CREATE TABLE [ContentTriggers] ([SubscriptionID] VARCHAR(20) NOT NULL);
-
--- Index `ContentTriggerSubscription` on table `ContentTriggers`
-CREATE UNIQUE INDEX [ContentTriggerSubscription] ON [ContentTriggers] ([SubscriptionID]);
+CREATE TABLE [ContentTriggers] ([SubscriptionID] VARCHAR(20) NOT NULL PRIMARY KEY);
 
 -- Table `SubscriptionPosts`
 CREATE TABLE [SubscriptionPosts] (
 [SubscriptionID] VARCHAR(20) NOT NULL,
 [MessageID] VARCHAR(50) NOT NULL,
+[MessageRowID] INTEGER NOT NULL,
 [Time] INTEGER NOT NULL
 );
 

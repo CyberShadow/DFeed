@@ -20,6 +20,7 @@ import std.algorithm;
 import std.ascii;
 import std.exception;
 import std.format;
+import std.process;
 import std.regex;
 import std.string;
 import std.typecons;
@@ -33,6 +34,7 @@ import ae.utils.json;
 import ae.utils.meta;
 import ae.utils.text;
 import ae.utils.textout;
+import ae.utils.time;
 import ae.utils.xmllite : putEncodedEntities;
 
 import common;
@@ -41,6 +43,7 @@ import groups;
 import ircsink;
 import message;
 import messagedb : threadID;
+import user;
 import web : getPost;
 
 void log(string s)
@@ -111,6 +114,16 @@ struct Subscription
 
 		foreach (action; actions)
 			action.run(this, post);
+	}
+
+	int getUnreadCount()
+	{
+		auto user = new RegisteredUser(userName);
+		int count = 0;
+		foreach (int rowid; query!"SELECT [MessageRowID] FROM [SubscriptionPosts] WHERE [SubscriptionID] = ?".iterate(id))
+			if (!user.isRead(rowid))
+				count++;
+		return count;
 	}
 }
 
@@ -203,6 +216,9 @@ class Trigger : FormSection
 
 	/// Short description for IRC and email subjects.
 	abstract string getShortDescription(Rfc850Post post);
+
+	/// Longer description emails.
+	abstract string getLongDescription(Rfc850Post post);
 }
 
 final class ReplyTrigger : Trigger
@@ -216,6 +232,17 @@ final class ReplyTrigger : Trigger
 	override string getShortDescription(Rfc850Post post)
 	{
 		return "%s replied to your post in the thread \"%s\"".format(post.author, post.subject);
+	}
+
+	override string getLongDescription(Rfc850Post post)
+	{
+		return "%s has just replied to your %s post in the thread titled \"%s\" in the %s group of %s.".format(
+			post.author,
+			post.time.formatTime!`F j`,
+			post.subject,
+			post.xref[0].group,
+			site.config.host,
+		);
 	}
 
 	override void putEditHTML(ref StringBuffer html)
@@ -268,6 +295,16 @@ final class ThreadTrigger : Trigger
 	override string getShortDescription(Rfc850Post post)
 	{
 		return "%s replied to the thread \"%s\"".format(post.author, post.subject);
+	}
+
+	override string getLongDescription(Rfc850Post post)
+	{
+		return "%s has just replied to a thread you have subscribed to titled \"%s\" in the %s group of %s.".format(
+			post.author,
+			post.subject,
+			post.xref[0].group,
+			site.config.host,
+		);
 	}
 
 	override void putEditHTML(ref StringBuffer html)
@@ -367,6 +404,22 @@ final class ContentTrigger : Trigger
 			post.references.length ? "replied to the" : "created",
 			post.subject,
 			post.xref[0].group,
+		);
+	}
+
+	override string getLongDescription(Rfc850Post post)
+	{
+		StringBuffer description;
+		putDescription(description);
+
+		return "%s has just %s a thread titled \"%s\" in the %s group of %s.\n\nThis %s matches a content alert subscription you have created (%s).".format(
+			post.author,
+			post.references.length ? "created" : "replied to",
+			post.subject,
+			post.xref[0].group,
+			site.config.host,
+			post.references.length ? "post" : "thread",
+			description.get(),
 		);
 	}
 
@@ -654,6 +707,136 @@ final class IrcAction : Action
 	override void cleanup() {}
 }
 
+final class EmailAction : Action
+{
+	bool enabled;
+	string address;
+
+	this(string userName, UrlParameters data)
+	{
+		super(userName, data);
+		enabled = !!("saction-email-enabled" in data);
+		address = data.get("saction-email-address", null);
+	}
+
+	override void putEditHTML(ref StringBuffer html)
+	{
+		html.put(
+			`<p>`
+				`<input type="checkbox" name="saction-email-enabled"`, enabled ? ` checked` : ``, `> `
+				`Send an email to <input type="email" name="saction-email-address" value="`), html.putEncodedEntities(address), html.put(`">`
+			`</p>`
+		);
+	}
+
+	override void serialize(ref UrlParameters data)
+	{
+		if (enabled) data["saction-email-enabled"] = "on";
+		data["saction-email-address"] = address;
+	}
+
+	override void run(ref Subscription subscription, Rfc850Post post)
+	{
+		auto unreadCount = subscription.getUnreadCount();
+		if (unreadCount)
+		{
+			log("User %s has %d unread messages in subscription %s - not emailing"
+				.format(subscription.userName, unreadCount, subscription.id));
+			return;
+		}
+
+		// Queue messages to avoid sending more than 1 email per message.
+		static struct Email { string[] args; string content; }
+
+		static Email[string] queue;
+		static TimerTask queueTask;
+
+		if (address in queue)
+		{
+			// TODO: Maybe add something to the content, to indicate that
+			// a second subscription was triggered by the same message.
+			return;
+		}
+		queue[address] = Email([
+			"-s", subscription.trigger.getShortDescription(post),
+			"-r", "%s <no-reply@%s>".format(site.config.host, site.config.host),
+			address], formatMessage(subscription, post));
+
+		if (!queueTask)
+			queueTask = setTimeout({
+				queueTask = null;
+				scope(exit) queue = null;
+				foreach (address, email; queue)
+				{
+					auto pipes = pipeProcess(["mail"] ~ email.args, Redirect.stdin);
+					pipes.stdin.rawWrite(email.content);
+					pipes.stdin.close();
+					enforce(wait(pipes.pid) == 0, "mail program failed");
+				}
+			}, 1.msecs);
+	}
+
+	string formatMessage(ref Subscription subscription, Rfc850Post post)
+	{
+		return q"EOF
+Howdy %s,
+
+%s
+
+This %s is located at:
+%s
+
+Here is the message that has just been posted:
+----------------------------------------------
+%-(%s
+%)
+----------------------------------------------
+
+To reply to this message, please visit this page:
+http://%s%s
+
+There may also be other messages matching your subscription, but you will not receive any more notifications for this subscription until you've read all messages matching this subscription:
+http://%s/subscription-posts/%s
+
+All the best,
+%s
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Unsubscription information:
+
+To stop receiving emails for this subscription, please visit this page:
+http://%s/subscription-disable/%s
+
+Or, visit your settings page to edit your subscriptions:
+http://%s/settings
+.
+EOF"
+		.format(
+			getUserSetting(subscription.userName, "name").split(" ")[0],
+			subscription.trigger.getLongDescription(post),
+			post.references.length ? "post" : "thread",
+			post.url,
+			post.content.strip.splitAsciiLines.map!(line => line.startsWith('.') ? '.' ~ line : line),
+			site.config.host, idToUrl(post.id, "reply"),
+			site.config.host, subscription.id,
+			site.config.name.length ? site.config.name : site.config.host,
+			site.config.host, subscription.id,
+			site.config.host,
+		);
+	}
+
+	override void validate()
+	{
+		if (!enabled)
+			return;
+		enforce(address.match(re!(`^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$`, "i")), "Invalid email address");
+	}
+
+	override void save() {}
+
+	override void cleanup() {}
+}
+
 final class DatabaseAction : Action
 {
 	mixin GenerateContructorProxies;
@@ -670,8 +853,9 @@ final class DatabaseAction : Action
 
 	override void run(ref Subscription subscription, Rfc850Post post)
 	{
-		query!"INSERT INTO [SubscriptionPosts] ([SubscriptionID], [MessageID], [Time]) VALUES (?, ?, ?)"
-			.exec(subscriptionID, post.id, post.time.stdTime);
+		assert(post.rowid, "No row ID for message " ~ post.id);
+		query!"INSERT INTO [SubscriptionPosts] ([SubscriptionID], [MessageID], [MessageRowID], [Time]) VALUES (?, ?, ?, ?)"
+			.exec(subscriptionID, post.id, post.rowid, post.time.stdTime);
 		// TODO: trim old posts?
 	}
 
@@ -685,7 +869,7 @@ final class DatabaseAction : Action
 Action[] getActions(string userName, UrlParameters data)
 {
 	Action[] result;
-	foreach (ActionType; TypeTuple!(IrcAction, DatabaseAction))
+	foreach (ActionType; TypeTuple!(EmailAction, IrcAction, DatabaseAction))
 		result ~= new ActionType(userName, data);
 	return result;
 }
@@ -694,7 +878,7 @@ Action[] getActions(string userName, UrlParameters data)
 
 private string getUserSetting(string userName, string setting)
 {
-	foreach (string value; query!`SELECT [Value] FROM [UserSettings] WHERE [User] = ? AND [Name] = `.iterate(userName, setting))
+	foreach (string value; query!`SELECT [Value] FROM [UserSettings] WHERE [User] = ? AND [Name] = ?`.iterate(userName, setting))
 		return value;
 	return null;
 }
