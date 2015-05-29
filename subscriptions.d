@@ -454,7 +454,7 @@ final class ContentTrigger : Trigger
 	{
 		return "%s has just %s a thread titled \"%s\" in the %s group of %s.\n\nThis %s matches a content alert subscription you have created (%s).".format(
 			post.author,
-			post.references.length ? "created" : "replied to",
+			post.references.length ? "replied to" : "created",
 			post.subject,
 			post.xref[0].group,
 			site.config.host,
@@ -695,7 +695,7 @@ final class IrcAction : Action
 		html.put(
 			`<p>`
 				`<input type="checkbox" name="saction-irc-enabled"`, enabled ? ` checked` : ``, `> `
-				`Send a private message to <input name="saction-irc-nick" value="`), html.putEncodedEntities(nick), html.put(`"> on `
+				`Send a private message to <input name="saction-irc-nick" value="`), html.putEncodedEntities(nick), html.put(`"> on the `
 				`<select name="saction-irc-network">`);
 		foreach (irc; services!IrcSink)
 		{
@@ -705,7 +705,7 @@ final class IrcAction : Action
 					html.put(`</option>`);
 		}
 		html.put(
-				`</select> `
+				`</select> IRC network`
 			`</p>`
 		);
 	}
@@ -761,7 +761,7 @@ final class EmailAction : Action
 	{
 		super(userName, data);
 		enabled = !!("saction-email-enabled" in data);
-		address = data.get("saction-email-address", null);
+		address = data.get("saction-email-address", getUserSetting(userName, "email"));
 	}
 
 	override void putEditHTML(ref StringBuffer html)
@@ -769,7 +769,7 @@ final class EmailAction : Action
 		html.put(
 			`<p>`
 				`<input type="checkbox" name="saction-email-enabled"`, enabled ? ` checked` : ``, `> `
-				`Send an email to <input type="email" name="saction-email-address" value="`), html.putEncodedEntities(address), html.put(`">`
+				`Send an email to <input type="email" size="30" name="saction-email-address" value="`), html.putEncodedEntities(address), html.put(`">`
 			`</p>`
 		);
 	}
