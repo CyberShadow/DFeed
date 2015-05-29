@@ -3170,7 +3170,7 @@ CachedResource getSubscriptionFeed(string subscriptionID)
 	CachedResource getFeed()
 	{
 		auto subscription = getSubscription(subscriptionID);
-		auto title = "%s subscription (%s)".format(vhost, subscription.trigger.getDescription());
+		auto title = "%s subscription (%s)".format(vhost, subscription.trigger.getTextDescription());
 		Rfc850Post[] posts;
 		foreach (string messageID; query!"SELECT [MessageID] FROM [SubscriptionPosts] WHERE [SubscriptionID] = ? ORDER BY [Time] DESC LIMIT 50"
 							.iterate(subscriptionID))

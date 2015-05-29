@@ -231,6 +231,9 @@ class Trigger : FormSection
 		return description.get().assumeUnique();
 	}
 
+	/// Text description shown in emails and feed titles.
+	abstract string getTextDescription();
+
 	/// Short description for IRC and email subjects.
 	abstract string getShortPostDescription(Rfc850Post post);
 
@@ -244,7 +247,9 @@ final class ReplyTrigger : Trigger
 
 	override @property string type() const { return "reply"; }
 
-	override void putDescription(ref StringBuffer html) { html.put("Replies to your posts"); }
+	override void putDescription(ref StringBuffer html) { html.put(getTextDescription()); }
+
+	override string getTextDescription() { return "Replies to your posts"; }
 
 	override string getShortPostDescription(Rfc850Post post)
 	{
@@ -307,6 +312,12 @@ final class ThreadTrigger : Trigger
 	override void putDescription(ref StringBuffer html)
 	{
 		html.put(`Replies to the thread `), putThreadName(html);
+	}
+
+	override string getTextDescription()
+	{
+		auto post = getPost(threadID);
+		return "Replies to the thread " ~ (post ? `"` ~ post.subject ~ `"` : threadID);
 	}
 
 	override string getShortPostDescription(Rfc850Post post)
@@ -420,6 +431,8 @@ final class ContentTrigger : Trigger
 		putStringFilter("containing", messageFilter);
 	}
 
+	override string getTextDescription() { return getDescription().replace(`<b>`, ``).replace(`</b>`, ``); }
+
 	override string getShortPostDescription(Rfc850Post post)
 	{
 		return "%s %s thread \"%s\" in %s".format(
@@ -439,7 +452,7 @@ final class ContentTrigger : Trigger
 			post.xref[0].group,
 			site.config.host,
 			post.references.length ? "post" : "thread",
-			getDescription(),
+			getTextDescription(),
 		);
 	}
 
