@@ -141,6 +141,16 @@ body
 	throw new Exception("No such subscription");
 }
 
+Subscription getUserSubscription(string userName, string subscriptionID)
+in { assert(userName.length); }
+out(result) { assert(result.id == subscriptionID && result.userName == userName); }
+body
+{
+	foreach (string data; query!`SELECT [Data] FROM [Subscriptions] WHERE [Username] = ? AND [ID] = ?`.iterate(userName, subscriptionID))
+		return Subscription(userName, data.jsonParse!(UrlParameters));
+	throw new Exception("No such user subscription");
+}
+
 Subscription[] getUserSubscriptions(string userName)
 {
 	assert(userName);
@@ -854,7 +864,7 @@ final class DatabaseAction : Action
 	override void putEditHTML(ref StringBuffer html)
 	{
 		html.put(
-			`<p>Additionally, you can <a href="/subscription-feeds/`, subscriptionID, `">subscribe to an ATOM feed of matched posts</a>, `
+			`<p>Additionally, you can <a href="/subscription-feed/`, subscriptionID, `">subscribe to an ATOM feed of matched posts</a>, `
 			`or <a href="/subscription-posts/`, subscriptionID, `">read them online</a>.</p>`
 		);
 	}

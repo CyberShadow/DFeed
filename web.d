@@ -451,6 +451,14 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				}
 				break;
 			}
+			case "auto-save":
+			{
+				auto postVars = request.decodePostData();
+				if (postVars.get("secret", "") != getUserSecret())
+					throw new Exception("XSRF secret verification failed");
+				autoSaveDraft(postVars);
+				return response.serveText("OK");
+			}
 			case "subscribe":
 			{
 				enforce(path.length > 1, "No post specified");
@@ -470,13 +478,18 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				discussionSubscriptionEdit(threadSubscription);
 				break;
 			}
-			case "auto-save":
+			case "subscription-posts":
 			{
-				auto postVars = request.decodePostData();
-				if (postVars.get("secret", "") != getUserSecret())
-					throw new Exception("XSRF secret verification failed");
-				autoSaveDraft(postVars);
-				return response.serveText("OK");
+				enforce(path.length > 1, "No subscription specified");
+				int page = to!int(parameters.get("page", "1"));
+				discussionSubscriptionPosts(urlDecode(pathX), page);
+				title = "View subscription";
+				break;
+			}
+			case "subscription-feed":
+			{
+				enforce(path.length > 1, "No subscription specified");
+				return getSubscriptionFeed(urlDecode(pathX)).getResponse(request);
 			}
 			case "delete":
 			{
@@ -1663,7 +1676,7 @@ void miniPostInfo(Rfc850Post post, Rfc850Post[string] knownPosts)
 				`</td>`
 				`<td class="post-info-actions">`); postActions(post.msg); html.put(`</td>`
 			`</tr></table>`
-		);	
+		);
 	}
 }
 
@@ -2579,6 +2592,12 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 			return discussionSubscriptionEdit(getSubscription(subscriptionID));
 		}
 		else
+		if (action.skipOver("subscription-view-"))
+			throw new Redirect("/subscription-posts/" ~ action);
+		else
+		if (action.skipOver("subscription-feed-"))
+			throw new Redirect("/subscription-feed/" ~ action);
+		else
 		if (action == "subscription-save" || action == "subscription-undelete")
 		{
 			string message;
@@ -2667,7 +2686,9 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 				html.put(
 					`<tr>`
 						`<td>`), subscription.trigger.putDescription(html), html.put(`</td>`
-						`<td><input type="submit" form="subscriptions-form" name="action-subscription-edit-`, subscription.id, `" value="Edit"></td>`
+						`<td><input type="submit" form="subscriptions-form" name="action-subscription-view-`  , subscription.id, `" value="View posts"></td>`
+						`<td><input type="submit" form="subscriptions-form" name="action-subscription-feed-`  , subscription.id, `" value="Get ATOM feed"></td>`
+						`<td><input type="submit" form="subscriptions-form" name="action-subscription-edit-`  , subscription.id, `" value="Edit"></td>`
 						`<td><input type="submit" form="subscriptions-form" name="action-subscription-delete-`, subscription.id, `" value="Delete"></td>`
 					`</tr>`
 				);
@@ -2721,6 +2742,35 @@ void discussionSubscriptionEdit(Subscription subscription)
 		`</p>`
 		`</form>`
 	);
+}
+
+void discussionSubscriptionPosts(string subscriptionID, int page)
+{
+	enum postsPerPage = POSTS_PER_PAGE;
+	html.put(
+		`<form style="display:block;float:right" action="/settings" method="post">`
+			`<input type="hidden" name="secret" value="`), html.putEncodedEntities(getUserSecret()), html.put(`">`
+			`<input type="submit" name="action-subscription-edit-`), html.putEncodedEntities(subscriptionID), html.put(`" value="Edit subscription">`
+		`</form>`
+
+		`<h1>View subscription`
+	);
+	if (page != 1)
+		html.put(" (page ", text(page), ")");
+	html.put("</h1>");
+
+	auto postCount = query!"SELECT COUNT(*) FROM [SubscriptionPosts] WHERE [SubscriptionID] = ?".iterate(subscriptionID).selectValue!int;
+
+	foreach (string messageID; query!"SELECT [MessageID] FROM [SubscriptionPosts] WHERE [SubscriptionID] = ? ORDER BY [Time] DESC LIMIT ? OFFSET ?"
+						.iterate(subscriptionID, postsPerPage, (page-1)*postsPerPage))
+		formatPost(getPost(messageID), null);
+
+	if (page != 1 || postCount > postsPerPage)
+	{
+		html.put(`<table class="forum-table post-pager">`);
+		pager(null, page, getPageCount(postCount, postsPerPage));
+		html.put(`</table>`);
+	}
 }
 
 // ***********************************************************************
@@ -3055,16 +3105,20 @@ CachedResource getFeed(string group, bool threadsOnly, int hours)
 		(threadsOnly ? "/threads" : "/posts") ~
 		(group ? "/" ~ group : "") ~
 		(hours!=FEED_HOURS_DEFAULT ? "?hours=" ~ text(hours) : "");
-	return feedCache(feedUrl, makeFeed(feedUrl, group, threadsOnly, hours));
+
+	CachedResource getFeed()
+	{
+		auto title = "Latest " ~ (threadsOnly ? "threads" : "posts") ~ (group ? " on " ~ group : "");
+		auto posts = getFeedPosts(group, threadsOnly, hours);
+		auto feed = makeFeed(posts, feedUrl, title, group is null);
+		return feed;
+	}
+	return feedCache(feedUrl, getFeed());
 }
 
-CachedResource makeFeed(string feedUrl, string group, bool threadsOnly, int hours)
+Rfc850Post[] getFeedPosts(string group, bool threadsOnly, int hours)
 {
-	string PERF_SCOPE = "makeFeed(,%s,%s,%s)".format(group, threadsOnly, hours); mixin(MeasurePerformanceMixin);
-	auto title = "Latest " ~ (threadsOnly ? "threads" : "posts") ~ (group ? " on " ~ group : "");
-
-	AtomFeedWriter feed;
-	feed.startFeed(feedUrl, title, Clock.currTime());
+	string PERF_SCOPE = "getFeedPosts(%s,%s,%s)".format(group, threadsOnly, hours); mixin(MeasurePerformanceMixin);
 
 	auto since = (Clock.currTime() - dur!"hours"(hours)).stdTime;
 	auto iterator =
@@ -3080,26 +3134,54 @@ CachedResource makeFeed(string feedUrl, string group, bool threadsOnly, int hour
 				query!"SELECT `Message` FROM `Posts` WHERE `Time` > ?".iterate(since)
 		;
 
+	Rfc850Post[] posts;
 	foreach (string message; iterator)
-	{
-		auto post = new Rfc850Post(message);
+		posts ~= new Rfc850Post(message);
+	return posts;
+}
 
+CachedResource makeFeed(Rfc850Post[] posts, string feedUrl, string feedTitle, bool addGroup)
+{
+	AtomFeedWriter feed;
+	feed.startFeed(feedUrl, feedTitle, Clock.currTime());
+
+	foreach (post; posts)
+	{
 		html.clear();
 		html.put("<pre>");
 		formatBody(post);
 		html.put("</pre>");
 
-		auto url = "http://" ~ vhost ~ idToUrl(post.id);
-		auto title = post.rawSubject;
-		if (!group)
-			title = "[" ~ post.where ~ "] " ~ title;
+		auto postTitle = post.rawSubject;
+		if (addGroup)
+			postTitle = "[" ~ post.where ~ "] " ~ postTitle;
 
-		feed.putEntry(url, title, post.author, post.time, cast(string)html.get(), url);
+		feed.putEntry(post.url, postTitle, post.author, post.time, cast(string)html.get(), post.url);
 	}
 	feed.endFeed();
 
 	return new CachedResource([Data(feed.xml.output.get())], "application/atom+xml");
 }
+
+CachedResource getSubscriptionFeed(string subscriptionID)
+{
+	string feedUrl = "http://" ~ vhost ~ "/subscription-feed/" ~ subscriptionID;
+
+	CachedResource getFeed()
+	{
+		auto subscription = getSubscription(subscriptionID);
+		auto title = "%s subscription (%s)".format(vhost, subscription.trigger.getDescription());
+		Rfc850Post[] posts;
+		foreach (string messageID; query!"SELECT [MessageID] FROM [SubscriptionPosts] WHERE [SubscriptionID] = ? ORDER BY [Time] DESC LIMIT 50"
+							.iterate(subscriptionID))
+			posts ~= getPost(messageID);
+
+		return makeFeed(posts, feedUrl, title, true);
+	}
+	return feedCache(feedUrl, getFeed());
+}
+
+// **************************************************************************
 
 class Redirect : Throwable
 {
