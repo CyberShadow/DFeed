@@ -1396,9 +1396,9 @@ void discussionGroupThreaded(string group, int page, bool narrow = false)
 	//foreach (string threadID; query!"SELECT `ID` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?".iterate(group, THREADS_PER_PAGE, (page-1)*THREADS_PER_PAGE))
 	//	foreach (string id, string parent, string author, string subject, long stdTime; query!"SELECT `ID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` = ?".iterate(threadID))
 	PostInfo*[] posts;
-	enum ViewSQL = "SELECT `ROWID`, `ID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` IN (SELECT `ID` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?)";
-	foreach (int rowid, string id, string parent, string author, string subject, long stdTime; query!ViewSQL.iterate(group, THREADS_PER_PAGE, getPageOffset(page, THREADS_PER_PAGE)))
-		posts ~= [PostInfo(rowid, id, null, parent, author, subject, SysTime(stdTime, UTC()))].ptr; // TODO: optimize?
+	enum ViewSQL = "SELECT `ROWID`, `ID`, `ParentID`, `Author`, `AuthorEmail`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` IN (SELECT `ID` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?)";
+	foreach (int rowid, string id, string parent, string author, string authorEmail, string subject, long stdTime; query!ViewSQL.iterate(group, THREADS_PER_PAGE, getPageOffset(page, THREADS_PER_PAGE)))
+		posts ~= [PostInfo(rowid, id, null, parent, author, authorEmail, subject, SysTime(stdTime, UTC()))].ptr; // TODO: optimize?
 
 	html.put(
 		`<table id="group-index-threaded" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(user.get("groupviewmode", defaultViewMode)), html.put(`">`
@@ -1881,9 +1881,9 @@ void discussionThread(string id, int page, out string group, out string title, b
 void discussionThreadOverview(string threadID, string selectedID)
 {
 	PostInfo*[] posts;
-	enum ViewSQL = "SELECT `ROWID`, `ID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` = ?";
-	foreach (int rowid, string id, string parent, string author, string subject, long stdTime; query!ViewSQL.iterate(threadID))
-		posts ~= [PostInfo(rowid, id, null, parent, author, subject, SysTime(stdTime, UTC()))].ptr;
+	enum ViewSQL = "SELECT `ROWID`, `ID`, `ParentID`, `Author`, `AuthorEmail`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` = ?";
+	foreach (int rowid, string id, string parent, string author, string authorEmail, string subject, long stdTime; query!ViewSQL.iterate(threadID))
+		posts ~= [PostInfo(rowid, id, null, parent, author, authorEmail, subject, SysTime(stdTime, UTC()))].ptr;
 
 	html.put(
 		`<table id="thread-index" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(user.get("groupviewmode", defaultViewMode)), html.put(`">`
@@ -2837,7 +2837,7 @@ static string getPostSource(string id)
 	return null;
 }
 
-struct PostInfo { int rowid; string id, threadID, parentID, author, subject; SysTime time; }
+struct PostInfo { int rowid; string id, threadID, parentID, author, authorEmail, subject; SysTime time; }
 CachedSet!(string, PostInfo*) postInfoCache;
 
 PostInfo* getPostInfo(string id)
@@ -2848,8 +2848,8 @@ PostInfo* getPostInfo(string id)
 PostInfo* retrievePostInfo(string id)
 {
 	if (id.startsWith('<') && id.endsWith('>'))
-		foreach (int rowid, string threadID, string parentID, string author, string subject, long stdTime; query!"SELECT `ROWID`, `ThreadID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ID` = ?".iterate(id))
-			return [PostInfo(rowid, id, threadID, parentID, author, subject, SysTime(stdTime, UTC()))].ptr;
+		foreach (int rowid, string threadID, string parentID, string author, string authorEmail, string subject, long stdTime; query!"SELECT `ROWID`, `ThreadID`, `ParentID`, `Author`, `AuthorEmail`, `Subject`, `Time` FROM `Posts` WHERE `ID` = ?".iterate(id))
+			return [PostInfo(rowid, id, threadID, parentID, author, authorEmail, subject, SysTime(stdTime, UTC()))].ptr;
 	return null;
 }
 

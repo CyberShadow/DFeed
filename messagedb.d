@@ -60,8 +60,8 @@ protected:
 			log(format("Message %s already present with ROWID=%d", message.id, message.rowid));
 		else
 		{
-			query!"INSERT INTO `Posts` (`ID`, `Message`, `Author`, `Subject`, `Time`, `ParentID`, `ThreadID`) VALUES (?, ?, ?, ?, ?, ?, ?)"
-				.exec(message.id, message.message, message.author, message.subject, message.time.stdTime, message.parentID, message.threadID);
+			query!"INSERT INTO `Posts` (`ID`, `Message`, `Author`, `AuthorEmail`, `Subject`, `Time`, `ParentID`, `ThreadID`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+				.exec(message.id, message.message, message.author, message.authorEmail, message.subject, message.time.stdTime, message.parentID, message.threadID);
 			message.rowid = db.lastInsertRowID.to!int;
 			log(format("Message %s saved with ROWID=%d", message.id, message.rowid));
 		}
@@ -88,8 +88,8 @@ public:
 	{
 		log(format("Updating message %s (%s)", message.id, message.where));
 
-		query!"UPDATE `Posts` SET `Message`=?, `Author`=?, `Subject`=?, `Time`=?, `ParentID`=?, `ThreadID`=? WHERE `ID` = ?"
-			.exec(message.message, message.author, message.subject, message.time.stdTime, message.parentID, message.threadID, message.id);
+		query!"UPDATE `Posts` SET `Message`=?, `Author`=?, `AuthorEmail`=?, `Subject`=?, `Time`=?, `ParentID`=?, `ThreadID`=? WHERE `ID` = ?"
+			.exec(message.message, message.author, message.authorEmail, message.subject, message.time.stdTime, message.parentID, message.threadID, message.id);
 	}
 }
 

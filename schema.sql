@@ -14,7 +14,7 @@ CREATE TABLE [Posts] (
 [Time] INTEGER  NULL,
 [ParentID] VARCHAR(50)  NULL,
 [ThreadID] VARCHAR(50)  NULL
-);
+, [AuthorEmail] VARCHAR(50));
 
 -- Table `Threads`
 CREATE TABLE [Threads] (
