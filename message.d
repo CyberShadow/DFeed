@@ -20,10 +20,12 @@ import std.algorithm;
 import std.array;
 import std.conv;
 import std.exception;
+import std.range;
 import std.string;
 
 public import ae.net.ietf.message;
 import ae.net.ietf.url;
+import ae.net.ietf.wrap;
 import ae.utils.array;
 
 import bitly;
@@ -188,6 +190,16 @@ class Rfc850Post : Post
 			roots ~= post;
 		}
 		return roots;
+	}
+
+	/// Get content excluding quoted text.
+	@property string newContent()
+	{
+		auto paragraphs = content.unwrapText(flowed, delsp);
+		auto index = paragraphs.length.iota.filter!(i =>
+			paragraphs[i].quotePrefix.length || (i < paragraphs.length-1 && paragraphs[i+1].quotePrefix.length)
+		).array;
+		return paragraphs.indexed(index).map!(p => p.text).join("\n");
 	}
 
 private:
