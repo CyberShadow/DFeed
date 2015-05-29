@@ -392,6 +392,20 @@ div#footernav a {
 	background: none !important;
 }
 
+#group-index a.forum-postsummary-gravatar {
+	float: left;
+	margin-right: 0.5em;
+	display: block;
+}
+
+#group-index a.forum-postsummary-gravatar img.post-gravatar {
+	width : 2.2em;
+	height: 2.2em;
+	border-width: 0.3em;
+	margin: -0.05em;
+	display: block;
+}
+
 /*************** Thread view, individual posts ***************/
 
 #forum-content > .post-wrapper:first-child > .post {

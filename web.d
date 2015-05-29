@@ -1148,6 +1148,9 @@ void discussionGroup(string group, int page)
 			{
 				html.put(
 				//	`<!-- Thread ID: ` ~ encodeEntities(threadID) ~ ` | First Post ID: ` ~ encodeEntities(id) ~ `-->` ~
+					`<a class="forum-postsummary-gravatar" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`">`
+						`<img alt="Gravatar" class="post-gravatar" src="http://www.gravatar.com/avatar/`, getGravatarHash(info.authorEmail), `?d=identicon">`
+					`</a>`
 					`<div class="truncated"><a class="forum-postsummary-subject `, (isRead ? "forum-read" : "forum-unread"), `" href="`), html.putEncodedEntities(idToUrl(tid, "thread")), html.put(`" title="`), html.putEncodedEntities(subject), html.put(`">`), html.putEncodedEntities(subject), html.put(`</a></div>`
 					`<div class="truncated">by <span class="forum-postsummary-author" title="`), html.putEncodedEntities(author), html.put(`">`), html.putEncodedEntities(author), html.put(`</span></div>`);
 				return;
