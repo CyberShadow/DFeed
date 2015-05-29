@@ -963,15 +963,6 @@ string[] getLatestAnnouncements()
 	return result;
 }
 
-CachedSet!(string, string) authorEmailCache;
-
-string getAuthorEmail(string id)
-{
-	foreach (int rowid, string postID, string message; query!"SELECT `ROWID`, `ID`, `Message` FROM `Posts` WHERE `ID` = ?".iterate(id))
-		return new Rfc850Post(message, postID, rowid, id).authorEmail;
-	return null;
-}
-
 void summarizeFrameThread(PostInfo* info, string infoText)
 {
 	if (info)
@@ -979,7 +970,7 @@ void summarizeFrameThread(PostInfo* info, string infoText)
 		{
 			html.put(
 				`<a target="_top" class="forum-postsummary-gravatar" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`">`
-					`<img alt="Gravatar" class="post-gravatar" src="http://www.gravatar.com/avatar/`, getGravatarHash(authorEmailCache(id, getAuthorEmail(id))), `?d=identicon">`
+					`<img alt="Gravatar" class="post-gravatar" src="http://www.gravatar.com/avatar/`, getGravatarHash(info.authorEmail), `?d=identicon">`
 				`</a>`
 				`<a target="_top" class="forum-postsummary-subject `, (user.isRead(rowid) ? "forum-read" : "forum-unread"), `" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`">`), html.putEncodedEntities(subject), html.put(`</a><br>`
 				`<div class="forum-postsummary-info">`, infoText, `</div>`
