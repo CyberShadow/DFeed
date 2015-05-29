@@ -491,6 +491,13 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				enforce(path.length > 1, "No subscription specified");
 				return getSubscriptionFeed(urlDecode(pathX)).getResponse(request);
 			}
+			case "subscription-unsubscribe":
+			{
+				enforce(path.length > 1, "No subscription specified");
+				title = "Unsubscribe";
+				discussionSubscriptionUnsubscribe(urlDecode(pathX));
+				break;
+			}
 			case "delete":
 			{
 				enforce(user.getLevel() >= User.Level.canDeletePosts, "You can't delete posts");
@@ -2741,6 +2748,17 @@ void discussionSubscriptionEdit(Subscription subscription)
 			`<input type="submit" name="action-subscription-cancel" value="Cancel">`
 		`</p>`
 		`</form>`
+	);
+}
+
+void discussionSubscriptionUnsubscribe(string subscriptionID)
+{
+	auto subscription = getSubscription(subscriptionID);
+	subscription.unsubscribe();
+	html.put(
+		`<h1>Unsubscribe</h1>`
+		`<p>This subscription has been deactivated.</p>`
+		`<p>If you did not intend to do this, you can reactivate the subscription's actions on your <a href="/settings">settings page</a>.</p>`
 	);
 }
 

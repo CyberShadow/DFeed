@@ -100,6 +100,13 @@ struct Subscription
 		query!`DELETE FROM [Subscriptions] WHERE [ID] = ?`.exec(id);
 	}
 
+	void unsubscribe()
+	{
+		foreach (action; actions)
+			action.unsubscribe();
+		save();
+	}
+
 	void runActions(Rfc850Post post)
 	{
 		log("Running subscription %s (%s trigger) actions for post %s".format(id, trigger.type, post.id));
@@ -664,6 +671,9 @@ class Action : FormSection
 
 	/// Execute this action, if it is enabled.
 	abstract void run(ref Subscription subscription, Rfc850Post post);
+
+	/// Disable this action (used for one-click-unsubscribe in emails)
+	abstract void unsubscribe();
 }
 
 final class IrcAction : Action
@@ -738,6 +748,8 @@ final class IrcAction : Action
 	override void save() {}
 
 	override void cleanup() {}
+
+	override void unsubscribe() { enabled = false; }
 }
 
 final class EmailAction : Action
@@ -838,7 +850,7 @@ All the best,
 Unsubscription information:
 
 To stop receiving emails for this subscription, please visit this page:
-http://%s/subscription-disable/%s
+http://%s/subscription-unsubscribe/%s
 
 Or, visit your settings page to edit your subscriptions:
 http://%s/settings
@@ -868,6 +880,8 @@ EOF"
 	override void save() {}
 
 	override void cleanup() {}
+
+	override void unsubscribe() { enabled = false; }
 }
 
 final class DatabaseAction : Action
@@ -897,6 +911,8 @@ final class DatabaseAction : Action
 	override void save() {}
 
 	override void cleanup() {} // Just leave the SubscriptionPosts alone, e.g. in case the user clicks undo
+
+	override void unsubscribe() {}
 }
 
 Action[] getActions(string userName, UrlParameters data)
