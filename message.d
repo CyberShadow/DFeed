@@ -197,7 +197,7 @@ class Rfc850Post : Post
 	{
 		auto paragraphs = content.unwrapText(flowed, delsp);
 		auto index = paragraphs.length.iota.filter!(i =>
-			paragraphs[i].quotePrefix.length || (i < paragraphs.length-1 && paragraphs[i+1].quotePrefix.length)
+			!paragraphs[i].quotePrefix.length && (i+1 >= paragraphs.length || !paragraphs[i+1].quotePrefix.length)
 		).array;
 		return paragraphs.indexed(index).map!(p => p.text).join("\n");
 	}
