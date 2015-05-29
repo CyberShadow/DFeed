@@ -374,7 +374,13 @@ div#footernav a {
 
 #group-index > tbody > tr > td:nth-child(1) { width: 65%; }
 #group-index > tbody > tr > td:nth-child(2) { width: 25%; }
-#group-index > tbody > tr > td:nth-child(3) { width: 10%; }
+#group-index > tbody > tr > td:nth-child(3) { width: 6.1em; }
+
+.forum-postsummary-time {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
 
 .group-index-col-first {
 	width: 70%;
