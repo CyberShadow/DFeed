@@ -246,7 +246,7 @@ string encodeAnchor(string s)
 /// Get relative URL to a post ID.
 string idToUrl(string id, string action = "post", int page = 1)
 {
-	enforce(id.startsWith('<') && id.endsWith('>'));
+	enforce(id.startsWith('<') && id.endsWith('>'), "Invalid message ID");
 
 	// RFC 3986:
 	// pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
@@ -264,7 +264,7 @@ string idToUrl(string id, string action = "post", int page = 1)
 /// Get URL fragment / anchor name for a post on the same page.
 string idToFragment(string id)
 {
-	enforce(id.startsWith('<') && id.endsWith('>'));
+	enforce(id.startsWith('<') && id.endsWith('>'), "Invalid message ID");
 	return "post-" ~ encodeAnchor(id[1..$-1]);
 }
 
