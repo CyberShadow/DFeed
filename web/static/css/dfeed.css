@@ -1029,7 +1029,9 @@ select[name=trigger-content-groups] {
 		margin-right: 1em;
 	}
 
-	.forum-form {
+	.forum-form,
+	#settings-form,
+	#subscription-form {
 		display: block;
 		margin: 0 0.5em 0.5em 0.5em;
 	}

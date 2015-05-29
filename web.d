@@ -2651,8 +2651,8 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 	}
 
 	html.put(
-		`<h1>Settings</h1>`
 		`<form method="post" id="settings-form">`
+		`<h1>Settings</h1>`
 		`<input type="hidden" name="secret" value="`, getUserSecret(), `">`
 
 		`<h2>User Interface</h2>`
@@ -2719,8 +2719,8 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 void discussionSubscriptionEdit(Subscription subscription)
 {
 	html.put(
-		`<h1>Edit subscription</h1>`
 		`<form action="/settings" method="post" id="subscription-form">`
+		`<h1>Edit subscription</h1>`
 		`<input type="hidden" name="secret" value="`, getUserSecret(), `">`
 		`<input type="hidden" name="id" value="`, subscription.id, `">`
 
