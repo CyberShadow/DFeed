@@ -597,7 +597,7 @@ final class IrcAction : Action
 			`<p>`
 				`<input type="checkbox" name="saction-irc-enabled"`, enabled ? ` checked` : ``, `> `
 				`Send a private message to <input name="saction-irc-nick" value="`), html.putEncodedEntities(nick), html.put(`"> on `
-				`<select name="sactin-irc-server">`);
+				`<select name="saction-irc-network">`);
 		foreach (irc; services!IrcSink)
 		{
 			html.put(
