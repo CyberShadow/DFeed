@@ -27,6 +27,7 @@ import std.typetuple;
 
 import ae.net.ietf.url : UrlParameters;
 import ae.sys.log;
+import ae.sys.timing;
 import ae.utils.array;
 import ae.utils.json;
 import ae.utils.meta;
@@ -622,9 +623,20 @@ final class IrcAction : Action
 
 	override void run(ref Subscription subscription, Rfc850Post post)
 	{
-		foreach (irc; services!IrcSink)
-			if (irc.network == network)
-				irc.sendMessage(nick, subscription.trigger.getShortDescription(post) ~ ": " ~ post.url);
+		// Queue messages to avoid sending more than 1 PM per message.
+
+		static string[string][string] queue;
+		static TimerTask queueTask;
+
+		queue[network][nick] = subscription.trigger.getShortDescription(post) ~ ": " ~ post.url;
+		if (!queueTask)
+			queueTask = setTimeout({
+				queueTask = null;
+				scope(exit) queue = null;
+				foreach (irc; services!IrcSink)
+					foreach (nick, message; queue.get(irc.network, null))
+						irc.sendMessage(nick, message);
+			}, 1.msecs);
 	}
 
 	override void validate()
