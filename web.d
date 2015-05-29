@@ -2849,7 +2849,17 @@ PostInfo* retrievePostInfo(string id)
 {
 	if (id.startsWith('<') && id.endsWith('>'))
 		foreach (int rowid, string threadID, string parentID, string author, string authorEmail, string subject, long stdTime; query!"SELECT `ROWID`, `ThreadID`, `ParentID`, `Author`, `AuthorEmail`, `Subject`, `Time` FROM `Posts` WHERE `ID` = ?".iterate(id))
+		{
+			if (authorEmail is null)
+			{
+				authorEmail = new Rfc850Message(query!"SELECT [Message] FROM [Posts] WHERE [ROWID]=?".iterate(rowid).selectValue!string).authorEmail;
+				if (authorEmail is null)
+					authorEmail = "";
+				assert(authorEmail !is null);
+				query!"UPDATE [Posts] SET [AuthorEmail]=? WHERE [ROWID]=?".exec(authorEmail, rowid);
+			}
 			return [PostInfo(rowid, id, threadID, parentID, author, authorEmail, subject, SysTime(stdTime, UTC()))].ptr;
+		}
 	return null;
 }
 
