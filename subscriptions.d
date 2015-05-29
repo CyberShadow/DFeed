@@ -499,7 +499,7 @@ final class ContentTrigger : Trigger
 		if (!checkFilter(authorNameFilter , post.author     )) return false;
 		if (!checkFilter(authorEmailFilter, post.authorEmail)) return false;
 		if (!checkFilter(subjectFilter    , post.subject    )) return false;
-		if (!checkFilter(messageFilter    , post.message    )) return false;
+		if (!checkFilter(messageFilter    , post.newContent )) return false;
 
 		return true;
 	}
