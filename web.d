@@ -2589,7 +2589,7 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 		if (action.skipOver("subscription-edit-"))
 		{
 			auto subscriptionID = action;
-			return discussionSubscriptionEdit(getSubscription(subscriptionID));
+			return discussionSubscriptionEdit(getUserSubscription(user.getName(), subscriptionID));
 		}
 		else
 		if (action.skipOver("subscription-view-"))
@@ -2635,12 +2635,12 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 			);
 			// Replicate the entire edit form here (but make it invisible),
 			// so that saving the subscription recreates it on the server.
-			discussionSubscriptionEdit(getSubscription(subscriptionID));
+			discussionSubscriptionEdit(getUserSubscription(user.getName(), subscriptionID));
 			html.put(
 				`</div>`
 			);
 
-			getSubscription(subscriptionID).remove();
+			getUserSubscription(user.getName(), subscriptionID).remove();
 		}
 		else
 		if (action == "subscription-create-content")

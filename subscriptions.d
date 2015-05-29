@@ -142,10 +142,10 @@ body
 }
 
 Subscription getUserSubscription(string userName, string subscriptionID)
-in { assert(userName.length); }
 out(result) { assert(result.id == subscriptionID && result.userName == userName); }
 body
 {
+	enforce(userName.length, "Not logged in");
 	foreach (string data; query!`SELECT [Data] FROM [Subscriptions] WHERE [Username] = ? AND [ID] = ?`.iterate(userName, subscriptionID))
 		return Subscription(userName, data.jsonParse!(UrlParameters));
 	throw new Exception("No such user subscription");
