@@ -1052,7 +1052,7 @@ select[name=trigger-content-groups] {
 		display: none;
 	}
 
-	table.mini-post-info,
+	.split-post table.mini-post-info,
 	table.post-footer {
 		display: table;
 	}
