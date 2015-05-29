@@ -2007,7 +2007,7 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 		`<label for="postform-name">Your name:</label>`
 		`<input id="postform-name" name="name" size="40" value="`), html.putEncodedEntities(draft.clientVars.get("name", null)), html.put(`">`
 		`<label for="postform-email">Your email address (<a href="/help#email">?</a>):</label>`
-		`<input id="postform-email" name="email" size="40" value="`), html.putEncodedEntities(draft.clientVars.get("email", null)), html.put(`">`
+		`<input id="postform-email" type="email" name="email" size="40" value="`), html.putEncodedEntities(draft.clientVars.get("email", null)), html.put(`">`
 		`<label for="postform-subject">Subject:</label>`
 		`<input id="postform-subject" name="subject" size="80" value="`), html.putEncodedEntities(draft.clientVars.get("subject", null)), html.put(`">`
 		`<label for="postform-text">Message:</label>`
