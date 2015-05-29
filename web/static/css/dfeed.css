@@ -936,7 +936,7 @@ kbd { /* stolen from http://en.wikipedia.org/wiki/Template:Key_press */
 
 /*************** Login ***************/
 
-.loginform {
+.forum-form.loginform {
 	width: 320px;
 	margin: 70px auto 0 auto;
 }
