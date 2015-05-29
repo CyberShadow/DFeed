@@ -1605,7 +1605,7 @@ void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts, bool markAsRead 
 			`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(2), `</tr>` // Fixed layout dummies
 			`<tr class="post-header"><th colspan="2">`
 				`<div class="post-time">`, summarizeTime(time), `</div>`
-				`<a title="Permanent link to this post" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" class="`, (user.isRead(post.rowid) ? "forum-read" : "forum-unread"), `">`,
+				`<a title="Permanent link to this post" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" class="permalink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread"), `">`,
 					encodeEntities(rawSubject),
 				`</a>`
 			`</th></tr>`
@@ -2766,11 +2766,6 @@ void discussionSubscriptionPosts(string subscriptionID, int page)
 {
 	enum postsPerPage = POSTS_PER_PAGE;
 	html.put(
-		`<form style="display:block;float:right" action="/settings" method="post">`
-			`<input type="hidden" name="secret" value="`), html.putEncodedEntities(getUserSecret()), html.put(`">`
-			`<input type="submit" name="action-subscription-edit-`), html.putEncodedEntities(subscriptionID), html.put(`" value="Edit subscription">`
-		`</form>`
-
 		`<h1>View subscription`
 	);
 	if (page != 1)
@@ -2778,6 +2773,11 @@ void discussionSubscriptionPosts(string subscriptionID, int page)
 	html.put("</h1>");
 
 	auto postCount = query!"SELECT COUNT(*) FROM [SubscriptionPosts] WHERE [SubscriptionID] = ?".iterate(subscriptionID).selectValue!int;
+
+	if (postCount == 0)
+	{
+		html.put(`<p>It looks like there's nothing here! No posts matched this subscription so far.</p>`);
+	}
 
 	foreach (string messageID; query!"SELECT [MessageID] FROM [SubscriptionPosts] WHERE [SubscriptionID] = ? ORDER BY [Time] DESC LIMIT ? OFFSET ?"
 						.iterate(subscriptionID, postsPerPage, (page-1)*postsPerPage))
@@ -2789,6 +2789,14 @@ void discussionSubscriptionPosts(string subscriptionID, int page)
 		pager(null, page, getPageCount(postCount, postsPerPage));
 		html.put(`</table>`);
 	}
+
+	html.put(
+		`<form style="display:block;float:right;margin-top:0.5em" action="/settings" method="post">`
+			`<input type="hidden" name="secret" value="`), html.putEncodedEntities(getUserSecret()), html.put(`">`
+			`<input type="submit" name="action-subscription-edit-`), html.putEncodedEntities(subscriptionID), html.put(`" value="Edit subscription">`
+		`</form>`
+		`<div style="clear:right"></div>`
+	);
 }
 
 // ***********************************************************************
