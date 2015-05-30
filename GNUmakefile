@@ -17,16 +17,13 @@ TARGETS : \
 	config/groups.ini
 
 %.min.htt : %.htt $(HTMLCOMPRESSOR) $(YUICOMPRESSOR)
-	$(HTMLTOOL) < $< > $@.tmp
-	mv $@.tmp $@
+	$(HTMLTOOL) < $< > $@
 
 %.min.js : %.js $(YUICOMPRESSOR)
-	$(JSTOOL) < $< > $@.tmp
-	mv $@.tmp $@
+	$(JSTOOL) < $< > $@
 
 %.min.css : %.css $(YUICOMPRESSOR)
-	$(CSSTOOL) < $< > $@.tmp
-	mv $@.tmp $@
+	$(CSSTOOL) < $< > $@
 
 web/skel.htt : $(DLANG)/forum-template.html
 	cp $^ $@
@@ -48,3 +45,5 @@ $(YUICOMPRESSOR) :
 
 config/groups.ini : config/gengroups.d
 	cd config && rdmd -I.. gengroups
+
+.DELETE_ON_ERROR:
