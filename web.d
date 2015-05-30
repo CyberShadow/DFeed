@@ -160,7 +160,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	auto response = new HttpResponseEx();
 
 	ip = request.remoteHosts(conn.remoteAddress.toAddrString())[0];
-	user = getUser("Cookie" in request.headers ? request.headers["Cookie"] : null);
+	user = getUser(request.headers.get("Cookie", null));
 	string[] cookies;
 	scope(success)
 	{
@@ -2431,7 +2431,7 @@ void saveBanList()
 bool banCheck(string ip, HttpRequest request)
 {
 	string[] keys = [ip];
-	foreach (cookie; ("Cookie" in request.headers ? request.headers["Cookie"] : null).split("; "))
+	foreach (cookie; request.headers.get("Cookie", null).split("; "))
 	{
 		auto p = cookie.indexOf("=");
 		if (p<0) continue;
