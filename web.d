@@ -73,6 +73,7 @@ HttpServer server;
 string vhost;
 User user;
 string ip;
+HttpRequest currentRequest;
 StringBuffer html;
 string[string] banned;
 
@@ -157,6 +158,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 {
 	StopWatch responseTime;
 	responseTime.start();
+	currentRequest = request;
 	auto response = new HttpResponseEx();
 
 	ip = request.remoteHosts(conn.remoteAddress.toAddrString())[0];
@@ -635,7 +637,10 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		}
 	}
 	catch (Redirect r)
+	{
+		cookies = user.save();
 		return response.redirect(r.url);
+	}
 	catch (Exception e)
 	{
 		//return response.writeError(HttpStatusCode.InternalServerError, "Unprocessed exception: " ~ e.msg);
@@ -696,6 +701,10 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 					`<div class="forum-notice">Draft discarded. <a href="/posting/` ~ encodeEntities(draftID) ~ `">Undo</a></div>` ~ htmlStr;
 				break;
 			}
+			case "settings-saved":
+				htmlStr =
+					`<div class="forum-notice">Settings saved.</div>` ~ htmlStr;
+				break;
 			default:
 				throw new Exception("Unknown kind of pending notice: " ~ kind);
 		}
@@ -2610,8 +2619,12 @@ UserSettings userSettings;
 
 // ***********************************************************************
 
+string settingsReferrer;
+
 void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 {
+	settingsReferrer = postVars.get("referrer", currentRequest.headers.get("Referer", null));
+
 	if (postVars)
 	{
 		if (postVars.get("secret", "") != userSettings.secret)
@@ -2622,7 +2635,7 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 		auto action = actions.front[7..$];
 
 		if (action == "cancel")
-			throw new Redirect("/");
+			throw new Redirect(settingsReferrer ? settingsReferrer : "/");
 		else
 		if (action == "save")
 		{
@@ -2634,7 +2647,8 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 			foreach (setting; ["enable-keynav"])
 				userSettings.set(setting, setting in postVars ? "true" : "false");
 
-			html.put(`<div class="forum-notice">Settings saved.</div>`);
+			userSettings.pendingNotice = "settings-saved";
+			throw new Redirect(settingsReferrer ? settingsReferrer : "/settings");
 		}
 		else
 		if (action == "subscription-cancel")
@@ -2706,6 +2720,7 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 	html.put(
 		`<form method="post" id="settings-form">`
 		`<h1>Settings</h1>`
+		`<input type="hidden" name="referrer" value="`), html.putEncodedEntities(settingsReferrer), html.put(`">`
 		`<input type="hidden" name="secret" value="`, userSettings.secret, `">`
 
 		`<h2>User Interface</h2>`
@@ -2764,6 +2779,7 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 		`</form>`
 
 		`<form method="post" id="subscriptions-form">`
+		`<input type="hidden" name="referrer" value="`), html.putEncodedEntities(settingsReferrer), html.put(`">`
 		`<input type="hidden" name="secret" value="`, userSettings.secret, `">`
 		`</form>`
 	);
@@ -2774,6 +2790,7 @@ void discussionSubscriptionEdit(Subscription subscription)
 	html.put(
 		`<form action="/settings" method="post" id="subscription-form">`
 		`<h1>Edit subscription</h1>`
+		`<input type="hidden" name="referrer" value="`), html.putEncodedEntities(settingsReferrer), html.put(`">`
 		`<input type="hidden" name="secret" value="`, userSettings.secret, `">`
 		`<input type="hidden" name="id" value="`, subscription.id, `">`
 
