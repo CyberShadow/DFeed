@@ -900,7 +900,7 @@ void discussionIndex()
 	{
 		html.put(
 			`<tr><th colspan="5">`), html.putEncodedEntities(set.name), html.put(`</th></tr>`
-			`<tr class="subheader"><th>Forum</th><th>Last Post</th><th>Threads</th><th>Posts</th><th>Also via</th></tr>`);
+			`<tr class="subheader"><th>Group</th><th>Last Post</th><th>Threads</th><th>Posts</th><th>Also via</th></tr>`);
 		foreach (group; set.groups)
 		{
 			html.put(

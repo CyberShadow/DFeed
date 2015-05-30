@@ -2,7 +2,7 @@
 <h2 id="view-modes">View modes</h2>
 
 <p>
-  You can browse the discussions using one of several view modes:
+  You can browse the forum using one of several view modes:
   <ul>
     <li><b>Basic</b> - A forum-like view with paged linear threads.</li>
     <li><b>Threaded</b> - Threaded group overview with single post display, similar to mailing list archives.</li>
@@ -15,7 +15,7 @@
 <h2 id="keynav">Keyboard navigation</h2>
 
 <p>
-  Keyboard shortcuts are available for all view modes (in thread and post listing pages, as well as the board index).
+  Keyboard shortcuts are available for all view modes (in thread and post listing pages, as well as the forum index).
   If JavaScript is enabled, press <kbd>?</kbd> to view a list of shortcuts.
 </p>
 
@@ -37,7 +37,7 @@
 <h2 id="accounts">Accounts</h2>
 
 <p>
-  You do not need an account to browse or post this discussion board.
+  You do not need an account to browse or post this forum.
   Preferences and read post history are stored in browser cookies for unregistered users.
 </p>
 
@@ -62,29 +62,29 @@
 <h2 id="avatars">Avatars</h2>
 
 <p>
-  The discussion board will display avatars associated with users' email addresses.
+  The forum will display avatars associated with users' email addresses.
   If the email address is registered with <a href="http://en.gravatar.com/">Gravatar</a>, the associated avatar is shown.
   Otherwise, an <a href="http://en.wikipedia.org/wiki/Identicon">Identicon</a> generated from a hash of the email address is displayed as a fallback.
 </p>
 
 <p>
-  To use a custom avatar on this discussion board,
+  To use a custom avatar on this forum,
     <a href="http://en.gravatar.com/site/signup/">register an account at Gravatar</a>,
     associate an email address with an image,
-    and use that email address when posting to this discussion board.
+    and use that email address when posting to this forum.
   Additionally, you can create a Gravatar profile, which will be accessible by clicking on your avatar.
 </p>
 
 <h2 id="profiles">User profiles and signatures</h2>
 
 <p>
-  Since messages can come from a variety of sources, this discussion board does not have customizable user profiles.
+  Since messages can come from a variety of sources, this forum does not have customizable user profiles.
   Instead, you can create a <a href="http://en.gravatar.com/">Gravatar</a> profile, as described in the <a href="#avatars">Avatars</a> section above.
   Click a user's avatar to go to their Gravatar profile page, assuming they have created one.
 </p>
 
 <p id="signatures">
-  For similar reasons, this discussion board does not allow configuring a signature.
+  For similar reasons, this forum does not allow configuring a signature.
   Signatures are not as useful in messages on the web today, and often devolve to a low signal-to-noise ratio.
   Instead, you can put relevant information on your Gravatar profile, or on your website (and link to it from your Gravatar profile).
 </p>
@@ -121,7 +121,7 @@
 <h2 id="about">About</h2>
 
 <p>
-  This discussion board is a web frontend to the DigitalMars NNTP server and mailing lists.
+  This website is a web frontend to the DigitalMars NNTP server and mailing lists.
   It is part of DFeed, which is also a D news aggregator and IRC bot.
 </p>
 <p>
@@ -134,7 +134,7 @@
 <h2 id="contributing">Contributing</h2>
 
 <p>
-  This discussion board software is open-source, and written in the D programming language.
+  This forum software is open-source, and written in the D programming language.
   Contributions are welcome. You can help improve this software by reporting bugs, feedback, and submitting pull requests.
   Patches for fixes, improvements, documentation, unit tests, refactoring, etc. are all welcome.
 </p>
