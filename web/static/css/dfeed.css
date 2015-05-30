@@ -941,6 +941,10 @@ kbd { /* stolen from http://en.wikipedia.org/wiki/Template:Key_press */
 	margin: 70px auto 0 auto;
 }
 
+.forum-form.loginform input[type=checkbox] {
+	margin-top: 1em;
+}
+
 .loginform-error {
 	margin: 0 !important;
 }

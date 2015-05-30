@@ -41,9 +41,9 @@ abstract class User
 	abstract void remove(string name, SettingType settingType);
 	abstract string[] save();
 
-	abstract void logIn(string username, string password);
+	abstract void logIn(string username, string password, bool remember);
 	abstract void logOut();
-	abstract void register(string username, string password);
+	abstract void register(string username, string password, bool remember);
 	abstract bool isLoggedIn();
 
 	enum Level : int
@@ -245,17 +245,17 @@ class GuestUser : User
 		return (password ~ config.salt).md5Of().toHexString!(LetterCase.lower)().idup; // Issue 9279
 	}
 
-	override void logIn(string username, string password)
+	override void logIn(string username, string password, bool remember)
 	{
 		foreach (string session; query!"SELECT `Session` FROM `Users` WHERE `Username` = ? AND `Password` = ?".iterate(username, encryptPassword(password)))
 		{
-			set("session", session, SettingType.client);
+			set("session", session, remember ? SettingType.client : SettingType.session);
 			return;
 		}
 		throw new Exception("No such username/password combination");
 	}
 
-	override void register(string username, string password)
+	override void register(string username, string password, bool remember)
 	{
 		enforce(username.length, "Please enter a username");
 		enforce(username.length < 32, "Username too long");
@@ -272,7 +272,7 @@ class GuestUser : User
 		user.save();
 
 		// Log them in
-		this.set("session", session, SettingType.client);
+		this.set("session", session, remember ? SettingType.client : SettingType.session);
 	}
 
 	override void logOut() { throw new Exception("Not logged in"); }
@@ -360,9 +360,9 @@ final class RegisteredUser : GuestUser
 		return super.save();
 	}
 
-	override void logIn(string username, string password) { throw new Exception("Already logged in"); }
+	override void logIn(string username, string password, bool remember) { throw new Exception("Already logged in"); }
 	override bool isLoggedIn() { return true; }
-	override void register(string username, string password) { throw new Exception("Already registered"); }
+	override void register(string username, string password, bool remember) { throw new Exception("Already registered"); }
 	override string getName() { return username; }
 	override Level getLevel() { return level; }
 

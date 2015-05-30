@@ -2496,6 +2496,8 @@ void discussionLoginForm(UrlParameters parameters, string errorMessage = null)
 			`<input id="loginform-username" name="username" value="`), html.putEncodedEntities(parameters.get("username", "")), html.put(`" autofocus>`
 			`<label for="loginform-password">Password:</label>`
 			`<input id="loginform-password" type="password" name="password" value="`), html.putEncodedEntities(parameters.get("password", "")), html.put(`">`
+			`<input id="loginform-remember" type="checkbox" name="remember" `, "username" !in  parameters || "remember" in parameters ? ` checked` : ``, `>`
+			`<label for="loginform-remember"> Remember me</label>`
 			`<input type="submit" value="Log in">`
 		`</td></tr>`);
 	if (errorMessage)
@@ -2512,7 +2514,7 @@ void discussionLoginForm(UrlParameters parameters, string errorMessage = null)
 
 void discussionLogin(UrlParameters parameters)
 {
-	user.logIn(aaGet(parameters, "username"), aaGet(parameters, "password"));
+	user.logIn(aaGet(parameters, "username"), aaGet(parameters, "password"), !!("remember" in parameters));
 }
 
 void discussionRegisterForm(UrlParameters parameters, string errorMessage = null)
@@ -2532,6 +2534,8 @@ void discussionRegisterForm(UrlParameters parameters, string errorMessage = null
 		`<input id="loginform-password" type="password" name="password" value="`), html.putEncodedEntities(parameters.get("password", "")), html.put(`">`
 		`<label for="loginform-password2">Confirm:</label>`
 		`<input id="loginform-password2" type="password" name="password2" value="`), html.putEncodedEntities(parameters.get("password2", "")), html.put(`">`
+		`<input id="loginform-remember" type="checkbox" name="remember" `, "username" !in  parameters || "remember" in parameters ? ` checked` : ``, `>`
+		`<label for="loginform-remember"> Remember me</label>`
 		`<input type="submit" value="Register">`
 		`</td></tr>`);
 	if (errorMessage)
@@ -2547,7 +2551,7 @@ void discussionRegisterForm(UrlParameters parameters, string errorMessage = null
 void discussionRegister(UrlParameters parameters)
 {
 	enforce(aaGet(parameters, "password") == aaGet(parameters, "password2"), "Passwords do not match");
-	user.register(aaGet(parameters, "username"), aaGet(parameters, "password"));
+	user.register(aaGet(parameters, "username"), aaGet(parameters, "password"), !!("remember" in parameters));
 }
 
 // ***********************************************************************
