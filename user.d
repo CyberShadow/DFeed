@@ -27,11 +27,18 @@ import ae.sys.timing;
 import ae.utils.text;
 import ae.utils.zlib;
 
+enum SettingType
+{
+	server,
+	client,
+	session,
+}
+
 abstract class User
 {
-	abstract string get(string name, string defaultValue);
-	abstract void set(string name, string value);
-	abstract void remove(string name);
+	abstract string get(string name, string defaultValue, SettingType settingType);
+	abstract void set(string name, string value, SettingType settingType);
+	abstract void remove(string name, SettingType settingType);
 	abstract string[] save();
 
 	abstract void logIn(string username, string password);
@@ -49,24 +56,6 @@ abstract class User
 	string getName() { return null; }
 	Level getLevel() { return Level.init; }
 
-	final bool opIn_r(string name)
-	{
-		return get(name, null) !is null;
-	}
-
-	final string opIndex(string name)
-	{
-		auto result = get(name, null);
-		enforce(result, "No such user setting: " ~ name);
-		return result;
-	}
-
-	final string opIndexAssign(string value, string name)
-	{
-		set(name, value);
-		return value;
-	}
-
 protected:
 	/// Save misc data to string settings
 	final void finalize()
@@ -81,7 +70,7 @@ protected:
 	out { assert( this.readPosts); }
 	body
 	{
-		auto b64 = get("readposts", null);
+		auto b64 = get("readposts", null, SettingType.server);
 		if (b64.length)
 		{
 			// Temporary hack to catch Phobos bug
@@ -119,7 +108,7 @@ protected:
 	in  { assert(readPosts && readPosts.length && readPostsDirty); }
 	body
 	{
-		set("readposts", encodeReadPosts(readPosts));
+		set("readposts", encodeReadPosts(readPosts), SettingType.server);
 	}
 
 	Data* readPosts;
@@ -135,7 +124,10 @@ final:
 	void flushReadPosts()
 	{
 		if (readPosts && readPosts.length && readPostsDirty)
+		{
 			saveReadPosts();
+			readPostsDirty = false;
+		}
 	}
 
 	public bool isRead(size_t post)
@@ -172,9 +164,10 @@ final:
 
 // ***************************************************************************
 
-final class GuestUser : User
+class GuestUser : User
 {
 	string[string] cookies, newCookies;
+	SettingType[string] settingTypes;
 
 	this(string cookieHeader)
 	{
@@ -192,7 +185,7 @@ final class GuestUser : User
 		}
 	}
 
-	override string get(string name, string defaultValue)
+	override string get(string name, string defaultValue, SettingType settingType)
 	{
 		auto pCookie = name in newCookies;
 		if (pCookie)
@@ -203,14 +196,16 @@ final class GuestUser : User
 		return defaultValue;
 	}
 
-	override void set(string name, string value)
+	override void set(string name, string value, SettingType settingType)
 	{
 		newCookies[name] = value;
+		settingTypes[name] = settingType;
 	}
 
-	override void remove(string name)
+	override void remove(string name, SettingType settingType)
 	{
 		newCookies[name] = null;
+		settingTypes[name] = settingType;
 	}
 
 	override string[] save()
@@ -232,8 +227,11 @@ final class GuestUser : User
 				if (name in cookies && cookies[name] == value)
 					continue;
 
-				// TODO Expires
-				result ~= "dfeed_" ~ name ~ "=" ~ value ~ "; Expires=Wed, 09 Jun 2021 10:18:14 GMT; Path=/";
+				if (settingTypes[name] == SettingType.session)
+					result ~= "dfeed_" ~ name ~ "=" ~ value ~ "; Path=/";
+				else
+					// TODO Expires
+					result ~= "dfeed_" ~ name ~ "=" ~ value ~ "; Expires=Wed, 09 Jun 2021 10:18:14 GMT; Path=/";
 			}
 		}
 		return result;
@@ -251,7 +249,7 @@ final class GuestUser : User
 	{
 		foreach (string session; query!"SELECT `Session` FROM `Users` WHERE `Username` = ? AND `Password` = ?".iterate(username, encryptPassword(password)))
 		{
-			set("session", session);
+			set("session", session, SettingType.client);
 			return;
 		}
 		throw new Exception("No such username/password combination");
@@ -270,11 +268,11 @@ final class GuestUser : User
 		// Copy cookies to database
 		auto user = new RegisteredUser(username);
 		foreach (name, value; cookies)
-			user.set(name, value);
+			user.set(name, value, SettingType.server);
 		user.save();
 
 		// Log them in
-		this.set("session", session);
+		this.set("session", session, SettingType.client);
 	}
 
 	override void logOut() { throw new Exception("Not logged in"); }
@@ -285,20 +283,24 @@ final class GuestUser : User
 
 import database;
 
-final class RegisteredUser : User
+final class RegisteredUser : GuestUser
 {
 	string[string] settings, newSettings;
 	string username;
 	Level level;
 
-	this(string username, Level level = Level.init)
+	this(string username, string cookieHeader = null, Level level = Level.init)
 	{
+		super(cookieHeader);
 		this.username = username;
 		this.level = level;
 	}
 
-	override string get(string name, string defaultValue)
+	override string get(string name, string defaultValue, SettingType settingType)
 	{
+		if (settingType != SettingType.server)
+			return super.get(name, defaultValue, settingType);
+
 		auto pSetting = name in newSettings;
 		if (pSetting)
 			return *pSetting;
@@ -317,14 +319,20 @@ final class RegisteredUser : User
 		return value ? value : defaultValue;
 	}
 
-	override void set(string name, string value)
+	override void set(string name, string value, SettingType settingType)
 	{
-		newSettings[name] = value;
+		if (settingType == SettingType.server)
+			newSettings[name] = value;
+		else
+			super.set(name, value, settingType);
 	}
 
-	override void remove(string name)
+	override void remove(string name, SettingType settingType)
 	{
-		newSettings[name] = null;
+		if (settingType == SettingType.server)
+			newSettings[name] = null;
+		else
+			super.remove(name, settingType);
 	}
 
 	override string[] save()
@@ -349,7 +357,7 @@ final class RegisteredUser : User
 			}
 		}
 
-		return null;
+		return super.save();
 	}
 
 	override void logIn(string username, string password) { throw new Exception("Already logged in"); }
@@ -361,6 +369,7 @@ final class RegisteredUser : User
 	override void logOut()
 	{
 		query!"UPDATE `Users` SET `Session` = ? WHERE `Username` = ?".exec(randomString(), username);
+		super.remove("session", SettingType.client);
 	}
 
 	// ***************************************************************************
@@ -395,7 +404,7 @@ final class RegisteredUser : User
 				{
 					log("Flushing " ~ username);
 					auto user = new RegisteredUser(username);
-					user.set("readposts", encodeReadPosts(cacheEntry.readPosts));
+					user.set("readposts", encodeReadPosts(cacheEntry.readPosts), SettingType.server);
 					user.save();
 					cacheEntry.dirty = false;
 				}
@@ -443,7 +452,7 @@ User getUser(string cookieHeader)
 	if ("session" in guest.cookies)
 	{
 		foreach (string username, int level; query!"SELECT `Username`, `Level` FROM `Users` WHERE `Session` = ?".iterate(guest.cookies["session"]))
-			return new RegisteredUser(username, cast(User.Level)level);
+			return new RegisteredUser(username, cookieHeader, cast(User.Level)level);
 	}
 	return guest;
 }

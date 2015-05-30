@@ -63,7 +63,7 @@ import message;
 import posting;
 import site;
 import subscriptions;
-import user : User, getUser;
+import user : User, getUser, SettingType;
 
 version = MeasurePerformance;
 
@@ -272,7 +272,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				string pageStr = page==1 ? "" : format(" (page %d)", page);
 				title = group ~ " index" ~ pageStr;
 				breadcrumb1 = `<a href="/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
-				auto viewMode = user.get("groupviewmode", defaultViewMode);
+				auto viewMode = userSettings.groupViewMode;
 				if (viewMode == "basic")
 					discussionGroup(group, page);
 				else
@@ -294,7 +294,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				string threadID = '<' ~ urlDecode(pathX) ~ '>';
 
 				auto firstPostUrl = idToUrl(getPostAtThreadIndex(threadID, getPageOffset(page, POSTS_PER_PAGE)));
-				auto viewMode = user.get("groupviewmode", defaultViewMode);
+				auto viewMode = userSettings.groupViewMode;
 				if (viewMode != "basic")
 					html.put(`<div class="forum-notice">Viewing thread in basic view mode &ndash; click a post's title to open it in `, encodeEntities(viewMode), ` view mode</div>`);
 				returnPage = firstPostUrl;
@@ -310,10 +310,10 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			}
 			case "post":
 				enforce(path.length > 1, "No post specified");
-				if (user.get("groupviewmode", defaultViewMode) == "basic")
+				if (userSettings.groupViewMode == "basic")
 					return response.redirect(resolvePostUrl('<' ~ urlDecode(pathX) ~ '>'));
 				else
-				if (user.get("groupviewmode", defaultViewMode) == "threaded")
+				if (userSettings.groupViewMode == "threaded")
 				{
 					string group, subject;
 					discussionSinglePost('<' ~ urlDecode(pathX) ~ '>', group, subject);
@@ -361,20 +361,22 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				enforce(path.length > 1, "No post specified");
 				discussionSplitPost('<' ~ urlDecode(pathX) ~ '>');
 				return response.serveData(cast(string)html.get());
+		/+
 			case "set":
 			{
-				if (parameters.get("secret", "") != getUserSecret())
+				if (parameters.get("secret", "") != userSettings.secret)
 					throw new Exception("XSRF secret verification failed. Are your cookies enabled?");
 
 				foreach (name, value; parameters)
 					if (name != "url" && name != "secret")
-						user[name] = value; // TODO: is this a good idea?
+						user.set(name, value); // TODO: is this a good idea?
 
 				if ("url" in parameters)
 					return response.redirect(parameters["url"]);
 				else
 					return response.serveText("OK");
 			}
+		+/
 			case "mark-unread":
 			{
 				enforce(path.length > 1, "No post specified");
@@ -454,7 +456,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			case "auto-save":
 			{
 				auto postVars = request.decodePostData();
-				if (postVars.get("secret", "") != getUserSecret())
+				if (postVars.get("secret", "") != userSettings.secret)
 					throw new Exception("XSRF secret verification failed");
 				autoSaveDraft(postVars);
 				return response.serveText("OK");
@@ -679,17 +681,27 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		`<div style="clear: both"></div>`;
 	string htmlStr = cast(string) html.get(); // html contents will be overwritten on next request
 
+	auto pendingNotice = userSettings.pendingNotice;
+	if (pendingNotice)
 	{
-		auto draftID = user.get("draft-deleted-notice", null);
-		if (draftID)
+		userSettings.pendingNotice = null;
+		auto parts = pendingNotice.findSplit(":");
+		auto kind = parts[0];
+		switch (kind)
 		{
-			htmlStr =
-				`<div class="forum-notice">Draft discarded. <a href="/posting/` ~ encodeEntities(draftID) ~ `">Undo</a></div>` ~ htmlStr;
-			user.remove("draft-deleted-notice");
+			case "draft-deleted":
+			{
+				auto draftID = parts[2];
+				htmlStr =
+					`<div class="forum-notice">Draft discarded. <a href="/posting/` ~ encodeEntities(draftID) ~ `">Undo</a></div>` ~ htmlStr;
+				break;
+			}
+			default:
+				throw new Exception("Unknown kind of pending notice: " ~ kind);
 		}
 	}
 
-	jsVars["enableKeyNav"] = user.get("enable-keynav", `true`);
+	jsVars["enableKeyNav"] = user.get("enable-keynav", `true`, SettingType.client);
 
 	string[] extraJS;
 	if (jsVars.length)
@@ -1286,7 +1298,7 @@ void formatThreadedPosts(PostInfo*[] postInfos, bool narrow, string selectedID =
 			posts[parent].children ~= post;
 		}
 
-	bool reversed = user.get("groupviewmode", defaultViewMode) == "threaded";
+	bool reversed = userSettings.groupViewMode == "threaded";
 	foreach (post; posts)
 	{
 		post.calcStats();
@@ -1395,7 +1407,7 @@ void discussionGroupThreaded(string group, int page, bool narrow = false)
 		posts ~= [PostInfo(rowid, id, null, parent, author, authorEmail, subject, SysTime(stdTime, UTC()))].ptr; // TODO: optimize?
 
 	html.put(
-		`<table id="group-index-threaded" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(user.get("groupviewmode", defaultViewMode)), html.put(`">`
+		`<table id="group-index-threaded" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(userSettings.groupViewMode), html.put(`">`
 		`<tr class="group-index-header"><th><div>`), newPostButton(group), html.putEncodedEntities(group), html.put(`</div></th></tr>`,
 	//	`<tr class="group-index-captions"><th>Subject / Author</th><th>Time</th>`,
 		`<tr><td class="group-threads-cell"><div class="group-threads"><table>`);
@@ -1484,29 +1496,14 @@ string getGravatarHash(string email)
 	return email.toLower().strip().md5Of().toHexString!(LetterCase.lower)().idup; // Issue 9279
 }
 
-/// A unique ID used to recognize both logged-in and anonymous users.
-string getUserID()
-{
-	if ("id" !in user)
-		user["id"] = randomString();
-	return user["id"];
-}
-
-/// Secret token used for CSRF protection.
-/// Visible in URLs.
-string getUserSecret()
-{
-	if ("secret" !in user)
-		user["secret"] = randomString();
-	return user["secret"];
-}
+// ***********************************************************************
 
 enum maxPostActions = 4;
 
 void postActions(Rfc850Message msg)
 {
 	auto id = msg.id;
-	if (user.get("groupviewmode", defaultViewMode) == "basic")
+	if (userSettings.groupViewMode == "basic")
 		html.put(
 			`<a class="actionlink permalink" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" `
 				`title="Canonical link to this post. See &quot;Canonical links&quot; on the Help page for more information.">`
@@ -1880,7 +1877,7 @@ void discussionThreadOverview(string threadID, string selectedID)
 		posts ~= [PostInfo(rowid, id, null, parent, author, authorEmail, subject, SysTime(stdTime, UTC()))].ptr;
 
 	html.put(
-		`<table id="thread-index" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(user.get("groupviewmode", defaultViewMode)), html.put(`">`
+		`<table id="thread-index" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(userSettings.groupViewMode), html.put(`">`
 		`<tr class="group-index-header"><th><div>Thread overview</div></th></tr>`,
 		`<tr><td class="group-threads-cell"><div class="group-threads"><table>`);
 	formatThreadedPosts(posts, false, selectedID);
@@ -1911,7 +1908,7 @@ string discussionFirstUnread(string threadID)
 void createDraft(PostDraft draft)
 {
 	query!"INSERT INTO [Drafts] ([ID], [UserID], [Status], [ClientVars], [ServerVars], [Time]) VALUES (?, ?, ?, ?, ?, ?)"
-		.exec(draft.clientVars["did"], getUserID(), draft.status, draft.clientVars.toJson, draft.serverVars.toJson, Clock.currTime.stdTime);
+		.exec(draft.clientVars["did"], userSettings.id, draft.status, draft.clientVars.toJson, draft.serverVars.toJson, Clock.currTime.stdTime);
 }
 
 PostDraft getDraft(string draftID)
@@ -1942,8 +1939,8 @@ PostDraft newPostDraft(string where)
 	auto draftID = randomString();
 	auto draft = PostDraft(PostDraft.Status.reserved, UrlParameters([
 		"did" : draftID,
-		"name" : user.get("name", null),
-		"email" : user.get("email", null),
+		"name" : userSettings.name,
+		"email" : userSettings.email,
 	]), [
 		"where" : where,
 	]);
@@ -1957,8 +1954,8 @@ PostDraft newReplyDraft(Rfc850Post post)
 	auto draftID = randomString();
 	auto draft = PostDraft(PostDraft.Status.reserved, UrlParameters([
 		"did" : draftID,
-		"name" : user.get("name", null),
-		"email" : user.get("email", null),
+		"name" : userSettings.name,
+		"email" : userSettings.email,
 		"subject" : postTemplate.subject,
 		"text" : postTemplate.content,
 	]), [
@@ -1971,7 +1968,7 @@ PostDraft newReplyDraft(Rfc850Post post)
 
 void draftNotices(string except = null)
 {
-	foreach (string id, long time; query!"SELECT [ID], [Time] FROM [Drafts] WHERE [UserID]==? AND [Status]==?".iterate(getUserID(), PostDraft.Status.edited))
+	foreach (string id, long time; query!"SELECT [ID], [Time] FROM [Drafts] WHERE [UserID]==? AND [Status]==?".iterate(userSettings.id, PostDraft.Status.edited))
 	{
 		if (id == except)
 			continue;
@@ -2040,7 +2037,7 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 					? `:<br>(<b>` ~ encodeEntities(info.description) ~ `</b>)`
 					: ``),
 		`</div>`
-		`<input type="hidden" name="secret" value="`, getUserSecret(), `">`
+		`<input type="hidden" name="secret" value="`, userSettings.secret, `">`
 		`<input type="hidden" name="did" value="`), html.putEncodedEntities(draftID), html.put(`">`
 		`<label for="postform-name">Your name:</label>`
 		`<input id="postform-name" name="name" size="40" value="`), html.putEncodedEntities(draft.clientVars.get("name", null)), html.put(`">`
@@ -2087,7 +2084,7 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 				throw new Exception("This message has already been sent.");
 		}
 
-		if (clientVars.get("secret", "") != getUserSecret())
+		if (clientVars.get("secret", "") != userSettings.secret)
 			throw new Exception("XSRF secret verification failed. Are your cookies enabled?");
 
 		draft.clientVars = clientVars;
@@ -2152,8 +2149,8 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 			}
 			case "send":
 			{
-				user["name"] = aaGet(clientVars, "name");
-				user["email"] = aaGet(clientVars, "email");
+				userSettings.name  = aaGet(clientVars, "name");
+				userSettings.email = aaGet(clientVars, "email");
 
 				foreach (rule; lintRules)
 					if ("lint-ignore-" ~ rule.id !in draft.serverVars && rule.check(draft))
@@ -2190,7 +2187,7 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 				}
 
 				auto parent = "parent" in draft.serverVars ? getPost(draft.serverVars["parent"]) : null;
-				auto process = new PostProcess(draft, getUserID(), ip, headers, parent);
+				auto process = new PostProcess(draft, userSettings.id, ip, headers, parent);
 				process.run();
 				lastPostAttempt[ip] = Clock.currTime();
 				draft.serverVars["pid"] = process.pid;
@@ -2203,7 +2200,7 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 			case "discard":
 			{
 				// Show undo notice
-				user.set("draft-deleted-notice", draftID);
+				userSettings.pendingNotice = "draft-deleted:" ~ draftID;
 				// Mark as deleted
 				draft.status = PostDraft.Status.discarded;
 				// Redirect to relevant page
@@ -2321,7 +2318,7 @@ void discussionDeleteForm(Rfc850Post post)
 		`<div id="deleteform-info">`
 			`Are you sure you want to delete this post from DFeed's database?`
 		`</div>`
-		`<input type="hidden" name="secret" value="`, getUserSecret(), `">`
+		`<input type="hidden" name="secret" value="`, userSettings.secret, `">`
 		`<textarea id="deleteform-message" readonly="readonly" rows="25" cols="80">`), html.putEncodedEntities(post.message), html.put(`</textarea><br>`
 		`Reason: <input name="reason" value="spam"></input><br>`,
 		 findPostingLog(post.id)
@@ -2333,7 +2330,7 @@ void discussionDeleteForm(Rfc850Post post)
 
 void deletePost(UrlParameters vars)
 {
-	if (vars.get("secret", "") != getUserSecret())
+	if (vars.get("secret", "") != userSettings.secret)
 		throw new Exception("XSRF secret verification failed. Are your cookies enabled?");
 	auto post = getPost(vars.get("id", ""));
 	enforce(post, "Post not found");
@@ -2444,7 +2441,7 @@ bool banCheck(string ip, HttpRequest request)
 			if (value.length)
 				keys ~= value;
 	}
-	string secret = user.get("secret", null);
+	string secret = userSettings.secret;
 	if (secret.length)
 		keys ~= secret;
 
@@ -2555,13 +2552,65 @@ void discussionRegister(UrlParameters parameters)
 
 // ***********************************************************************
 
-const defaultViewMode = "basic";
+struct UserSettings
+{
+	static SettingType[string] settingTypes;
+
+	template userSetting(string name, string defaultValue, SettingType settingType)
+	{
+		@property string userSetting() { return user.get(name, defaultValue, settingType); }
+		@property string userSetting(string newValue) { user.set(name, newValue, settingType); return newValue; }
+		static this() { settingTypes[name] = settingType; }
+	}
+
+	template randomUserString(string name, SettingType settingType)
+	{
+		@property string randomUserString()
+		{
+			auto value = user.get(name, null, settingType);
+			if (value is null)
+			{
+				value = randomString();
+				user.set(name, value, settingType);
+			}
+			return value;
+		}
+	}
+
+	/// Posting details. Remembered when posting messages.
+	alias name = userSetting!("name", null, SettingType.server);
+	alias email = userSetting!("email", null, SettingType.server);
+
+	/// View mode. Can be changed in the settings.
+	alias groupViewMode = userSetting!("groupviewmode", "basic", SettingType.client);
+
+	/// Enable or disable keyboard hotkeys. Can be changed in the settings.
+	alias enableKeyNav = userSetting!("enable-keynav", "true", SettingType.client);
+
+	/// Any pending notices that should be shown on the next page shown.
+	alias pendingNotice = userSetting!("pending-notice", null, SettingType.session);
+
+	/// A unique ID used to recognize both logged-in and anonymous users.
+	alias id = randomUserString!("id", SettingType.server);
+
+	/// Secret token used for CSRF protection.
+	/// Visible in URLs.
+	alias secret = randomUserString!("secret", SettingType.server);
+
+	void set(string name, string value)
+	{
+		user.set(name, value, settingTypes.aaGet(name));
+	}
+}
+UserSettings userSettings;
+
+// ***********************************************************************
 
 void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 {
 	if (postVars)
 	{
-		if (postVars.get("secret", "") != getUserSecret())
+		if (postVars.get("secret", "") != userSettings.secret)
 			throw new Exception("XSRF secret verification failed. Are your cookies enabled?");
 
 		auto actions = postVars.keys.filter!(name => name.startsWith("action-"));
@@ -2576,10 +2625,10 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 			// Inputs
 			foreach (setting; ["groupviewmode"])
 				if (setting in postVars)
-					user.set(setting, postVars[setting]);
+					userSettings.set(setting, postVars[setting]);
 			// Checkboxes
 			foreach (setting; ["enable-keynav"])
-				user.set(setting, setting in postVars ? "true" : "false");
+				userSettings.set(setting, setting in postVars ? "true" : "false");
 
 			html.put(`<div class="forum-notice">Settings saved.</div>`);
 		}
@@ -2653,19 +2702,19 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 	html.put(
 		`<form method="post" id="settings-form">`
 		`<h1>Settings</h1>`
-		`<input type="hidden" name="secret" value="`, getUserSecret(), `">`
+		`<input type="hidden" name="secret" value="`, userSettings.secret, `">`
 
 		`<h2>User Interface</h2>`
 
 		`View mode: <select name="groupviewmode">`
 	);
-	auto currentMode = user.get("groupviewmode", defaultViewMode);
+	auto currentMode = userSettings.groupViewMode;
 	foreach (mode; ["basic", "threaded", "horizontal-split"])
 		html.put(`<option value="`, mode, `"`, mode == currentMode ? ` selected` : null, `>`, mode, `</option>`);
 	html.put(
 		`</select><br>`
 
-		`<input type="checkbox" name="enable-keynav" id="enable-keynav"`, user.get("enable-keynav", "true") == "true" ? ` checked` : null, `>`
+		`<input type="checkbox" name="enable-keynav" id="enable-keynav"`, userSettings.enableKeyNav == "true" ? ` checked` : null, `>`
 		`<label for="enable-keynav">Enable keyboard shortcuts</label> (<a href="/help#keynav">?</a>)<br>`
 
 		`<p>`
@@ -2711,7 +2760,7 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 		`</form>`
 
 		`<form method="post" id="subscriptions-form">`
-		`<input type="hidden" name="secret" value="`, getUserSecret(), `">`
+		`<input type="hidden" name="secret" value="`, userSettings.secret, `">`
 		`</form>`
 	);
 }
@@ -2721,7 +2770,7 @@ void discussionSubscriptionEdit(Subscription subscription)
 	html.put(
 		`<form action="/settings" method="post" id="subscription-form">`
 		`<h1>Edit subscription</h1>`
-		`<input type="hidden" name="secret" value="`, getUserSecret(), `">`
+		`<input type="hidden" name="secret" value="`, userSettings.secret, `">`
 		`<input type="hidden" name="id" value="`, subscription.id, `">`
 
 		`<h2>Condition</h2>`
@@ -2786,7 +2835,7 @@ void discussionSubscriptionPosts(string subscriptionID, int page)
 
 	html.put(
 		`<form style="display:block;float:right;margin-top:0.5em" action="/settings" method="post">`
-			`<input type="hidden" name="secret" value="`), html.putEncodedEntities(getUserSecret()), html.put(`">`
+			`<input type="hidden" name="secret" value="`), html.putEncodedEntities(userSettings.secret), html.put(`">`
 			`<input type="submit" name="action-subscription-edit-`), html.putEncodedEntities(subscriptionID), html.put(`" value="Edit subscription">`
 		`</form>`
 		`<div style="clear:right"></div>`
@@ -3116,11 +3165,13 @@ static string encodeEntities(string s)
 	return result.get();
 }
 
+/+
 /// Generate a link to set a user preference
 string setOptionLink(string name, string value)
 {
-	return "/set?" ~ encodeUrlParameters(UrlParameters([name : value, "url" : "__URL__", "secret" : getUserSecret()]));
+	return "/set?" ~ encodeUrlParameters(UrlParameters([name : value, "url" : "__URL__", "secret" : userSettings.secret]));
 }
++/
 
 // ***********************************************************************
 
