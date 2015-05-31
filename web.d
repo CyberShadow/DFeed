@@ -915,13 +915,16 @@ void discussionIndex()
 		return `<div class="forum-no-data">-</div>`;
 	}
 
-	html.put(`<table id="forum-index" class="forum-table">`);
-	html.put(`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(5), `</tr>`); // Fixed layout dummies
+	html.put(
+		`<table id="forum-index" class="forum-table">`
+		`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(5), `</tr>` // Fixed layout dummies
+	);
 	foreach (set; groupHierarchy)
 	{
 		html.put(
 			`<tr><th colspan="5">`), html.putEncodedEntities(set.name), html.put(`</th></tr>`
-			`<tr class="subheader"><th>Group</th><th>Last Post</th><th>Threads</th><th>Posts</th><th>Also via</th></tr>`);
+			`<tr class="subheader"><th>Group</th><th>Last Post</th><th>Threads</th><th>Posts</th><th>Also via</th></tr>`
+		);
 		foreach (group; set.groups)
 		{
 			html.put(
@@ -933,10 +936,12 @@ void discussionIndex()
 					`<td class="forum-index-col-lastpost">`, group.name in lastPosts    ? summarizePost(   lastPosts[group.name]) : `<div class="forum-no-data">-</div>`, `</td>`
 					`<td class="number-column">`,            group.name in threadCounts ? formatNumber (threadCounts[group.name]) : `-`, `</td>`
 					`<td class="number-column">`,            group.name in postCounts   ? formatNumber (  postCounts[group.name]) : `-`, `</td>`
-					`<td class="number-column">`);
+					`<td class="number-column">`
+			);
 			foreach (i, av; group.alsoVia.values)
 				html.put(i ? `<br>` : ``, `<a href="`, av.url, `">`, av.name, `</a>`);
-			html.put(`</td>`
+			html.put(
+					`</td>`
 				`</tr>`,
 			);
 		}
