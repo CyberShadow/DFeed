@@ -442,12 +442,21 @@ final class ContentTrigger : Trigger
 
 	override string getShortPostDescription(Rfc850Post post)
 	{
-		return "%s %s thread \"%s\" in %s".format(
+		auto s = "%s %s thread \"%s\" in %s".format(
 			post.author,
 			post.references.length ? "replied to the" : "created",
 			post.subject,
 			post.xref[0].group,
 		);
+		string matchStr =
+			authorNameFilter .enabled && authorNameFilter .str ? authorNameFilter .str :
+			authorEmailFilter.enabled && authorEmailFilter.str ? authorEmailFilter.str :
+			subjectFilter    .enabled && subjectFilter    .str ? subjectFilter    .str :
+			messageFilter    .enabled && messageFilter    .str ? messageFilter    .str :
+			null;
+		if (matchStr)
+			s = "%s matching %s".format(s, matchStr);
+		return s;
 	}
 
 	override string getLongPostDescription(Rfc850Post post)
