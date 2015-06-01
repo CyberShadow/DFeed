@@ -16,6 +16,7 @@
 
 module dfeed;
 
+import std.getopt;
 import std.stdio : stderr;
 
 import ae.net.asockets;
@@ -43,8 +44,14 @@ import subscriptions;
 // Captcha
 import captcha_dcaptcha;
 
-void main()
+void main(string[] args)
 {
+	bool refresh;
+	getopt(args,
+		"q|quiet", {}, // handled by ae.sys.log
+		"refresh", &refresh
+	);
+
 	// Create sources
 	createServices!NntpSource   ("sources/nntp");
 	createServices!MailRelay    ("sources/mailrelay");
@@ -53,10 +60,12 @@ void main()
 	createServices!Reddit       ("sources/reddit");
 	createServices!SocketSource ("sources/socket");
 	createServices!Mailman      ("sources/mailman");
+	if (refresh)
+		new MessageDBSource();
 
 	// Create sinks
 	createServices!IrcSink("sinks/irc");
-	new MessageDBSink();
+	new MessageDBSink(refresh ? Yes.update : No.update);
 	new SubscriptionSink();
 
 	// Start web server
