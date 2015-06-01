@@ -239,6 +239,14 @@ class TopPostingRule : LintRule
 		if (start && lines[start-1].isWroteLine())
 			start--;
 		lines = lines[start..$] ~ [string.init] ~ lines[0..start];
+
+		if (!lines[0].isWroteLine())
+		{
+			auto i = lines.countUntil!isWroteLine();
+			if (i > 0)
+				lines = [lines[i]] ~ lines[0..i] ~ lines[i+1..$];
+		}
+
 		draft.clientVars["text"] = lines.join("\n").strip();
 	}
 }
