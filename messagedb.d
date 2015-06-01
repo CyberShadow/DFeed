@@ -27,13 +27,17 @@ import message;
 
 final class MessageDBSink : NewsSink
 {
-	this()
+	alias Update = Flag!"update";
+
+	this(Update update=Update.no)
 	{
 		log = createLogger("MessageDBSink");
+		this.update = update;
 	}
 
 private:
     Logger log;
+    Update update;
 
 protected:
 	override void handlePost(Post post, Fresh fresh)
@@ -57,7 +61,15 @@ protected:
 				message.rowid = postRowid;
 
 		if (message.rowid)
+		{
 			log(format("Message %s already present with ROWID=%d", message.id, message.rowid));
+			if (update)
+			{
+				query!"UPDATE [Posts] SET [ID]=?, [Message]=?, [Author]=?, [AuthorEmail]=?, [Subject]=?, [Time]=?, [ParentID]=?, [ThreadID]=? WHERE [ROWID] = ?"
+					.exec(message.id, message.message, message.author, message.authorEmail, message.subject, message.time.stdTime, message.parentID, message.threadID, message.rowid);
+				log("Updated.");
+			}
+		}
 		else
 		{
 			query!"INSERT INTO `Posts` (`ID`, `Message`, `Author`, `AuthorEmail`, `Subject`, `Time`, `ParentID`, `ThreadID`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
