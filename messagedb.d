@@ -119,7 +119,13 @@ final class MessageDBSource : NewsSource
 	}
 
 	int batchSize = 50;
-	bool stopping;
+	Duration idleInterval = 100.msecs;
+
+	override void start()
+	{
+		stopping = false;
+		doBatch(0);
+	}
 
 	override void stop()
 	{
@@ -127,11 +133,8 @@ final class MessageDBSource : NewsSource
 		stopping = true;
 	}
 
-	override void start()
-	{
-		stopping = false;
-		doBatch(0);
-	}
+private:
+	bool stopping;
 
 	void doBatch(int offset)
 	{
@@ -141,24 +144,28 @@ final class MessageDBSource : NewsSource
 			return;
 		}
 
+		bool foundPosts;
+
 		assert(batchSize > 0);
 		log("Processing posts %d..%d".format(offset, offset + batchSize));
 
-		mixin(DB_TRANSACTION);
-
-		bool foundPosts;
-		foreach (int rowID, string message, string id; query!"SELECT [ROWID], [Message], [ID] FROM [Posts] LIMIT ? OFFSET ?".iterate(batchSize, offset))
 		{
-			announcePost(new Rfc850Post(message, id, rowID), Fresh.no);
-			foundPosts = true;
+			mixin(DB_TRANSACTION);
+
+			foreach (int rowID, string message, string id; query!"SELECT [ROWID], [Message], [ID] FROM [Posts] LIMIT ? OFFSET ?".iterate(batchSize, offset))
+			{
+				announcePost(new Rfc850Post(message, id, rowID), Fresh.no);
+				foundPosts = true;
+			}
+
+			log("Committing...");
 		}
+		log("Batch committed.");
 
 		if (foundPosts)
-			setTimeout({doBatch(offset + batchSize);}, 1.msecs);
+			setTimeout({doBatch(offset + batchSize);}, idleInterval);
 		else
 			log("All done!");
-
-		log("Committing...");
 	}
 }
 
