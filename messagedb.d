@@ -118,7 +118,7 @@ final class MessageDBSource : NewsSource
 		super("MessageDBSource");
 	}
 
-	int batchSize = 50;
+	int batchSize = 500;
 	Duration idleInterval = 100.msecs;
 
 	override void start()
