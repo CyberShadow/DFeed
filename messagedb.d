@@ -16,6 +16,7 @@
 
 module messagedb;
 
+import std.algorithm;
 import std.conv;
 import std.string;
 
@@ -93,6 +94,9 @@ protected:
 			if (lastUpdated < message.time.stdTime)
 				query!"UPDATE `Threads` SET `LastPost` = ?, `LastUpdated` = ? WHERE `ROWID` = ?".exec(message.id, message.time.stdTime, threadIndex);
 		}
+
+		query!"INSERT OR REPLACE INTO [PostSearch] ([ROWID], [Time], [Group], [Author], [AuthorEmail], [Subject], [Content]) VALUES (?, ?, ?, ?, ?, ?, ?)"
+			.exec(message.rowid, message.time.stdTime, message.xref.map!(xref => xref.group).join(","), message.author, message.authorEmail, message.subject, message.newContent);
 	}
 
 public:
