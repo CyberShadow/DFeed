@@ -21,6 +21,7 @@ import std.conv;
 import std.string;
 
 import ae.sys.log;
+import ae.sys.timing;
 
 import common;
 import database;
@@ -106,6 +107,58 @@ public:
 
 		query!"UPDATE `Posts` SET `Message`=?, `Author`=?, `AuthorEmail`=?, `Subject`=?, `Time`=?, `ParentID`=?, `ThreadID`=? WHERE `ID` = ?"
 			.exec(message.message, message.author, message.authorEmail, message.subject, message.time.stdTime, message.parentID, message.threadID, message.id);
+	}
+}
+
+/// Source used for refreshing the message database.
+final class MessageDBSource : NewsSource
+{
+	this()
+	{
+		super("MessageDBSource");
+	}
+
+	int batchSize = 50;
+	bool stopping;
+
+	override void stop()
+	{
+		log("Stop requested...");
+		stopping = true;
+	}
+
+	override void start()
+	{
+		stopping = false;
+		doBatch(0);
+	}
+
+	void doBatch(int offset)
+	{
+		if (stopping)
+		{
+			log("Stopping.");
+			return;
+		}
+
+		assert(batchSize > 0);
+		log("Processing posts %d..%d".format(offset, offset + batchSize));
+
+		mixin(DB_TRANSACTION);
+
+		bool foundPosts;
+		foreach (int rowID, string message, string id; query!"SELECT [ROWID], [Message], [ID] FROM [Posts] LIMIT ? OFFSET ?".iterate(batchSize, offset))
+		{
+			announcePost(new Rfc850Post(message, id, rowID), Fresh.no);
+			foundPosts = true;
+		}
+
+		if (foundPosts)
+			setTimeout({doBatch(offset + batchSize);}, 1.msecs);
+		else
+			log("All done!");
+
+		log("Committing...");
 	}
 }
 
