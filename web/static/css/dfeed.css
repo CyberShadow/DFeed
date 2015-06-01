@@ -136,7 +136,7 @@ body.navhidden #content {
 
 /*************** General rules ***************/
 
-#forum-content {
+#forum-content > table {
 	position: relative;
 }
 
