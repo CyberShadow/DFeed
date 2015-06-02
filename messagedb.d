@@ -17,6 +17,7 @@
 module messagedb;
 
 import std.algorithm;
+import std.ascii;
 import std.conv;
 import std.string;
 
@@ -98,7 +99,7 @@ protected:
 		}
 
 		query!"INSERT OR REPLACE INTO [PostSearch] ([ROWID], [Time], [ThreadMD5], [Group], [Author], [AuthorEmail], [Subject], [Content]) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-			.exec(message.rowid, message.time.stdTime, message.threadID.getDigestString!MD5().toLower(), message.xref.map!(xref => xref.group).join(","), message.author, message.authorEmail, message.subject, message.newContent);
+			.exec(message.rowid, message.time.stdTime, message.threadID.getDigestString!MD5().toLower(), message.xref.map!(xref => xref.group.searchTerm).join(","), message.author, message.authorEmail, message.subject, message.newContent);
 	}
 
 public:
@@ -191,4 +192,13 @@ string getThreadID(string id)
 @property string threadID(Rfc850Post post)
 {
 	return getThreadID(post.firstAncestorID);
+}
+
+string searchTerm(string s)
+{
+	string result;
+	foreach (c; s)
+		if (isAlphaNum(c))
+			result ~= c;
+	return result;
 }

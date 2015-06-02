@@ -62,6 +62,7 @@ import lint;
 import list;
 //import mailhide;
 import message;
+import messagedb : searchTerm;
 import posting;
 import site;
 import subscriptions;
@@ -752,7 +753,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 
 		searchOptions ~= SearchOption("Discussion Forums", "forum");
 		if (currentGroup)
-			searchOptions ~= SearchOption(currentGroup, "group:" ~ currentGroup);
+			searchOptions ~= SearchOption(currentGroup, "group:" ~ currentGroup.searchTerm);
 		if (currentThread)
 			searchOptions ~= SearchOption("Current thread", "threadmd5:" ~ currentThread.getDigestString!MD5().toLower());
 
@@ -2959,7 +2960,11 @@ void discussionSearch(UrlParameters parameters)
 	foreach (param; ["group", "author", "authoremail", "subject", "content"])
 		if (parameters.get(param, null).length)
 			foreach (word; parameters[param].split)
+			{
+				if (param == "group")
+					word = word.searchTerm;
 				terms ~= param ~ ":" ~ word;
+			}
 
 	if (parameters.get("startdate", null).length || parameters.get("enddate", null).length)
 		terms ~= "date:" ~ parameters.get("startdate", null) ~ ".." ~ parameters.get("enddate", null);
