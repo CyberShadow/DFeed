@@ -2944,7 +2944,7 @@ void discussionSearch(UrlParameters parameters)
 		if (searchScope == "forum")
 			{}
 		else
-		if (searchScope.startsWith("group:") || searchScope.startsWith("threadid:"))
+		if (searchScope.startsWith("group:") || searchScope.startsWith("threadmd5:"))
 			terms ~= searchScope;
 	}
 	terms ~= parameters.get("q", null);
@@ -2958,7 +2958,8 @@ void discussionSearch(UrlParameters parameters)
 
 	foreach (param; ["group", "author", "authoremail", "subject", "content"])
 		if (parameters.get(param, null).length)
-			terms ~= param ~ ":" ~ parameters[param];
+			foreach (word; parameters[param].split)
+				terms ~= param ~ ":" ~ word;
 
 	if (parameters.get("startdate", null).length || parameters.get("enddate", null).length)
 		terms ~= "date:" ~ parameters.get("startdate", null) ~ ".." ~ parameters.get("enddate", null);
@@ -3042,7 +3043,7 @@ void discussionSearch(UrlParameters parameters)
 			int n = 0;
 
 			enum queryCommon =
-				"SELECT [ROWID], snippet([PostSearch], '" ~ searchDelimStartMatch ~ "', '" ~ searchDelimEndMatch ~ "', '" ~ searchDelimEllipses ~ "') "
+				"SELECT [ROWID], snippet([PostSearch], '" ~ searchDelimStartMatch ~ "', '" ~ searchDelimEndMatch ~ "', '" ~ searchDelimEllipses ~ "', 6) "
 				"FROM [PostSearch]";
 			auto iterator = (startDate == 0 && endDate == long.max)
 				? query!(queryCommon ~ " WHERE [PostSearch] MATCH ?                            LIMIT ? OFFSET ?")
@@ -3079,7 +3080,6 @@ void discussionSearch(UrlParameters parameters)
 
 void formatSearchSnippet(string s)
 {
-	bool sawEllipses;
 	while (true)
 	{
 		auto i = s.indexOf(searchDelimPrefix);
@@ -3092,14 +3092,11 @@ void formatSearchSnippet(string s)
 		{
 			case searchDelimStartMatch: html.put(`<b>`       ); break;
 			case searchDelimEndMatch  : html.put(`</b>`      ); break;
-			case searchDelimEllipses  : html.put(`<b>...</b>`); sawEllipses = true; break;
+			case searchDelimEllipses  : html.put(`<b>...</b>`); break;
 			default: break;
 		}
 	}
 	html.putEncodedEntities(s);
-
-	if (!sawEllipses)
-		html.put(`<br><br><b>[...]</b>`);
 }
 
 void formatSearchResult(Rfc850Post post, string snippet)
