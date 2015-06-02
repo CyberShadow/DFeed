@@ -22,6 +22,7 @@ import std.string;
 
 import ae.sys.log;
 import ae.sys.timing;
+import ae.utils.digest;
 
 import common;
 import database;
@@ -96,8 +97,8 @@ protected:
 				query!"UPDATE `Threads` SET `LastPost` = ?, `LastUpdated` = ? WHERE `ROWID` = ?".exec(message.id, message.time.stdTime, threadIndex);
 		}
 
-		query!"INSERT OR REPLACE INTO [PostSearch] ([ROWID], [Time], [Group], [Author], [AuthorEmail], [Subject], [Content]) VALUES (?, ?, ?, ?, ?, ?, ?)"
-			.exec(message.rowid, message.time.stdTime, message.xref.map!(xref => xref.group).join(","), message.author, message.authorEmail, message.subject, message.newContent);
+		query!"INSERT OR REPLACE INTO [PostSearch] ([ROWID], [Time], [ThreadMD5], [Group], [Author], [AuthorEmail], [Subject], [Content]) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+			.exec(message.rowid, message.time.stdTime, message.threadID.getDigestString!MD5().toLower(), message.xref.map!(xref => xref.group).join(","), message.author, message.authorEmail, message.subject, message.newContent);
 	}
 
 public:

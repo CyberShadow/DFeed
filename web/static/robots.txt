@@ -6,3 +6,4 @@ Disallow: /set
 Disallow: /newpost
 Disallow: /reply
 Disallow: /source/
+Disallow: /search

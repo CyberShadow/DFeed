@@ -43,6 +43,7 @@ import ae.net.ietf.wrap;
 import ae.net.shutdown;
 import ae.sys.log;
 import ae.utils.array;
+import ae.utils.digest;
 import ae.utils.feed;
 import ae.utils.json;
 import ae.utils.meta;
@@ -179,6 +180,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	string[] tools, extraHeaders;
 	string[string] jsVars;
 	auto status = HttpStatusCode.OK;
+	string currentGroup, currentThread; // for search
 
 	// Redirect to canonical domain name
 	auto host = request.headers.get("Host", "");
@@ -269,7 +271,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			case "group":
 			{
 				enforce(path.length > 1, "No group specified");
-				string group = path[1];
+				string group = currentGroup = path[1];
 				int page = to!int(parameters.get("page", "1"));
 				string pageStr = page==1 ? "" : format(" (page %d)", page);
 				title = group ~ " index" ~ pageStr;
@@ -305,6 +307,8 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				string group, subject;
 				discussionThread(threadID, page, group, subject, viewMode == "basic");
 				title = subject ~ pageStr;
+				currentGroup = group;
+				currentThread = threadID;
 				breadcrumb1 = `<a href="/group/` ~encodeEntities(group)~`">` ~ encodeEntities(group  ) ~ `</a>`;
 				breadcrumb2 = `<a href="/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a>` ~ pageStr;
 				extraHeaders ~= canonicalHeader; // Google confuses /post/ URLs with threads
@@ -312,26 +316,31 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			}
 			case "post":
 				enforce(path.length > 1, "No post specified");
+				string id = '<' ~ urlDecode(pathX) ~ '>';
 				if (userSettings.groupViewMode == "basic")
-					return response.redirect(resolvePostUrl('<' ~ urlDecode(pathX) ~ '>'));
+					return response.redirect(resolvePostUrl(id));
 				else
 				if (userSettings.groupViewMode == "threaded")
 				{
-					string group, subject;
-					discussionSinglePost('<' ~ urlDecode(pathX) ~ '>', group, subject);
+					string group, subject, threadID;
+					discussionSinglePost(id, group, subject, threadID);
 					title = subject;
+					currentGroup = group;
+					currentThread = threadID;
 					breadcrumb1 = `<a href="/group/` ~encodeEntities(group)~`">` ~ encodeEntities(group  ) ~ `</a>`;
 					breadcrumb2 = `<a href="/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a> (view single post)`;
 					break;
 				}
 				else
 				{
-					string group;
+					string group, threadID;
 					int page;
-					discussionGroupSplitFromPost('<' ~ urlDecode(pathX) ~ '>', group, page);
+					discussionGroupSplitFromPost(id, group, page, threadID);
 
 					string pageStr = page==1 ? "" : format(" (page %d)", page);
 					title = group ~ " index" ~ pageStr;
+					currentGroup = group;
+					currentThread = threadID;
 					breadcrumb1 = `<a href="/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
 					extraHeaders ~= horizontalSplitHeaders;
 
@@ -397,6 +406,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				enforce(path.length > 1, "No group specified");
 				string group = path[1];
 				title = "Posting to " ~ group;
+				currentGroup = group;
 				breadcrumb1 = `<a href="/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>`;
 				breadcrumb2 = `<a href="/newpost/`~encodeEntities(group)~`">New thread</a>`;
 				if (discussionPostForm(newPostDraft(group)))
@@ -409,6 +419,8 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				auto post = getPost('<' ~ urlDecode(pathX) ~ '>');
 				enforce(post, "Post not found");
 				title = `Replying to "` ~ post.subject ~ `"`; // "
+				currentGroup = post.getGroup();
+				currentThread = post.threadID;
 				breadcrumb1 = `<a href="` ~ encodeEntities(idToUrl(post.id)) ~ `">` ~ encodeEntities(post.subject) ~ `</a>`;
 				breadcrumb2 = `<a href="/reply/`~pathX~`">Post reply</a>`;
 				if (discussionPostForm(newReplyDraft(post)))
@@ -500,6 +512,12 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				enforce(path.length > 1, "No subscription specified");
 				title = "Unsubscribe";
 				discussionSubscriptionUnsubscribe(urlDecode(pathX));
+				break;
+			}
+			case "search":
+			{
+				title = "Search";
+				discussionSearch(parameters);
 				break;
 			}
 			case "delete":
@@ -726,18 +744,36 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			break;
 		}
 
+	string searchOptionStr;
+	{
+		struct SearchOption { string name, value; }
+		SearchOption[] searchOptions;
+
+		searchOptions ~= SearchOption("Discussion Forums", "forum");
+		if (currentGroup)
+			searchOptions ~= SearchOption(currentGroup, "group:" ~ currentGroup);
+		if (currentThread)
+			searchOptions ~= SearchOption("Current thread", "threadmd5:" ~ currentThread.getDigestString!MD5().toLower());
+
+		foreach (i, option; searchOptions)
+			searchOptionStr ~=
+				`<option value="` ~ encodeEntities(option.value) ~ `"` ~ (i==searchOptions.length-1 ? ` selected` : ``) ~ `>` ~
+					encodeEntities(option.name) ~ `</option>`;
+	}
+
 	string getVar(string name)
 	{
 		switch (name)
 		{
-			case "title"        : return encodeEntities(title);
-			case "content"      : return htmlStr;
-			case "breadcrumb1"  : return breadcrumb1;
-			case "breadcrumb2"  : return breadcrumb2;
-			case "extraheaders" : return extraHeaders.join();
-			case "extrajs"      : return extraJS.join();
-			case "bodyclass"    : return bodyClass;
-			case "tools"        : return toolStr;
+			case "title"          : return encodeEntities(title);
+			case "content"        : return htmlStr;
+			case "breadcrumb1"    : return breadcrumb1;
+			case "breadcrumb2"    : return breadcrumb2;
+			case "extraheaders"   : return extraHeaders.join();
+			case "extrajs"        : return extraJS.join();
+			case "bodyclass"      : return bodyClass;
+			case "tools"          : return toolStr;
+			case "search-options" : return searchOptionStr;
 			default:
 				if (name.startsWith("static:"))
 					return staticPath(name[7..$]);
@@ -1446,13 +1482,14 @@ void discussionGroupSplit(string group, int page)
 		`</tr></table>`);
 }
 
-void discussionGroupSplitFromPost(string id, out string group, out int page)
+void discussionGroupSplitFromPost(string id, out string group, out int page, out string threadID)
 {
 	auto post = getPost(id);
 	enforce(post, "Post not found");
 
 	group = post.getGroup();
-	page = getThreadPage(group, post.cachedThreadID);
+	threadID = post.cachedThreadID;
+	page = getThreadPage(group, threadID);
 
 	discussionGroupSplit(group, page);
 }
@@ -1898,15 +1935,16 @@ void discussionThreadOverview(string threadID, string selectedID)
 	html.put(`</table></div></td></tr></table>`);
 }
 
-void discussionSinglePost(string id, out string group, out string title)
+void discussionSinglePost(string id, out string group, out string title, out string threadID)
 {
 	auto post = getPost(id);
 	enforce(post, "Post not found");
 	group = post.getGroup();
 	title = post.subject;
+	threadID = post.cachedThreadID;
 
 	formatSplitPost(post, false);
-	discussionThreadOverview(post.cachedThreadID, id);
+	discussionThreadOverview(threadID, id);
 }
 
 string discussionFirstUnread(string threadID)
@@ -2866,6 +2904,61 @@ void discussionSubscriptionPosts(string subscriptionID, int page)
 		`</form>`
 		`<div style="clear:right"></div>`
 	);
+}
+
+// ***********************************************************************
+
+void discussionSearch(UrlParameters parameters)
+{
+	string[] terms;
+	if (string searchScope = parameters.get("scope", null))
+	{
+		if (searchScope == "site")
+			throw new Redirect("https://www.google.com/search?" ~ encodeUrlParameters(["sitesearch" : "dlang.org", "q" : parameters.get("q", null)]));
+		else
+		if (searchScope == "forum")
+			{}
+		else
+		if (searchScope.startsWith("group:") || searchScope.startsWith("threadid:"))
+			terms ~= searchScope;
+	}
+	terms ~= parameters.get("q", null);
+	auto searchString = terms.map!strip.filter!(not!empty).join(" ");
+
+	html.put(
+		`<form method="get" id="search-form">`
+		`<h1>Search</h1>`
+		`<input name="q" size="50" value="`), html.putEncodedEntities(searchString), html.put(`">`
+		`<input name="search" type="submit" value="Search">`
+		`</form>`
+	);
+
+	if (searchString.length)
+	{
+		int page = parameters.get("page", "1").to!int;
+		enforce(page >= 1, "Bad page");
+
+		enum postsPerPage = 10;
+
+		int n = 0;
+
+		foreach (int rowid, string snippet; query!"SELECT [ROWID], snippet([PostSearch]) FROM [PostSearch] WHERE [PostSearch] MATCH ? LIMIT ? OFFSET ?".iterate(searchString, postsPerPage + 1, (page-1)*postsPerPage))
+		{
+			n++;
+			if (n == postsPerPage)
+				break;
+
+			html.put(`<pre>`, snippet, `</pre>`);
+			auto messageID = query!"SELECT [ID] FROM [Posts] WHERE [ROWID] = ?".iterate(rowid).selectValue!string();
+			auto post = getPost(messageID);
+			formatPost(post, null, false);
+		}
+
+		//pager();
+
+		if (n == 0)
+			html.put(`<p>Your search - <b>`), html.putEncodedEntities(searchString), html.put(`</b> - did not match any forum posts.</p>`);
+	}
 }
 
 // ***********************************************************************
