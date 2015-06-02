@@ -2790,6 +2790,8 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 			`<input type="submit" name="action-cancel" value="Cancel">`
 		`</p>`
 
+		`<hr>`
+
 		`<h2>Subscriptions</h2>`
 	);
 	if (user.isLoggedIn())
