@@ -176,7 +176,8 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			response.headers.add("Set-Cookie", cookie);
 	}
 
-	string title, breadcrumb1, breadcrumb2;
+	string title;
+	string[] breadcrumbs;
 	string bodyClass = "narrowdoc";
 	string returnPage = request.resource;
 	html.clear();
@@ -266,7 +267,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 					return response.redirect("/");
 
 				title = "Index";
-				breadcrumb1 = `<a href="/">Forum Index</a>`;
+				//breadcrumbs ~= `<a href="/">Forum Index</a>`;
 				foreach (what; ["posts", "threads"])
 					extraHeaders ~= `<link rel="alternate" type="application/atom+xml" title="New `~what~`" href="/feed/`~what~`" />`;
 				discussionIndex();
@@ -278,7 +279,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				int page = to!int(parameters.get("page", "1"));
 				string pageStr = page==1 ? "" : format(" (page %d)", page);
 				title = group ~ " index" ~ pageStr;
-				breadcrumb1 = `<a href="/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
+				breadcrumbs ~= `<a href="/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
 				auto viewMode = userSettings.groupViewMode;
 				if (viewMode == "basic")
 					discussionGroup(group, page);
@@ -312,8 +313,8 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				title = subject ~ pageStr;
 				currentGroup = group;
 				currentThread = threadID;
-				breadcrumb1 = `<a href="/group/` ~encodeEntities(group)~`">` ~ encodeEntities(group  ) ~ `</a>`;
-				breadcrumb2 = `<a href="/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a>` ~ pageStr;
+				breadcrumbs ~= `<a href="/group/` ~encodeEntities(group)~`">` ~ encodeEntities(group  ) ~ `</a>`;
+				breadcrumbs ~= `<a href="/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a>` ~ pageStr;
 				extraHeaders ~= canonicalHeader; // Google confuses /post/ URLs with threads
 				break;
 			}
@@ -330,8 +331,8 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 					title = subject;
 					currentGroup = group;
 					currentThread = threadID;
-					breadcrumb1 = `<a href="/group/` ~encodeEntities(group)~`">` ~ encodeEntities(group  ) ~ `</a>`;
-					breadcrumb2 = `<a href="/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a> (view single post)`;
+					breadcrumbs ~= `<a href="/group/` ~encodeEntities(group)~`">` ~ encodeEntities(group  ) ~ `</a>`;
+					breadcrumbs ~= `<a href="/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a> (view single post)`;
 					break;
 				}
 				else
@@ -344,7 +345,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 					title = group ~ " index" ~ pageStr;
 					currentGroup = group;
 					currentThread = threadID;
-					breadcrumb1 = `<a href="/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
+					breadcrumbs ~= `<a href="/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
 					extraHeaders ~= horizontalSplitHeaders;
 
 					break;
@@ -410,8 +411,8 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				string group = path[1];
 				title = "Posting to " ~ group;
 				currentGroup = group;
-				breadcrumb1 = `<a href="/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>`;
-				breadcrumb2 = `<a href="/newpost/`~encodeEntities(group)~`">New thread</a>`;
+				breadcrumbs ~= `<a href="/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>`;
+				breadcrumbs ~= `<a href="/newpost/`~encodeEntities(group)~`">New thread</a>`;
 				if (discussionPostForm(newPostDraft(group)))
 					bodyClass ~= " formdoc";
 				break;
@@ -424,8 +425,9 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				title = `Replying to "` ~ post.subject ~ `"`; // "
 				currentGroup = post.getGroup();
 				currentThread = post.threadID;
-				breadcrumb1 = `<a href="` ~ encodeEntities(idToUrl(post.id)) ~ `">` ~ encodeEntities(post.subject) ~ `</a>`;
-				breadcrumb2 = `<a href="/reply/`~pathX~`">Post reply</a>`;
+				breadcrumbs ~= `<a href="/group/`~encodeEntities(currentGroup)~`">` ~ encodeEntities(currentGroup) ~ `</a>`;
+				breadcrumbs ~= `<a href="` ~ encodeEntities(idToUrl(post.id)) ~ `">` ~ encodeEntities(post.subject) ~ `</a>`;
+				breadcrumbs ~= `<a href="/reply/`~pathX~`">Post reply</a>`;
 				if (discussionPostForm(newReplyDraft(post)))
 					bodyClass = "formdoc";
 				break;
@@ -437,7 +439,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				if (redirectTo)
 					return response.redirect(redirectTo);
 
-				title = breadcrumb1 = `Posting error`;
+				breadcrumbs ~= title = `Posting error`;
 				bodyClass ~= " formdoc";
 				break;
 			}
@@ -454,11 +456,11 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 						response.setRefresh(1, redirectTo);
 					if (form)
 					{
-						title = breadcrumb1 = `Posting error`;
+						breadcrumbs ~= title = `Posting error`;
 						bodyClass ~= " formdoc";
 					}
 					else
-						title = breadcrumb1 = `Posting status`;
+						breadcrumbs ~= title = `Posting status`;
 				}
 				else
 				{
@@ -529,8 +531,8 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				auto post = getPost('<' ~ urlDecode(pathX) ~ '>');
 				enforce(post, "Post not found");
 				title = `Delete "` ~ post.subject ~ `"?`; // "
-				breadcrumb1 = `<a href="` ~ encodeEntities(idToUrl(post.id)) ~ `">` ~ encodeEntities(post.subject) ~ `</a>`;
-				breadcrumb2 = `<a href="/delete/`~pathX~`">Delete post</a>`;
+				breadcrumbs ~= `<a href="` ~ encodeEntities(idToUrl(post.id)) ~ `">` ~ encodeEntities(post.subject) ~ `</a>`;
+				breadcrumbs ~= `<a href="/delete/`~pathX~`">Delete post</a>`;
 				discussionDeleteForm(post);
 				bodyClass ~= " formdoc";
 				break;
@@ -546,7 +548,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			case "loginform":
 			{
 				discussionLoginForm(parameters);
-				title = breadcrumb1 = `Log in`;
+				breadcrumbs ~= title = `Log in`;
 				tools ~= `<a href="/registerform?url=__URL__">Register</a>`;
 				returnPage = "/";
 				break;
@@ -554,7 +556,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			case "registerform":
 			{
 				discussionRegisterForm(parameters);
-				title = breadcrumb1 = `Registration`;
+				breadcrumbs ~= title = `Registration`;
 				tools ~= `<a href="/registerform?url=__URL__">Register</a>`;
 				returnPage = "/";
 				break;
@@ -570,7 +572,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				catch (Exception e)
 				{
 					discussionLoginForm(parameters, e.msg);
-					title = breadcrumb1 = `Login error`;
+					breadcrumbs ~= title = `Login error`;
 					tools ~= `<a href="/registerform?url=__URL__">Register</a>`;
 					returnPage = "/";
 					break;
@@ -587,7 +589,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				catch (Exception e)
 				{
 					discussionRegisterForm(parameters, e.msg);
-					title = breadcrumb1 = `Registration error`;
+					breadcrumbs ~= title = `Registration error`;
 					tools ~= `<a href="/registerform?url=__URL__">Register</a>`;
 					returnPage = "/";
 					break;
@@ -603,23 +605,23 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 					return response.serveText("OK");
 			}
 			case "settings":
-				title = "Settings";
+				breadcrumbs ~= title = "Settings";
 				discussionSettings(parameters, request.method == "POST" ? request.decodePostData() : UrlParameters.init);
 				break;
 			case "help":
-				title = breadcrumb1 = "Help";
+				breadcrumbs ~= title = "Help";
 				html.put(readText(optimizedPath(null, "web/help.htt")));
 				break;
 
 			// dlang.org front page iframes
 			case "frame-discussions":
 				bodyClass = "frame";
-				title = breadcrumb1 = "Forum activity summary";
+				breadcrumbs ~= title = "Forum activity summary";
 				discussionFrameDiscussions();
 				break;
 			case "frame-announcements":
 				bodyClass = "frame";
-				title = breadcrumb1 = "Forum activity summary";
+				breadcrumbs ~= title = "Forum activity summary";
 				discussionFrameAnnouncements();
 				break;
 
@@ -666,12 +668,12 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		//return response.writeError(HttpStatusCode.InternalServerError, "Unprocessed exception: " ~ e.msg);
 		if (cast(NotFoundException) e)
 		{
-			breadcrumb1 = title = "Not Found";
+			breadcrumbs ~= title = "Not Found";
 			status = HttpStatusCode.NotFound;
 		}
 		else
 		{
-			breadcrumb1 = title = "Error";
+			breadcrumbs ~= title = "Error";
 			status = HttpStatusCode.InternalServerError;
 		}
 		auto text = encodeEntities(e.msg).replace("\n", "<br>");
@@ -686,8 +688,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 
 	assert(title, "No title");
 	assert(html.length, "No HTML");
-	if (breadcrumb1) breadcrumb1 = "&rsaquo; " ~ breadcrumb1;
-	if (breadcrumb2) breadcrumb2 = "&raquo; " ~ breadcrumb2;
+	if (breadcrumbs.length) breadcrumbs = [`<a href="/">Index</a>`] ~ breadcrumbs;
 
 	if (user.isLoggedIn())
 		tools ~= `<a href="/logout?url=__URL__">Log out ` ~ encodeEntities(user.getName()) ~ `</a>`;
@@ -701,7 +702,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	toolStr =
 		toolStr.replace("__URL__",  encodeUrlParameter(returnPage));
 	toolStr =
-		`<div id="forum-tools-left"></div>`
+		`<div id="forum-tools-left">` ~ breadcrumbs.join(` &raquo; `) ~ `</div>`
 		`<div id="forum-tools-right">` ~ toolStr ~ `</div>`
 		`<div style="clear: both"></div>`;
 	string htmlStr = cast(string) html.get(); // html contents will be overwritten on next request
@@ -769,8 +770,6 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		{
 			case "title"          : return encodeEntities(title);
 			case "content"        : return htmlStr;
-			case "breadcrumb1"    : return breadcrumb1;
-			case "breadcrumb2"    : return breadcrumb2;
 			case "extraheaders"   : return extraHeaders.join();
 			case "extrajs"        : return extraJS.join();
 			case "bodyclass"      : return bodyClass;
