@@ -728,6 +728,9 @@ final class IrcAction : Action
 
 	override void run(ref Subscription subscription, Rfc850Post post)
 	{
+		if (!enabled)
+			return;
+
 		// Queue messages to avoid sending more than 1 PM per message.
 
 		static string[string][string] queue;
@@ -791,6 +794,9 @@ final class EmailAction : Action
 
 	override void run(ref Subscription subscription, Rfc850Post post)
 	{
+		if (!enabled)
+			return;
+
 		auto unreadCount = subscription.getUnreadCount();
 		if (unreadCount)
 		{
