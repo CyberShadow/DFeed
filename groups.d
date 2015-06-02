@@ -17,6 +17,7 @@
 module groups;
 
 import std.exception;
+import std.string;
 
 struct Config
 {
@@ -84,6 +85,15 @@ GroupInfo getGroupInfoByUrl(string urlName)
 	foreach (set; groupHierarchy)
 		foreach (ref group; set.groups)
 			if (group.urlName == urlName)
+				return &group;
+	return null;
+}
+
+GroupInfo getGroupInfoByPublicName(string publicName)
+{
+	foreach (set; groupHierarchy)
+		foreach (ref group; set.groups)
+			if (!icmp(group.publicName, publicName))
 				return &group;
 	return null;
 }

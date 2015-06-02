@@ -3103,7 +3103,7 @@ void discussionSearch(UrlParameters parameters)
 			foreach (word; parameters[param].split)
 			{
 				if (param == "group")
-					word = word.searchTerm;
+					word = word.getGroupInfoByPublicName.I!(gi => gi ? gi.internalName.searchTerm : word);
 				terms ~= param ~ ":" ~ word;
 			}
 
