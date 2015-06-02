@@ -44,11 +44,14 @@ function initSplitView() {
 	$(window).bind('popstate', onPopState);
 	onPopState();
 
-	$('#forum-tools-left').append(
+	toolsTemplate =
 		$('<a>')
 		.attr('href', 'javascript:toggleNav()')
 		.text('Toggle navigation')
-	);
+		[0].outerHTML
+		+ ' &middot; '
+		+ toolsTemplate;
+	updateTools();
 
 	showNav(localStorage.getItem('navhidden') == 'true');
 }
@@ -128,6 +131,10 @@ function onPopState() {
 			showHtml('Your browser does not support HTML5 pushState.');
 	}
 
+	updateTools();
+}
+
+function updateTools() {
 	$('#forum-tools-right').html(toolsTemplate.replace(/__URL__/g, encodeURIComponent(document.location.href)));
 }
 
