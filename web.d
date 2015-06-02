@@ -501,8 +501,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			{
 				enforce(path.length > 1, "No subscription specified");
 				int page = to!int(parameters.get("page", "1"));
-				discussionSubscriptionPosts(urlDecode(pathX), page);
-				title = "View subscription";
+				discussionSubscriptionPosts(urlDecode(pathX), page, title);
 				break;
 			}
 			case "subscription-feed":
@@ -933,11 +932,11 @@ void discussionIndexHeader()
 			auto c = subscription.getUnreadCount();
 			if (subscription.trigger.type == "reply")
 				if (c)
-					bits[0] ~= `<li><b>You have <a href="/subscription-posts/%s">%d new repl%s to <a href="/search?q=authoremail:%s">your posts</a>.</b></li>`
+					bits[0] ~= `<li><b>You have <a href="/subscription-posts/%s">%d new repl%s</a> to <a href="/search?q=authoremail:%s">your posts</a>.</b></li>`
 						.format(encodeEntities(subscription.id), c, c==1 ? "y" : "ies", encodeEntities(encodeUrlParameter(userSettings.email)));
 				else
-					bits[2] ~= `<li>No new replies to <a href="/search?q=authoremail:%s">your posts</a>.</li>`
-						.format(encodeEntities(encodeUrlParameter(userSettings.email)));
+					bits[2] ~= `<li>No new <a href="/subscription-posts/%s">replies</a> to <a href="/search?q=authoremail:%s">your posts</a>.</li>`
+						.format(encodeEntities(subscription.id), encodeEntities(encodeUrlParameter(userSettings.email)));
 			else
 			{
 				numSubscriptions++;
@@ -3014,12 +3013,13 @@ void discussionSubscriptionUnsubscribe(string subscriptionID)
 	);
 }
 
-void discussionSubscriptionPosts(string subscriptionID, int page)
+void discussionSubscriptionPosts(string subscriptionID, int page, out string title)
 {
+	auto subscription = getUserSubscription(user.getName(), subscriptionID);
+	title = "View subscription: " ~ subscription.trigger.getTextDescription();
+
 	enum postsPerPage = POSTS_PER_PAGE;
-	html.put(
-		`<h1>View subscription`
-	);
+	html.put(`<h1>`); html.putEncodedEntities(title);
 	if (page != 1)
 		html.put(" (page ", text(page), ")");
 	html.put("</h1>");
