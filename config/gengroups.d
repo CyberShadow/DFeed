@@ -9,7 +9,7 @@ import std.string;
 import ae.utils.array;
 
 struct DAlsoVia { string name, url; }
-struct DGroupInfo { string name, description, postMessage, mlName; bool mlOnly; DAlsoVia[string] alsoVia; }
+struct DGroupInfo { string internalName, publicName, urlName, description, postMessage, mlName; bool mlOnly; DAlsoVia[string] alsoVia; }
 struct DGroupSet { string id, name, shortName; DGroupInfo[] groups; bool visible; }
 
 DGroupSet makeDGroupSet(string name, DGroupInfo[] groups, bool visible = true)
@@ -20,12 +20,12 @@ DGroupSet makeDGroupSet(string name, DGroupInfo[] groups, bool visible = true)
 	return DGroupSet(id, name, shortName, groups, visible);
 }
 
-DGroupInfo makeDGroupInfo(string name, string archiveName, string mlName, string description, bool mlOnly, bool bugzilla)
+DGroupInfo makeDGroupInfo(string internalName, string publicName, string urlName, string archiveName, string mlName, string description, bool mlOnly, bool bugzilla)
 {
-	auto info = DGroupInfo(name, description.chomp(".").strip());
+	auto info = DGroupInfo(internalName, publicName, urlName, description.chomp(".").strip());
 	info.mlOnly = mlOnly;
 	if (!mlOnly)
-		info.alsoVia["01-nntp"] = DAlsoVia("NNTP", `news://news.digitalmars.com/` ~ name);
+		info.alsoVia["01-nntp"] = DAlsoVia("NNTP", `news://news.digitalmars.com/` ~ internalName);
 	if (mlName)
 	{
 		info.mlName = mlName;
@@ -40,7 +40,7 @@ DGroupInfo makeDGroupInfo(string name, string archiveName, string mlName, string
 				`<a href="/newpost/digitalmars.D">post to digitalmars.D</a>.`;
 	}
 	if (mlOnly)
-		info.alsoVia["04-archive"] = DAlsoVia("archive", `http://lists.puremagic.com/pipermail/`~name.toLower());
+		info.alsoVia["04-archive"] = DAlsoVia("archive", `http://lists.puremagic.com/pipermail/`~internalName.toLower());
 	else
 	if (archiveName)
 		info.alsoVia["04-archive"] = DAlsoVia("archive", `http://www.digitalmars.com/d/archives/`~archiveName~`/`);
@@ -52,58 +52,60 @@ void main()
 {
 	DGroupSet[] groupHierarchy =
 	[
+		//                  internalName                publicName                  urlName                     archiveName                 mlName                      description                                                         mlOnly bugzilla
 		makeDGroupSet("D Programming Language - New users", [
-			makeDGroupInfo("digitalmars.D.learn"     , "digitalmars/D/learn"     , "digitalmars-d-learn"     , "Questions about learning D"                                       , false, false),
+			makeDGroupInfo("digitalmars.D.learn"     , "Learn"                   , "learn"                   , "digitalmars/D/learn"     , "digitalmars-d-learn"     , "Questions about learning and using D"                             , false, false),
 		]),
 		makeDGroupSet("D Programming Language - General", [
-			makeDGroupInfo("digitalmars.D"           , "digitalmars/D"           , "digitalmars-d"           , "General discussion of the D programming language."                , false, false),
-			makeDGroupInfo("digitalmars.D.announce"  , "digitalmars/D/announce"  , "digitalmars-d-announce"  , "Announcements for anything D related"                             , false, false),
+			makeDGroupInfo("digitalmars.D"           , "General"                 , "general"                 , "digitalmars/D"           , "digitalmars-d"           , "General discussion of the D programming language"                 , false, false),
+			makeDGroupInfo("digitalmars.D.announce"  , "Announce"                , "announce"                , "digitalmars/D/announce"  , "digitalmars-d-announce"  , "Announcements for anything D related"                             , false, false),
 		]),
 		makeDGroupSet("D Programming Language - Ecosystem", [
-			makeDGroupInfo("D.gnu"                   , "D/gnu"                   , "d.gnu"                   , "GDC, the Gnu D Compiler "                                         , false, false),
-			makeDGroupInfo("digitalmars.D.ldc"       , null                      , "digitalmars-d-ldc"       , "LDC, the LLVM-based D Compiler "                                  , false, false),
+			makeDGroupInfo("D.gnu"                   , "GDC"                     , "gdc"                     , "D/gnu"                   , "d.gnu"                   , "GDC, the GCC-based D Compiler"                                    , false, false),
+			makeDGroupInfo("digitalmars.D.ldc"       , "LDC"                     , "ldc"                     , null                      , "digitalmars-d-ldc"       , "LDC, the LLVM-based D Compiler"                                   , false, false),
 
-			makeDGroupInfo("digitalmars.D.debugger"  , "digitalmars/D/debugger"  , "digitalmars-d-debugger"  , "Debuggers for D"                                                  , false, false),
-			makeDGroupInfo("digitalmars.D.ide"       , "digitalmars/D/ide"       , "digitalmars-d-ide"       , "Integrated Development Environments for D"                        , false, false),
+			makeDGroupInfo("digitalmars.D.debugger"  , "Debuggers"               , "debugger"                , "digitalmars/D/debugger"  , "digitalmars-d-debugger"  , "Debuggers for D"                                                  , false, false),
+			makeDGroupInfo("digitalmars.D.ide"       , "IDEs"                    , "ide"                     , "digitalmars/D/ide"       , "digitalmars-d-ide"       , "Integrated Development Environments for D"                        , false, false),
 
-			makeDGroupInfo("digitalmars.D.dwt"       , "digitalmars/D/dwt"       , "digitalmars-d-dwt"       , "Developing the D Widget Toolkit"                                  , false, false),
+			makeDGroupInfo("digitalmars.D.dwt"       , "DWT"                     , "dwt"                     , "digitalmars/D/dwt"       , "digitalmars-d-dwt"       , "Discussion of the D Widget Toolkit"                               , false, false),
 		]),
 		makeDGroupSet("D Programming Language - Development", [
-			makeDGroupInfo("digitalmars.D.bugs"      , "digitalmars/D/bugs"      , "digitalmars-d-bugs"      , "Bug reports for D compiler and library"                           , false, true ),
-			makeDGroupInfo("dmd-beta"                , null                      , "dmd-beta"                , "Notify of and discuss beta versions"                              , true , false),
-			makeDGroupInfo("dmd-concurrency"         , null                      , "dmd-concurrency"         , "Design of concurrency features in D and library"                  , true , false),
-			makeDGroupInfo("dmd-internals"           , null                      , "dmd-internals"           , "dmd compiler internal design and implementation"                  , true , false),
-			makeDGroupInfo("phobos"                  , null                      , "phobos"                  , "Phobos standard library design and implementation"                , true , false),
-			makeDGroupInfo("D-runtime"               , null                      , "D-runtime"               , "Runtime library design and implementation"                        , true , false),
+			makeDGroupInfo("digitalmars.D.bugs"      , "Issues"                  , "issues"                  , "digitalmars/D/bugs"      , "digitalmars-d-bugs"      , "Bug reports for D compiler and library"                           , false, true ),
+			makeDGroupInfo("dmd-beta"                , "Beta"                    , "beta"                    , null                      , "dmd-beta"                , "Notifications and discussion of D beta versions"                  , true , false),
+			makeDGroupInfo("dmd-internals"           , "DMD"                     , "dmd"                     , null                      , "dmd-internals"           , "DMD compiler internal design and implementation"                  , true , false),
+			makeDGroupInfo("phobos"                  , "Phobos"                  , "phobos"                  , null                      , "phobos"                  , "Phobos standard library design and implementation"                , true , false),
+			makeDGroupInfo("D-runtime"               , "Druntime"                , "druntime"                , null                      , "D-runtime"               , "Runtime library design and implementation"                        , true , false),
 		]),
-		makeDGroupSet("Other", [
-			makeDGroupInfo("digitalmars.D.dtl"       , "digitalmars/D/dtl"       , "digitalmars-d-dtl"       , "Developing the D Template Library"                                , false, false),
-			makeDGroupInfo("DMDScript"               , "DMDScript"               , null                      , "General discussion of DMDScript"                                  , false, false),
-			makeDGroupInfo("digitalmars.empire"      , "digitalmars/empire"      , null                      , "General discussion of Empire, the Wargame of the Century"         , false, false),
-			makeDGroupInfo("D"                       , ""                        , null                      , "Retired, use digitalmars.D instead"                               , false, false),
+		makeDGroupSet("Unused", [
+			makeDGroupInfo("dmd-concurrency"         , "Concurrency"             , "concurrency"             , null                      , "dmd-concurrency"         , "Design of concurrency features in D and standard library"         , true , false),
+
+			makeDGroupInfo("digitalmars.D.dtl"       , "digitalmars.D.dtl"       , "digitalmars.D.dtl"       , "digitalmars/D/dtl"       , "digitalmars-d-dtl"       , "Developing the D Template Library"                                , false, false),
+			makeDGroupInfo("DMDScript"               , "DMDScript"               , "DMDScript"               , "DMDScript"               , null                      , "General discussion of DMDScript"                                  , false, false),
+			makeDGroupInfo("digitalmars.empire"      , "digitalmars.empire"      , "digitalmars.empire"      , "digitalmars/empire"      , null                      , "General discussion of Empire, the Wargame of the Century"         , false, false),
+			makeDGroupInfo("D"                       , "D"                       , "D"                       , ""                        , null                      , "Retired, use digitalmars.D instead"                               , false, false),
 		], false),
 		makeDGroupSet("C and C++", [
-			makeDGroupInfo("c++"                     , "c++"                     , null                      , "General discussion of DMC++ compiler"                             , false, false),
-			makeDGroupInfo("c++.announce"            , "c++/announce"            , null                      , "Announcements about C++"                                          , false, false),
-			makeDGroupInfo("c++.atl"                 , "c++/atl"                 , null                      , "Microsoft's Advanced Template Library"                            , false, false),
-			makeDGroupInfo("c++.beta"                , "c++/beta"                , null                      , "Test versions of various C++ products"                            , false, false),
-			makeDGroupInfo("c++.chat"                , "c++/chat"                , null                      , "Off topic discussions"                                            , false, false),
-			makeDGroupInfo("c++.command-line"        , "c++/command-line"        , null                      , "Command line tools"                                               , false, false),
-			makeDGroupInfo("c++.dos"                 , "c++/dos"                 , null                      , "DMC++ and DOS"                                                    , false, false),
-			makeDGroupInfo("c++.dos.16-bits"         , "c++/dos/16-bits"         , null                      , "16 bit DOS topics"                                                , false, false),
-			makeDGroupInfo("c++.dos.32-bits"         , "c++/dos/32-bits"         , null                      , "32 bit extended DOS topics"                                       , false, false),
-			makeDGroupInfo("c++.idde"                , "c++/idde"                , null                      , "The Digital Mars Integrated Development and Debugging Environment", false, false),
-			makeDGroupInfo("c++.mfc"                 , "c++/mfc"                 , null                      , "Microsoft Foundation Classes"                                     , false, false),
-			makeDGroupInfo("c++.rtl"                 , "c++/rtl"                 , null                      , "C++ Runtime Library"                                              , false, false),
-			makeDGroupInfo("c++.stl"                 , "c++/stl"                 , null                      , "Standard Template Library"                                        , false, false),
-			makeDGroupInfo("c++.stl.hp"              , "c++/stl/hp"              , null                      , "HP's Standard Template Library"                                   , false, false),
-			makeDGroupInfo("c++.stl.port"            , "c++/stl/port"            , null                      , "STLPort Standard Template Library"                                , false, false),
-			makeDGroupInfo("c++.stl.sgi"             , "c++/stl/sgi"             , null                      , "SGI's Standard Template Library"                                  , false, false),
-			makeDGroupInfo("c++.stlsoft"             , "c++/stlsoft"             , null                      , "Stlsoft products"                                                 , false, false),
-			makeDGroupInfo("c++.windows"             , "c++/windows"             , null                      , "Writing C++ code for Microsoft Windows"                           , false, false),
-			makeDGroupInfo("c++.windows.16-bits"     , "c++/windows/16-bits"     , null                      , "16 bit Windows topics"                                            , false, false),
-			makeDGroupInfo("c++.windows.32-bits"     , "c++/windows/32-bits"     , null                      , "32 bit Windows topics"                                            , false, false),
-			makeDGroupInfo("c++.wxwindows"           , "c++/wxwindows"           , null                      , "wxWindows"                                                        , false, false),
+			makeDGroupInfo("c++"                     , "c++"                     , "c++"                     , "c++"                     , null                      , "General discussion of DMC++ compiler"                             , false, false),
+			makeDGroupInfo("c++.announce"            , "c++.announce"            , "c++.announce"            , "c++/announce"            , null                      , "Announcements about C++"                                          , false, false),
+			makeDGroupInfo("c++.atl"                 , "c++.atl"                 , "c++.atl"                 , "c++/atl"                 , null                      , "Microsoft's Advanced Template Library"                            , false, false),
+			makeDGroupInfo("c++.beta"                , "c++.beta"                , "c++.beta"                , "c++/beta"                , null                      , "Test versions of various C++ products"                            , false, false),
+			makeDGroupInfo("c++.chat"                , "c++.chat"                , "c++.chat"                , "c++/chat"                , null                      , "Off topic discussions"                                            , false, false),
+			makeDGroupInfo("c++.command-line"        , "c++.command-line"        , "c++.command-line"        , "c++/command-line"        , null                      , "Command line tools"                                               , false, false),
+			makeDGroupInfo("c++.dos"                 , "c++.dos"                 , "c++.dos"                 , "c++/dos"                 , null                      , "DMC++ and DOS"                                                    , false, false),
+			makeDGroupInfo("c++.dos.16-bits"         , "c++.dos.16-bits"         , "c++.dos.16-bits"         , "c++/dos/16-bits"         , null                      , "16 bit DOS topics"                                                , false, false),
+			makeDGroupInfo("c++.dos.32-bits"         , "c++.dos.32-bits"         , "c++.dos.32-bits"         , "c++/dos/32-bits"         , null                      , "32 bit extended DOS topics"                                       , false, false),
+			makeDGroupInfo("c++.idde"                , "c++.idde"                , "c++.idde"                , "c++/idde"                , null                      , "The Digital Mars Integrated Development and Debugging Environment", false, false),
+			makeDGroupInfo("c++.mfc"                 , "c++.mfc"                 , "c++.mfc"                 , "c++/mfc"                 , null                      , "Microsoft Foundation Classes"                                     , false, false),
+			makeDGroupInfo("c++.rtl"                 , "c++.rtl"                 , "c++.rtl"                 , "c++/rtl"                 , null                      , "C++ Runtime Library"                                              , false, false),
+			makeDGroupInfo("c++.stl"                 , "c++.stl"                 , "c++.stl"                 , "c++/stl"                 , null                      , "Standard Template Library"                                        , false, false),
+			makeDGroupInfo("c++.stl.hp"              , "c++.stl.hp"              , "c++.stl.hp"              , "c++/stl/hp"              , null                      , "HP's Standard Template Library"                                   , false, false),
+			makeDGroupInfo("c++.stl.port"            , "c++.stl.port"            , "c++.stl.port"            , "c++/stl/port"            , null                      , "STLPort Standard Template Library"                                , false, false),
+			makeDGroupInfo("c++.stl.sgi"             , "c++.stl.sgi"             , "c++.stl.sgi"             , "c++/stl/sgi"             , null                      , "SGI's Standard Template Library"                                  , false, false),
+			makeDGroupInfo("c++.stlsoft"             , "c++.stlsoft"             , "c++.stlsoft"             , "c++/stlsoft"             , null                      , "Stlsoft products"                                                 , false, false),
+			makeDGroupInfo("c++.windows"             , "c++.windows"             , "c++.windows"             , "c++/windows"             , null                      , "Writing C++ code for Microsoft Windows"                           , false, false),
+			makeDGroupInfo("c++.windows.16-bits"     , "c++.windows.16-bits"     , "c++.windows.16-bits"     , "c++/windows/16-bits"     , null                      , "16 bit Windows topics"                                            , false, false),
+			makeDGroupInfo("c++.windows.32-bits"     , "c++.windows.32-bits"     , "c++.windows.32-bits"     , "c++/windows/32-bits"     , null                      , "32 bit Windows topics"                                            , false, false),
+			makeDGroupInfo("c++.wxwindows"           , "c++.wxwindows"           , "c++.wxwindows"           , "c++/wxwindows"           , null                      , "wxWindows"                                                        , false, false),
 		], false),
 	];
 
@@ -121,9 +123,12 @@ void main()
 		foreach (group; set.groups)
 		{
 			f.writeln();
-			f.writeln("[groups.", group.name.replace(".", "-"), "]");
-			f.writeln("name=", group.name);
-			f.writeln("urlName=", group.name);
+			f.writeln("[groups.", group.urlName.replace(".", "-"), "]");
+			f.writeln("internalName=", group.internalName);
+			f.writeln("publicName=", group.publicName);
+			f.writeln("urlName=", group.urlName);
+			if (group.internalName != group.urlName)
+				f.writeln("urlAliases=", [group.internalName]);
 			f.writeln("groupSet=", set.id);
 			f.writeln("description=", group.description);
 			if (group.postMessage)
@@ -158,7 +163,7 @@ void main()
 	{
 		auto name = group.mlName.replace(".", "-").toLower();
 		f.writefln("%s.list = %s" , name, group.mlName);
-		f.writefln("%s.group = %s", name, group.name);
+		f.writefln("%s.group = %s", name, group.internalName);
 		f.writeln();
 	}
 }

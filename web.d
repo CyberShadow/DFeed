@@ -184,7 +184,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	string[] tools, extraHeaders;
 	string[string] jsVars;
 	auto status = HttpStatusCode.OK;
-	string currentGroup, currentThread; // for search
+	GroupInfo currentGroup; string currentThread; // for search
 
 	// Redirect to canonical domain name
 	auto host = request.headers.get("Host", "");
@@ -275,24 +275,34 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			case "group":
 			{
 				enforce(path.length > 1, "No group specified");
-				string group = currentGroup = path[1];
+				string groupUrlName = path[1];
+
+				foreach (groupInfo; groupHierarchy.map!(set => set.groups).join)
+					if (groupInfo.urlAliases.canFind(groupUrlName))
+						throw new Redirect("/group/" ~ groupInfo.urlName);
+				foreach (groupInfo; groupHierarchy.map!(set => set.groups).join)
+					if (groupInfo.urlAliases.canFind!(not!icmp)(groupUrlName))
+						throw new Redirect("/group/" ~ groupInfo.urlName);
+
 				int page = to!int(parameters.get("page", "1"));
 				string pageStr = page==1 ? "" : format(" (page %d)", page);
-				title = group ~ " index" ~ pageStr;
-				breadcrumbs ~= `<a href="/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
+				auto groupInfo = currentGroup = getGroupInfoByUrl(groupUrlName);
+				enforce(groupInfo, "Unknown group");
+				title = groupInfo.publicName ~ " group index" ~ pageStr;
+				breadcrumbs ~= `<a href="/group/`~encodeEntities(groupUrlName)~`">` ~ encodeEntities(groupInfo.publicName) ~ `</a>` ~ pageStr;
 				auto viewMode = userSettings.groupViewMode;
 				if (viewMode == "basic")
-					discussionGroup(group, page);
+					discussionGroup(groupInfo, page);
 				else
 				if (viewMode == "threaded")
-					discussionGroupThreaded(group, page);
+					discussionGroupThreaded(groupInfo, page);
 				else
 				{
-					discussionGroupSplit(group, page);
+					discussionGroupSplit(groupInfo, page);
 					extraHeaders ~= horizontalSplitHeaders;
 				}
 				foreach (what; ["posts", "threads"])
-					extraHeaders ~= `<link rel="alternate" type="application/atom+xml" title="New `~what~` on `~encodeEntities(group)~`" href="/feed/`~what~`/`~encodeEntities(group)~`" />`;
+					extraHeaders ~= `<link rel="alternate" type="application/atom+xml" title="New `~what~` on `~encodeEntities(groupInfo.publicName)~`" href="/feed/`~what~`/`~encodeEntities(groupInfo.urlName)~`" />`;
 				break;
 			}
 			case "thread":
@@ -308,12 +318,13 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				returnPage = firstPostUrl;
 
 				string pageStr = page==1 ? "" : format(" (page %d)", page);
-				string group, subject;
-				discussionThread(threadID, page, group, subject, viewMode == "basic");
+				GroupInfo groupInfo;
+				string subject;
+				discussionThread(threadID, page, groupInfo, subject, viewMode == "basic");
 				title = subject ~ pageStr;
-				currentGroup = group;
+				currentGroup = groupInfo;
 				currentThread = threadID;
-				breadcrumbs ~= `<a href="/group/` ~encodeEntities(group)~`">` ~ encodeEntities(group  ) ~ `</a>`;
+				breadcrumbs ~= `<a href="/group/` ~encodeEntities(groupInfo.urlName)~`">` ~ encodeEntities(groupInfo.publicName) ~ `</a>`;
 				breadcrumbs ~= `<a href="/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a>` ~ pageStr;
 				extraHeaders ~= canonicalHeader; // Google confuses /post/ URLs with threads
 				break;
@@ -326,26 +337,21 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				else
 				if (userSettings.groupViewMode == "threaded")
 				{
-					string group, subject, threadID;
-					discussionSinglePost(id, group, subject, threadID);
+					string subject;
+					discussionSinglePost(id, currentGroup, subject, currentThread);
 					title = subject;
-					currentGroup = group;
-					currentThread = threadID;
-					breadcrumbs ~= `<a href="/group/` ~encodeEntities(group)~`">` ~ encodeEntities(group  ) ~ `</a>`;
+					breadcrumbs ~= `<a href="/group/` ~encodeEntities(currentGroup.urlName)~`">` ~ encodeEntities(currentGroup.publicName) ~ `</a>`;
 					breadcrumbs ~= `<a href="/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a> (view single post)`;
 					break;
 				}
 				else
 				{
-					string group, threadID;
 					int page;
-					discussionGroupSplitFromPost(id, group, page, threadID);
+					discussionGroupSplitFromPost(id, currentGroup, page, currentThread);
 
 					string pageStr = page==1 ? "" : format(" (page %d)", page);
-					title = group ~ " index" ~ pageStr;
-					currentGroup = group;
-					currentThread = threadID;
-					breadcrumbs ~= `<a href="/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>` ~ pageStr;
+					title = currentGroup.publicName ~ " group index" ~ pageStr;
+					breadcrumbs ~= `<a href="/group/`~encodeEntities(currentGroup.urlName)~`">` ~ encodeEntities(currentGroup.publicName) ~ `</a>` ~ pageStr;
 					extraHeaders ~= horizontalSplitHeaders;
 
 					break;
@@ -408,12 +414,12 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			case "newpost":
 			{
 				enforce(path.length > 1, "No group specified");
-				string group = path[1];
-				title = "Posting to " ~ group;
-				currentGroup = group;
-				breadcrumbs ~= `<a href="/group/`~encodeEntities(group)~`">` ~ encodeEntities(group) ~ `</a>`;
-				breadcrumbs ~= `<a href="/newpost/`~encodeEntities(group)~`">New thread</a>`;
-				if (discussionPostForm(newPostDraft(group)))
+				string groupUrlName = path[1];
+				currentGroup = getGroupInfoByUrl(groupUrlName).enforce("No such group");
+				title = "Posting to " ~ currentGroup.publicName;
+				breadcrumbs ~= `<a href="/group/`~encodeEntities(currentGroup.urlName)~`">` ~ encodeEntities(currentGroup.publicName) ~ `</a>`;
+				breadcrumbs ~= `<a href="/newpost/`~encodeEntities(currentGroup.urlName)~`">New thread</a>`;
+				if (discussionPostForm(newPostDraft(currentGroup)))
 					bodyClass ~= " formdoc";
 				break;
 			}
@@ -425,7 +431,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				title = `Replying to "` ~ post.subject ~ `"`; // "
 				currentGroup = post.getGroup();
 				currentThread = post.threadID;
-				breadcrumbs ~= `<a href="/group/`~encodeEntities(currentGroup)~`">` ~ encodeEntities(currentGroup) ~ `</a>`;
+				breadcrumbs ~= `<a href="/group/`~encodeEntities(currentGroup.urlName)~`">` ~ encodeEntities(currentGroup.publicName) ~ `</a>`;
 				breadcrumbs ~= `<a href="` ~ encodeEntities(idToUrl(post.id)) ~ `">` ~ encodeEntities(post.subject) ~ `</a>`;
 				breadcrumbs ~= `<a href="/reply/`~pathX~`">Post reply</a>`;
 				if (discussionPostForm(newReplyDraft(post)))
@@ -631,12 +637,13 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				enforce(path.length > 1, "Feed type not specified");
 				enforce(path[1]=="posts" || path[1]=="threads", "Unknown feed type");
 				bool threadsOnly = path[1] == "threads";
-				string group;
+				string groupUrlName;
 				if (path.length > 2)
-					group = path[2];
+					groupUrlName = path[2];
 				auto hours = to!int(parameters.get("hours", text(FEED_HOURS_DEFAULT)));
 				enforce(hours <= FEED_HOURS_MAX, "hours parameter exceeds limit");
-				return getFeed(group, threadsOnly, hours).getResponse(request);
+				auto groupInfo = getGroupInfoByUrl(groupUrlName);
+				return getFeed(groupInfo, threadsOnly, hours).getResponse(request);
 			}
 
 			case "js":
@@ -755,7 +762,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 
 		searchOptions ~= SearchOption("Discussion Forums", "forum");
 		if (currentGroup)
-			searchOptions ~= SearchOption(currentGroup, "group:" ~ currentGroup.searchTerm);
+			searchOptions ~= SearchOption(currentGroup.publicName ~ " group", "group:" ~ currentGroup.internalName.searchTerm);
 		if (currentThread)
 			searchOptions ~= SearchOption("Current thread", "threadmd5:" ~ currentThread.getDigestString!MD5().toLower());
 
@@ -862,7 +869,7 @@ string renderNav(string html)
 
 	return nav.render(groupHierarchy.filter!(set => set.visible).map!(set =>
 		[set.shortName, nav2.render(set.groups.map!(group =>
-			["/group/" ~ group.name, group.name]
+			["/group/" ~ group.urlName, group.publicName]
 		).array)]
 	).array);
 }
@@ -1050,8 +1057,8 @@ string[string] getLastPosts()
 	string[string] lastPosts;
 	foreach (set; groupHierarchy)
 		foreach (group; set.groups)
-			foreach (string id; query!"SELECT `ID` FROM `Groups` WHERE `Group`=? ORDER BY `Time` DESC LIMIT 1".iterate(group.name))
-				lastPosts[group.name] = id;
+			foreach (string id; query!"SELECT `ID` FROM `Groups` WHERE `Group`=? ORDER BY `Time` DESC LIMIT 1".iterate(group.internalName))
+				lastPosts[group.internalName] = id;
 	return lastPosts;
 }
 
@@ -1096,12 +1103,12 @@ void discussionIndex()
 			html.put(
 				`<tr class="group-row">`
 					`<td class="forum-index-col-forum">`
-						`<a href="/group/`), html.putEncodedEntities(group.name), html.put(`">`), html.putEncodedEntities(group.name), html.put(`</a>`
+						`<a href="/group/`), html.putEncodedEntities(group.urlName), html.put(`">`), html.putEncodedEntities(group.publicName), html.put(`</a>`
 						`<div class="truncated forum-index-description" title="`), html.putEncodedEntities(group.description), html.put(`">`), html.putEncodedEntities(group.description), html.put(`</div>`
 					`</td>`
-					`<td class="forum-index-col-lastpost">`, group.name in lastPosts    ? summarizePost(   lastPosts[group.name]) : `<div class="forum-no-data">-</div>`, `</td>`
-					`<td class="number-column">`,            group.name in threadCounts ? formatNumber (threadCounts[group.name]) : `-`, `</td>`
-					`<td class="number-column">`,            group.name in postCounts   ? formatNumber (  postCounts[group.name]) : `-`, `</td>`
+					`<td class="forum-index-col-lastpost">`, group.internalName in lastPosts    ? summarizePost(   lastPosts[group.internalName]) : `<div class="forum-no-data">-</div>`, `</td>`
+					`<td class="number-column">`,            group.internalName in threadCounts ? formatNumber (threadCounts[group.internalName]) : `-`, `</td>`
+					`<td class="number-column">`,            group.internalName in postCounts   ? formatNumber (  postCounts[group.internalName]) : `-`, `</td>`
 					`<td class="number-column">`
 			);
 			foreach (i, av; group.alsoVia.values)
@@ -1212,10 +1219,10 @@ int[] getThreadPostIndexes(string id)
 
 CachedSet!(string, int[]) threadPostIndexCache;
 
-void newPostButton(string group)
+void newPostButton(GroupInfo groupInfo)
 {
 	html.put(
-		`<form name="new-post-form" method="get" action="/newpost/`), html.putEncodedEntities(group), html.put(`">`
+		`<form name="new-post-form" method="get" action="/newpost/`), html.putEncodedEntities(groupInfo.urlName), html.put(`">`
 			`<div class="header-tools">`
 				`<input class="btn" type="submit" value="Create thread">`
 				`<input class="img" type="image" src="`, staticPath("/images/newthread.png"), `" alt="Create thread">`
@@ -1297,17 +1304,17 @@ static int indexToPage(int index, int perPage)  { return index / perPage + 1; } 
 static int getPageCount(int count, int perPage) { return indexToPage(count-1, perPage); }
 static int getPageOffset(int page, int perPage) { return (page-1) * perPage; }
 
-void threadPager(string group, int page, int maxWidth = 40)
+void threadPager(GroupInfo groupInfo, int page, int maxWidth = 40)
 {
 	auto threadCounts = threadCountCache(getThreadCounts());
-	enforce(group in threadCounts, "Empty or unknown group: " ~ group);
-	auto threadCount = threadCounts[group];
+	enforce(groupInfo.internalName in threadCounts, "Empty group: " ~ groupInfo.publicName);
+	auto threadCount = threadCounts[groupInfo.internalName];
 	auto pageCount = getPageCount(threadCount, THREADS_PER_PAGE);
 
-	pager(`/group/` ~ group, page, pageCount, maxWidth);
+	pager(`/group/` ~ groupInfo.urlName, page, pageCount, maxWidth);
 }
 
-void discussionGroup(string group, int page)
+void discussionGroup(GroupInfo groupInfo, int page)
 {
 	enforce(page >= 1, "Invalid page");
 
@@ -1335,7 +1342,7 @@ void discussionGroup(string group, int page)
 		return count;
 	}
 
-	foreach (string firstPostID, string lastPostID; query!"SELECT `ID`, `LastPost` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?".iterate(group, THREADS_PER_PAGE, getPageOffset(page, THREADS_PER_PAGE)))
+	foreach (string firstPostID, string lastPostID; query!"SELECT `ID`, `LastPost` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?".iterate(groupInfo.internalName, THREADS_PER_PAGE, getPageOffset(page, THREADS_PER_PAGE)))
 		foreach (int count; query!"SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ?".iterate(firstPostID))
 			threads ~= Thread(firstPostID, getPostInfo(firstPostID), getPostInfo(lastPostID), count, getUnreadPostCount(firstPostID));
 
@@ -1386,7 +1393,7 @@ void discussionGroup(string group, int page)
 	html.put(
 		`<table id="group-index" class="forum-table">`
 		`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(3), `</tr>` // Fixed layout dummies
-		`<tr class="group-index-header"><th colspan="3"><div class="header-with-tools">`), newPostButton(group), html.putEncodedEntities(group), html.put(`</div></th></tr>`
+		`<tr class="group-index-header"><th colspan="3"><div class="header-with-tools">`), newPostButton(groupInfo), html.putEncodedEntities(groupInfo.publicName), html.put(`</div></th></tr>`
 		`<tr class="subheader"><th>Thread / Thread Starter</th><th>Last Post</th><th>Replies</th>`);
 	foreach (thread; threads)
 		html.put(
@@ -1395,7 +1402,7 @@ void discussionGroup(string group, int page)
 				`<td class="group-index-col-last">`), summarizeLastPost(thread.lastPost), html.put(`</td>`
 				`<td class="number-column">`), summarizePostCount(thread), html.put(`</td>`
 			`</tr>`);
-	threadPager(group, page);
+	threadPager(groupInfo, page);
 	html.put(
 		`</table>`
 	);
@@ -1581,7 +1588,7 @@ void formatThreadedPosts(PostInfo*[] postInfos, bool narrow, string selectedID =
 	formatPosts(posts[null].children, 0, null, true);
 }
 
-void discussionGroupThreaded(string group, int page, bool narrow = false)
+void discussionGroupThreaded(GroupInfo groupInfo, int page, bool narrow = false)
 {
 	enforce(page >= 1, "Invalid page");
 
@@ -1589,26 +1596,26 @@ void discussionGroupThreaded(string group, int page, bool narrow = false)
 	//	foreach (string id, string parent, string author, string subject, long stdTime; query!"SELECT `ID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` = ?".iterate(threadID))
 	PostInfo*[] posts;
 	enum ViewSQL = "SELECT `ROWID`, `ID`, `ParentID`, `Author`, `AuthorEmail`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` IN (SELECT `ID` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?)";
-	foreach (int rowid, string id, string parent, string author, string authorEmail, string subject, long stdTime; query!ViewSQL.iterate(group, THREADS_PER_PAGE, getPageOffset(page, THREADS_PER_PAGE)))
+	foreach (int rowid, string id, string parent, string author, string authorEmail, string subject, long stdTime; query!ViewSQL.iterate(groupInfo.internalName, THREADS_PER_PAGE, getPageOffset(page, THREADS_PER_PAGE)))
 		posts ~= [PostInfo(rowid, id, null, parent, author, authorEmail, subject, SysTime(stdTime, UTC()))].ptr; // TODO: optimize?
 
 	html.put(
 		`<table id="group-index-threaded" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(userSettings.groupViewMode), html.put(`">`
-		`<tr class="group-index-header"><th><div>`), newPostButton(group), html.putEncodedEntities(group), html.put(`</div></th></tr>`,
+		`<tr class="group-index-header"><th><div>`), newPostButton(groupInfo), html.putEncodedEntities(groupInfo.publicName), html.put(`</div></th></tr>`,
 	//	`<tr class="group-index-captions"><th>Subject / Author</th><th>Time</th>`,
 		`<tr><td class="group-threads-cell"><div class="group-threads"><table>`);
 	formatThreadedPosts(posts, narrow);
 	html.put(`</table></div></td></tr>`);
-	threadPager(group, page, narrow ? 25 : 50);
+	threadPager(groupInfo, page, narrow ? 25 : 50);
 	html.put(`</table>`);
 }
 
-void discussionGroupSplit(string group, int page)
+void discussionGroupSplit(GroupInfo groupInfo, int page)
 {
 	html.put(
 		`<table id="group-split"><tr>`
 		`<td id="group-split-list"><div>`);
-	discussionGroupThreaded(group, page, true);
+	discussionGroupThreaded(groupInfo, page, true);
 	html.put(
 		`</div></td>`
 		`<td id="group-split-message" class="group-split-message-none">`
@@ -1618,24 +1625,24 @@ void discussionGroupSplit(string group, int page)
 		`</tr></table>`);
 }
 
-void discussionGroupSplitFromPost(string id, out string group, out int page, out string threadID)
+void discussionGroupSplitFromPost(string id, out GroupInfo groupInfo, out int page, out string threadID)
 {
 	auto post = getPost(id);
 	enforce(post, "Post not found");
 
-	group = post.getGroup();
+	groupInfo = post.getGroup();
 	threadID = post.cachedThreadID;
-	page = getThreadPage(group, threadID);
+	page = getThreadPage(groupInfo, threadID);
 
-	discussionGroupSplit(group, page);
+	discussionGroupSplit(groupInfo, page);
 }
 
-int getThreadPage(string group, string thread)
+int getThreadPage(GroupInfo groupInfo, string thread)
 {
 	int page = 0;
 
 	foreach (long time; query!"SELECT `LastUpdated` FROM `Threads` WHERE `ID` = ? LIMIT 1".iterate(thread))
-		foreach (int threadIndex; query!"SELECT COUNT(*) FROM `Threads` WHERE `Group` = ? AND `LastUpdated` > ? ORDER BY `LastUpdated` DESC".iterate(group, time))
+		foreach (int threadIndex; query!"SELECT COUNT(*) FROM `Threads` WHERE `Group` = ? AND `LastUpdated` > ? ORDER BY `LastUpdated` DESC".iterate(groupInfo.internalName, time))
 			page = indexToPage(threadIndex, THREADS_PER_PAGE);
 
 	enforce(page > 0, "Can't find thread's page");
@@ -2019,7 +2026,7 @@ string getPostAtThreadIndex(string threadID, int index)
 	throw new NotFoundException(format("Post #%d of thread %s not found", index, threadID));
 }
 
-void discussionThread(string id, int page, out string group, out string title, bool markAsRead)
+void discussionThread(string id, int page, out GroupInfo groupInfo, out string title, bool markAsRead)
 {
 	//auto viewMode = user.get("threadviewmode", "flat"); // legacy
 	auto viewMode = "flat";
@@ -2039,8 +2046,8 @@ void discussionThread(string id, int page, out string group, out string title, b
 
 	enforce(posts.length, "Thread not found");
 
-	group = posts[0].getGroup();
-	title = posts[0].subject;
+	groupInfo = posts[0].getGroup();
+	title     = posts[0].subject;
 
 	if (nested)
 		posts = Rfc850Post.threadify(posts);
@@ -2076,12 +2083,12 @@ void discussionThreadOverview(string threadID, string selectedID)
 	html.put(`</table></div></td></tr></table>`);
 }
 
-void discussionSinglePost(string id, out string group, out string title, out string threadID)
+void discussionSinglePost(string id, out GroupInfo groupInfo, out string title, out string threadID)
 {
 	auto post = getPost(id);
 	enforce(post, "Post not found");
-	group = post.getGroup();
-	title = post.subject;
+	groupInfo = post.getGroup();
+	title     = post.subject;
 	threadID = post.cachedThreadID;
 
 	formatSplitPost(post, false);
@@ -2127,7 +2134,7 @@ void autoSaveDraft(UrlParameters clientVars)
 		.exec(clientVars.toJson, Clock.currTime.stdTime, PostDraft.Status.edited, draftID);
 }
 
-PostDraft newPostDraft(string where)
+PostDraft newPostDraft(GroupInfo groupInfo)
 {
 	auto draftID = randomString();
 	auto draft = PostDraft(PostDraft.Status.reserved, UrlParameters([
@@ -2135,7 +2142,7 @@ PostDraft newPostDraft(string where)
 		"name" : userSettings.name,
 		"email" : userSettings.email,
 	]), [
-		"where" : where,
+		"where" : groupInfo.internalName,
 	]);
 	createDraft(draft);
 	return draft;
@@ -2189,7 +2196,7 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 			`<table class="forum-table forum-error">`
 				`<tr><th>Can't post to archive</th></tr>`
 				`<tr><td class="forum-table-message">`
-					~ info.postMessage.replace("%NAME%", info.name) ~
+					), html.putEncodedEntities(info.publicName), html.put(
 				`</td></tr>`
 			`</table>`);
 		return false;
@@ -2199,7 +2206,7 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 		auto config = loadIni!SmtpConfig("config/sources/smtp/" ~ info.sinkName ~ ".ini");
 		html.put(`<div class="forum-notice">Note: you are posting to a mailing list.<br>`
 			`Your message will not go through unless you `
-			`<a href="`), html.putEncodedEntities(config.listInfo), html.putEncodedEntities(info.name), html.put(`">subscribe to the mailing list</a> first.<br>`
+			`<a href="`), html.putEncodedEntities(config.listInfo), html.putEncodedEntities(info.internalName), html.put(`">subscribe to the mailing list</a> first.<br>`
 			`You must then use the same email address when posting here as the one you used to subscribe to the list.<br>`
 			`If you do not want to receive mailing list mail, you can disable mail delivery at the above link.</div>`);
 	}
@@ -2223,7 +2230,7 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 
 	html.put(
 		`<div id="postform-info">`
-			`Posting to <b>`), html.putEncodedEntities(info.name), html.put(`</b>`,
+			`Posting to <b>`), html.putEncodedEntities(info.publicName), html.put(`</b>`,
 			(parent
 				? ` in reply to ` ~ postLink(parentInfo)
 				: info
@@ -3278,7 +3285,7 @@ void formatSearchResult(Rfc850Post post, string snippet)
 			`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(2), `</tr>` // Fixed layout dummies
 			`<tr class="post-header"><th colspan="2">`
 				`<div class="post-time">`, summarizeTime(time), `</div>`,
-				encodeEntities(post.where), ` &raquo; `
+				encodeEntities(post.publicGroupNames().join(", ")), ` &raquo; `
 				`<a title="View this post" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" class="permalink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread"), `">`,
 					encodeEntities(rawSubject),
 				`</a>`
@@ -3647,34 +3654,34 @@ enum FEED_HOURS_MAX = 72;
 
 CachedSet!(string, CachedResource) feedCache;
 
-CachedResource getFeed(string group, bool threadsOnly, int hours)
+CachedResource getFeed(GroupInfo groupInfo, bool threadsOnly, int hours)
 {
 	string feedUrl = "http://" ~ vhost ~ "/feed" ~
 		(threadsOnly ? "/threads" : "/posts") ~
-		(group ? "/" ~ group : "") ~
+		(groupInfo ? "/" ~ groupInfo.urlName : "") ~
 		(hours!=FEED_HOURS_DEFAULT ? "?hours=" ~ text(hours) : "");
 
 	CachedResource getFeed()
 	{
-		auto title = "Latest " ~ (threadsOnly ? "threads" : "posts") ~ (group ? " on " ~ group : "");
-		auto posts = getFeedPosts(group, threadsOnly, hours);
-		auto feed = makeFeed(posts, feedUrl, title, group is null);
+		auto title = "Latest " ~ (threadsOnly ? "threads" : "posts") ~ (groupInfo ? " on " ~ groupInfo.publicName : "");
+		auto posts = getFeedPosts(groupInfo, threadsOnly, hours);
+		auto feed = makeFeed(posts, feedUrl, title, groupInfo is null);
 		return feed;
 	}
 	return feedCache(feedUrl, getFeed());
 }
 
-Rfc850Post[] getFeedPosts(string group, bool threadsOnly, int hours)
+Rfc850Post[] getFeedPosts(GroupInfo groupInfo, bool threadsOnly, int hours)
 {
-	string PERF_SCOPE = "getFeedPosts(%s,%s,%s)".format(group, threadsOnly, hours); mixin(MeasurePerformanceMixin);
+	string PERF_SCOPE = "getFeedPosts(%s,%s,%s)".format(groupInfo.internalName, threadsOnly, hours); mixin(MeasurePerformanceMixin);
 
 	auto since = (Clock.currTime() - dur!"hours"(hours)).stdTime;
 	auto iterator =
-		group ?
+		groupInfo ?
 			threadsOnly ?
-				query!"SELECT `Message` FROM `Posts` WHERE `ID` IN (SELECT `ID` FROM `Groups` WHERE `Time` > ? AND `Group` = ?) AND `ID` = `ThreadID`".iterate(since, group)
+				query!"SELECT `Message` FROM `Posts` WHERE `ID` IN (SELECT `ID` FROM `Groups` WHERE `Time` > ? AND `Group` = ?) AND `ID` = `ThreadID`".iterate(since, groupInfo.internalName)
 			:
-				query!"SELECT `Message` FROM `Posts` WHERE `ID` IN (SELECT `ID` FROM `Groups` WHERE `Time` > ? AND `Group` = ?)".iterate(since, group)
+				query!"SELECT `Message` FROM `Posts` WHERE `ID` IN (SELECT `ID` FROM `Groups` WHERE `Time` > ? AND `Group` = ?)".iterate(since, groupInfo.internalName)
 		:
 			threadsOnly ?
 				query!"SELECT `Message` FROM `Posts` WHERE `Time` > ? AND `ID` = `ThreadID`".iterate(since)
@@ -3702,7 +3709,7 @@ CachedResource makeFeed(Rfc850Post[] posts, string feedUrl, string feedTitle, bo
 
 		auto postTitle = post.rawSubject;
 		if (addGroup)
-			postTitle = "[" ~ post.where ~ "] " ~ postTitle;
+			postTitle = "[" ~ post.publicGroupNames().join(", ") ~ "] " ~ postTitle;
 
 		feed.putEntry(post.url, postTitle, post.author, post.time, cast(string)html.get(), post.url);
 	}

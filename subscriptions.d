@@ -489,13 +489,16 @@ final class ContentTrigger : Trigger
 		);
 		foreach (set; groupHierarchy)
 		{
+			if (!set.visible)
+				continue;
+
 			html.put(
 				`<option disabled>`), html.putEncodedEntities(set.shortName), html.put(`</option>`
 			);
 			foreach (group; set.groups)
 				html.put(
-					`<option value="`), html.putEncodedEntities(group.name), html.put(`"`, groups.canFind(group.name) ? ` selected` : ``, `>`
-						`&nbsp;&nbsp;&nbsp;`), html.putEncodedEntities(group.name), html.put(`</option>`
+					`<option value="`), html.putEncodedEntities(group.internalName), html.put(`"`, groups.canFind(group.internalName) ? ` selected` : ``, `>`
+						`&nbsp;&nbsp;&nbsp;`), html.putEncodedEntities(group.publicName), html.put(`</option>`
 				);
 		}
 		html.put(

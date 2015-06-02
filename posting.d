@@ -19,6 +19,7 @@ module posting;
 import std.algorithm;
 import std.datetime;
 import std.exception;
+import std.range.primitives;
 import std.string;
 import std.file;
 
@@ -293,7 +294,11 @@ private:
 
 	void postMessage()
 	{
-		auto group = getGroupInfo(post.where.split(",")[0]);
+		auto groups = post.xref.map!(x => x.group.getGroupInfo());
+		enforce(groups.length, "No groups");
+		auto group = groups.front;
+		auto sinkTypes = groups.map!(group => group.sinkType);
+		enforce(sinkTypes.uniq.walkLength == 1, "Can't cross-post across protocols");
 		switch (group.sinkType)
 		{
 			case null:
@@ -392,7 +397,7 @@ private:
 		smtp.handleStateChanged = &onStateChanged;
 		smtp.sendMessage(
 			"<" ~ post.authorEmail ~ ">",
-			"<" ~ toLower(group.name) ~ "@" ~ config.domain ~ ">",
+			"<" ~ toLower(group.internalName) ~ "@" ~ config.domain ~ ">",
 			post.message.splitAsciiLines()
 		);
 	}

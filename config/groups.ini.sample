@@ -12,8 +12,11 @@ shortName=Example set
 # Example group.
 [groups.example]
 
-# name is what appears on the web pages.
-name=example
+# Name used by the mailing lists, NNTP servers, etc.
+internalName=example
+
+# Name visible on web pages.
+publicName=Example
 
 # urlName is what appears in URLs.
 urlName=example

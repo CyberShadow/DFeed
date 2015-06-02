@@ -23,7 +23,7 @@ struct Config
 	struct Set
 	{
 		string name, shortName;
-		bool visible;
+		bool visible = true;
 	}
 	OrderedMap!(string, Set) sets;
 
@@ -34,7 +34,8 @@ struct Config
 
 	struct Group
 	{
-		string name, urlName, groupSet, description, postMessage, sinkType, sinkName;
+		string internalName, publicName, urlName, groupSet, description, postMessage, sinkType, sinkName;
+		string[] urlAliases;
 		OrderedMap!(string, AlsoVia) alsoVia;
 	}
 	OrderedMap!(string, Group) groups;
@@ -54,6 +55,8 @@ struct GroupSet
 }
 immutable GroupSet[] groupHierarchy;
 
+alias GroupInfo = immutable(Config.Group)*;
+
 shared static this()
 {
 	import std.algorithm;
@@ -67,11 +70,20 @@ shared static this()
 		)).array;
 }
 
-auto getGroupInfo(string name)
+GroupInfo getGroupInfo(string internalName)
 {
 	foreach (set; groupHierarchy)
 		foreach (ref group; set.groups)
-			if (group.name == name)
+			if (group.internalName == internalName)
+				return &group;
+	return null;
+}
+
+GroupInfo getGroupInfoByUrl(string urlName)
+{
+	foreach (set; groupHierarchy)
+		foreach (ref group; set.groups)
+			if (group.urlName == urlName)
 				return &group;
 	return null;
 }

@@ -27,9 +27,11 @@ public import ae.net.ietf.message;
 import ae.net.ietf.url;
 import ae.net.ietf.wrap;
 import ae.utils.array;
+import ae.utils.meta;
 
 import bitly;
 import common;
+import groups;
 import site;
 
 alias std.string.indexOf indexOf;
@@ -132,8 +134,14 @@ class Rfc850Post : Post
 				formatForIRC(handler);
 			});
 
+		string groupPublicName(string internalName)
+		{
+			auto groupInfo = getGroupInfo(internalName);
+			return groupInfo ? groupInfo.publicName : internalName;
+		}
+
 		handler(format("%s%s %s %s%s",
-			where is null ? null : "[" ~ where.replace("digitalmars.", "dm.") ~ "] ",
+			xref.length ? publicGroupNames.join(",") : null,
 			author == "" ? "<no name>" : filterIRCName(author),
 			reply ? "replied to" : "posted",
 			subject == "" ? "<no subject>" : `"` ~ subject ~ `"`,
@@ -154,6 +162,11 @@ class Rfc850Post : Post
 			return true;
 
 		return !reply || author.isIn(VIPs);
+	}
+
+	@property string[] publicGroupNames()
+	{
+		return xref.map!(x => x.group.getGroupInfo.I!(gi => gi ? gi.publicName : x.group)).array();
 	}
 
 	@property string where()
@@ -268,8 +281,8 @@ string idToFragment(string id)
 	return "post-" ~ encodeAnchor(id[1..$-1]);
 }
 
-string getGroup(Rfc850Post post)
+GroupInfo getGroup(Rfc850Post post)
 {
 	enforce(post.xref.length, "No groups found in post");
-	return post.xref[0].group;
+	return getGroupInfo(post.xref[0].group);
 }
