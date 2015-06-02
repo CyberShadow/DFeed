@@ -792,6 +792,15 @@ final class EmailAction : Action
 		data["saction-email-address"] = address;
 	}
 
+	string getUserRealName(string userName)
+	{
+		auto name = getUserSetting(userName, "name");
+		if (!name)
+		//	name = address.split("@")[0].capitalize();
+			name = userName;
+		return name;
+	}
+
 	override void run(ref Subscription subscription, Rfc850Post post)
 	{
 		if (!enabled)
@@ -818,14 +827,10 @@ final class EmailAction : Action
 			return;
 		}
 
-		auto name = getUserSetting(subscription.userName, "name");
-		if (!name)
-			name = address.split("@")[0].capitalize();
-
 		queue[address] = Email([
 			"-s", subscription.trigger.getShortPostDescription(post),
 			"-r", "%s <no-reply@%s>".format(site.config.host, site.config.host),
-			"\"%s\" <%s>".format(name, address)], formatMessage(subscription, post));
+			"\"%s\" <%s>".format(getUserRealName(userName), address)], formatMessage(subscription, post));
 
 		if (!queueTask)
 			queueTask = setTimeout({
@@ -877,7 +882,7 @@ http://%s/settings
 .
 EOF"
 		.format(
-			getUserSetting(subscription.userName, "name").split(" ")[0],
+			getUserRealName(userName).split(" ")[0],
 			subscription.trigger.getLongPostDescription(post),
 			post.references.length ? "post" : "thread",
 			post.url,
