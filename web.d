@@ -503,6 +503,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			{
 				enforce(path.length > 1, "No subscription specified");
 				int page = to!int(parameters.get("page", "1"));
+				breadcrumbs ~= "View subscription";
 				discussionSubscriptionPosts(urlDecode(pathX), page, title);
 				break;
 			}
@@ -520,7 +521,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			}
 			case "search":
 			{
-				title = "Search";
+				breadcrumbs ~= title = "Search";
 				discussionSearch(parameters);
 				break;
 			}
