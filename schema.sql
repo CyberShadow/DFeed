@@ -124,10 +124,10 @@ CREATE TABLE [SubscriptionPosts] (
 CREATE INDEX [SubscriptionPostID] ON [SubscriptionPosts] ([SubscriptionID], [Time] DESC);
 
 -- Table `PostSearch`
-CREATE VIRTUAL TABLE [PostSearch] USING fts4([Time], [ThreadMD5], [Group], [Author], [AuthorEmail], [Subject], [Content], order=desc);
+CREATE VIRTUAL TABLE [PostSearch] USING fts4([Time], [ThreadMD5], [Group], [Author], [AuthorEmail], [Subject], [Content], [NewThread], order=desc);
 
 -- Table `PostSearch_content`
-CREATE TABLE 'PostSearch_content'(docid INTEGER PRIMARY KEY, 'c0Time', 'c1ThreadMD5', 'c2Group', 'c3Author', 'c4AuthorEmail', 'c5Subject', 'c6Content');
+CREATE TABLE 'PostSearch_content'(docid INTEGER PRIMARY KEY, 'c0Time', 'c1ThreadMD5', 'c2Group', 'c3Author', 'c4AuthorEmail', 'c5Subject', 'c6Content', 'c7NewThread');
 
 -- Table `PostSearch_segments`
 CREATE TABLE 'PostSearch_segments'(blockid INTEGER PRIMARY KEY, block BLOB);

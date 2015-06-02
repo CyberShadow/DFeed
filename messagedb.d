@@ -98,8 +98,18 @@ protected:
 				query!"UPDATE `Threads` SET `LastPost` = ?, `LastUpdated` = ? WHERE `ROWID` = ?".exec(message.id, message.time.stdTime, threadIndex);
 		}
 
-		query!"INSERT OR REPLACE INTO [PostSearch] ([ROWID], [Time], [ThreadMD5], [Group], [Author], [AuthorEmail], [Subject], [Content]) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-			.exec(message.rowid, message.time.stdTime, message.threadID.getDigestString!MD5().toLower(), message.xref.map!(xref => xref.group.searchTerm).join(","), message.author, message.authorEmail, message.subject, message.newContent);
+		query!"INSERT OR REPLACE INTO [PostSearch] ([ROWID], [Time], [ThreadMD5], [Group], [Author], [AuthorEmail], [Subject], [Content], [NewThread]) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+			.exec(
+				message.rowid,
+				message.time.stdTime,
+				message.threadID.getDigestString!MD5().toLower(),
+				message.xref.map!(xref => xref.group.searchTerm).join(","),
+				message.author,
+				message.authorEmail,
+				message.subject,
+				message.newContent,
+				message.references.length ? "n" : "y",
+			);
 	}
 
 public:
