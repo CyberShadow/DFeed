@@ -2933,6 +2933,8 @@ void discussionSearch(UrlParameters parameters)
 {
 	// HTTP form parameters => search string (visible in form, ?q= parameter) => search query (sent to database)
 
+	bool doSearch = true;
+
 	string[] terms;
 	if (string searchScope = parameters.get("scope", null))
 	{
@@ -2946,20 +2948,63 @@ void discussionSearch(UrlParameters parameters)
 			terms ~= searchScope;
 	}
 	terms ~= parameters.get("q", null);
+
+	if (parameters.get("exact", null).length)
+		terms ~= '"' ~ parameters["exact"].replace(`"`, ``) ~ '"';
+
+	if (parameters.get("not", null).length)
+		foreach (word; parameters["not"].split)
+			terms ~= "-" ~ word.stripLeft('-');
+
+	foreach (param; ["group", "author", "authoremail", "subject", "content"])
+		if (parameters.get(param, null).length)
+			terms ~= param ~ ":" ~ parameters[param];
+
+	if (parameters.get("startdate", null).length || parameters.get("enddate", null).length)
+		terms ~= "date:" ~ parameters.get("startdate", null) ~ ".." ~ parameters.get("enddate", null);
+
 	auto searchString = terms.map!strip.filter!(not!empty).join(" ");
 
-	html.put(
-		`<form method="get" id="search-form">`
-		`<h1>Search</h1>`
-		`<input name="q" size="50" value="`), html.putEncodedEntities(searchString), html.put(`">`
-		`<input name="search" type="submit" value="Search">`
-		`</form>`
-	);
+	if ("advsearch" in parameters)
+	{
+		html.put(
+			`<form method="get" id="advanced-search-form">`
+			`<h1>Advanced Search</h1>`
+			`<p>Find posts with...</p>`
+			`<table>`
+				`<tr><td>all these words:`     ` </td><td><input size="50" name="q" value="`), html.putEncodedEntities(searchString), html.put(`" autofocus></td></tr>`
+				`<tr><td>this exact phrase:`   ` </td><td><input size="50" name="exact"></td></tr>`
+				`<tr><td>none of these words:` ` </td><td><input size="50" name="not"></td></tr>`
+				`<tr><td>posted in the group:` ` </td><td><input size="50" name="group"></td></tr>`
+				`<tr><td>posted by:`           ` </td><td><input size="50" name="author"></td></tr>`
+				`<tr><td>posted by (email):`   ` </td><td><input size="50" name="authoremail"></td></tr>`
+				`<tr><td>in threads titled:`   ` </td><td><input size="50" name="subject"></td></tr>`
+				`<tr><td>containing:`          ` </td><td><input size="50" name="content"></td></tr>`
+				`<tr><td>posted between:`      ` </td><td><input type="date" placeholder="yyyy-mm-dd" name="startdate"> and <input type="date" placeholder="yyyy-mm-dd" name="enddate"></td></tr>`
+			`</table>`
+			`<br>`
+			`<input name="search" type="submit" value="Advanced search">`
+			`</table>`
+			`</form>`
+		);
+		doSearch = false;
+	}
+	else
+	{
+		html.put(
+			`<form method="get" id="search-form">`
+			`<h1>Search</h1>`
+			`<input name="q" size="50" value="`), html.putEncodedEntities(searchString), html.put(`" autofocus>`
+			`<input name="search" type="submit" value="Search">`
+			`<input name="advsearch" type="submit" value="Advanced search">`
+			`</form>`
+		);
+	}
 
-	if (searchString.length)
+	if (searchString.length && doSearch)
 		try
 		{
-			long startDate = long.min;
+			long startDate = 0;
 			long endDate = long.max;
 
 			terms = searchString.split();
@@ -2999,12 +3044,11 @@ void discussionSearch(UrlParameters parameters)
 			enum queryCommon =
 				"SELECT [ROWID], snippet([PostSearch], '" ~ searchDelimStartMatch ~ "', '" ~ searchDelimEndMatch ~ "', '" ~ searchDelimEllipses ~ "') "
 				"FROM [PostSearch]";
-
-			auto iterator = (startDate == long.min && endDate == long.max)
+			auto iterator = (startDate == 0 && endDate == long.max)
 				? query!(queryCommon ~ " WHERE [PostSearch] MATCH ?                            LIMIT ? OFFSET ?")
-					.iterate(searchString,                     postsPerPage + 1, (page-1)*postsPerPage)
+					.iterate(queryString,                     postsPerPage + 1, (page-1)*postsPerPage)
 				: query!(queryCommon ~ " WHERE [PostSearch] MATCH ? AND [Time] BETWEEN ? AND ? LIMIT ? OFFSET ?")
-					.iterate(searchString, startDate, endDate, postsPerPage + 1, (page-1)*postsPerPage)
+					.iterate(queryString, startDate, endDate, postsPerPage + 1, (page-1)*postsPerPage)
 				;
 
 			foreach (int rowid, string snippet; iterator)
@@ -3035,11 +3079,12 @@ void discussionSearch(UrlParameters parameters)
 
 void formatSearchSnippet(string s)
 {
+	bool sawEllipses;
 	while (true)
 	{
 		auto i = s.indexOf(searchDelimPrefix);
 		if (i < 0)
-			return html.putEncodedEntities(s);
+			break;
 		html.putEncodedEntities(s[0..i]);
 		string delim = s[i..i+searchDelimLength];
 		s = s[i+searchDelimLength..$];
@@ -3047,10 +3092,14 @@ void formatSearchSnippet(string s)
 		{
 			case searchDelimStartMatch: html.put(`<b>`       ); break;
 			case searchDelimEndMatch  : html.put(`</b>`      ); break;
-			case searchDelimEllipses  : html.put(`<b>...</b>`); break;
+			case searchDelimEllipses  : html.put(`<b>...</b>`); sawEllipses = true; break;
 			default: break;
 		}
 	}
+	html.putEncodedEntities(s);
+
+	if (!sawEllipses)
+		html.put(`<br><br><b>[...]</b>`);
 }
 
 void formatSearchResult(Rfc850Post post, string snippet)
@@ -3066,7 +3115,7 @@ void formatSearchResult(Rfc850Post post, string snippet)
 			`<tr class="post-header"><th colspan="2">`
 				`<div class="post-time">`, summarizeTime(time), `</div>`,
 				encodeEntities(post.where), ` &raquo; `
-				`<a title="Permanent link to this post" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" class="permalink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread"), `">`,
+				`<a title="View this post" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" class="permalink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread"), `">`,
 					encodeEntities(rawSubject),
 				`</a>`
 			`</th></tr>`
