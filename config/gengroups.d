@@ -10,14 +10,14 @@ import ae.utils.array;
 
 struct DAlsoVia { string name, url; }
 struct DGroupInfo { string name, description, postMessage, mlName; bool mlOnly; DAlsoVia[string] alsoVia; }
-struct DGroupSet { string id, name, shortName; DGroupInfo[] groups; }
+struct DGroupSet { string id, name, shortName; DGroupInfo[] groups; bool visible; }
 
-DGroupSet makeDGroupSet(string name, DGroupInfo[] groups)
+DGroupSet makeDGroupSet(string name, DGroupInfo[] groups, bool visible = true)
 {
 	auto shortName = name;
 	shortName.eat("D Programming Language - ");
 	auto id = shortName.toLower.replace(".", "-").replace(" ", "-");
-	return DGroupSet(id, name, shortName, groups);
+	return DGroupSet(id, name, shortName, groups, visible);
 }
 
 DGroupInfo makeDGroupInfo(string name, string archiveName, string mlName, string description, bool mlOnly, bool bugzilla)
@@ -65,6 +65,8 @@ void main()
 
 			makeDGroupInfo("digitalmars.D.debugger"  , "digitalmars/D/debugger"  , "digitalmars-d-debugger"  , "Debuggers for D"                                                  , false, false),
 			makeDGroupInfo("digitalmars.D.ide"       , "digitalmars/D/ide"       , "digitalmars-d-ide"       , "Integrated Development Environments for D"                        , false, false),
+
+			makeDGroupInfo("digitalmars.D.dwt"       , "digitalmars/D/dwt"       , "digitalmars-d-dwt"       , "Developing the D Widget Toolkit"                                  , false, false),
 		]),
 		makeDGroupSet("D Programming Language - Development", [
 			makeDGroupInfo("digitalmars.D.bugs"      , "digitalmars/D/bugs"      , "digitalmars-d-bugs"      , "Bug reports for D compiler and library"                           , false, true ),
@@ -75,14 +77,11 @@ void main()
 			makeDGroupInfo("D-runtime"               , null                      , "D-runtime"               , "Runtime library design and implementation"                        , true , false),
 		]),
 		makeDGroupSet("Other", [
-			makeDGroupInfo("digitalmars.D.dwt"       , "digitalmars/D/dwt"       , "digitalmars-d-dwt"       , "Developing the D Widget Toolkit"                                  , false, false),
 			makeDGroupInfo("digitalmars.D.dtl"       , "digitalmars/D/dtl"       , "digitalmars-d-dtl"       , "Developing the D Template Library"                                , false, false),
-
 			makeDGroupInfo("DMDScript"               , "DMDScript"               , null                      , "General discussion of DMDScript"                                  , false, false),
 			makeDGroupInfo("digitalmars.empire"      , "digitalmars/empire"      , null                      , "General discussion of Empire, the Wargame of the Century"         , false, false),
 			makeDGroupInfo("D"                       , ""                        , null                      , "Retired, use digitalmars.D instead"                               , false, false),
-		]),
-	/*
+		], false),
 		makeDGroupSet("C and C++", [
 			makeDGroupInfo("c++"                     , "c++"                     , null                      , "General discussion of DMC++ compiler"                             , false, false),
 			makeDGroupInfo("c++.announce"            , "c++/announce"            , null                      , "Announcements about C++"                                          , false, false),
@@ -105,8 +104,7 @@ void main()
 			makeDGroupInfo("c++.windows.16-bits"     , "c++/windows/16-bits"     , null                      , "16 bit Windows topics"                                            , false, false),
 			makeDGroupInfo("c++.windows.32-bits"     , "c++/windows/32-bits"     , null                      , "32 bit Windows topics"                                            , false, false),
 			makeDGroupInfo("c++.wxwindows"           , "c++/wxwindows"           , null                      , "wxWindows"                                                        , false, false),
-		]),
-	*/
+		], false),
 	];
 
 	auto f = File("groups.ini", "wb");
@@ -118,6 +116,7 @@ void main()
 		f.writeln("[sets.", set.id, "]");
 		f.writeln("name=", set.name);
 		f.writeln("shortName=", set.shortName);
+		f.writeln("visible=", set.visible);
 
 		foreach (group; set.groups)
 		{

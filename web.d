@@ -860,7 +860,7 @@ string renderNav(string html)
 	auto nav2 = inferList(nav.itemSuffix, [["<?url1?>", "<?title1?>"], ["<?url2?>", "<?title2?>"]]);
 	nav.itemSuffix = null; nav.varPrefix ~= null;
 
-	return nav.render(groupHierarchy.map!(set =>
+	return nav.render(groupHierarchy.filter!(set => set.visible).map!(set =>
 		[set.shortName, nav2.render(set.groups.map!(group =>
 			["/group/" ~ group.name, group.name]
 		).array)]
@@ -1084,6 +1084,9 @@ void discussionIndex()
 	);
 	foreach (set; groupHierarchy)
 	{
+		if (!set.visible)
+			continue;
+
 		html.put(
 			`<tr><th colspan="5">`), html.putEncodedEntities(set.name), html.put(`</th></tr>`
 			`<tr class="subheader"><th>Group</th><th>Last Post</th><th>Threads</th><th>Posts</th><th>Also via</th></tr>`

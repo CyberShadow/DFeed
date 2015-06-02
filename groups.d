@@ -23,6 +23,7 @@ struct Config
 	struct Set
 	{
 		string name, shortName;
+		bool visible;
 	}
 	OrderedMap!(string, Set) sets;
 
