@@ -1093,12 +1093,13 @@ void newPostButton(string group)
 		`</form>`);
 }
 
+/// pageCount==int.max indicates unknown number of pages
 void pager(string base, int page, int pageCount, int maxWidth = 50)
 {
 	string linkOrNot(string text, int page, bool cond)
 	{
 		if (cond)
-			return `<a href="` ~ encodeEntities(base) ~ `?page=` ~ .text(page) ~ `">` ~ text ~ `</a>`;
+			return `<a href="` ~ encodeEntities(base) ~ (base.canFind('?') ? `&` : `?`) ~ `page=` ~ .text(page) ~ `">` ~ text ~ `</a>`;
 		else
 			return `<span class="disabled-link">` ~ text ~ `</span>`;
 	}
@@ -1111,6 +1112,8 @@ void pager(string base, int page, int pageCount, int maxWidth = 50)
 
 		int pagerStart = max(1, page - radius);
 		int pagerEnd = min(pageCount, page + radius);
+		if (pageCount==int.max)
+			pagerEnd = page + 1;
 
 		int width = pagerEnd - pagerStart;
 		foreach (n; pagerStart..pagerEnd+1)
@@ -1127,6 +1130,9 @@ void pager(string base, int page, int pageCount, int maxWidth = 50)
 
 	int pagerStart = max(1, page - radius);
 	int pagerEnd = min(pageCount, page + radius);
+	if (pageCount==int.max)
+		pagerEnd = page + 1;
+
 	string[] pager;
 	if (pagerStart > 1)
 		pager ~= "&hellip;";
@@ -1148,7 +1154,7 @@ void pager(string base, int page, int pageCount, int maxWidth = 50)
 			`<div class="pager-right">`,
 				linkOrNot("Next &rsaquo;", page+1, page<pageCount),
 				`&nbsp;&nbsp;&nbsp;`,
-				linkOrNot("Last &raquo; ", pageCount, page!=pageCount),
+				linkOrNot("Last &raquo; ", pageCount, page!=pageCount && pageCount!=int.max),
 			`</div>`
 			`<div class="pager-numbers">`, pager.join(` `), `</div>`
 		`</th></tr>`);
@@ -2945,7 +2951,7 @@ void discussionSearch(UrlParameters parameters)
 		foreach (int rowid, string snippet; query!"SELECT [ROWID], snippet([PostSearch]) FROM [PostSearch] WHERE [PostSearch] MATCH ? LIMIT ? OFFSET ?".iterate(searchString, postsPerPage + 1, (page-1)*postsPerPage))
 		{
 			n++;
-			if (n == postsPerPage)
+			if (n > postsPerPage)
 				break;
 
 			html.put(`<pre>`, snippet, `</pre>`);
@@ -2954,10 +2960,15 @@ void discussionSearch(UrlParameters parameters)
 			formatPost(post, null, false);
 		}
 
-		//pager();
-
 		if (n == 0)
 			html.put(`<p>Your search - <b>`), html.putEncodedEntities(searchString), html.put(`</b> - did not match any forum posts.</p>`);
+
+		if (page != 1 || n > postsPerPage)
+		{
+			html.put(`<table class="forum-table post-pager">`);
+			pager("?q=" ~ searchString, page, n > postsPerPage ? int.max : page);
+			html.put(`</table>`);
+		}
 	}
 }
 
