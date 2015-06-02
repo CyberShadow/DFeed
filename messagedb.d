@@ -87,15 +87,19 @@ protected:
 			query!"INSERT OR IGNORE INTO `Groups` (`Group`, `ArtNum`, `ID`, `Time`) VALUES (?, ?, ?, ?)"
 				.exec(xref.group, xref.num, message.id, message.time.stdTime);
 
-			long threadIndex = 0, lastUpdated;
-			foreach (long rowid, long updated; query!"SELECT `ROWID`, `LastUpdated` FROM `Threads` WHERE `ID` = ? AND `Group` = ?".iterate(message.threadID, xref.group))
-				threadIndex = rowid, lastUpdated = updated;
+			long threadIndex = 0, created, updated;
+			foreach (long rowid, long threadCreated, long threadUpdated; query!"SELECT `ROWID`, `Created`, `LastUpdated` FROM `Threads` WHERE `ID` = ? AND `Group` = ?".iterate(message.threadID, xref.group))
+				threadIndex = rowid, created = threadCreated, updated = threadUpdated;
 
 			if (!threadIndex) // new thread
-				query!"INSERT INTO `Threads` (`Group`, `ID`, `LastPost`, `LastUpdated`) VALUES (?, ?, ?, ?)".exec(xref.group, message.threadID, message.id, message.time.stdTime);
+				query!"INSERT INTO `Threads` (`Group`, `ID`, `LastPost`, `Created`, `LastUpdated`) VALUES (?, ?, ?, ?, ?)".exec(xref.group, message.threadID, message.id, message.time.stdTime, message.time.stdTime);
 			else
-			if (lastUpdated < message.time.stdTime)
-				query!"UPDATE `Threads` SET `LastPost` = ?, `LastUpdated` = ? WHERE `ROWID` = ?".exec(message.id, message.time.stdTime, threadIndex);
+			{
+				if ((created > message.time.stdTime || !created) && !message.references.length)
+					query!"UPDATE `Threads` SET `Created` = ? WHERE `ROWID` = ?".exec(message.time.stdTime, threadIndex);
+				if (updated < message.time.stdTime)
+					query!"UPDATE `Threads` SET `LastPost` = ?, `LastUpdated` = ? WHERE `ROWID` = ?".exec(message.id, message.time.stdTime, threadIndex);
+			}
 		}
 
 		query!"INSERT OR REPLACE INTO [PostSearch] ([ROWID], [Time], [ThreadMD5], [Group], [Author], [AuthorEmail], [Subject], [Content], [NewThread]) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"

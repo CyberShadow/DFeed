@@ -26,6 +26,7 @@ import std.exception;
 import std.file;
 import std.functional;
 import std.path;
+import std.random;
 import std.range;
 import std.regex;
 import std.stdio;
@@ -902,6 +903,129 @@ q{
 	}
 };
 
+Cached!int totalPostCountCache, totalThreadCountCache;
+
+void discussionIndexHeader()
+{
+	auto now = Clock.currTime();
+	if (now - SysTime(userSettings.sessionCanary.to!long) > 4.hours)
+	{
+		userSettings.previousSession = userSettings.currentSession;
+		userSettings.currentSession = userSettings.sessionCanary = now.stdTime.text;
+	}
+	long previousSession = userSettings.previousSession.to!long;
+
+	html.put(
+		`<h1>D Programming Language Forum</h1>`
+		`<p>Welcome`, previousSession ? ` back` : ``, `, `), html.putEncodedEntities(user.isLoggedIn() ? user.getName() : `guest`), html.put(`.</p>`
+
+		`<ul>`
+	);
+
+	string[][3] bits;
+
+	if (user.isLoggedIn())
+	{
+		auto subscriptions = getUserSubscriptions(user.getName());
+		int numSubscriptions, numNewSubscriptions;
+		foreach (subscription; subscriptions)
+		{
+			auto c = subscription.getUnreadCount();
+			if (subscription.trigger.type == "reply")
+				if (c)
+					bits[0] ~= `<li><b>You have <a href="/subscription-posts/%s">%d new repl%s to <a href="/search?q=authoremail:%s">your posts</a>.</b></li>`
+						.format(encodeEntities(subscription.id), c, c==1 ? "y" : "ies", encodeEntities(encodeUrlParameter(userSettings.email)));
+				else
+					bits[2] ~= `<li>No new replies to <a href="/search?q=authoremail:%s">your posts</a>.</li>`
+						.format(encodeEntities(encodeUrlParameter(userSettings.email)));
+			else
+			{
+				numSubscriptions++;
+				if (c)
+				{
+					numNewSubscriptions++;
+					bits[1] ~= `<li><b>You have <a href="/subscription-posts/%s">%d unread post%s matching your <a href="/settings#subscriptions">%s subscription</a> (%s).</b></li>`
+						.format(encodeEntities(subscription.id), c, c==1 ? "" : "s", subscription.trigger.type, subscription.trigger.getDescription());
+				}
+			}
+		}
+		if (numSubscriptions && !numNewSubscriptions)
+			bits[2] ~= `<li>No new posts matching your <a href="/settings#subscriptions">subscription%s</a>.</b></li>`
+				.format(numSubscriptions==1 ? "" : "s");
+	}
+	else
+	{
+		int hasPosts = 0;
+		if (userSettings.email)
+			hasPosts = query!"SELECT EXISTS(SELECT 1 FROM [Posts] WHERE [AuthorEmail] = ? LIMIT 1)".iterate(userSettings.email).selectValue!int;
+		if (hasPosts)
+			bits[2] ~= `<li>If you <a href="/register">create an account</a>, you can track replies to <a href="/search?q=authoremail:%s">your posts</a>.</li>`
+				.format(encodeEntities(encodeUrlParameter(userSettings.email)));
+	}
+
+	SysTime cutOff = previousSession ? SysTime(previousSession) : now - 24.hours;
+	int numThreads = query!"SELECT COUNT(*) FROM [Threads] WHERE [Created] >= ?".iterate(cutOff.stdTime).selectValue!int;
+	int numPosts   = query!"SELECT COUNT(*) FROM [Posts]   WHERE [Time]    >= ?".iterate(cutOff.stdTime).selectValue!int;
+
+	bits[(numThreads || numPosts) ? 1 : 2] ~=
+		"<li>"
+		~
+		(
+			(numThreads || numPosts)
+			?
+				(
+					(numThreads ? [`<a href="/search?q=time:%d..+newthread:y">%s thread%s</a>`.format(cutOff.stdTime, formatNumber(numThreads), numThreads==1 ? "" : "s")] : [])
+					~
+					(numPosts   ? [`<a href="/search?q=time:%d..">%s post%s</a>`              .format(cutOff.stdTime, formatNumber(numPosts  ), numPosts  ==1 ? "" : "s")] : [])
+				).join(" and ") ~ " ha%s been posted".format(numThreads+numPosts==1 ? "s" : "ve")
+			:
+				"No new forum activity"
+		)
+		~
+		(
+			previousSession
+			?
+				" since your last visit (%s).".format(formatDuration(now - cutOff))
+			:
+				" in the last 24 hours."
+		)
+		~
+		"</li>"
+	;
+
+	bits[2] ~= "<li>There are %s posts, %s threads, and %s registered users on this forum.</li>"
+		.format(
+			formatNumber(totalPostCountCache  (query!"SELECT COUNT(*) FROM [Posts]"  .iterate().selectValue!int)),
+			formatNumber(totalThreadCountCache(query!"SELECT COUNT(*) FROM [Threads]".iterate().selectValue!int)),
+			formatNumber(                      query!"SELECT COUNT(*) FROM [Users]"  .iterate().selectValue!int ),
+		);
+
+	bits[2] ~= "<li>Random tip: " ~ tips[uniform(0, $)] ~ "</li>";
+
+	foreach (bitGroup; bits[])
+		foreach (bit; bitGroup)
+			html.put(bit);
+	html.put(`</ul>`);
+
+	//html.put("<p>Random tip: " ~ tips[uniform(0, $)] ~ "</p>");
+}
+
+string[] tips =
+[
+	`This forum has several different <a href="/help#view-modes">view modes</a>. Try them to find one you like best. You can change the view mode in the <a href="/settings">settings</a>.`,
+	`This forum supports <a href="/help#keynav">keyboard shortcuts</a>. Press <kbd>?</kbd> to view them.`,
+	`You can focus a message with <kbd>j</kbd>/<kbd>k</kbd> and press <kbd>u</kbd> to mark it as unread, to remind you to read it later.`,
+	`The <a href="/help#avatars">avatars on this forum</a> are provided by Gravatar, which allows associating a global avatar with an email address.`,
+	`This forum remembers your read post history on a per-post basis. If you are logged in, the post history is saved on the server, and in a compressed cookie otherwise.`,
+	`Much of this forum's content is also available via classic mailing lists or NNTP - see the "Also via" column on the forum index.`,
+	`If you create a Gravatar profile with the email address you post with, it will be accessible when clicking your avatar.`,
+	`You don't need to create an account to post on this forum, but doing so <a href="/help#accounts">offers a few benefits</a>.`,
+	`To subscribe to a thread, click the "Subscribe" link on that thread's first post. You need to be logged in to create subscriptions.`,
+	`To search the forum, use the search widget on the left, or you can visit <a href="/search">the search page</a> directly.`,
+	`This forum is open-source! Read or fork the code <a href="https://github.com/CyberShadow/DFeed">on GitHub</a>.`,
+	`If you encounter a bug or need a missing feature, you can <a href="https://github.com/CyberShadow/DFeed/issues">create an issue on GitHub</a>.`,
+];
+
 int[string] getThreadCounts()
 {
 	enum PERF_SCOPE = "getThreadCounts"; mixin(MeasurePerformanceMixin);
@@ -936,6 +1060,8 @@ Cached!(string[string]) lastPostCache;
 
 void discussionIndex()
 {
+	discussionIndexHeader();
+
 	auto threadCounts = threadCountCache(getThreadCounts());
 	auto postCounts = postCountCache(getPostCounts());
 	auto lastPosts = lastPostCache(getLastPosts());
@@ -952,7 +1078,6 @@ void discussionIndex()
 
 		return `<div class="forum-no-data">-</div>`;
 	}
-
 	html.put(
 		`<table id="forum-index" class="forum-table">`
 		`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(5), `</tr>` // Fixed layout dummies
@@ -2648,7 +2773,7 @@ struct UserSettings
 
 	/// Posting details. Remembered when posting messages.
 	alias name = userSetting!("name", null, SettingType.server);
-	alias email = userSetting!("email", null, SettingType.server);
+	alias email = userSetting!("email", null, SettingType.server); /// ditto
 
 	/// View mode. Can be changed in the settings.
 	alias groupViewMode = userSetting!("groupviewmode", "basic", SettingType.client);
@@ -2658,6 +2783,11 @@ struct UserSettings
 
 	/// Any pending notices that should be shown on the next page shown.
 	alias pendingNotice = userSetting!("pending-notice", null, SettingType.session);
+
+	/// Session management
+	alias previousSession = userSetting!("previous-session", "0", SettingType.server);
+	alias currentSession  = userSetting!("current-session" , "0", SettingType.server);  /// ditto
+	alias sessionCanary   = userSetting!("session-canary"  , "0", SettingType.session); /// ditto
 
 	/// A unique ID used to recognize both logged-in and anonymous users.
 	alias id = randomUserString!("id", SettingType.server);
@@ -3034,9 +3164,20 @@ void discussionSearch(UrlParameters parameters)
 					endDate   = parseDate(dates[2], 1.days, endDate);
 				}
 				else
+				if (term.startsWith("time:") && term.canFind(".."))
+				{
+					long parseTime(string time, long def)
+					{
+						return time.length ? time.to!long : def;
+					}
+
+					auto times = term.findSplit(":")[2].findSplit("..");
+					startDate = parseTime(times[0], startDate);
+					endDate   = parseTime(times[2], endDate);
+				}
+				else
 					queryTerms ~= term;
 
-			enforce(queryTerms.length, "Please specify some terms to search for");
 			enforce(startDate < endDate, "Start date must be before end date");
 			auto queryString = queryTerms.join(' ');
 
@@ -3050,11 +3191,16 @@ void discussionSearch(UrlParameters parameters)
 			enum queryCommon =
 				"SELECT [ROWID], snippet([PostSearch], '" ~ searchDelimStartMatch ~ "', '" ~ searchDelimEndMatch ~ "', '" ~ searchDelimEllipses ~ "', 6) "
 				"FROM [PostSearch]";
-			auto iterator = (startDate == 0 && endDate == long.max)
-				? query!(queryCommon ~ " WHERE [PostSearch] MATCH ?                            LIMIT ? OFFSET ?")
-					.iterate(queryString,                     postsPerPage + 1, (page-1)*postsPerPage)
-				: query!(queryCommon ~ " WHERE [PostSearch] MATCH ? AND [Time] BETWEEN ? AND ? LIMIT ? OFFSET ?")
-					.iterate(queryString, startDate, endDate, postsPerPage + 1, (page-1)*postsPerPage)
+			auto iterator =
+				queryTerms.length
+				?
+					(startDate == 0 && endDate == long.max)
+					? query!(queryCommon ~ " WHERE [PostSearch] MATCH ?                            LIMIT ? OFFSET ?")
+						.iterate(queryString,                     postsPerPage + 1, (page-1)*postsPerPage)
+					: query!(queryCommon ~ " WHERE [PostSearch] MATCH ? AND [Time] BETWEEN ? AND ? LIMIT ? OFFSET ?")
+						.iterate(queryString, startDate, endDate, postsPerPage + 1, (page-1)*postsPerPage)
+				: query!("SELECT [ROWID], '' FROM [Posts] WHERE [Time] BETWEEN ? AND ? ORDER BY [Time] DESC LIMIT ? OFFSET ?")
+					.iterate(startDate, endDate, postsPerPage + 1, (page-1)*postsPerPage)
 				;
 
 			foreach (int rowid, string snippet; iterator)
@@ -3066,7 +3212,19 @@ void discussionSearch(UrlParameters parameters)
 				//html.put(`<pre>`, snippet, `</pre>`);
 				auto messageID = query!"SELECT [ID] FROM [Posts] WHERE [ROWID] = ?".iterate(rowid).selectValue!string();
 				auto post = getPost(messageID);
-				formatSearchResult(post, snippet);
+				if (post)
+				{
+					if (!snippet.length) // No MATCH (date only)
+					{
+						enum maxWords = 20;
+						auto segments = post.newContent.segmentByWhitespace;
+						if (segments.length < maxWords*2)
+							snippet = segments.join();
+						else
+							snippet = segments[0..maxWords*2-1].join() ~ searchDelimEllipses;
+					}
+					formatSearchResult(post, snippet);
+				}
 			}
 
 			if (n == 0)

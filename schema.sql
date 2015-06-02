@@ -21,7 +21,7 @@ CREATE TABLE [Threads] (
 [Group] VARCHAR(50)  NULL,
 [ID] VARCHAR(50)  NULL,
 [LastUpdated] INTEGER  NULL
-, LastPost VARCHAR(50));
+, LastPost VARCHAR(50), [Created] INTEGER NULL);
 
 -- Index `PostThreadID` on table `Posts`
 CREATE INDEX [PostThreadID] ON [Posts](
@@ -140,4 +140,10 @@ CREATE TABLE 'PostSearch_docsize'(docid INTEGER PRIMARY KEY, size BLOB);
 
 -- Table `PostSearch_stat`
 CREATE TABLE 'PostSearch_stat'(id INTEGER PRIMARY KEY, value BLOB);
+
+-- Index `ThreadCreated` on table `Threads`
+CREATE INDEX [ThreadCreated] ON [Threads] ([Created] DESC);
+
+-- Index `PostAuthorEmail` on table `Posts`
+CREATE INDEX [PostAuthorEmail] ON [Posts] ([AuthorEmail]);
 

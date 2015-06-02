@@ -46,6 +46,10 @@
   Registering an account will transfer all variables from cookies to the server database.
 </p>
 
+<p>
+  Creating an account will also allow you to create subscriptions, and be notified by IRC or email of replies to your posts, or other events.
+</p>
+
 <h2 id="email">Email address</h2>
 
 <p>
