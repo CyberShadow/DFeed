@@ -438,7 +438,7 @@ final class ContentTrigger : Trigger
 		putStringFilter("containing", messageFilter);
 	}
 
-	override string getTextDescription() { return getDescription().replace(`<b>`, ``).replace(`</b>`, ``); }
+	override string getTextDescription() { return getDescription().replace(`<b>`, "\&ldquo;").replace(`</b>`, "\&rdquo;"); }
 
 	override string getShortPostDescription(Rfc850Post post)
 	{
