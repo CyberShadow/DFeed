@@ -44,6 +44,7 @@ import ae.net.shutdown;
 import ae.sys.log;
 import ae.utils.array;
 import ae.utils.digest;
+import ae.utils.exception;
 import ae.utils.feed;
 import ae.utils.json;
 import ae.utils.meta;
@@ -659,7 +660,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		cookies = user.save();
 		return response.redirect(r.url);
 	}
-	catch (Exception e)
+	catch (CaughtException e)
 	{
 		//return response.writeError(HttpStatusCode.InternalServerError, "Unprocessed exception: " ~ e.msg);
 		if (cast(NotFoundException) e)
