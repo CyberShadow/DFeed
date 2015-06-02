@@ -914,9 +914,10 @@ void discussionIndexHeader()
 	}
 	long previousSession = userSettings.previousSession.to!long;
 
+	string name = user.isLoggedIn() ? user.getName() : userSettings.name.length ? userSettings.name.split(' ')[0] : `Guest`;
 	html.put(
 		`<h1>D Programming Language Forum</h1>`
-		`<p>Welcome`, previousSession ? ` back` : ``, `, `), html.putEncodedEntities(user.isLoggedIn() ? user.getName() : `Guest`), html.put(`.</p>`
+		`<p>Welcome`, previousSession ? ` back` : ``, `, `), html.putEncodedEntities(name), html.put(`.</p>`
 
 		`<ul>`
 	);
