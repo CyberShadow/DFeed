@@ -817,10 +817,15 @@ final class EmailAction : Action
 			// a second subscription was triggered by the same message.
 			return;
 		}
+
+		auto name = getUserSetting(subscription.userName, "name");
+		if (!name)
+			name = address.split("@")[0].capitalize();
+
 		queue[address] = Email([
 			"-s", subscription.trigger.getShortPostDescription(post),
 			"-r", "%s <no-reply@%s>".format(site.config.host, site.config.host),
-			address], formatMessage(subscription, post));
+			"\"%s\" <%s>".format(name, address)], formatMessage(subscription, post));
 
 		if (!queueTask)
 			queueTask = setTimeout({
