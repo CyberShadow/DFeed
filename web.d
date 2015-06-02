@@ -916,7 +916,7 @@ void discussionIndexHeader()
 
 	html.put(
 		`<h1>D Programming Language Forum</h1>`
-		`<p>Welcome`, previousSession ? ` back` : ``, `, `), html.putEncodedEntities(user.isLoggedIn() ? user.getName() : `guest`), html.put(`.</p>`
+		`<p>Welcome`, previousSession ? ` back` : ``, `, `), html.putEncodedEntities(user.isLoggedIn() ? user.getName() : `Guest`), html.put(`.</p>`
 
 		`<ul>`
 	);
