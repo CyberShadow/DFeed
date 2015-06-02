@@ -794,7 +794,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 
 	auto page = readText(optimizedPath(null, "web/skel.htt"));
 	//scope(failure) std.file.write("bad-tpl.html", page);
-	page = renderNav(page);
+	page = renderNav(page, currentGroup);
 	page = parseTemplate(page, &getVar);
 	page = createBundles(page, re!`<link rel="stylesheet" href="(/[^"]*?)" ?/?>`);
 	page = createBundles(page, re!`<script type="text/javascript" src="(/[^"]*?\.js)"></script>`);
@@ -861,8 +861,17 @@ string fixCSS(string css, string path)
 	)(re!`\burl\(('?)(.*?)\1\)`);
 }
 
-string renderNav(string html)
+string renderNav(string html, GroupInfo currentGroup)
 {
+	string highlightCurrent(string html)
+	{
+		return currentGroup
+			? html.replace(
+				`href=' /group/` ~ currentGroup.urlName ~ `'`,
+				`href=' /group/` ~ currentGroup.urlName ~ `' class="active"`)
+			: html;
+	}
+
 	auto nav = inferList(html, [["<?category1?>"], ["<?category2?>"]]);
 	auto nav2 = inferList(nav.itemSuffix, [["<?url1?>", "<?title1?>"], ["<?url2?>", "<?title2?>"]]);
 	nav.itemSuffix = null; nav.varPrefix ~= null;
@@ -870,7 +879,7 @@ string renderNav(string html)
 	return nav.render(groupHierarchy.filter!(set => set.visible).map!(set =>
 		[set.shortName, nav2.render(set.groups.map!(group =>
 			["/group/" ~ group.urlName, group.publicName]
-		).array)]
+		).array).I!highlightCurrent]
 	).array);
 }
 

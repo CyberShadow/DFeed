@@ -83,6 +83,14 @@ body.forum #cssmenu ul ul a {
 	color: #EEE;
 }
 
+body.forum #cssmenu ul ul a.active {
+	color: #FFF;
+}
+
+body.forum #cssmenu ul ul a.active:before {
+	color: #FF473A;
+}
+
 body.forum #cssmenu > ul > li > a:hover,
 body.forum #cssmenu > ul > li > ul > li:hover {
 	background-color: #444;
