@@ -1712,7 +1712,7 @@ void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts, bool markAsRead 
 		user.setRead(post.rowid, true);
 }
 
-void miniPostInfo(Rfc850Post post, Rfc850Post[string] knownPosts)
+void miniPostInfo(Rfc850Post post, Rfc850Post[string] knownPosts, bool showActions = true)
 {
 	string horizontalInfo;
 	string gravatarHash = getGravatarHash(post.authorEmail);
@@ -1730,7 +1730,12 @@ void miniPostInfo(Rfc850Post post, Rfc850Post[string] knownPosts)
 					`Posted by <b>`), html.putEncodedEntities(author), html.put(`</b>`,
 					parentLink ? `<br>in reply to ` ~ parentLink : null,
 				`</td>`
-				`<td class="post-info-actions">`); postActions(post.msg); html.put(`</td>`
+		);
+		if (showActions)
+			html.put(
+				`<td class="post-info-actions">`), postActions(post.msg), html.put(`</td>`
+			);
+		html.put(
 			`</tr></table>`
 		);
 	}
@@ -2917,8 +2922,17 @@ void discussionSubscriptionPosts(string subscriptionID, int page)
 
 // ***********************************************************************
 
+/// Delimiters for formatSearchSnippet.
+enum searchDelimPrefix     = "\U000FDeed"; // Private Use Area character
+enum searchDelimStartMatch = searchDelimPrefix ~ "\x01";
+enum searchDelimEndMatch   = searchDelimPrefix ~ "\x02";
+enum searchDelimEllipses   = searchDelimPrefix ~ "\x03";
+enum searchDelimLength     = searchDelimPrefix.length + 1;
+
 void discussionSearch(UrlParameters parameters)
 {
+	// HTTP form parameters => search string (visible in form, ?q= parameter) => search query (sent to database)
+
 	string[] terms;
 	if (string searchScope = parameters.get("scope", null))
 	{
@@ -2943,35 +2957,142 @@ void discussionSearch(UrlParameters parameters)
 	);
 
 	if (searchString.length)
+		try
+		{
+			long startDate = long.min;
+			long endDate = long.max;
+
+			terms = searchString.split();
+			string[] queryTerms;
+			foreach (term; terms)
+				if (term.startsWith("date:") && term.canFind(".."))
+				{
+					long parseDate(string date, Duration offset, long def)
+					{
+						if (!date.length)
+							return def;
+						else
+							try
+								return (date.parseTime!`Y-m-d` + offset).stdTime;
+							catch (Exception e)
+								throw new Exception("Invalid date: %s (%s)".format(date, e.msg));
+					}
+
+					auto dates = term.findSplit(":")[2].findSplit("..");
+					startDate = parseDate(dates[0], 0.days, startDate);
+					endDate   = parseDate(dates[2], 1.days, endDate);
+				}
+				else
+					queryTerms ~= term;
+
+			enforce(queryTerms.length, "Please specify some terms to search for");
+			enforce(startDate < endDate, "Start date must be before end date");
+			auto queryString = queryTerms.join(' ');
+
+			int page = parameters.get("page", "1").to!int;
+			enforce(page >= 1, "Invalid page number");
+
+			enum postsPerPage = 10;
+
+			int n = 0;
+
+			enum queryCommon =
+				"SELECT [ROWID], snippet([PostSearch], '" ~ searchDelimStartMatch ~ "', '" ~ searchDelimEndMatch ~ "', '" ~ searchDelimEllipses ~ "') "
+				"FROM [PostSearch]";
+
+			auto iterator = (startDate == long.min && endDate == long.max)
+				? query!(queryCommon ~ " WHERE [PostSearch] MATCH ?                            LIMIT ? OFFSET ?")
+					.iterate(searchString,                     postsPerPage + 1, (page-1)*postsPerPage)
+				: query!(queryCommon ~ " WHERE [PostSearch] MATCH ? AND [Time] BETWEEN ? AND ? LIMIT ? OFFSET ?")
+					.iterate(searchString, startDate, endDate, postsPerPage + 1, (page-1)*postsPerPage)
+				;
+
+			foreach (int rowid, string snippet; iterator)
+			{
+				n++;
+				if (n > postsPerPage)
+					break;
+
+				//html.put(`<pre>`, snippet, `</pre>`);
+				auto messageID = query!"SELECT [ID] FROM [Posts] WHERE [ROWID] = ?".iterate(rowid).selectValue!string();
+				auto post = getPost(messageID);
+				formatSearchResult(post, snippet);
+			}
+
+			if (n == 0)
+				html.put(`<p>Your search - <b>`), html.putEncodedEntities(searchString), html.put(`</b> - did not match any forum posts.</p>`);
+
+			if (page != 1 || n > postsPerPage)
+			{
+				html.put(`<table class="forum-table post-pager">`);
+				pager("?q=" ~ searchString, page, n > postsPerPage ? int.max : page);
+				html.put(`</table>`);
+			}
+		}
+		catch (CaughtException e)
+			html.put(`<div class="form-error">Error: `), html.putEncodedEntities(e.msg), html.put(`</div>`);
+}
+
+void formatSearchSnippet(string s)
+{
+	while (true)
 	{
-		int page = parameters.get("page", "1").to!int;
-		enforce(page >= 1, "Bad page");
-
-		enum postsPerPage = 10;
-
-		int n = 0;
-
-		foreach (int rowid, string snippet; query!"SELECT [ROWID], snippet([PostSearch]) FROM [PostSearch] WHERE [PostSearch] MATCH ? LIMIT ? OFFSET ?".iterate(searchString, postsPerPage + 1, (page-1)*postsPerPage))
+		auto i = s.indexOf(searchDelimPrefix);
+		if (i < 0)
+			return html.putEncodedEntities(s);
+		html.putEncodedEntities(s[0..i]);
+		string delim = s[i..i+searchDelimLength];
+		s = s[i+searchDelimLength..$];
+		switch (delim)
 		{
-			n++;
-			if (n > postsPerPage)
-				break;
-
-			html.put(`<pre>`, snippet, `</pre>`);
-			auto messageID = query!"SELECT [ID] FROM [Posts] WHERE [ROWID] = ?".iterate(rowid).selectValue!string();
-			auto post = getPost(messageID);
-			formatPost(post, null, false);
+			case searchDelimStartMatch: html.put(`<b>`       ); break;
+			case searchDelimEndMatch  : html.put(`</b>`      ); break;
+			case searchDelimEllipses  : html.put(`<b>...</b>`); break;
+			default: break;
 		}
+	}
+}
 
-		if (n == 0)
-			html.put(`<p>Your search - <b>`), html.putEncodedEntities(searchString), html.put(`</b> - did not match any forum posts.</p>`);
+void formatSearchResult(Rfc850Post post, string snippet)
+{
+	string gravatarHash = getGravatarHash(post.authorEmail);
 
-		if (page != 1 || n > postsPerPage)
-		{
-			html.put(`<table class="forum-table post-pager">`);
-			pager("?q=" ~ searchString, page, n > postsPerPage ? int.max : page);
-			html.put(`</table>`);
-		}
+	with (post.msg)
+	{
+		html.put(
+			`<div class="post-wrapper">`
+			`<table class="post forum-table`, (post.children ? ` with-children` : ``), `" id="`), html.putEncodedEntities(idToFragment(id)), html.put(`">`
+			`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(2), `</tr>` // Fixed layout dummies
+			`<tr class="post-header"><th colspan="2">`
+				`<div class="post-time">`, summarizeTime(time), `</div>`,
+				encodeEntities(post.where), ` &raquo; `
+				`<a title="Permanent link to this post" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" class="permalink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread"), `">`,
+					encodeEntities(rawSubject),
+				`</a>`
+			`</th></tr>`
+			`<tr class="mini-post-info-cell">`
+				`<td colspan="2">`
+		); miniPostInfo(post, null, false); html.put(
+				`</td>`
+			`</tr>`
+			`<tr>`
+				`<td class="post-info">`
+					`<div class="post-author">`), html.putEncodedEntities(author), html.put(`</div>`
+					`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`), html.putEncodedEntities(author), html.put(`'s Gravatar profile">`
+						`<img alt="Gravatar" class="post-gravatar" width="80" height="80" src="http://www.gravatar.com/avatar/`, gravatarHash, `?d=identicon">`
+					`</a>`
+		);
+
+		html.put(
+				`</td>`
+				`<td class="post-body">`
+					`<pre class="post-text">`), formatSearchSnippet(snippet), html.put(`</pre>`,
+					(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``),
+				`</td>`
+			`</tr>`
+			`</table>`
+			`</div>`
+		);
 	}
 }
 
