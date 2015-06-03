@@ -207,6 +207,10 @@ function updateSize(resized) {
 	if ($focused.length)
 		wasFocusedInView = isRowInView($focused);
 
+	var $container = getSelectablesContainer();
+	if ($container.length)
+		var containerScrollTop = $container.scrollTop();
+
 	var resizees =
 		vertical
 		?	[
@@ -278,6 +282,9 @@ function updateSize(resized) {
 		resizees[i].$inner.height(newHeight);
 		//console.log(i, ':', newHeight);
 	}
+
+	if ($container.length)
+		$container.scrollTop(containerScrollTop);
 
 	if ($focused.length && wasFocusedInView)
 		focusRow($focused, true);
