@@ -96,20 +96,20 @@ var currentID = null;
 function onPopState() {
 	var path = getPath();
 	var id = idFromPath(path);
-	var row = findInTree(path);
+	var $row = findInTree(path);
 
-	if (id && id == currentID && row.find('.forum-unread').length==0)
+	if (id && id == currentID && $row.find('.forum-unread').length==0)
 		return;
 	else
-	if (id && row) {
+	if (id && $row) {
 		if (currentRequest) {
 			currentRequest.abort();
 			currentRequest = null;
 		}
 
 		$('.group-threads .selected').removeClass('selected');
-		row.addClass('selected');
-		focusRow(row, true);
+		$row.addClass('selected');
+		focusRow($row, true);
 		currentID = id;
 
 		showText('Loading message\n<'+id+'> ...');
@@ -118,7 +118,7 @@ function onPopState() {
 		var resource = '/split-post/';
 		currentRequest = $.get(resource + id, function(result) {
 			currentRequest = null;
-			row.find('.forum-unread').removeClass('forum-unread').addClass('forum-read');
+			$row.find('.forum-unread').removeClass('forum-unread').addClass('forum-read');
 
 			showPost(result);
 		});
@@ -189,10 +189,10 @@ var resizeTimeout = null;
 function updateSize() {
 	resizeTimeout = null;
 
-	var focused = $('.focused');
+	var $focused = $('.focused');
 	var wasFocusedInView = false;
-	if (focused.length)
-		wasFocusedInView = isRowInView(focused);
+	if ($focused.length)
+		wasFocusedInView = isRowInView($focused);
 
 	var vertical = $('#group-vsplit').length;
 
@@ -211,42 +211,46 @@ function updateSize() {
 	for (var i in resizees)
 		resizees[i].$outer.css('height', '');
 
+	var $bottommost = $('#copyright:visible').length ? $('#copyright') : $('#content');
+	var totalWindowSpace = $(window).height();
+
 	function getFreeSpace() {
-		var $bottommost = $('#copyright:visible').length ? $('#copyright') : $('#content');
 		var usedWindowSpace = $bottommost.position().top + $bottommost.outerHeight(true);
 		usedWindowSpace = Math.floor(usedWindowSpace);
 
-		var totalWindowSpace = $(window).height();
 		var freeWindowSpace  = totalWindowSpace - usedWindowSpace;
-		return freeWindowSpace - 1;
+		return freeWindowSpace - 1 /*pixel fraction*/ ;
 	}
 
-	function getFreeSpaceFor(showFun) {
+	function getFreeSpaceFor(fDoShow) {
 		for (var i in resizees)
-			if (showFun(i))
-				resizees[i].$inner.height(dummyHeight);
+			if (fDoShow(i))
+				resizees[i].$outer.show();
 			else
 				resizees[i].$outer.hide();
-		var freeSpace = getFreeSpace();
-		for (var i in resizees)
-			resizees[i].$outer.show();
-		return freeSpace;
+		return getFreeSpace();
 	}
 
 	var dummyHeight = 300;
+
+	for (var i in resizees)
+		resizees[i].$inner.height(dummyHeight);
 
 	// Shrink content to a fixed height, so we can calculate how much space we have to grow.
 
 	var growSpace = [];
 	for (var i in resizees)
 		growSpace.push(getFreeSpaceFor(function(j) { return i==j; }));
-	var growSpaceAll  = getFreeSpaceFor(function(j) { return true; });
+//	var growSpaceAll  = getFreeSpaceFor(function(j) { return true; });
 	var growSpaceNone = getFreeSpaceFor(function(j) { return false; });
-	var growSpaceMin  = Math.min.apply(null, growSpace);
-	var growSpaceMax  = Math.max.apply(null, growSpace);
+//	var growSpaceMin  = Math.min.apply(null, growSpace);
+//	var growSpaceMax  = Math.max.apply(null, growSpace);
 	var heights = [];
 	for (var i in resizees)
 		heights.push(growSpaceNone - growSpace[i]);
+
+	for (var i in resizees)
+		resizees[i].$outer.show();
 
 	//var obj = {}; ['growSpace', 'heights', 'growSpaceAll', 'growSpaceNone', 'growSpaceMax', 'growSpaceMax'].forEach(function(n) { obj[n]=eval(n); }); console.log(JSON.stringify(obj));
 
@@ -264,8 +268,8 @@ function updateSize() {
 		//console.log(i, ':', newHeight);
 	}
 
-	if (focused.length && wasFocusedInView)
-		focusRow(focused, true);
+	if ($focused.length && wasFocusedInView)
+		focusRow($focused, true);
 }
 
 function onResize() {
@@ -288,45 +292,45 @@ function nestedOffset(element, container) {
 		return element.offsetTop + nestedOffset(element.offsetParent, container);
 }
 
-function isInView(element, container) {
-	var containerTop = $(container).scrollTop();
-	var containerHeight = $(container).height();
+function isInView($element, $container) {
+	var containerTop = $container.scrollTop();
+	var containerHeight = $container.height();
 	var containerBottom = containerTop + containerHeight;
 
-	var elemTop = nestedOffset(element, container);
-	var elemBottom = elemTop + $(element).height();
+	var elemTop = nestedOffset($element[0], $container[0]);
+	var elemBottom = elemTop + $element.height();
 
 	return elemTop > containerTop && elemBottom < containerBottom;
 }
 
-function scrollIntoView(element, container, withMargin) {
-	var containerTop = $(container).scrollTop();
-	var containerHeight = $(container).height();
+function scrollIntoView($element, $container, withMargin) {
+	var containerTop = $container.scrollTop();
+	var containerHeight = $container.height();
 	var containerBottom = containerTop + containerHeight;
 	//var elemTop = element.offsetTop;
-	var elemTop = nestedOffset(element, container);
-	var elemBottom = elemTop + $(element).height();
+	var elemTop = nestedOffset($element[0], $container[0]);
+	var elemBottom = elemTop + $element.height();
 	var scrollMargin = withMargin ? containerHeight/4 : 10;
 	if (elemTop < containerTop) {
-		$(container).scrollTop(Math.max(0, elemTop - scrollMargin));
-		//$(container).scrollTo(elemTop, 200)
+		$container.scrollTop(Math.max(0, elemTop - scrollMargin));
+		//$container.scrollTo(elemTop, 200)
 	} else if (elemBottom > containerBottom) {
-		$(container).scrollTop(elemBottom - containerHeight + scrollMargin);
-		//$(container).scrollTo(elemBottom - $(container).height(), 200)
+		$container.scrollTop(elemBottom - containerHeight + scrollMargin);
+		//$container.scrollTo(elemBottom - $container.height(), 200)
 	}
 }
 
 // **************************************************************************
 // Keyboard navigation
 
-function isRowInView(row) {
-	return isInView(row[0], getSelectablesContainer());
+function isRowInView($row) {
+	return isInView($row, getSelectablesContainer());
 }
 
-function focusRow(row, withMargin) {
+function focusRow($row, withMargin) {
 	$('.focused').removeClass('focused');
-	row.addClass('focused');
-	scrollIntoView(row[0], getSelectablesContainer(), withMargin);
+	$row.addClass('focused');
+	scrollIntoView($row, getSelectablesContainer(), withMargin);
 
 	if ($('#group-split').length == 0 && $('#group-vsplit').length == 0)
 		addLinkNavigation();
@@ -366,9 +370,9 @@ function getSelectedPost() {
 
 function getSelectablesContainer() {
 	if ($('#group-split').length || $('#group-vsplit').length) {
-		return $('.group-threads')[0];
+		return $('.group-threads');
 	} else /*if ($('#forum-index').length)*/ {
-		return window;
+		return $(window);
 	}
 }
 
@@ -392,16 +396,16 @@ function focusNext(offset, onlyUnread) {
 	if (typeof onlyUnread == 'undefined')
 		onlyUnread = false;
 
-	var all = getSelectables();
-	var count = all.length;
-	var current = $('.focused');
+	var $all = getSelectables();
+	var count = $all.length;
+	var $current = $('.focused');
 	var index;
-	if (current.length == 0) {
+	if ($current.length == 0) {
 		index = offset>0 ? offset-1 : count-offset;
 	} else if (Math.abs(offset) == Infinity) {
 		index = offset>0 ? count-1 : 0;
 	} else {
-		index = all.index(current);
+		index = $all.index($current);
 		if (index < 0)
 			index = 0;
 		else
@@ -410,11 +414,11 @@ function focusNext(offset, onlyUnread) {
 	}
 
 	for (var i=0; i<count; i++) {
-		var row = all.eq(index);
-		var isUnread = row.find('.forum-unread').length > 0;
+		var $row = $all.eq(index);
+		var isUnread = $row.find('.forum-unread').length > 0;
 		if (!onlyUnread || isUnread) {
 			//row.mousedown();
-			focusRow(row, false);
+			focusRow($row, false);
 			return true;
 		}
 
