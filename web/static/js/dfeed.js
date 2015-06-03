@@ -38,7 +38,7 @@ function initSplitView() {
 	}).css('cursor', 'default');
 
 	$(window).resize(onResize);
-	updateSize();
+	updateSize(true);
 	focusRow($('tr.thread-post-row').last());
 
 	$(window).bind('popstate', onPopState);
@@ -144,7 +144,7 @@ function showPost(postHtml) {
 	$('#group-split-message')
 		.html(postHtml)
 		.removeClass('group-split-message-none');
-	updateSize();
+	updateSize(false);
 	addLinkNavigation();
 }
 
@@ -155,7 +155,7 @@ function showText(text) {
 		$('<span>')
 			.text(text)
 	);
-	updateSize();
+	updateSize(false);
 }
 
 function showHtml(text) {
@@ -176,7 +176,7 @@ function toggleNav() {
 
 function showNav(hidden) {
 	$('body').toggleClass('navhidden', hidden);
-	updateSize();
+	updateSize(true);
 }
 
 // **************************************************************************
@@ -186,15 +186,26 @@ function showNav(hidden) {
 
 var resizeTimeout = null;
 
-function updateSize() {
+function updateSize(resized) {
 	resizeTimeout = null;
+
+	var vertical = $('#group-vsplit').length;
+
+	if (!resized && !vertical && $.browser.mozilla) {
+		// Firefox speed hack
+		var $outer = $('#group-split-message > *');
+		var $inner = $('.split-post .post-body');
+		var $posts = $('#group-split-list');
+		$outer.css('height', '');
+		$inner.height(100);
+		$inner.height($posts.height() - ($outer.height() - 100));
+		return;
+	}
 
 	var $focused = $('.focused');
 	var wasFocusedInView = false;
 	if ($focused.length)
 		wasFocusedInView = isRowInView($focused);
-
-	var vertical = $('#group-vsplit').length;
 
 	var resizees =
 		vertical
@@ -275,7 +286,7 @@ function updateSize() {
 function onResize() {
 	if (resizeTimeout)
 		clearTimeout(resizeTimeout);
-	resizeTimeout = setTimeout(updateSize, 10);
+	resizeTimeout = setTimeout(updateSize, 10, true);
 }
 
 // **************************************************************************
