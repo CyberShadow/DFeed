@@ -932,6 +932,7 @@ void discussionIndexHeader()
 
 	string name = user.isLoggedIn() ? user.getName() : userSettings.name.length ? userSettings.name.split(' ')[0] : `Guest`;
 	html.put(
+		`<div id="forum-index-header">`
 		`<h1>D Programming Language Forum</h1>`
 		`<p>Welcome`, previousSession ? ` back` : ``, `, `), html.putEncodedEntities(name), html.put(`.</p>`
 
@@ -1021,7 +1022,10 @@ void discussionIndexHeader()
 	foreach (bitGroup; bits[])
 		foreach (bit; bitGroup)
 			html.put(bit);
-	html.put(`</ul>`);
+	html.put(
+		`</ul>`
+		`</div>`
+	);
 
 	//html.put("<p>Random tip: " ~ tips[uniform(0, $)] ~ "</p>");
 }

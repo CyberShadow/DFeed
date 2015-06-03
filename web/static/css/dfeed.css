@@ -1047,7 +1047,8 @@ hr {
 
 	.forum-form,
 	#settings-form,
-	#subscription-form {
+	#subscription-form,
+	#forum-index-header {
 		display: block;
 		margin: 0 0.5em 0.5em 0.5em;
 	}
