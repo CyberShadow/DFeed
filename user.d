@@ -16,6 +16,8 @@
 
 module user;
 
+import core.bitop;
+
 import std.functional;
 import std.string;
 import std.exception;
@@ -159,6 +161,21 @@ final:
 		else
 			*pbyte = *pbyte & ~mask;
 		readPostsDirty = true;
+	}
+
+	public size_t countRead()
+	{
+		needReadPosts();
+		if (!readPosts.length)
+			return 0;
+
+		size_t count;
+		auto uints = cast(uint*)readPosts.contents.ptr;
+		foreach (uint u; uints[0..readPosts.length/uint.sizeof])
+			count += popcnt(u);
+		foreach (ubyte b; cast(ubyte[])readPosts.contents[$/uint.sizeof*uint.sizeof..$])
+			count += popcnt(b);
+		return count;
 	}
 }
 
