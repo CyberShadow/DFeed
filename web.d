@@ -297,10 +297,13 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				if (viewMode == "threaded")
 					discussionGroupThreaded(groupInfo, page);
 				else
+				if (viewMode == "horizontal-split")
 				{
 					discussionGroupSplit(groupInfo, page);
 					extraHeaders ~= horizontalSplitHeaders;
 				}
+				else
+					discussionGroupVSplit(groupInfo, page);
 				foreach (what; ["posts", "threads"])
 					extraHeaders ~= `<link rel="alternate" type="application/atom+xml" title="New `~what~` on `~encodeEntities(groupInfo.publicName)~`" href="/feed/`~what~`/`~encodeEntities(groupInfo.urlName)~`" />`;
 				break;
@@ -332,10 +335,11 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			case "post":
 				enforce(path.length > 1, "No post specified");
 				string id = '<' ~ urlDecode(pathX) ~ '>';
-				if (userSettings.groupViewMode == "basic")
+				auto viewMode = userSettings.groupViewMode;
+				if (viewMode == "basic")
 					return response.redirect(resolvePostUrl(id));
 				else
-				if (userSettings.groupViewMode == "threaded")
+				if (viewMode == "threaded")
 				{
 					string subject;
 					discussionSinglePost(id, currentGroup, subject, currentThread);
@@ -347,7 +351,10 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				else
 				{
 					int page;
-					discussionGroupSplitFromPost(id, currentGroup, page, currentThread);
+					if (viewMode == "horizontal-split")
+						discussionGroupSplitFromPost(id, currentGroup, page, currentThread);
+					else
+						discussionGroupVSplitFromPost(id, currentGroup, page, currentThread);
 
 					string pageStr = page==1 ? "" : format(" (page %d)", page);
 					title = currentGroup.publicName ~ " group index" ~ pageStr;
@@ -381,6 +388,10 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			case "split-post":
 				enforce(path.length > 1, "No post specified");
 				discussionSplitPost('<' ~ urlDecode(pathX) ~ '>');
+				return response.serveData(cast(string)html.get());
+			case "vsplit-post":
+				enforce(path.length > 1, "No post specified");
+				discussionVSplitPost('<' ~ urlDecode(pathX) ~ '>');
 				return response.serveData(cast(string)html.get());
 		/+
 			case "set":
@@ -1631,10 +1642,10 @@ void discussionGroupSplit(GroupInfo groupInfo, int page)
 	discussionGroupThreaded(groupInfo, page, true);
 	html.put(
 		`</div></td>`
-		`<td id="group-split-message" class="group-split-message-none">`
+		`<td id="group-split-message" class="group-split-message-none"><span>`
 			`Loading...`
 			`<div class="nojs">Sorry, this view requires JavaScript.</div>`
-		`</td>`
+		`</span></td>`
 		`</tr></table>`);
 }
 
@@ -1701,6 +1712,117 @@ string getGravatarHash(string email)
 	import std.digest.md;
 	import std.ascii : LetterCase;
 	return email.toLower().strip().md5Of().toHexString!(LetterCase.lower)().idup; // Issue 9279
+}
+
+// ***********************************************************************
+
+void formatVSplitPosts(PostInfo*[] postInfos, string selectedID = null)
+{
+/*
+	html.put(
+		`<tr class="thread-post-row">`
+			`<th>Subject</th>`
+			`<th>From</th>`
+		`</tr>`
+	);
+*/
+
+	foreach (postInfo; postInfos)
+	{
+		html.put(
+			`<tr class="thread-post-row`, (postInfo && postInfo.id==selectedID ? ` focused selected` : ``), `">`
+				`<td>`
+					`<a class="postlink `, (user.isRead(postInfo.rowid) ? "forum-read" : "forum-unread" ), `" `
+						`href="`), html.putEncodedEntities(idToUrl(postInfo.id)), html.put(`">`
+						), html.putEncodedEntities(postInfo.subject), html.put(
+					`</a>`
+				`</td>`
+				`<td>`
+					), html.putEncodedEntities(postInfo.author), html.put(
+				`</td>`
+				`<td>`
+					`<div class="thread-post-time">`, summarizeTime(postInfo.time, true), `</div>`,
+				`</td>`
+			`</tr>`
+		);
+	}
+}
+
+enum POSTS_PER_GROUP_PAGE = 100;
+
+void discussionGroupVSplitList(GroupInfo groupInfo, int page)
+{
+	enum postsPerPage = POSTS_PER_GROUP_PAGE;
+	enforce(page >= 1, "Invalid page");
+
+	//foreach (string threadID; query!"SELECT `ID` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?".iterate(group, THREADS_PER_PAGE, (page-1)*THREADS_PER_PAGE))
+	//	foreach (string id, string parent, string author, string subject, long stdTime; query!"SELECT `ID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` = ?".iterate(threadID))
+	PostInfo*[] posts;
+	//enum ViewSQL = "SELECT `ROWID`, `ID`, `ParentID`, `Author`, `AuthorEmail`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` IN (SELECT `ID` FROM `Threads` WHERE `Group` = ?) ORDER BY `Time` DESC LIMIT ? OFFSET ?";
+	//enum ViewSQL = "SELECT [Posts].[ROWID], [Posts].[ID], `ParentID`, `Author`, `AuthorEmail`, `Subject`, `Time` FROM `Posts` "
+	//	"INNER JOIN [Threads] ON `ThreadID`==[Threads].[ID] WHERE `Group` = ? ORDER BY `Time` DESC LIMIT ? OFFSET ?";
+	enum ViewSQL = "SELECT [Posts].[ROWID], [Posts].[ID], [ParentID], [Author], [AuthorEmail], [Subject], [Posts].[Time] FROM [Groups] "
+		"INNER JOIN [Posts] ON [Posts].[ID]==[Groups].[ID] WHERE [Group] = ? ORDER BY [Groups].[Time] DESC LIMIT ? OFFSET ?";
+	foreach (int rowid, string id, string parent, string author, string authorEmail, string subject, long stdTime; query!ViewSQL.iterate(groupInfo.internalName, postsPerPage, getPageOffset(page, postsPerPage)))
+		posts ~= [PostInfo(rowid, id, null, parent, author, authorEmail, subject, SysTime(stdTime, UTC()))].ptr; // TODO: optimize?
+	posts.reverse();
+
+	html.put(
+		`<table id="group-index-vsplit" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(userSettings.groupViewMode), html.put(`">`
+		`<tr class="group-index-header"><th><div>`), newPostButton(groupInfo), html.putEncodedEntities(groupInfo.publicName), html.put(`</div></th></tr>`,
+	//	`<tr class="group-index-captions"><th>Subject / Author</th><th>Time</th>`,
+		`<tr><td class="group-threads-cell"><div class="group-threads"><table id="group-posts-vsplit">`
+		`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(3), `</tr>` // Fixed layout dummies
+	);
+	formatVSplitPosts(posts);
+	html.put(`</table></div></td></tr>`);
+	groupPostPager(groupInfo, page);
+	html.put(`</table>`);
+}
+
+void discussionGroupVSplit(GroupInfo groupInfo, int page)
+{
+	html.put(
+		`<table id="group-vsplit"><tr>`
+		`<td id="group-vsplit-list"><div>`);
+	discussionGroupVSplitList(groupInfo, page);
+	html.put(
+		`</div></td></tr>`
+		`<tr><td id="group-split-message" class="group-split-message-none">`
+			`Loading...`
+			`<div class="nojs">Sorry, this view requires JavaScript.</div>`
+		`</td>`
+		`</tr></table>`);
+}
+
+void discussionGroupVSplitFromPost(string id, out GroupInfo groupInfo, out int page, out string threadID)
+{
+	auto post = getPost(id);
+	enforce(post, "Post not found");
+
+	groupInfo = post.getGroup();
+	threadID = post.cachedThreadID;
+	page = getThreadPage(groupInfo, threadID);
+
+	discussionGroupVSplit(groupInfo, page);
+}
+
+void groupPostPager(GroupInfo groupInfo, int page)
+{
+	auto postCounts = postCountCache(getPostCounts());
+	enforce(groupInfo.internalName in postCounts, "Empty group: " ~ groupInfo.publicName);
+	auto postCount = postCounts[groupInfo.internalName];
+	auto pageCount = getPageCount(postCount, POSTS_PER_GROUP_PAGE);
+
+	pager(`/group/` ~ groupInfo.urlName, page, pageCount, 50);
+}
+
+void discussionVSplitPost(string id)
+{
+	auto post = getPost(id);
+	enforce(post, "Post not found");
+
+	formatPost(post, null);
 }
 
 // ***********************************************************************
@@ -2937,7 +3059,7 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 		`View mode: <select name="groupviewmode">`
 	);
 	auto currentMode = userSettings.groupViewMode;
-	foreach (mode; ["basic", "threaded", "horizontal-split"])
+	foreach (mode; ["basic", "threaded", "horizontal-split", "vertical-split"])
 		html.put(`<option value="`, mode, `"`, mode == currentMode ? ` selected` : null, `>`, mode, `</option>`);
 	html.put(
 		`</select><br>`

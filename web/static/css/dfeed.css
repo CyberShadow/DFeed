@@ -658,24 +658,28 @@ a > .forcewrap {
 }
 
 #thread-index         .focused > td > div,
-#group-index-threaded .focused > td > div {
+#group-index-threaded .focused > td > div,
+#group-posts-vsplit   .focused {
 	outline: 1px solid #89F !important;
 	background-color: #EEF;
 }
 
 #thread-index         .selected > td > div,
-#group-index-threaded .selected > td > div {
+#group-index-threaded .selected > td > div,
+#group-posts-vsplit   .selected {
 	background-color: #45F;
 	color: white;
 }
 
 #thread-index         .selected a,
-#group-index-threaded .selected a {
+#group-index-threaded .selected a,
+#group-posts-vsplit   .selected a {
 	color: inherit;
 }
 
 #thread-index         .selected .thread-post-time span,
-#group-index-threaded .selected .thread-post-time span {
+#group-index-threaded .selected .thread-post-time span,
+#group-posts-vsplit   .selected .thread-post-time span {
 	color: inherit !important;
 }
 
@@ -687,7 +691,7 @@ table.viewmode-threaded > tbody > tr > th {
 	width: 100%;
 }
 
-/*************** Split view ***************/
+/*************** Horizontal split view ***************/
 
 #group-split {
 	table-layout: fixed;
@@ -700,7 +704,7 @@ table.viewmode-threaded > tbody > tr > th {
 	position: relative;
 }
 
-#group-split-message {
+#group-split #group-split-message {
 	padding-left: 4px;
 	vertical-align: top;
 	overflow: auto;
@@ -848,6 +852,7 @@ td.post-footer-nav a {
 	text-align: center;
 	vertical-align: middle !important;
 	overflow: hidden;
+	width: 100%;
 }
 
 .keyboardhelp {
@@ -904,6 +909,27 @@ kbd { /* stolen from http://en.wikipedia.org/wiki/Template:Key_press */
 }
 .keyboardhelp-popup .keyboardhelp th {
 	display: table-cell;
+}
+
+/*************** Vertical split view ***************/
+
+#group-index-vsplit > tbody > tr > th:first-child {
+	width: 100%;
+}
+
+#group-posts-vsplit > tbody > tr > td:nth-child(1) { width: 70%; }
+#group-posts-vsplit > tbody > tr > td:nth-child(2) { width: 30%; }
+#group-posts-vsplit > tbody > tr > td:nth-child(3) { width: 8.5em; }
+
+#group-posts-vsplit > tbody > tr > td {
+	white-space: pre;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+#group-index-vsplit div.group-threads {
+	height: 30em;
+	overflow: auto;
 }
 
 /*************** Posting ***************/
@@ -1086,6 +1112,8 @@ hr {
 	#forum-content .post > tbody > tr:first-child > td:nth-child(2) {
 		width: 100%;
 	}
+
+	#group-posts-vsplit > tbody > tr > td:nth-child(3) { width: 0; }
 }
 
 /*************** Frame view ***************/

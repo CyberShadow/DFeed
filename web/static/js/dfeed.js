@@ -11,7 +11,7 @@ $(document).ready(function() {
 		}
 	}
 
-	if ($('#group-split').length)
+	if ($('#group-split').length || $('#group-vsplit').length)
 		initSplitView();
 
 	if ($('#postform').length)
@@ -114,7 +114,9 @@ function onPopState() {
 
 		showText('Loading message\n<'+id+'> ...');
 
-		currentRequest = $.get('/split-post/' + id, function(result) {
+		//var resource = $('#group-vsplit').length ? '/vsplit-post/' : '/split-post/';
+		var resource = '/split-post/';
+		currentRequest = $.get(resource + id, function(result) {
 			currentRequest = null;
 			row.find('.forum-unread').removeClass('forum-unread').addClass('forum-read');
 
@@ -148,8 +150,12 @@ function showPost(postHtml) {
 
 function showText(text) {
 	$('#group-split-message')
-		.text(text)
-		.addClass('group-split-message-none');
+	.addClass('group-split-message-none')
+	.html(
+		$('<span>')
+			.text(text)
+	);
+	updateSize();
 }
 
 function showHtml(text) {
@@ -188,51 +194,75 @@ function updateSize() {
 	if (focused.length)
 		wasFocusedInView = isRowInView(focused);
 
-	var resizees = [
-		{ outer : $('#group-split-list    > div'), inner : $('.group-threads')},
-		{ outer : $('#group-split-message > *'  ), inner : $('.split-post .post-body')},
-	];
+	var vertical = $('#group-vsplit').length;
+
+	var resizees =
+		vertical
+		?	[
+				{ $outer : $('#group-vsplit-list   > div'), $inner : $('.group-threads')},
+				{ $outer : $('#group-split-message'      ), $inner : $('.split-post .post-body, .group-split-message-none')},
+			]
+		:	[
+				{ $outer : $('#group-split-list    > div'), $inner : $('.group-threads')},
+				{ $outer : $('#group-split-message > *'  ), $inner : $('.split-post .post-body')},
+			]
+		;
+
+	for (var i in resizees)
+		resizees[i].$outer.css('height', '');
+
+	function getFreeSpace() {
+		var $bottommost = $('#copyright:visible').length ? $('#copyright') : $('#content');
+		var usedWindowSpace = $bottommost.position().top + $bottommost.outerHeight(true);
+		usedWindowSpace = Math.floor(usedWindowSpace);
+
+		var totalWindowSpace = $(window).height();
+		var freeWindowSpace  = totalWindowSpace - usedWindowSpace;
+		return freeWindowSpace - 1;
+	}
+
+	function getFreeSpaceFor(showFun) {
+		for (var i in resizees)
+			if (showFun(i))
+				resizees[i].$inner.height(dummyHeight);
+			else
+				resizees[i].$outer.hide();
+		var freeSpace = getFreeSpace();
+		for (var i in resizees)
+			resizees[i].$outer.show();
+		return freeSpace;
+	}
 
 	var dummyHeight = 300;
 
 	// Shrink content to a fixed height, so we can calculate how much space we have to grow.
 
-	for (var i in resizees) {
-		resizees[i].inner.height(dummyHeight);
-	}
+	var growSpace = [];
+	for (var i in resizees)
+		growSpace.push(getFreeSpaceFor(function(j) { return i==j; }));
+	var growSpaceAll  = getFreeSpaceFor(function(j) { return true; });
+	var growSpaceNone = getFreeSpaceFor(function(j) { return false; });
+	var growSpaceMin  = Math.min.apply(null, growSpace);
+	var growSpaceMax  = Math.max.apply(null, growSpace);
+	var heights = [];
+	for (var i in resizees)
+		heights.push(growSpaceNone - growSpace[i]);
 
-	var contentBottom = $('#content').position().top + $('#content').outerHeight(true);
-	var usedWindowSpace  = contentBottom;
-	if ($('#copyright:visible').length)
-		usedWindowSpace += $('#copyright').position().top + $('#copyright').outerHeight(true) - contentBottom + 10 /*???*/;
-	usedWindowSpace = Math.floor(usedWindowSpace);
-	var totalWindowSpace = $(window).height();
-	var freeWindowSpace  = totalWindowSpace - usedWindowSpace;
-
-	var resizeeOuterSizes = $.map(resizees, function(r) { return r.outer.outerHeight(true); });
-//	resizeeOuterSizes[1] += 1; // HACK ??? border?
-	var contentSize = Math.max.apply(null, resizeeOuterSizes);
-
-	//console.log(JSON.stringify({contentBottom:contentBottom, usedWindowSpace:usedWindowSpace, totalWindowSpace:totalWindowSpace, freeWindowSpace:freeWindowSpace,resizeeOuterSizes:resizeeOuterSizes, contentSize:contentSize, }));
+	//var obj = {}; ['growSpace', 'heights', 'growSpaceAll', 'growSpaceNone', 'growSpaceMax', 'growSpaceMax'].forEach(function(n) { obj[n]=eval(n); }); console.log(JSON.stringify(obj));
 
 	for (var i in resizees) {
-		var resizeeOuterSize = resizeeOuterSizes[i];
-		var itemFreeSpace = dummyHeight;
+		var newHeight = dummyHeight;
 
-		// Grow to fill content (this will be 0 for tallest resizee)
-		itemFreeSpace += contentSize - resizeeOuterSize;
+		if (vertical)
+		{
+			newHeight = growSpaceNone / resizees.length - heights[i] + dummyHeight;
+		}
+		else
+			newHeight += growSpace[i];
 
-		// Grow to fill window
-		itemFreeSpace += freeWindowSpace;
-
-		resizees[i].inner.height(itemFreeSpace);
-
-		// Correction
-	//	console.log([contentSize, resizees[i].outer.height() - (freeWindowSpace)]);
+		resizees[i].$inner.height(newHeight);
+		//console.log(i, ':', newHeight);
 	}
-
-	//console.log($('#content').outerHeight(true));
-	//console.log([resizees[0].outer.outerHeight(true), resizees[1].outer.outerHeight(true)]);
 
 	if (focused.length && wasFocusedInView)
 		focusRow(focused, true);
@@ -298,7 +328,7 @@ function focusRow(row, withMargin) {
 	row.addClass('focused');
 	scrollIntoView(row[0], getSelectablesContainer(), withMargin);
 
-	if ($('#group-split').length == 0)
+	if ($('#group-split').length == 0 && $('#group-vsplit').length == 0)
 		addLinkNavigation();
 }
 
@@ -307,7 +337,7 @@ function selectRow(row) {
 }
 
 function getSelectables() {
-	if ($('#group-split').length) {
+	if ($('#group-split').length || $('#group-vsplit').length) {
 		return $('tr.thread-post-row');
 	} else if ($('#forum-index').length) {
 		return $('#forum-index > tbody > tr.group-row');
@@ -335,7 +365,7 @@ function getSelectedPost() {
 }
 
 function getSelectablesContainer() {
-	if ($('#group-split').length) {
+	if ($('#group-split').length || $('#group-vsplit').length) {
 		return $('.group-threads')[0];
 	} else /*if ($('#forum-index').length)*/ {
 		return window;
@@ -351,7 +381,7 @@ function getSelectableLink(row) {
 }
 
 function getReplyLink() {
-	if ($('#group-split').length) {
+	if ($('#group-split').length || $('#group-vsplit').length || $('.viewmode-threaded').length) {
 		return $('a.replylink');
 	} else {
 		return $('.focused a.replylink');
@@ -521,7 +551,6 @@ function onKeyPressImpl(e) {
 			case 'n':
 			{
 				var $form = $('form[name=new-post-form]');
-				console.log($form);
 				$form.submit();
 				return $form.length > 0;
 			}

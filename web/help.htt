@@ -6,7 +6,8 @@
   <ul>
     <li><b>Basic</b> - A forum-like view with paged linear threads.</li>
     <li><b>Threaded</b> - Threaded group overview with single post display, similar to mailing list archives.</li>
-    <li><b>Horizontal-split</b> - JavaScript-powered interface with a split view, similar to a mail or newsgroup client.</li>
+    <li><b>Horizontal-split</b> - JavaScript-powered interface with a split view, similar to a usenet client.</li>
+    <li><b>Vertical-split</b> - A view with a list pane at the top and a message pane at the bottom, resembling a desktop mail client.</li>
   </ul>
 
   The view mode can be changed on the <a href="/settings">settings page</a>.
