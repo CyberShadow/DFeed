@@ -70,14 +70,14 @@ protected:
 			if (update)
 			{
 				query!"UPDATE [Posts] SET [ID]=?, [Message]=?, [Author]=?, [AuthorEmail]=?, [Subject]=?, [Time]=?, [ParentID]=?, [ThreadID]=? WHERE [ROWID] = ?"
-					.exec(message.id, message.message, message.author, message.authorEmail, message.subject, message.time.stdTime, message.parentID, message.threadID, message.rowid);
+					.exec(message.id, message.message, message.author, message.authorEmail, message.rawSubject, message.time.stdTime, message.parentID, message.threadID, message.rowid);
 				log("Updated.");
 			}
 		}
 		else
 		{
 			query!"INSERT INTO `Posts` (`ID`, `Message`, `Author`, `AuthorEmail`, `Subject`, `Time`, `ParentID`, `ThreadID`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-				.exec(message.id, message.message, message.author, message.authorEmail, message.subject, message.time.stdTime, message.parentID, message.threadID);
+				.exec(message.id, message.message, message.author, message.authorEmail, message.rawSubject, message.time.stdTime, message.parentID, message.threadID);
 			message.rowid = db.lastInsertRowID.to!int;
 			log(format("Message %s saved with ROWID=%d", message.id, message.rowid));
 		}
@@ -114,15 +114,6 @@ protected:
 				message.newContent,
 				message.references.length ? "n" : "y",
 			);
-	}
-
-public:
-	void updatePost(Rfc850Post message)
-	{
-		log(format("Updating message %s (%s)", message.id, message.where));
-
-		query!"UPDATE `Posts` SET `Message`=?, `Author`=?, `AuthorEmail`=?, `Subject`=?, `Time`=?, `ParentID`=?, `ThreadID`=? WHERE `ID` = ?"
-			.exec(message.message, message.author, message.authorEmail, message.subject, message.time.stdTime, message.parentID, message.threadID, message.id);
 	}
 }
 
