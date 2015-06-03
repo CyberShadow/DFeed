@@ -1028,6 +1028,10 @@ void discussionIndexHeader()
 			formatNumber(                      query!"SELECT COUNT(*) FROM [Users]"  .iterate().selectValue!int ),
 		);
 
+	auto numRead = user.countRead();
+	if (numRead)
+		bits[2] ~= "<li>You have read a total of %s forum post%s during your visit%s.</li>".format(formatNumber(numRead), numRead==1?"":"s", previousSession?"s":"");
+
 	bits[2] ~= "<li>Random tip: " ~ tips[uniform(0, $)] ~ "</li>";
 
 	foreach (bitGroup; bits[])
