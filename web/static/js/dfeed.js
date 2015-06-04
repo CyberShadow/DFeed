@@ -587,7 +587,7 @@ function onKeyPressImpl(e) {
 	if ($.browser.webkit) c = c.toLowerCase();
 	var pageSize = $('.group-threads').height() / $('.thread-post-row').eq(0).height();
 
-	if (!e.ctrlKey && !e.shiftKey && !e.altKey) {
+	if (!e.ctrlKey && !e.shiftKey && !e.altKey && !e.metaKey) {
 		switch (c) {
 			case 'j':
 				return focusNext(+1);
@@ -636,7 +636,7 @@ function onKeyPressImpl(e) {
 		}
 	}
 
-	if (!e.ctrlKey && e.shiftKey && !e.altKey) {
+	if (!e.ctrlKey && e.shiftKey && !e.altKey && !e.metaKey) {
 		switch (c) {
 			case 'J':
 				return focusNext(+1) && selectFocused();
@@ -647,7 +647,7 @@ function onKeyPressImpl(e) {
 		}
 	}
 
-	if (e.ctrlKey && !e.shiftKey && !e.altKey) {
+	if (e.ctrlKey && !e.shiftKey && !e.altKey && !e.metaKey) {
 		switch (e.keyCode) {
 			case 13: // ctrl+enter == enter
 				return selectFocused();
