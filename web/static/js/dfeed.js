@@ -38,7 +38,9 @@ function initThreadUrlFixer() {
 			if (el) {
 				$post = $(el).filter('.post');
 				if ($post.length) {
-					focusRow($post);
+					// Chrome is not scrolling to the hash if
+					// we call replaceState inside the load event.
+					setTimeout(focusRow, 0, $post);
 				}
 			}
 		}
