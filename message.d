@@ -141,7 +141,7 @@ class Rfc850Post : Post
 		}
 
 		handler(format("%s%s %s %s%s",
-			xref.length ? publicGroupNames.join(",") : null,
+			xref.length ? "[" ~ publicGroupNames.join(",") ~ "] " : null,
 			author == "" ? "<no name>" : filterIRCName(author),
 			reply ? "replied to" : "posted",
 			subject == "" ? "<no subject>" : `"` ~ subject ~ `"`,
