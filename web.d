@@ -3616,7 +3616,7 @@ void formatBody(Rfc850Message post)
 				return next(s);
 
 			size_t pos = 0;
-			foreach (m; match(s, reUrl))
+			foreach (m; matchAll(s, reUrl))
 			{
 				next(s[pos..m.pre().length]);
 				html.put(`<a rel="nofollow" href="`, m.hit(), `">`);
