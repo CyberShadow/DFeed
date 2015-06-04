@@ -841,7 +841,7 @@ HttpResponseEx makeBundle(string time, string url)
 		auto bundlePaths = url.split("+");
 		enforce(bundlePaths.length > 0, "Empty bundle");
 		HttpResponseEx bundleResponse;
-		foreach (bundlePath; bundlePaths)
+		foreach (n, bundlePath; bundlePaths)
 		{
 			auto pathResponse = new HttpResponseEx;
 			serveFile(pathResponse, bundlePath);
@@ -849,7 +849,7 @@ HttpResponseEx makeBundle(string time, string url)
 			if (bundlePath.endsWith(".css"))
 			{
 				auto oldText = cast(string)pathResponse.data[0].contents;
-				auto newText = fixCSS(oldText, bundlePath);
+				auto newText = fixCSS(oldText, bundlePath, n == 0);
 				if (oldText !is newText)
 					pathResponse.data = [Data(newText)];
 			}
@@ -863,13 +863,17 @@ HttpResponseEx makeBundle(string time, string url)
 	return cache[url].response;
 }
 
-string fixCSS(string css, string path)
+string fixCSS(string css, string path, bool first)
 {
-	return css.replaceAll!(captures =>
+	css = css.replace(re!(`@charset "utf-8";`, "i"), ``);
+	if (first)
+		css = `@charset "utf-8";` ~ css;
+	css = css.replaceAll!(captures =>
 		captures[2].canFind("//")
 		? captures[0]
 		: captures[0].replace(captures[2], staticPath(buildNormalizedPath(dirName("/" ~ path), captures[2]).replace(`\`, `/`)))
 	)(re!`\burl\(('?)(.*?)\1\)`);
+	return css;
 }
 
 string renderNav(string html, GroupInfo currentGroup)
