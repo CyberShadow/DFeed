@@ -913,6 +913,10 @@ kbd { /* stolen from http://en.wikipedia.org/wiki/Template:Key_press */
 
 /*************** Vertical split view ***************/
 
+#group-posts-vsplit {
+	font-size: 90%;
+}
+
 #group-index-vsplit > tbody > tr > th:first-child {
 	width: 100%;
 }
@@ -930,6 +934,10 @@ kbd { /* stolen from http://en.wikipedia.org/wiki/Template:Key_press */
 #group-index-vsplit div.group-threads {
 	height: 30em;
 	overflow: auto;
+}
+
+#group-vsplit .post-header {
+	display: none;
 }
 
 /*************** Posting ***************/

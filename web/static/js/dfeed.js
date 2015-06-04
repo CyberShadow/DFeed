@@ -252,6 +252,7 @@ function updateSize(resized) {
 				{ $outer : $('#group-split-message > *'  ), $inner : $('.split-post .post-body')},
 			]
 		;
+	var verticalSplit = [0.35, 0.65];
 
 	for (var i in resizees)
 		resizees[i].$outer.css('height', '');
@@ -303,9 +304,7 @@ function updateSize(resized) {
 		var newHeight = dummyHeight;
 
 		if (vertical)
-		{
-			newHeight = growSpaceNone / resizees.length - heights[i] + dummyHeight;
-		}
+			newHeight = growSpaceNone * verticalSplit[i] - heights[i] + dummyHeight;
 		else
 			newHeight += growSpace[i];
 
