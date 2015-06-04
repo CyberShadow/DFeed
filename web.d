@@ -2038,7 +2038,7 @@ void formatSplitPost(Rfc850Post post, bool footerNav)
 	InfoRow[] infoRows;
 	string parentLink;
 
-	infoRows ~= InfoRow("From", post.author);
+	infoRows ~= InfoRow("From", encodeEntities(post.author));
 	//infoRows ~= InfoRow("Date", format("%s (%s)", formatLongTime(post.time), formatShortTime(post.time, false)));
 	infoRows ~= InfoRow("Date", formatLongTime(post.time));
 
