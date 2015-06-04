@@ -636,7 +636,7 @@ function onKeyPressImpl(e) {
 	}
 
 	if (!e.ctrlKey && e.shiftKey && !e.altKey && !e.metaKey) {
-		switch (c) {
+		switch (c.toUpperCase()) {
 			case 'J':
 				return focusNext(+1) && selectFocused();
 			case 'K':
