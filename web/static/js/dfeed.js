@@ -442,6 +442,13 @@ function getReplyLink() {
 	}
 }
 
+function getPostScrollable() {
+	if ($('#group-split').length || $('#group-vsplit').length) {
+		return $('.post-body');
+	}
+	return null;
+}
+
 function focusNext(offset, onlyUnread) {
 	if (typeof onlyUnread == 'undefined')
 		onlyUnread = false;
@@ -596,8 +603,8 @@ function onKeyPressImpl(e) {
 				return selectFocused();
 			case ' ':
 			{
-				var p = $('.post-body');
-				if (!p.length) return false;
+				var p = getPostScrollable();
+				if (!p || !p.length) return false;
 				var dest = p.scrollTop()+p.height();
 				if (dest < p[0].scrollHeight) {
 					p.animate({scrollTop : dest}, 200);
