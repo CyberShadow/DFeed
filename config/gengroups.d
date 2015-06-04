@@ -56,7 +56,7 @@ void main()
 		makeDGroupSet("D Programming Language - New users", [
 			makeDGroupInfo("digitalmars.D.learn"     , "Learn"                   , "learn"                   , "digitalmars/D/learn"     , "digitalmars-d-learn"     , "Questions about learning and using D"                             , false, false),
 		]),
-		makeDGroupSet("D Programming Language - General", [
+		makeDGroupSet("D Programming Language - Community", [
 			makeDGroupInfo("digitalmars.D"           , "General"                 , "general"                 , "digitalmars/D"           , "digitalmars-d"           , "General discussion of the D programming language"                 , false, false),
 			makeDGroupInfo("digitalmars.D.announce"  , "Announce"                , "announce"                , "digitalmars/D/announce"  , "digitalmars-d-announce"  , "Announcements for anything D related"                             , false, false),
 		]),
