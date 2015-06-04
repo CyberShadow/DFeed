@@ -993,11 +993,14 @@ void discussionIndexHeader()
 		if (hasPosts)
 			bits[2] ~= `<li>If you <a href="/register">create an account</a>, you can track replies to <a href="/search?q=authoremail:%s">your posts</a>.</li>`
 				.format(encodeEntities(encodeUrlParameter(userSettings.email)));
+		else
+			bits[0] ~= `<li>You can read and post on this forum without <a href="/register">creating an account</a>, but doing so offers <a href="/help#accounts">a few benefits</a>.</li>`;
 	}
 
 	SysTime cutOff = previousSession ? SysTime(previousSession) : now - 24.hours;
-	int numThreads = query!"SELECT COUNT(*) FROM [Threads] WHERE [Created] >= ?".iterate(cutOff.stdTime).selectValue!int;
-	int numPosts   = query!"SELECT COUNT(*) FROM [Posts]   WHERE [Time]    >= ?".iterate(cutOff.stdTime).selectValue!int;
+	int numThreads = query!"SELECT COUNT(*)                      FROM [Threads] WHERE [Created] >= ?".iterate(cutOff.stdTime).selectValue!int;
+	int numPosts   = query!"SELECT COUNT(*)                      FROM [Posts]   WHERE [Time]    >= ?".iterate(cutOff.stdTime).selectValue!int;
+	int numUsers   = query!"SELECT COUNT(DISTINCT [AuthorEmail]) FROM [Posts]   WHERE [Time]    >= ?".iterate(cutOff.stdTime).selectValue!int;
 
 	bits[(numThreads || numPosts) ? 1 : 2] ~=
 		"<li>"
@@ -1005,11 +1008,15 @@ void discussionIndexHeader()
 		(
 			(numThreads || numPosts)
 			?
-				(
+				"%d user%s ha%s created %-(%s and %)"
+				.format(
+					numUsers,
+					numUsers==1 ? "" : "s",
+					numThreads+numPosts==1 ? "s" : "ve",
 					(numThreads ? [`<a href="/search?q=time:%d..+newthread:y">%s thread%s</a>`.format(cutOff.stdTime, formatNumber(numThreads), numThreads==1 ? "" : "s")] : [])
 					~
 					(numPosts   ? [`<a href="/search?q=time:%d..">%s post%s</a>`              .format(cutOff.stdTime, formatNumber(numPosts  ), numPosts  ==1 ? "" : "s")] : [])
-				).join(" and ") ~ " ha%s been posted".format(numThreads+numPosts==1 ? "s" : "ve")
+				)
 			:
 				"No new forum activity"
 		)
@@ -1058,7 +1065,7 @@ string[] tips =
 	`This forum remembers your read post history on a per-post basis. If you are logged in, the post history is saved on the server, and in a compressed cookie otherwise.`,
 	`Much of this forum's content is also available via classic mailing lists or NNTP - see the "Also via" column on the forum index.`,
 	`If you create a Gravatar profile with the email address you post with, it will be accessible when clicking your avatar.`,
-	`You don't need to create an account to post on this forum, but doing so <a href="/help#accounts">offers a few benefits</a>.`,
+//	`You don't need to create an account to post on this forum, but doing so <a href="/help#accounts">offers a few benefits</a>.`,
 	`To subscribe to a thread, click the "Subscribe" link on that thread's first post. You need to be logged in to create subscriptions.`,
 	`To search the forum, use the search widget on the left, or you can visit <a href="/search">the search page</a> directly.`,
 	`This forum is open-source! Read or fork the code <a href="https://github.com/CyberShadow/DFeed">on GitHub</a>.`,
