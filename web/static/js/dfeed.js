@@ -509,6 +509,9 @@ function initKeyNav() {
 }
 
 function addLinkNavigation() {
+	if (!enableKeyNav)
+		return;
+
 	$post = getSelectedPost();
 	if (!$post)
 		return;
