@@ -351,7 +351,7 @@ div#footernav a {
 #forum-index > tbody > tr > td:nth-child(2) { width: 40%; }
 #forum-index > tbody > tr > td:nth-child(3) { width: 5em; }
 #forum-index > tbody > tr > td:nth-child(4) { width: 5em; }
-#forum-index > tbody > tr > td:nth-child(5) { width: 6em; }
+#forum-index > tbody > tr > td:nth-child(5) { width: 6.2em; }
 
 .forum-index-description {
 	color: #444;
