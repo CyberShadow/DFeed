@@ -555,7 +555,7 @@ var keyboardHelp =
 
 function showHelp() {
 	$('<div class="keyboardhelp-popup">')
-		.html(keyboardHelp)
+		.html(keyboardHelp + '<div class="keyboardhelp-popup-closetext">(press any key or click to close)</div>')
 		.click(closeHelp)
 		.appendTo($('body'))
 		.hide()
