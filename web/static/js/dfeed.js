@@ -641,6 +641,7 @@ function onKeyPressImpl(e) {
 				return focusNext(+1) && selectFocused();
 			case 'K':
 				return focusNext(-1) && selectFocused();
+			case 'H':
 			case '?':
 				return showHelp();
 		}
