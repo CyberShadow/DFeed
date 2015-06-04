@@ -1536,6 +1536,7 @@ void formatThreadedPosts(PostInfo*[] postInfos, bool narrow, string selectedID =
 
 	string normalizeSubject(string s)
 	{
+		s.skipOver("Re: ");
 		return s
 			.replace("New: ", "") // Bugzilla hack
 			.replace("\t", " ")   // Apple Mail hack
