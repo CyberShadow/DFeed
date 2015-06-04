@@ -2,13 +2,10 @@ var cssmenu_no_js = 1;
 
 $(document).ready(function() {
 	if (enableKeyNav) {
-		if ($.browser.webkit) {
-			// Chrome does not pass Ctrl+keys to keypress - but in many
-			// other browsers keydown does not repeat
-			$(document).keydown(onKeyPress);
-		} else {
-			$(document).keypress(onKeyPress);
-		}
+		// Chrome does not pass Ctrl+keys to keypress - but in many
+		// other browsers keydown does not repeat
+		$(document).keydown (onKeyDown );
+		$(document).keypress(onKeyPress);
 	}
 
 	if ($('#group-split').length || $('#group-vsplit').length)
@@ -570,16 +567,20 @@ function closeHelp() {
 	$('.keyboardhelp-popup').fadeOut(function() { $('.keyboardhelp-popup').remove(); });
 }
 
-function onKeyPress(e) {
-	var result = onKeyPressImpl(e);
+function onKeyDown(e) {
+	var result = onKey(e, true);
 	if (result && 'localStorage' in window)
 		localStorage.setItem('usingKeyNav', 'true');
 	return !result; // event handlers return "false" if the event was handled
 }
 
+function onKeyPress(e) {
+	return !onKey(e, false);
+}
+
 // Return true if the event was handled,
 // and false if it wasn't and it should be processed by the browser.
-function onKeyPressImpl(e) {
+function onKey(e, keyDown) {
 	if ($(e.target).is('input, textarea')) {
 		return false;
 	}
@@ -593,7 +594,7 @@ function onKeyPressImpl(e) {
 	if ($.browser.webkit) c = c.toLowerCase();
 	var pageSize = $('.group-threads').height() / $('.thread-post-row').eq(0).height();
 
-	if (!e.ctrlKey && !e.shiftKey && !e.altKey && !e.metaKey) {
+	if (!keyDown && !e.ctrlKey && !e.shiftKey && !e.altKey && !e.metaKey) {
 		switch (c) {
 			case 'j':
 				return focusNext(+1);
@@ -642,7 +643,7 @@ function onKeyPressImpl(e) {
 		}
 	}
 
-	if (!e.ctrlKey && e.shiftKey && !e.altKey && !e.metaKey) {
+	if (!keyDown && !e.ctrlKey && e.shiftKey && !e.altKey && !e.metaKey) {
 		switch (c.toUpperCase()) {
 			case 'J':
 				return focusNext(+1) && selectFocused();
@@ -653,7 +654,7 @@ function onKeyPressImpl(e) {
 		}
 	}
 
-	if (e.ctrlKey && !e.shiftKey && !e.altKey && !e.metaKey) {
+	if (keyDown && e.ctrlKey && !e.shiftKey && !e.altKey && !e.metaKey) {
 		switch (e.keyCode) {
 			case 13: // ctrl+enter == enter
 				return selectFocused();
