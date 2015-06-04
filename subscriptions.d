@@ -833,7 +833,7 @@ final class EmailAction : Action
 		queue[address] = Email([
 			"-s", subscription.trigger.getShortPostDescription(post),
 			"-r", "%s <no-reply@%s>".format(site.config.host, site.config.host),
-			"\"%s\" <%s>".format(getUserRealName(userName), address)], formatMessage(subscription, post));
+			address], formatMessage(subscription, post));
 
 		if (!queueTask)
 			queueTask = setTimeout({
