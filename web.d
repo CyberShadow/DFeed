@@ -1059,7 +1059,7 @@ void discussionIndexHeader()
 string[] tips =
 [
 	`This forum has several different <a href="/help#view-modes">view modes</a>. Try them to find one you like best. You can change the view mode in the <a href="/settings">settings</a>.`,
-	`This forum supports <a href="/help#keynav">keyboard shortcuts</a>. Press <kbd>⇧ Shift</kbd>+<kbd>H</kbd> to view them.`,
+	`This forum supports <a href="/help#keynav">keyboard shortcuts</a>. Press <kbd>Shift</kbd>+<kbd>H</kbd> to view them.`,
 	`You can focus a message with <kbd>j</kbd>/<kbd>k</kbd> and press <kbd>u</kbd> to mark it as unread, to remind you to read it later.`,
 	`The <a href="/help#avatars">avatars on this forum</a> are provided by Gravatar, which allows associating a global avatar with an email address.`,
 	`This forum remembers your read post history on a per-post basis. If you are logged in, the post history is saved on the server, and in a compressed cookie otherwise.`,
