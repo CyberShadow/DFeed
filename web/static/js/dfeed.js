@@ -21,7 +21,37 @@ $(document).ready(function() {
 		initKeyNav();
 		localStorage.removeItem('usingKeyNav');
 	}
+
+	if ($('#thread-posts').length) {
+		initThreadUrlFixer();
+	}
 });
+
+// **************************************************************************
+// Thread view
+
+var updateUrlOnFocus = false;
+
+function initThreadUrlFixer() {
+	if ('history' in window && 'replaceState' in window.history) {
+		updateUrlOnFocus = true;
+
+		if (document.location.hash.length) {
+			var el = document.getElementById(document.location.hash.substr(1));
+			if (el) {
+				$post = $(el).filter('.post');
+				if ($post.length) {
+					focusRow($post);
+				}
+			}
+		}
+
+		$('.post').live('click', function() {
+			focusRow($(this));
+			return true;
+		});
+	}
+}
 
 // **************************************************************************
 // Split view
@@ -352,6 +382,9 @@ function focusRow($row, withMargin) {
 
 	if ($('#group-split').length == 0 && $('#group-vsplit').length == 0)
 		addLinkNavigation();
+
+	if (updateUrlOnFocus)
+		window.history.replaceState(null, '', $row.find('.permalink').attr('href'));
 }
 
 function selectRow(row) {

@@ -422,7 +422,7 @@ div#footernav a {
 
 /*************** Thread view, individual posts ***************/
 
-#forum-content > .post-wrapper:first-child > .post {
+#thread-posts > .post-wrapper:first-child > .post {
 	margin-top: 0;
 }
 .post-wrapper {

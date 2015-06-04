@@ -2191,8 +2191,10 @@ void discussionThread(string id, int page, out GroupInfo groupInfo, out string t
 	if (nested)
 		posts = Rfc850Post.threadify(posts);
 
+	html.put(`<div id="thread-posts">`);
 	foreach (post; posts)
 		formatPost(post, knownPosts, markAsRead);
+	html.put(`</div>`);
 
 	if (!nested)
 	{
