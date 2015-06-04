@@ -57,12 +57,12 @@ void main()
 			makeDGroupInfo("digitalmars.D.learn"     , "Learn"                   , "learn"                   , "digitalmars/D/learn"     , "digitalmars-d-learn"     , "Questions about learning and using D"                             , false, false),
 		]),
 		makeDGroupSet("D Programming Language - Community", [
-			makeDGroupInfo("digitalmars.D"           , "General"                 , "general"                 , "digitalmars/D"           , "digitalmars-d"           , "General discussion of the D programming language"                 , false, false),
-			makeDGroupInfo("digitalmars.D.announce"  , "Announce"                , "announce"                , "digitalmars/D/announce"  , "digitalmars-d-announce"  , "Announcements for anything D related"                             , false, false),
+			makeDGroupInfo("digitalmars.D"           , "General"                 , "general"                 , "digitalmars/D"           , "digitalmars-d"           , "Discussion of the D programming language"                         , false, false),
+			makeDGroupInfo("digitalmars.D.announce"  , "Announce"                , "announce"                , "digitalmars/D/announce"  , "digitalmars-d-announce"  , "News and announcements for anything D related"                    , false, false),
 		]),
 		makeDGroupSet("D Programming Language - Ecosystem", [
-			makeDGroupInfo("D.gnu"                   , "GDC"                     , "gdc"                     , "D/gnu"                   , "d.gnu"                   , "GDC, the GCC-based D Compiler"                                    , false, false),
-			makeDGroupInfo("digitalmars.D.ldc"       , "LDC"                     , "ldc"                     , null                      , "digitalmars-d-ldc"       , "LDC, the LLVM-based D Compiler"                                   , false, false),
+			makeDGroupInfo("D.gnu"                   , "GDC"                     , "gdc"                     , "D/gnu"                   , "d.gnu"                   , "GCC-based D Compiler"                                             , false, false),
+			makeDGroupInfo("digitalmars.D.ldc"       , "LDC"                     , "ldc"                     , null                      , "digitalmars-d-ldc"       , "LLVM-based D Compiler"                                            , false, false),
 
 			makeDGroupInfo("digitalmars.D.debugger"  , "Debuggers"               , "debugger"                , "digitalmars/D/debugger"  , "digitalmars-d-debugger"  , "Debuggers for D"                                                  , false, false),
 			makeDGroupInfo("digitalmars.D.ide"       , "IDEs"                    , "ide"                     , "digitalmars/D/ide"       , "digitalmars-d-ide"       , "Integrated Development Environments for D"                        , false, false),
@@ -72,8 +72,8 @@ void main()
 		makeDGroupSet("D Programming Language - Development", [
 			makeDGroupInfo("digitalmars.D.bugs"      , "Issues"                  , "issues"                  , "digitalmars/D/bugs"      , "digitalmars-d-bugs"      , "Bug reports for D compiler and library"                           , false, true ),
 			makeDGroupInfo("dmd-beta"                , "Beta"                    , "beta"                    , null                      , "dmd-beta"                , "Notifications and discussion of D beta versions"                  , true , false),
-			makeDGroupInfo("dmd-internals"           , "DMD"                     , "dmd"                     , null                      , "dmd-internals"           , "DMD compiler internal design and implementation"                  , true , false),
-			makeDGroupInfo("phobos"                  , "Phobos"                  , "phobos"                  , null                      , "phobos"                  , "Phobos standard library design and implementation"                , true , false),
+			makeDGroupInfo("dmd-internals"           , "DMD"                     , "dmd"                     , null                      , "dmd-internals"           , "Compiler internal design and implementation"                      , true , false),
+			makeDGroupInfo("phobos"                  , "Phobos"                  , "phobos"                  , null                      , "phobos"                  , "Standard library design and implementation"                       , true , false),
 			makeDGroupInfo("D-runtime"               , "Druntime"                , "druntime"                , null                      , "D-runtime"               , "Runtime library design and implementation"                        , true , false),
 		]),
 		makeDGroupSet("Unused", [
