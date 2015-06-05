@@ -473,7 +473,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 						response.setRefresh(1, redirectTo);
 					if (form)
 					{
-						breadcrumbs ~= title = `Posting error`;
+						breadcrumbs ~= title = `Posting`;
 						bodyClass ~= " formdoc";
 					}
 					else
