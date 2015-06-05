@@ -1418,14 +1418,15 @@ void discussionGroup(GroupInfo groupInfo, int page)
 
 	void summarizePostCount(ref Thread thread)
 	{
+		html.put(`<a class="secretlink" href="`), html.putEncodedEntities(idToUrl(thread.id, "thread")), html.put(`">`);
 		if (thread.unreadPostCount == 0)
 			html ~= formatNumber(thread.postCount-1);
 		else
-		if (thread.unreadPostCount == thread.postCount)
 			html.put(`<b>`, formatNumber(thread.postCount-1), `</b>`);
-		else
+		html.put(`</a>`);
+
+		if (thread.unreadPostCount && thread.unreadPostCount != thread.postCount)
 			html.put(
-				`<b>`, formatNumber(thread.postCount-1), `</b>`
 				`<br>(<a href="`, idToUrl(thread.id, "first-unread"), `">`, formatNumber(thread.unreadPostCount), ` new</a>)`);
 	}
 

@@ -196,6 +196,14 @@ div.truncated {
 	max-width: 100%;
 }
 
+a.secretlink,
+a.secretlink:hover,
+a.secretlink:active,
+a.secretlink:visited {
+	color: inherit;
+	text-decoration: none;
+}
+
 /* A forum-table has a gray header and borders */
 
 .forum-table {
