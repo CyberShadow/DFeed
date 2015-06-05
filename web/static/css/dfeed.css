@@ -729,6 +729,9 @@ table.viewmode-threaded > tbody > tr > th {
 .split-post .post-body {
 	overflow: auto;
 	padding: 0;
+	border-left: none;
+	border-right: none;
+	border-bottom: none;
 	display: block;
 }
 
