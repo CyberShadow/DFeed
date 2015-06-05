@@ -3540,7 +3540,7 @@ static this() { reUrl = regex(`\w+://[^<>\s]+[\w/\-=]`); }
 
 void formatBody(Rfc850Message post)
 {
-	auto paragraphs = unwrapText(post.content, post.flowed, post.delsp);
+	auto paragraphs = unwrapText(post.content, post.wrapFormat);
 	bool inSignature = false;
 	int quoteLevel = 0;
 	foreach (paragraph; paragraphs)

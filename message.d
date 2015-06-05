@@ -208,7 +208,7 @@ class Rfc850Post : Post
 	/// Get content excluding quoted text.
 	@property string newContent()
 	{
-		auto paragraphs = content.unwrapText(flowed, delsp);
+		auto paragraphs = content.unwrapText(wrapFormat);
 		auto index = paragraphs.length.iota.filter!(i =>
 			!paragraphs[i].quotePrefix.length && (i+1 >= paragraphs.length || !paragraphs[i+1].quotePrefix.length)
 		).array;
