@@ -699,7 +699,11 @@ function moveCaretToEnd(el) {
 
 function initPosting() {
 	initAutoSave();
-	moveCaretToEnd($('#postform textarea')[0]);
+	var textarea = $('#postform textarea')[0];
+	if (textarea.value.length)
+		moveCaretToEnd(textarea);
+	else
+		$('#postform-subject').focus();
 }
 
 function initAutoSave() {
