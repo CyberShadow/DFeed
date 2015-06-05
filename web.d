@@ -345,7 +345,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 					discussionSinglePost(id, currentGroup, subject, currentThread);
 					title = subject;
 					breadcrumbs ~= `<a href="/group/` ~encodeEntities(currentGroup.urlName)~`">` ~ encodeEntities(currentGroup.publicName) ~ `</a>`;
-					breadcrumbs ~= `<a href="/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a> (view single post)`;
+					breadcrumbs ~= `<a href="/post/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a> (view single post)`;
 					break;
 				}
 				else
