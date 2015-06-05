@@ -40,13 +40,14 @@ function initThreadUrlFixer() {
 				if ($post.length) {
 					// Chrome is not scrolling to the hash if
 					// we call replaceState inside the load event.
-					setTimeout(focusRow, 0, $post);
+					setTimeout(focusRow, 0, $post, FocusScroll.none);
 				}
 			}
 		}
 
 		$('.post').live('click', function() {
-			focusRow($(this));
+			if (!$(this).is('.focused'))
+				focusRow($(this), FocusScroll.none);
 			return true;
 		});
 	}
@@ -68,7 +69,7 @@ function initSplitView() {
 
 	$(window).resize(onResize);
 	updateSize(true);
-	focusRow($('tr.thread-post-row').last());
+	focusRow($('tr.thread-post-row').last(), FocusScroll.scroll);
 
 	$(window).bind('popstate', onPopState);
 	onPopState();
@@ -138,7 +139,7 @@ function onPopState() {
 
 		$('.group-threads .selected').removeClass('selected');
 		$row.addClass('selected');
-		focusRow($row, true);
+		focusRow($row, FocusScroll.withMargin);
 		currentID = id;
 
 		showText('Loading message\n<'+id+'> ...');
@@ -315,7 +316,7 @@ function updateSize(resized) {
 		$container.scrollTop(containerScrollTop);
 
 	if ($focused.length && wasFocusedInView)
-		focusRow($focused, true);
+		focusRow($focused, FocusScroll.withMargin);
 }
 
 function onResize() {
@@ -373,10 +374,13 @@ function isRowInView($row) {
 	return isInView($row, getSelectablesContainer());
 }
 
-function focusRow($row, withMargin) {
+var FocusScroll = { none:0, scroll:1, withMargin:2 };
+
+function focusRow($row, focusScroll) {
 	$('.focused').removeClass('focused');
 	$row.addClass('focused');
-	scrollIntoView($row, getSelectablesContainer(), withMargin);
+	if (focusScroll)
+		scrollIntoView($row, getSelectablesContainer(), focusScroll == FocusScroll.withMargin);
 
 	if ($('#group-split').length == 0 && $('#group-vsplit').length == 0)
 		addLinkNavigation();
@@ -474,7 +478,7 @@ function focusNext(offset, onlyUnread) {
 		var isUnread = $row.find('.forum-unread').length > 0;
 		if (!onlyUnread || isUnread) {
 			//row.mousedown();
-			focusRow($row, false);
+			focusRow($row, FocusScroll.scroll);
 			return true;
 		}
 
