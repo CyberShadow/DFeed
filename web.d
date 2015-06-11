@@ -976,7 +976,7 @@ void discussionIndexHeader()
 				if (c)
 				{
 					numNewSubscriptions++;
-					bits[1] ~= `<li><b>You have <a href="/subscription-posts/%s">%d unread post%s matching your <a href="/settings#subscriptions">%s subscription</a> (%s).</b></li>`
+					bits[1] ~= `<li><b>You have <a href="/subscription-posts/%s">%d unread post%s</a> matching your <a href="/settings#subscriptions">%s subscription</a> (%s).</b></li>`
 						.format(encodeEntities(subscription.id), c, c==1 ? "" : "s", subscription.trigger.type, subscription.trigger.getDescription());
 				}
 			}
