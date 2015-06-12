@@ -20,6 +20,7 @@ import std.file;
 import std.stdio;
 
 import ae.net.asockets;
+import ae.net.ssl.openssl;
 
 import common;
 import web;
