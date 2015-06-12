@@ -20,6 +20,7 @@ import std.getopt;
 import std.stdio : stderr;
 
 import ae.net.asockets;
+import ae.net.ssl.openssl;
 import ae.utils.meta;
 import ae.utils.sini;
 
