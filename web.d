@@ -3827,7 +3827,7 @@ CachedResource getFeed(GroupInfo groupInfo, bool threadsOnly, int hours)
 
 Rfc850Post[] getFeedPosts(GroupInfo groupInfo, bool threadsOnly, int hours)
 {
-	string PERF_SCOPE = "getFeedPosts(%s,%s,%s)".format(groupInfo.internalName, threadsOnly, hours); mixin(MeasurePerformanceMixin);
+	string PERF_SCOPE = "getFeedPosts(%s,%s,%s)".format(groupInfo ? groupInfo.internalName : "null", threadsOnly, hours); mixin(MeasurePerformanceMixin);
 
 	auto since = (Clock.currTime() - dur!"hours"(hours)).stdTime;
 	auto iterator =
