@@ -324,6 +324,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				GroupInfo groupInfo;
 				string subject;
 				discussionThread(threadID, page, groupInfo, subject, viewMode == "basic");
+				enforce(groupInfo, "Unknown group");
 				title = subject ~ pageStr;
 				currentGroup = groupInfo;
 				currentThread = threadID;
