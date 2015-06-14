@@ -861,7 +861,7 @@ HttpResponseEx makeBundle(string time, string url)
 		}
 		cache[url] = Bundle(time, bundleResponse);
 	}
-	return cache[url].response;
+	return cache[url].response.dup;
 }
 
 string fixCSS(string css, string path, bool first)
