@@ -1156,7 +1156,7 @@ body.frame:before {
 	display: none;
 }
 
-body.frame > div, body.frame #forum-tools {
+body.frame > div, body.frame > div#top, body.frame #forum-tools {
 	display: none;
 }
 
