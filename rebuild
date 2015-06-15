@@ -1,5 +1,8 @@
 #!/bin/bash
-set -e
+
+set -eu
+cd "$(dirname "$0")"
+
 MODEL=64
 DFLAGS="-m$MODEL -g -L-lcurl"
 #DFLAGS="$DFLAGS -debug"

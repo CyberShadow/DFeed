@@ -1,6 +1,7 @@
 #!/bin/bash
 
-set -e
+set -eu
+cd "$(dirname "$0")"
 
 while [ `date +%S` -lt 58 ]; do
 	SECOND=`date +%S`

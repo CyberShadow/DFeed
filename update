@@ -1,6 +1,7 @@
 #!/bin/bash
 
-set -ex
+set -eux
+cd "$(dirname "$0")"
 
 git pull
 
