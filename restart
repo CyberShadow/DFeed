@@ -3,7 +3,7 @@
 set -eu
 cd "$(dirname "$0")"
 
-while [ `date +%S` -lt 58 ]; do
+while [ `date +%S` -lt 57 ]; do
 	SECOND=`date +%S`
 	echo -ne Restarting in `expr 58 - $SECOND` ... '\r'
 	sleep 1
