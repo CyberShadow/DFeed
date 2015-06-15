@@ -655,6 +655,10 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				auto hours = to!int(parameters.get("hours", text(FEED_HOURS_DEFAULT)));
 				enforce(hours <= FEED_HOURS_MAX, "hours parameter exceeds limit");
 				auto groupInfo = getGroupInfoByUrl(groupUrlName);
+				if (groupUrlName && !groupInfo)
+					groupInfo = getGroupInfo(groupUrlName);
+				if (groupUrlName && !groupInfo)
+					throw new NotFoundException("No such group");
 				return getFeed(groupInfo, threadsOnly, hours).getResponse(request);
 			}
 
