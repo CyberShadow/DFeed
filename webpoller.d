@@ -62,7 +62,7 @@ private:
 	{
 		if (stopping) return;
 
-		// Use a jitter to avoid making multiple simultaneous resquests
+		// Use a jitter to avoid making multiple simultaneous requests
 		auto delay = pollPeriod + uniform(-5, 5);
 		log(format("Next poll in %d seconds", delay));
 		timerTask = setTimeout(&startNextRequest, delay.seconds);
