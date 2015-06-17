@@ -416,8 +416,20 @@ final class ContentTrigger : Trigger
 		if (onlyInGroups)
 		{
 			html.put(` in `);
-			foreach (i, group; groups)
-				html.put(i ? `, ` : ``, `<b>`), html.putEncodedEntities(group), html.put(`</b>`);
+			void putGroup(string group)
+			{
+				auto gi = getGroupInfo(group);
+				html.put(`<b>`), html.putEncodedEntities(gi ? gi.publicName : group), html.put(`</b>`);
+			}
+
+			putGroup(groups[0]);
+			if (groups.length==2)
+				html.put(` and `), putGroup(groups[1]);
+			else
+			if (groups.length==3)
+				html.put(`, `), putGroup(groups[1]), html.put(` and `), putGroup(groups[2]);
+			else
+				html.put(`, `), putGroup(groups[1]), html.put(`, (<b>%d</b> more)`.format(groups.length-2));
 		}
 
 		void putStringFilter(string preface, ref StringFilter filter)
