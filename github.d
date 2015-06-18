@@ -96,9 +96,9 @@ class GitHubPost : Post
 				url = data["compare"].str;
 				break;
 			case "pull_request":
-				str = "%s %sd %s pull request #%s (\"%s\")".format(
+				str = "%s %s %s pull request #%s (\"%s\")".format(
 					data["sender"]["login"].str.filterIRCName,
-					data["action"].str,
+					data["action"].str == "synchronize" ? "updated" : data["action"].str,
 					data["repository"]["name"].str,
 					data["pull_request"]["number"].integer,
 					data["pull_request"]["title"].str,
@@ -183,7 +183,10 @@ class GitHubPost : Post
 
 	override bool isImportant()
 	{
-		return event.isOneOf("pull_request");
+		debug
+			return false;
+		else
+			return event.isOneOf("pull_request");
 	}
 
 private:
