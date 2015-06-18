@@ -98,7 +98,9 @@ class GitHubPost : Post
 			case "pull_request":
 				str = "%s %s %s pull request #%s (\"%s\")".format(
 					data["sender"]["login"].str.filterIRCName,
-					data["action"].str == "synchronize" ? "updated" : data["action"].str,
+					   (data["action"].str == "closed" && data["pull_request"]["merged"].type == JSON_TYPE.TRUE) ? "merged" :
+						data["action"].str == "synchronize" ? "updated" :
+						data["action"].str,
 					data["repository"]["name"].str,
 					data["pull_request"]["number"].integer,
 					data["pull_request"]["title"].str,
