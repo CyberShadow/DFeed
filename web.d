@@ -58,6 +58,7 @@ import cache;
 import captcha;
 import common;
 import database;
+import github;
 import groups;
 import lint;
 import list;
@@ -661,6 +662,10 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 					throw new NotFoundException("No such group");
 				return getFeed(groupInfo, threadsOnly, hours).getResponse(request);
 			}
+			case "github-webhook":
+				foreach (service; services!GitHub)
+					service.handleWebHook(request);
+				break;
 
 			case "js":
 			case "css":

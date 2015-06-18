@@ -36,6 +36,7 @@ import feed;
 import reddit;
 import socket;
 import mailman;
+import github;
 
 // Sinks
 import ircsink;
@@ -61,6 +62,7 @@ void main(string[] args)
 	createServices!Reddit       ("sources/reddit");
 	createServices!SocketSource ("sources/socket");
 	createServices!Mailman      ("sources/mailman");
+	createServices!GitHub       ("sources/github");
 	if (refresh)
 		new MessageDBSource();
 
