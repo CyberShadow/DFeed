@@ -48,6 +48,9 @@ class GitHub : NewsSource
 
 	immutable Config config;
 
+	override void start() {}
+	override void stop() {}
+
 	void handleWebHook(HttpRequest request)
 	{
 		auto data = cast(string)request.data.joinToHeap();
