@@ -167,6 +167,8 @@ class GitHubPost : Post
 				break;
 		}
 
+		str = "[GitHub] " ~ str;
+
 		if (url && isImportant)
 			shortenURL(url, (string shortenedURL) {
 				handler(str ~ ": " ~ shortenedURL);
