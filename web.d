@@ -665,7 +665,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			case "github-webhook":
 				foreach (service; services!GitHub)
 					service.handleWebHook(request);
-				break;
+				return response.serveText("DFeed OK\n");
 
 			case "js":
 			case "css":

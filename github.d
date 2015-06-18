@@ -49,7 +49,7 @@ class GitHub : NewsSource
 	immutable Config config;
 
 	override void start() {}
-	override void stop() {}
+	override void stop () {}
 
 	void handleWebHook(HttpRequest request)
 	{
