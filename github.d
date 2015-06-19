@@ -162,6 +162,7 @@ class GitHubPost : Post
 					data["action"].str,
 					data["repository"]["name"].str,
 				);
+				url = data["sender"]["html_url"].str;
 				break;
 			default:
 				//throw new Exception("Unknown event type: " ~ event);
