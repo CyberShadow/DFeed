@@ -152,7 +152,7 @@ class Rfc850Post : Post
 	override bool isImportant()
 	{
 		// GitHub notifications are already grabbed from RSS
-		if (authorEmail == "noreply@github.com")
+		if (author == "GitHub")
 			return false;
 
 		if (where == "")
