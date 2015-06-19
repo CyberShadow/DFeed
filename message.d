@@ -216,7 +216,7 @@ class Rfc850Post : Post
 	}
 
 private:
-	string[] ANNOUNCE_REPLIES = ["digitalmars.D.bugs"];
+	string[] ANNOUNCE_REPLIES = [];
 	string[] VIPs = ["Walter Bright", "Andrei Alexandrescu", "Sean Kelly", "Don", "dsimcha"];
 }
 
