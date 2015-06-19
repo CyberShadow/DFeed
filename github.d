@@ -188,7 +188,13 @@ class GitHubPost : Post
 		debug
 			return false;
 		else
-			return event.isOneOf("pull_request");
+			switch (event)
+			{
+				case "pull_request":
+					return data["action"].str != "synchronize";
+				default:
+					return false;
+			}
 	}
 
 private:
