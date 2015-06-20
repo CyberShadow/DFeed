@@ -1822,6 +1822,18 @@ void discussionGroupVSplit(GroupInfo groupInfo, int page)
 		`</tr></table>`);
 }
 
+int getVSplitPostPage(GroupInfo groupInfo, string id)
+{
+	int page = 0;
+
+	foreach (long time; query!"SELECT [Time] FROM [Groups] WHERE [ID] = ? LIMIT 1".iterate(id))
+		foreach (int threadIndex; query!"SELECT COUNT(*) FROM [Groups] WHERE [Group] = ? AND [Time] > ? ORDER BY [Time] DESC".iterate(groupInfo.internalName, time))
+			page = indexToPage(threadIndex, POSTS_PER_GROUP_PAGE);
+
+	enforce(page > 0, "Can't find post's page");
+	return page;
+}
+
 void discussionGroupVSplitFromPost(string id, out GroupInfo groupInfo, out int page, out string threadID)
 {
 	auto post = getPost(id);
@@ -1829,7 +1841,7 @@ void discussionGroupVSplitFromPost(string id, out GroupInfo groupInfo, out int p
 
 	groupInfo = post.getGroup();
 	threadID = post.cachedThreadID;
-	page = getThreadPage(groupInfo, threadID);
+	page = getVSplitPostPage(groupInfo, id);
 
 	discussionGroupVSplit(groupInfo, page);
 }
