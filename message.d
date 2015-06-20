@@ -256,6 +256,8 @@ string encodeAnchor(string s)
 	return urlEncode!(" !\"#$%&'()*+,/;<=>?@[\\]^`{|}~", ':')(s);
 }
 
+alias urlEncodeMessageUrl = urlEncode!(" \"#%/<>?[\\]^`{|}", '%');
+
 /// Get relative URL to a post ID.
 string idToUrl(string id, string action = "post", int page = 1)
 {
@@ -265,7 +267,7 @@ string idToUrl(string id, string action = "post", int page = 1)
 	// pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
 	// sub-delims    = "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
 	// unreserved    = ALPHA / DIGIT / "-" / "." / "_" / "~"
-	string path = "/" ~ action ~ "/" ~ urlEncode!(" \"#%/<>?[\\]^`{|}", '%')(id[1..$-1]);
+	string path = "/" ~ action ~ "/" ~ urlEncodeMessageUrl(id[1..$-1]);
 
 	assert(page >= 1);
 	if (page > 1)

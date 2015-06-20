@@ -337,6 +337,11 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			case "post":
 				enforce(path.length > 1, "No post specified");
 				string id = '<' ~ urlDecode(pathX) ~ '>';
+
+				// Normalize URL encoding to allow JS to find message by URL
+				if (urlEncodeMessageUrl(urlDecode(pathX)) != pathX)
+					return response.redirect(idToUrl(id));
+
 				auto viewMode = userSettings.groupViewMode;
 				if (viewMode == "basic")
 					return response.redirect(resolvePostUrl(id));
