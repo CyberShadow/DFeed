@@ -765,7 +765,8 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		}
 	}
 
-	jsVars["enableKeyNav"] = user.get("enable-keynav", `true`, SettingType.client);
+	jsVars["enableKeyNav"] = userSettings.enableKeyNav;
+	jsVars["autoOpen"] = userSettings.autoOpen;
 
 	string[] extraJS;
 	if (jsVars.length)
@@ -2972,6 +2973,10 @@ struct UserSettings
 	/// Enable or disable keyboard hotkeys. Can be changed in the settings.
 	alias enableKeyNav = userSetting!("enable-keynav", "true", SettingType.client);
 
+	/// Whether messages are opened automatically after being focused
+	/// (message follows focus). Can be changed in the settings.
+	alias autoOpen = userSetting!("auto-open", "false", SettingType.client);
+
 	/// Any pending notices that should be shown on the next page shown.
 	alias pendingNotice = userSetting!("pending-notice", null, SettingType.session);
 
@@ -3021,7 +3026,7 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 				if (setting in postVars)
 					userSettings.set(setting, postVars[setting]);
 			// Checkboxes
-			foreach (setting; ["enable-keynav"])
+			foreach (setting; ["enable-keynav", "auto-open"])
 				userSettings.set(setting, setting in postVars ? "true" : "false");
 
 			userSettings.pendingNotice = "settings-saved";
@@ -3112,6 +3117,11 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 
 		`<input type="checkbox" name="enable-keynav" id="enable-keynav"`, userSettings.enableKeyNav == "true" ? ` checked` : null, `>`
 		`<label for="enable-keynav">Enable keyboard shortcuts</label> (<a href="/help#keynav">?</a>)<br>`
+
+		`<span title="Automatically open messages after selecting them.&#13;&#10;Applicable to threaded, horizontal-split and vertical-split view modes.">`
+			`<input type="checkbox" name="auto-open" id="auto-open"`, userSettings.autoOpen == "true" ? ` checked` : null, `>`
+			`<label for="auto-open">Focus follows message</label>`
+		`</span><br>`
 
 		`<p>`
 			`<input type="submit" name="action-save" value="Save">`

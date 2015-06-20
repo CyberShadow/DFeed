@@ -452,7 +452,18 @@ function getPostScrollable() {
 	return null;
 }
 
+function isAutoOpenApplicable() {
+	return $('#group-index-threaded').length || $('#thread-index').length || $('#group-split').length || $('#group-vsplit').length;
+}
+
+var autoOpenTimer = 0;
+
 function focusNext(offset, onlyUnread) {
+	if (autoOpenTimer)
+		clearTimeout(autoOpenTimer);
+	if (autoOpen && isAutoOpenApplicable())
+		autoOpenTimer = setTimeout(selectFocused, 500);
+
 	if (typeof onlyUnread == 'undefined')
 		onlyUnread = false;
 
@@ -489,6 +500,9 @@ function focusNext(offset, onlyUnread) {
 }
 
 function selectFocused() {
+	if (autoOpenTimer)
+		clearTimeout(autoOpenTimer);
+
 	var focused = $('.focused');
 	if (focused.length) {
 		selectRow(focused);
