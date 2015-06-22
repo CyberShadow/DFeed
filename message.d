@@ -51,6 +51,9 @@ class Rfc850Post : Post
 	/// URLs for IRC.
 	string url, shortURL;
 
+	/// For IRC.
+	string verb;
+
 	/// Result of threadify()
 	Rfc850Post[] children;
 
@@ -61,6 +64,8 @@ class Rfc850Post : Post
 			msg.id = _id;
 		this.rowid = rowid;
 		this.cachedThreadID = threadID;
+
+		this.verb = reply ? "replied to" : "posted";
 
 		int bugzillaCommentNumber;
 		if ("X-Bugzilla-Who" in headers)
@@ -102,6 +107,7 @@ class Rfc850Post : Post
 		{
 			auto urlBase = headers.get("X-Bugzilla-URL", "http://d.puremagic.com/issues/");
 			url = urlBase ~ "show_bug.cgi?id=" ~ subject.split(" ")[1][0..$-1];
+			verb = bugzillaCommentNumber ? "commented on" : reply ? "updated" : "created";
 			if (bugzillaCommentNumber > 0)
 				url ~= "#c" ~ .text(bugzillaCommentNumber);
 		}
@@ -143,7 +149,7 @@ class Rfc850Post : Post
 		handler(format("%s%s %s %s%s",
 			xref.length ? "[" ~ publicGroupNames.join(",") ~ "] " : null,
 			author == "" ? "<no name>" : filterIRCName(author),
-			reply ? "replied to" : "posted",
+			verb,
 			subject == "" ? "<no subject>" : `"` ~ subject ~ `"`,
 			shortURL ? ": " ~ shortURL : url ? ": " ~ url : "",
 		));
