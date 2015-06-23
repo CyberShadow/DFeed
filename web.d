@@ -2378,7 +2378,7 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 			`<table class="forum-table forum-error">`
 				`<tr><th>Can't post to archive</th></tr>`
 				`<tr><td class="forum-table-message">`
-					), html.putEncodedEntities(info.publicName), html.put(
+					), html.putEncodedEntities(info.postMessage), html.put(
 				`</td></tr>`
 			`</table>`);
 		return false;
