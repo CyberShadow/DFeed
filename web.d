@@ -463,7 +463,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				if (redirectTo)
 					return response.redirect(redirectTo);
 
-				breadcrumbs ~= title = `Posting error`;
+				breadcrumbs ~= title = `Posting`;
 				bodyClass ~= " formdoc";
 				break;
 			}
