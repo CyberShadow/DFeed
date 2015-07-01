@@ -1688,6 +1688,7 @@ void discussionGroupSplitFromPost(string id, out GroupInfo groupInfo, out int pa
 	enforce(post, "Post not found");
 
 	groupInfo = post.getGroup();
+	enforce(groupInfo, "Unknown group: " ~ post.where);
 	threadID = post.cachedThreadID;
 	page = getThreadPage(groupInfo, threadID);
 
