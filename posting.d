@@ -393,6 +393,7 @@ private:
 		status = PostingStatus.connecting;
 
 		auto config = loadIni!SmtpConfig("config/sources/smtp/" ~ group.sinkName ~ ".ini");
+		auto recipient = "<" ~ toLower(group.internalName) ~ "@" ~ config.domain ~ ">";
 
 		smtp = new SmtpClient(log, site.config.host, config.server, config.port);
 		smtp.handleSent = &onSent;
@@ -400,8 +401,8 @@ private:
 		smtp.handleStateChanged = &onStateChanged;
 		smtp.sendMessage(
 			"<" ~ post.authorEmail ~ ">",
-			"<" ~ toLower(group.internalName) ~ "@" ~ config.domain ~ ">",
-			post.message.splitAsciiLines()
+			recipient,
+			["To: " ~ recipient] ~ post.message.splitAsciiLines()
 		);
 	}
 }
