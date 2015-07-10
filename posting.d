@@ -331,7 +331,8 @@ private:
 			this.status = PostingStatus.serverError;
 			this.error = PostError("NNTP error: " ~ error);
 			nntp.handleDisconnect = null;
-			nntp.disconnect();
+			if (nntp.connected)
+				nntp.disconnect();
 			log("NNTP error: " ~ error);
 			log.close();
 		}
