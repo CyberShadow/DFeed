@@ -200,6 +200,8 @@ final class PostProcess
 
 	void run()
 	{
+		assert(status != PostingStatus.redirect, "Attempting to run a duplicate PostProcess");
+
 		captchaPresent = theCaptcha.isPresent(draft.clientVars);
 		if (captchaPresent)
 		{
