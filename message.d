@@ -39,7 +39,7 @@ alias std.string.indexOf indexOf;
 class Rfc850Post : Post
 {
 	/// Internet message.
-	DFeedMessage msg;
+	Rfc850Message msg;
 	alias msg this;
 
 	/// Internal database index
@@ -59,8 +59,7 @@ class Rfc850Post : Post
 
 	this(string _message, string _id=null, int rowid=0, string threadID=null)
 	{
-		this(new DFeedMessage(_message));
-
+		msg = new Rfc850Message(_message);
 		if (!msg.id && _id)
 			msg.id = _id;
 		this.rowid = rowid;
@@ -121,15 +120,16 @@ class Rfc850Post : Post
 		super.time = msg.time;
 	}
 
-	private this(DFeedMessage msg) { this.msg = msg; msg.outer = this; }
+	private this(Rfc850Message msg) { this.msg = msg; }
 
-	static Rfc850Post newPostTemplate(string groups) { return new Rfc850Post(new DFeedMessage(groups.split(",").map!(group => Xref(group)).array())); }
-	Rfc850Post replyTemplate()                       { return new Rfc850Post(new DFeedMessage(msg)); }
+	static Rfc850Post newPostTemplate(string groups) { return new Rfc850Post(Rfc850Message.newPostTemplate(groups)); }
+	Rfc850Post replyTemplate() { return new Rfc850Post(msg.replyTemplate()); }
 
 	/// Set headers and message.
 	void compile()
 	{
 		msg.compile();
+		headers["User-Agent"] = "DFeed";
 	}
 
 	override void formatForIRC(void delegate(string) handler)
@@ -224,20 +224,6 @@ class Rfc850Post : Post
 private:
 	string[] ANNOUNCE_REPLIES = [];
 	string[] VIPs = ["Walter Bright", "Andrei Alexandrescu", "Sean Kelly", "Don", "dsimcha"];
-
-	static class DFeedMessage : Rfc850Message
-	{
-		//mixin GenerateContructorProxies;
-		this(Args...)(auto ref Args args) { super(args); }
-
-		Rfc850Post outer;
-
-		override void compileHeaders()
-		{
-			super.compileHeaders();
-			headers["User-Agent"] = "DFeed";
-		}
-	}
 }
 
 unittest
