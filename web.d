@@ -3773,7 +3773,7 @@ string formatDuration(Duration duration)
 	if (duration < 7.days)
 		return ago(duration.total!"days", "day");
 	else
-	if (duration < 4.weeks)
+	if (duration < 31.days)
 		return ago(duration.total!"weeks", "week");
 	else
 	if (duration < 365.days)
