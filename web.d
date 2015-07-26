@@ -2271,6 +2271,7 @@ void discussionSinglePost(string id, out GroupInfo groupInfo, out string title, 
 	auto post = getPost(id);
 	enforce(post, "Post not found");
 	groupInfo = post.getGroup();
+	enforce(groupInfo, "Unknown group");
 	title     = post.subject;
 	threadID = post.cachedThreadID;
 
