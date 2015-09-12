@@ -3,6 +3,8 @@
 set -eu
 cd "$(dirname "$0")"
 
+test -f build.local && source build.local
+
 MODEL=64
 DFLAGS="-m$MODEL -g -L-lcurl"
 #DFLAGS="$DFLAGS -debug"
