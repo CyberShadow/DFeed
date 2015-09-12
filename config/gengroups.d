@@ -29,7 +29,7 @@ DGroupInfo makeDGroupInfo(string internalName, string publicName, string urlName
 	if (mlName)
 	{
 		info.mlName = mlName;
-		info.alsoVia["02-ml"] = DAlsoVia("mailing list", `http://lists.puremagic.com/cgi-bin/mailman/listinfo/` ~ mlName);
+		info.alsoVia["02-ml"] = DAlsoVia("mailing list", `http://lists.puremagic.com/cgi-bin/mailman/listinfo/` ~ mlName.toLower());
 	}
 	if (bugzilla)
 	{
@@ -54,23 +54,23 @@ void main()
 	[
 		//                  internalName                publicName                  urlName                     archiveName                 mlName                      description                                                         mlOnly bugzilla
 		makeDGroupSet("D Programming Language - New users", [
-			makeDGroupInfo("digitalmars.D.learn"     , "Learn"                   , "learn"                   , "digitalmars/D/learn"     , "digitalmars-d-learn"     , "Questions about learning and using D"                             , false, false),
+			makeDGroupInfo("digitalmars.D.learn"     , "Learn"                   , "learn"                   , "digitalmars/D/learn"     , "Digitalmars-d-learn"     , "Questions about learning and using D"                             , false, false),
 		]),
 		makeDGroupSet("D Programming Language - Community", [
-			makeDGroupInfo("digitalmars.D"           , "General"                 , "general"                 , "digitalmars/D"           , "digitalmars-d"           , "Discussion of the D programming language"                         , false, false),
-			makeDGroupInfo("digitalmars.D.announce"  , "Announce"                , "announce"                , "digitalmars/D/announce"  , "digitalmars-d-announce"  , "News and announcements for anything D related"                    , false, false),
+			makeDGroupInfo("digitalmars.D"           , "General"                 , "general"                 , "digitalmars/D"           , "Digitalmars-d"           , "Discussion of the D programming language"                         , false, false),
+			makeDGroupInfo("digitalmars.D.announce"  , "Announce"                , "announce"                , "digitalmars/D/announce"  , "Digitalmars-d-announce"  , "News and announcements for anything D related"                    , false, false),
 		]),
 		makeDGroupSet("D Programming Language - Ecosystem", [
-			makeDGroupInfo("D.gnu"                   , "GDC"                     , "gdc"                     , "D/gnu"                   , "d.gnu"                   , "GCC-based D Compiler"                                             , false, false),
+			makeDGroupInfo("D.gnu"                   , "GDC"                     , "gdc"                     , "D/gnu"                   , "D.gnu"                   , "GCC-based D Compiler"                                             , false, false),
 			makeDGroupInfo("digitalmars.D.ldc"       , "LDC"                     , "ldc"                     , null                      , "digitalmars-d-ldc"       , "LLVM-based D Compiler"                                            , false, false),
 
-			makeDGroupInfo("digitalmars.D.debugger"  , "Debuggers"               , "debugger"                , "digitalmars/D/debugger"  , "digitalmars-d-debugger"  , "Debuggers for D"                                                  , false, false),
-			makeDGroupInfo("digitalmars.D.ide"       , "IDEs"                    , "ide"                     , "digitalmars/D/ide"       , "digitalmars-d-ide"       , "Integrated Development Environments for D"                        , false, false),
+			makeDGroupInfo("digitalmars.D.debugger"  , "Debuggers"               , "debugger"                , "digitalmars/D/debugger"  , "Digitalmars-d-debugger"  , "Debuggers for D"                                                  , false, false),
+			makeDGroupInfo("digitalmars.D.ide"       , "IDEs"                    , "ide"                     , "digitalmars/D/ide"       , "Digitalmars-d-ide"       , "Integrated Development Environments for D"                        , false, false),
 
-			makeDGroupInfo("digitalmars.D.dwt"       , "DWT"                     , "dwt"                     , "digitalmars/D/dwt"       , "digitalmars-d-dwt"       , "Discussion of the D Widget Toolkit"                               , false, false),
+			makeDGroupInfo("digitalmars.D.dwt"       , "DWT"                     , "dwt"                     , "digitalmars/D/dwt"       , "Digitalmars-d-dwt"       , "Discussion of the D Widget Toolkit"                               , false, false),
 		]),
 		makeDGroupSet("D Programming Language - Development", [
-			makeDGroupInfo("digitalmars.D.bugs"      , "Issues"                  , "issues"                  , "digitalmars/D/bugs"      , "digitalmars-d-bugs"      , "Bug reports for D compiler and library"                           , false, true ),
+			makeDGroupInfo("digitalmars.D.bugs"      , "Issues"                  , "issues"                  , "digitalmars/D/bugs"      , "Digitalmars-d-bugs"      , "Bug reports for D compiler and library"                           , false, true ),
 			makeDGroupInfo("dmd-beta"                , "Beta"                    , "beta"                    , null                      , "dmd-beta"                , "Notifications and discussion of D beta versions"                  , true , false),
 			makeDGroupInfo("dmd-internals"           , "DMD"                     , "dmd"                     , null                      , "dmd-internals"           , "Compiler internal design and implementation"                      , true , false),
 			makeDGroupInfo("phobos"                  , "Phobos"                  , "phobos"                  , null                      , "phobos"                  , "Standard library design and implementation"                       , true , false),
@@ -79,7 +79,7 @@ void main()
 		makeDGroupSet("Unused", [
 			makeDGroupInfo("dmd-concurrency"         , "Concurrency"             , "concurrency"             , null                      , "dmd-concurrency"         , "Design of concurrency features in D and standard library"         , true , false),
 
-			makeDGroupInfo("digitalmars.D.dtl"       , "digitalmars.D.dtl"       , "digitalmars.D.dtl"       , "digitalmars/D/dtl"       , "digitalmars-d-dtl"       , "Developing the D Template Library"                                , false, false),
+			makeDGroupInfo("digitalmars.D.dtl"       , "digitalmars.D.dtl"       , "digitalmars.D.dtl"       , "digitalmars/D/dtl"       , "Digitalmars-d-dtl"       , "Developing the D Template Library"                                , false, false),
 			makeDGroupInfo("DMDScript"               , "DMDScript"               , "DMDScript"               , "DMDScript"               , null                      , "General discussion of DMDScript"                                  , false, false),
 			makeDGroupInfo("digitalmars.empire"      , "digitalmars.empire"      , "digitalmars.empire"      , "digitalmars/empire"      , null                      , "General discussion of Empire, the Wargame of the Century"         , false, false),
 			makeDGroupInfo("D"                       , "D"                       , "D"                       , ""                        , null                      , "Retired, use digitalmars.D instead"                               , false, false),
