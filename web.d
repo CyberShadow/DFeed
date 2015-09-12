@@ -3641,6 +3641,15 @@ void formatBody(Rfc850Message post)
 						else
 						if (!delimiters.length)
 						{
+							// Don't cut UTF-8 sequences in half
+							static bool canCutAt(char c) { return (c & 0x80) == 0 || (c & 0x40) != 0; }
+							foreach (i; s.length.iota.radial)
+								if (canCutAt(s[i]))
+								{
+									chunkify(s[0..i], null);
+									chunkify(s[i..$], null);
+									return;
+								}
 							chunkify(s[0..$/2], null);
 							chunkify(s[$/2..$], null);
 						}
