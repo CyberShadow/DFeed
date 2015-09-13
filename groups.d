@@ -71,29 +71,18 @@ shared static this()
 		)).array;
 }
 
-GroupInfo getGroupInfo(string internalName)
+GroupInfo getGroupInfoByField(string field, CaseSensitive cs=CaseSensitive.yes)(string value)
 {
 	foreach (set; groupHierarchy)
 		foreach (ref group; set.groups)
-			if (group.internalName == internalName)
+		{
+			auto fieldValue = mixin("group." ~ field);
+			if (cs ? fieldValue == value : icmp(fieldValue, value) == 0)
 				return &group;
+		}
 	return null;
 }
 
-GroupInfo getGroupInfoByUrl(string urlName)
-{
-	foreach (set; groupHierarchy)
-		foreach (ref group; set.groups)
-			if (group.urlName == urlName)
-				return &group;
-	return null;
-}
-
-GroupInfo getGroupInfoByPublicName(string publicName)
-{
-	foreach (set; groupHierarchy)
-		foreach (ref group; set.groups)
-			if (!icmp(group.publicName, publicName))
-				return &group;
-	return null;
-}
+alias getGroupInfo             = getGroupInfoByField!q{internalName};
+alias getGroupInfoByUrl        = getGroupInfoByField!q{urlName};
+alias getGroupInfoByPublicName = getGroupInfoByField!q{publicName};
