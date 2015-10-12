@@ -156,7 +156,10 @@ final class PostProcess
 			static void addLine(T)(ref T aa, string var, string line)
 			{
 				if (var in aa)
-					aa[var] ~= "\n" ~ line;
+				{
+					if (!line.isOneOf(aa[var].split("\n")))
+						aa[var] ~= "\n" ~ line;
+				}
 				else
 					aa[var] = line;
 			}
