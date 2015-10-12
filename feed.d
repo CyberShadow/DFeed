@@ -17,7 +17,6 @@
 module feed;
 
 import std.string;
-import std.stream;
 import std.datetime;
 
 import ae.utils.xml;
@@ -75,9 +74,8 @@ protected:
 	override void getPosts()
 	{
 		httpGet(config.url, (string result) {
-			auto content = cast(char[])result;
-			scope(failure) std.file.write("feed-error.xml", content);
-			auto data = new XmlDocument(new MemoryStream(content));
+			scope(failure) std.file.write("feed-error.xml", result);
+			auto data = new XmlDocument(result);
 			Post[string] r;
 			auto feed = data["feed"];
 

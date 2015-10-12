@@ -161,32 +161,32 @@ final class PostProcess
 					aa[var] = line;
 			}
 
-			if (line.eat("[Form] "))
+			if (line.skipOver("[Form] "))
 			{
-				auto var = line.eatUntil(": ");
+				auto var = line.skipUntil(": ");
 				if (var=="where" || var=="parent")
 					addLine(draft.serverVars, var, line);
 				else
 					addLine(draft.clientVars, var, line);
 			}
 			else
-			if (line.eat("[ServerVar] "))
+			if (line.skipOver("[ServerVar] "))
 			{
-				auto var = line.eatUntil(": ");
+				auto var = line.skipUntil(": ");
 				addLine(draft.serverVars, var, line);
 			}
 			else
-			if (line.eat("[Header] "))
+			if (line.skipOver("[Header] "))
 			{
-				auto name = line.eatUntil(": ");
+				auto name = line.skipUntil(": ");
 				headers[name] = line;
 			}
 			else
-			if (line.eat("IP: "))
+			if (line.skipOver("IP: "))
 				ip = line;
 			else
-			if (line.eat("< Message-ID: <"))
-				pid = line.eatUntil("@");
+			if (line.skipOver("< Message-ID: <"))
+				pid = line.skipUntil("@");
 		}
 		post = createPost(draft, headers, ip, null);
 		post.id = pidToMessageID(pid);

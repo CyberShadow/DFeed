@@ -17,7 +17,6 @@
 module reddit;
 
 import std.string;
-import std.stream;
 import std.regex;
 import std.datetime;
 
@@ -51,7 +50,7 @@ private:
 
 	static string getAuthor(string description)
 	{
-		auto doc = new XmlDocument(new MemoryStream(description.dup));
+		auto doc = new XmlDocument(description);
 		return strip(doc[1].text);
 	}
 
@@ -82,7 +81,7 @@ protected:
 	override void getPosts()
 	{
 		httpGet("http://www.reddit.com/r/"~config.subreddit~"/.rss", (string result) {
-			auto data = new XmlDocument(new MemoryStream(cast(char[])result));
+			auto data = new XmlDocument(result);
 			Post[string] r;
 
 			auto feed = data["rss"]["channel"];

@@ -235,12 +235,11 @@ class StopForumSpam : SpamChecker
 		}
 
 		httpGet("http://www.stopforumspam.com/api?ip=" ~ ip, (string result) {
-			import std.stream;
 			import std.datetime;
 			import ae.utils.xml;
 			import ae.utils.time : parseTime;
 
-			auto xml = new XmlDocument(new MemoryStream(cast(char[])result));
+			auto xml = new XmlDocument(result);
 			auto response = xml["response"];
 			if (response.attributes["success"] != "true")
 			{
