@@ -29,7 +29,7 @@
 <p>
   The posts you've viewed are saved to a compressed cookie, or on the server if you're logged in.
   Viewing a thread in basic view will mark all displayed posts as "read".
-  The horizontal-split view allows marking individual posts as "unread".
+  Posts can be marked as "unread" using the <kbd>u</kbd> keyboard shortcut.
 </p>
 <p>
   To avoid losing read post history, consider registering an account to avoid cookie limitations / expiration / accidental deletion.
@@ -38,7 +38,7 @@
 <h2 id="accounts">Accounts</h2>
 
 <p>
-  You do not need an account to browse or post this forum.
+  You do not need an account to browse or post to this forum.
   Preferences and read post history are stored in browser cookies for unregistered users.
 </p>
 
