@@ -151,7 +151,7 @@ final class PostProcess
 		{
 			if (line.length < 30 || line[0] != '[')
 				continue;
-			line = line[26..$]; // trim timestamp
+			line = line.findSplit("] ")[2]; // trim timestamp
 
 			static void addLine(T)(ref T aa, string var, string line)
 			{
