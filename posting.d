@@ -121,7 +121,7 @@ final class PostProcess
 
 		// Discard duplicate posts (redirect to original)
 		string allContent = draft.clientVars.values.sort().release().join("\0");
-		if (allContent in postsByContent)
+		if (allContent in postsByContent && postsByContent[allContent] in postProcesses && postProcesses[postsByContent[allContent]].status != PostingStatus.serverError)
 		{
 			string original = postsByContent[allContent];
 			log("Duplicate post, redirecting to " ~ original);
