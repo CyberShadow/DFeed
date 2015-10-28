@@ -137,7 +137,7 @@ private:
 					return;
 				}
 				auto html = readText(fn);
-				auto re = regex(`<A href="(\d+-\w+\.txt\.gz)">`);
+				auto re = regex(`<A href="(\d+-\w+\.txt(\.gz)?)">`);
 				foreach (line; splitLines(html))
 				{
 					auto m = match(line, re);
@@ -162,10 +162,17 @@ private:
 				}
 				auto data = readData(datafn);
 				scope(failure) std.file.write("errorfile", data.contents);
-				mixin(DB_TRANSACTION);
-				auto text = cast(string)(uncompress(data).contents).idup;
+				string text;
+				if (fn.endsWith(".txt.gz"))
+					text = cast(string)(data.uncompress.toHeap);
+				else
+				if (fn.endsWith(".txt"))
+					text = cast(string)(data.toHeap);
+				else
+					assert(false);
 				text = text[text.indexOf('\n')+1..$]; // skip first From line
 				auto fromline = regex("\n\nFrom .* at .*  \\w\\w\\w \\w\\w\\w [\\d ]\\d \\d\\d:\\d\\d:\\d\\d \\d\\d\\d\\d\n");
+				mixin(DB_TRANSACTION);
 				foreach (msg; splitter(text, fromline))
 				{
 					msg = "X-DFeed-List: " ~ list ~ "\n" ~ msg;
