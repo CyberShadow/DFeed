@@ -75,6 +75,7 @@ void main()
 			makeDGroupInfo("dmd-internals"           , "DMD"                     , "dmd"                     , null                      , "dmd-internals"           , "Compiler internal design and implementation"                      , true , false),
 			makeDGroupInfo("phobos"                  , "Phobos"                  , "phobos"                  , null                      , "phobos"                  , "Standard library design and implementation"                       , true , false),
 			makeDGroupInfo("D-runtime"               , "Druntime"                , "druntime"                , null                      , "D-runtime"               , "Runtime library design and implementation"                        , true , false),
+			makeDGroupInfo("Dlang-study"             , "Study"                   , "study"                   , null                      , "Dlang-study"             , "Study groups for D programming language design"                   , true , false),
 		]),
 		makeDGroupSet("Unused", [
 			makeDGroupInfo("dmd-concurrency"         , "Concurrency"             , "concurrency"             , null                      , "dmd-concurrency"         , "Design of concurrency features in D and standard library"         , true , false),
