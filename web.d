@@ -3239,7 +3239,11 @@ void discussionSubscriptionPosts(string subscriptionID, int page, out string tit
 
 	foreach (string messageID; query!"SELECT [MessageID] FROM [SubscriptionPosts] WHERE [SubscriptionID] = ? ORDER BY [Time] DESC LIMIT ? OFFSET ?"
 						.iterate(subscriptionID, postsPerPage, (page-1)*postsPerPage))
-		formatPost(getPost(messageID), null);
+	{
+		auto post = getPost(messageID);
+		if (post)
+			formatPost(post, null);
+	}
 
 	if (page != 1 || postCount > postsPerPage)
 	{
