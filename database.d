@@ -100,7 +100,7 @@ void dumpSchema()
 {
 	string schema;
 	foreach (string type, string name, string tbl_name, string sql; query!"SELECT `type`, `name`, `tbl_name`, `sql` FROM `sqlite_master`".iterate())
-		if (!name.startsWith("sqlite_"))
+		if (!name.startsWith("sqlite_") && !name.startsWith("PostSearch_")) // skip internal / FTS helper tables
 		{
 			if (name == tbl_name)
 				schema ~= format("-- %s `%s`\n", capitalize(type), name);
