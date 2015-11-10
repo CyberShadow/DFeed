@@ -127,19 +127,19 @@ CREATE INDEX [SubscriptionPostID] ON [SubscriptionPosts] ([SubscriptionID], [Tim
 CREATE VIRTUAL TABLE [PostSearch] USING fts4([Time], [ThreadMD5], [Group], [Author], [AuthorEmail], [Subject], [Content], [NewThread], order=desc);
 
 -- Table `PostSearch_content`
-CREATE TABLE 'PostSearch_content'(docid INTEGER PRIMARY KEY, 'c0Time', 'c1ThreadMD5', 'c2Group', 'c3Author', 'c4AuthorEmail', 'c5Subject', 'c6Content', 'c7NewThread');
+CREATE TABLE IF NOT EXISTS 'PostSearch_content'(docid INTEGER PRIMARY KEY, 'c0Time', 'c1ThreadMD5', 'c2Group', 'c3Author', 'c4AuthorEmail', 'c5Subject', 'c6Content', 'c7NewThread');
 
 -- Table `PostSearch_segments`
-CREATE TABLE 'PostSearch_segments'(blockid INTEGER PRIMARY KEY, block BLOB);
+CREATE TABLE IF NOT EXISTS 'PostSearch_segments'(blockid INTEGER PRIMARY KEY, block BLOB);
 
 -- Table `PostSearch_segdir`
-CREATE TABLE 'PostSearch_segdir'(level INTEGER,idx INTEGER,start_block INTEGER,leaves_end_block INTEGER,end_block INTEGER,root BLOB,PRIMARY KEY(level, idx));
+CREATE TABLE IF NOT EXISTS 'PostSearch_segdir'(level INTEGER,idx INTEGER,start_block INTEGER,leaves_end_block INTEGER,end_block INTEGER,root BLOB,PRIMARY KEY(level, idx));
 
 -- Table `PostSearch_docsize`
-CREATE TABLE 'PostSearch_docsize'(docid INTEGER PRIMARY KEY, size BLOB);
+CREATE TABLE IF NOT EXISTS 'PostSearch_docsize'(docid INTEGER PRIMARY KEY, size BLOB);
 
 -- Table `PostSearch_stat`
-CREATE TABLE 'PostSearch_stat'(id INTEGER PRIMARY KEY, value BLOB);
+CREATE TABLE IF NOT EXISTS 'PostSearch_stat'(id INTEGER PRIMARY KEY, value BLOB);
 
 -- Index `ThreadCreated` on table `Threads`
 CREATE INDEX [ThreadCreated] ON [Threads] ([Created] DESC);
