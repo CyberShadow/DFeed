@@ -423,6 +423,9 @@ final class ContentTrigger : Trigger
 			}
 
 			putGroup(groups[0]);
+			if (groups.length==1)
+				{}
+			else
 			if (groups.length==2)
 				html.put(` and `), putGroup(groups[1]);
 			else
