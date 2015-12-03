@@ -33,10 +33,10 @@ DGroupInfo makeDGroupInfo(string internalName, string publicName, string urlName
 	}
 	if (bugzilla)
 	{
-		info.alsoVia["03-bugzilla"] = DAlsoVia("Bugzilla", `http://d.puremagic.com/issues/`);
+		info.alsoVia["03-bugzilla"] = DAlsoVia("Bugzilla", `https://issues.dlang.org/`);
 		info.postMessage =
 			`You are viewing a Bugzilla message archive.<br>`
-			`To report a bug, please visit the <a href="http://d.puremagic.com/issues/">D Bugzilla</a> or `
+			`To report a bug, please visit the <a href="https://issues.dlang.org/">D Bugzilla</a> or `
 				`<a href="/newpost/digitalmars.D">post to digitalmars.D</a>.`;
 	}
 	if (mlOnly)
