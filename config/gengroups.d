@@ -15,7 +15,7 @@ struct DGroupSet { string id, name, shortName; DGroupInfo[] groups; bool visible
 DGroupSet makeDGroupSet(string name, DGroupInfo[] groups, bool visible = true)
 {
 	auto shortName = name;
-	shortName.eat("D Programming Language - ");
+	shortName.skipOver("D Programming Language - ");
 	auto id = shortName.toLower.replace(".", "-").replace(" ", "-");
 	return DGroupSet(id, name, shortName, groups, visible);
 }
