@@ -731,14 +731,16 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	tools ~= `<a href="/settings">Settings</a>`;
 	tools ~= `<a href="/help">Help</a>`;
 
-	string toolStr = tools.join(" &middot; ");
+	string toolStr = tools
+		.map!(t => `<div class="tip">` ~ t ~ `</div>`)
+		.join(" ");
 	jsVars["toolsTemplate"] = toJson(toolStr);
 	toolStr =
 		toolStr.replace("__URL__",  encodeUrlParameter(returnPage));
 	toolStr =
-		`<div id="forum-tools-left">` ~ breadcrumbs.join(` &raquo; `) ~ `</div>`
-		`<div id="forum-tools-right">` ~ toolStr ~ `</div>`
-		`<div style="clear: both"></div>`;
+		`<div id="forum-tools-left" class="tip">` ~
+		breadcrumbs.join(` &raquo; `) ~ `</div>` ~
+		`<div id="forum-tools-right">` ~ toolStr ~ `</div>`;
 	string htmlStr = cast(string) html.get(); // html contents will be overwritten on next request
 
 	auto pendingNotice = userSettings.pendingNotice;
@@ -787,7 +789,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		struct SearchOption { string name, value; }
 		SearchOption[] searchOptions;
 
-		searchOptions ~= SearchOption("Discussion Forums", "forum");
+		searchOptions ~= SearchOption("Forums", "forum");
 		if (currentGroup)
 			searchOptions ~= SearchOption(currentGroup.publicName ~ " group", "group:" ~ currentGroup.internalName.searchTerm);
 		if (currentThread)
@@ -3279,8 +3281,8 @@ void discussionSearch(UrlParameters parameters)
 	string[] terms;
 	if (string searchScope = parameters.get("scope", null))
 	{
-		if (searchScope == "site")
-			throw new Redirect("https://www.google.com/search?" ~ encodeUrlParameters(["sitesearch" : "dlang.org", "q" : parameters.get("q", null)]));
+		if (searchScope.startsWith("dlang.org"))
+			throw new Redirect("https://www.google.com/search?" ~ encodeUrlParameters(["sitesearch" : searchScope, "q" : parameters.get("q", null)]));
 		else
 		if (searchScope == "forum")
 			{}
