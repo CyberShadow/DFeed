@@ -15,7 +15,8 @@ TARGETS : \
 	$(patsubst %.css,%.min.css,$(filter-out $(wildcard $(DLANG)/css/*.min.css), $(wildcard $(DLANG)/css/*.css))) \
 	$(patsubst %.js, %.min.js, $(filter-out $(wildcard $(DLANG)/js/*.min.js  ), $(wildcard $(DLANG)/js/*.js  ))) \
 	$(DLANG)/css/cssmenu.min.css \
-	config/groups.ini
+	config/groups.ini \
+	deimos/openssl/ssl.d
 
 %.min.htt : %.htt $(HTMLCOMPRESSOR) $(YUICOMPRESSOR)
 	$(HTMLTOOL) < $< > $@
@@ -46,5 +47,10 @@ $(YUICOMPRESSOR) :
 
 config/groups.ini : config/gengroups.d
 	cd config && rdmd -I.. gengroups
+
+# Create junction on Windows, in lieu of Git/Windows symlink support
+deimos/openssl/ssl.d : deimos-openssl/deimos/openssl/ssl.d
+	rm -f deimos/openssl
+	cmd /C mklink /J deimos\openssl deimos-openssl\deimos\openssl
 
 .DELETE_ON_ERROR:
