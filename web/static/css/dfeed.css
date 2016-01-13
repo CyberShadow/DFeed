@@ -48,8 +48,16 @@ table td:not(:last-child), table th:not(:last-child) {
 
 /* Navigation menu */
 
+.subnav, .subnav-helper {
+	width: 9em;
+}
+
 .subnav > ul > li {
 	margin-top: 0.6em;
+}
+
+.subnav + #content {
+	margin-left: 11em;
 }
 
 /*************** Navigation toggle ***************/
@@ -995,6 +1003,9 @@ hr {
 /*************** Responsive overrides ***************/
 
 @media only screen and (max-width: 66em) { /* Narrow layout stage 1 */
+	.subnav {
+		width: auto;
+	}
 	.subnav > ul {
 		-moz-column-width: 8em;
 		-webkit-column-width: 8em;
