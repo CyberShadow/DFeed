@@ -255,7 +255,7 @@ function updateSize(resized) {
 	for (var i in resizees)
 		resizees[i].$outer.css('height', '');
 
-	var $bottommost = $('#copyright:visible').length ? $('#copyright') : $('#content');
+	var $bottommost = $('body');
 	var totalWindowSpace = $(window).height();
 
 	function getFreeSpace() {
