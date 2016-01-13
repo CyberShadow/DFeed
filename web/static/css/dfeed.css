@@ -63,11 +63,12 @@ table td:not(:last-child), table th:not(:last-child) {
 /*************** Navigation toggle ***************/
 
 body.navhidden #top,
-body.navhidden #navigation {
+body.navhidden .subnav,
+body.navhidden .subnav-helper {
 	display: none;
 }
 body.navhidden #content {
-	margin-left: 1em;
+	margin-left: 0;
 }
 
 /*************** General layout ***************/
