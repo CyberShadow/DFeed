@@ -7,3 +7,6 @@
 [submodule "web/static/dlang.org"]
 	path = web/static/dlang.org
 	url = https://github.com/D-Programming-Language/dlang.org
+[submodule "deimos-openssl"]
+	path = deimos-openssl
+	url = https://github.com/D-Programming-Deimos/openssl
