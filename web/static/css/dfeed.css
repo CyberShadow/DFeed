@@ -1026,6 +1026,9 @@ hr {
 	.subnav > ul > li:first-child {
 		margin-top: 0;
 	}
+	.subnav + #content {
+		margin-left: 0;
+	}
 }
 
 @media only screen and (max-width: 60em) {
