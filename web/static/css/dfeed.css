@@ -1007,12 +1007,21 @@ hr {
 		width: auto;
 	}
 	.subnav > ul {
-		-moz-column-width: 8em;
-		-webkit-column-width: 8em;
-		column-width: 8em;
+		-moz-column-width: 9em;
+		-webkit-column-width: 9em;
+		column-width: 9em;
+
+		-webkit-column-gap: 1em;
+		-moz-column-gap: 1em;
+		column-gap: 1em;
+
+		max-width: 29em; /* = 3 * column-width + 2 * column-gap */
 	}
 	.subnav > ul > li {
-		overflow: hidden; /* prevent column breaks inside */
+		/* avoid column breaks inside li */
+		-webkit-column-break-inside: avoid; /* Chrome, Safari, Opera */
+		page-break-inside: avoid; /* Firefox */
+		break-inside: avoid; /* IE 10+ */
 	}
 	.subnav > ul > li:first-child {
 		margin-top: 0;
