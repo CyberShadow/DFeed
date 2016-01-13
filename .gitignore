@@ -36,8 +36,5 @@
 /sanitizedb
 /sendspamfeedback
 
-# Deimos
-/deimos/
-
 # Generated from dlang.org
 /web/skel.htt
