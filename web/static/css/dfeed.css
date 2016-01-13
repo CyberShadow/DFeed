@@ -52,20 +52,6 @@ table td:not(:last-child), table th:not(:last-child) {
 	margin-top: 0.6em;
 }
 
-@media only screen and (max-width: 66em) { /* Narrow layout stage 1 */
-	.subnav > ul {
-		-moz-column-width: 8em;
-		-webkit-column-width: 8em;
-		column-width: 8em;
-	}
-	.subnav > ul > li {
-		overflow: hidden; /* prevent column breaks inside */
-	}
-	.subnav > ul > li:first-child {
-		margin-top: 0;
-	}
-}
-
 /*************** Navigation toggle ***************/
 
 body.navhidden #top,
@@ -1007,6 +993,20 @@ hr {
 }
 
 /*************** Responsive overrides ***************/
+
+@media only screen and (max-width: 66em) { /* Narrow layout stage 1 */
+	.subnav > ul {
+		-moz-column-width: 8em;
+		-webkit-column-width: 8em;
+		column-width: 8em;
+	}
+	.subnav > ul > li {
+		overflow: hidden; /* prevent column breaks inside */
+	}
+	.subnav > ul > li:first-child {
+		margin-top: 0;
+	}
+}
 
 @media only screen and (max-width: 60em) {
 	.viewmode-horizontal-split .thread-post-time {
