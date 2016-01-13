@@ -73,11 +73,11 @@ function initSplitView() {
 	onPopState();
 
 	toolsTemplate =
-		$('<a>')
+		$('<a class="tip">')
 		.attr('href', 'javascript:toggleNav()')
 		.text('Toggle navigation')
 		[0].outerHTML
-		+ ' &middot; '
+		+ ' '
 		+ toolsTemplate;
 	updateTools();
 
