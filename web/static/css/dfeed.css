@@ -1063,7 +1063,6 @@ hr {
 		padding-right: 0;
 		padding-bottom: 0;
 		border: 0;
-		margin-left: 0 !important;
 		font-size: 75%;
 	}
 
@@ -1098,6 +1097,15 @@ hr {
 }
 
 @media only screen and (max-width: 30em) {
+	/* counter default padding */
+	#content {
+		overflow: visible;
+	}
+	#forum-content {
+		margin-left: -1.33em;
+		margin-right: -1.33em;
+	}
+
 	#forum-content .post > tbody > tr.mini-post-info-cell > td > table.mini-post-info {
 		display: table !important;
 	}
