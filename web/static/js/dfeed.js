@@ -1,5 +1,3 @@
-var cssmenu_no_js = 1;
-
 $(document).ready(function() {
 	if (enableKeyNav) {
 		// Chrome does not pass Ctrl+keys to keypress - but in many
@@ -75,11 +73,11 @@ function initSplitView() {
 	onPopState();
 
 	toolsTemplate =
-		$('<a>')
+		$('<a class="tip">')
 		.attr('href', 'javascript:toggleNav()')
 		.text('Toggle navigation')
 		[0].outerHTML
-		+ ' &middot; '
+		+ ' '
 		+ toolsTemplate;
 	updateTools();
 
@@ -257,7 +255,7 @@ function updateSize(resized) {
 	for (var i in resizees)
 		resizees[i].$outer.css('height', '');
 
-	var $bottommost = $('#copyright:visible').length ? $('#copyright') : $('#content');
+	var $bottommost = $('body');
 	var totalWindowSpace = $(window).height();
 
 	function getFreeSpace() {

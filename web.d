@@ -733,14 +733,16 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	tools ~= `<a href="/settings">Settings</a>`;
 	tools ~= `<a href="/help">Help</a>`;
 
-	string toolStr = tools.join(" &middot; ");
+	string toolStr = tools
+		.map!(t => `<div class="tip">` ~ t ~ `</div>`)
+		.join(" ");
 	jsVars["toolsTemplate"] = toJson(toolStr);
 	toolStr =
 		toolStr.replace("__URL__",  encodeUrlParameter(returnPage));
 	toolStr =
-		`<div id="forum-tools-left">` ~ breadcrumbs.join(` &raquo; `) ~ `</div>`
-		`<div id="forum-tools-right">` ~ toolStr ~ `</div>`
-		`<div style="clear: both"></div>`;
+		`<div id="forum-tools-left" class="tip">` ~
+		breadcrumbs.join(` &raquo; `) ~ `</div>` ~
+		`<div id="forum-tools-right">` ~ toolStr ~ `</div>`;
 	string htmlStr = cast(string) html.get(); // html contents will be overwritten on next request
 
 	auto pendingNotice = userSettings.pendingNotice;
@@ -789,7 +791,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		struct SearchOption { string name, value; }
 		SearchOption[] searchOptions;
 
-		searchOptions ~= SearchOption("Discussion Forums", "forum");
+		searchOptions ~= SearchOption("Forums", "forum");
 		if (currentGroup)
 			searchOptions ~= SearchOption(currentGroup.publicName ~ " group", "group:" ~ currentGroup.internalName.searchTerm);
 		if (currentThread)
@@ -2211,16 +2213,12 @@ string getPostAtThreadIndex(string threadID, int index)
 
 void discussionThread(string id, int page, out GroupInfo groupInfo, out string title, bool markAsRead)
 {
-	//auto viewMode = user.get("threadviewmode", "flat"); // legacy
-	auto viewMode = "flat";
-	bool nested = viewMode == "nested" || viewMode == "threaded";
-
 	enforce(page >= 1, "Invalid page");
-	auto postsPerPage = nested ? int.max : POSTS_PER_PAGE;
-	if (nested) page = 1;
 
 	Rfc850Post[] posts;
-	foreach (int rowid, string postID, string message; query!"SELECT `ROWID`, `ID`, `Message` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC LIMIT ? OFFSET ?".iterate(id, postsPerPage, (page-1)*postsPerPage))
+	foreach (int rowid, string postID, string message;
+			query!"SELECT `ROWID`, `ID`, `Message` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC LIMIT ? OFFSET ?"
+			.iterate(id, POSTS_PER_PAGE, (page-1)*POSTS_PER_PAGE))
 		posts ~= new Rfc850Post(message, postID, rowid, id);
 
 	Rfc850Post[string] knownPosts;
@@ -2232,25 +2230,26 @@ void discussionThread(string id, int page, out GroupInfo groupInfo, out string t
 	groupInfo = posts[0].getGroup();
 	title     = posts[0].subject;
 
-	if (nested)
-		posts = Rfc850Post.threadify(posts);
+	auto postCount = getPostCount(id);
+
+	void pager(string position)
+	{
+		if (page > 1 || postCount > POSTS_PER_PAGE)
+		{
+			html.put(`<table class="forum-table post-pager post-pager-`, position, `">`);
+			postPager(id, page, postCount);
+			html.put(`</table>`);
+		}
+	}
+
+	pager("top");
 
 	html.put(`<div id="thread-posts">`);
 	foreach (post; posts)
 		formatPost(post, knownPosts, markAsRead);
 	html.put(`</div>`);
 
-	if (!nested)
-	{
-		auto postCount = getPostCount(id);
-
-		if (page > 1 || postCount > POSTS_PER_PAGE)
-		{
-			html.put(`<table class="forum-table post-pager">`);
-			postPager(id, page, postCount);
-			html.put(`</table>`);
-		}
-	}
+	pager("bottom");
 }
 
 void discussionThreadOverview(string threadID, string selectedID)
@@ -3281,8 +3280,8 @@ void discussionSearch(UrlParameters parameters)
 	string[] terms;
 	if (string searchScope = parameters.get("scope", null))
 	{
-		if (searchScope == "site")
-			throw new Redirect("https://www.google.com/search?" ~ encodeUrlParameters(["sitesearch" : "dlang.org", "q" : parameters.get("q", null)]));
+		if (searchScope.startsWith("dlang.org"))
+			throw new Redirect("https://www.google.com/search?" ~ encodeUrlParameters(["sitesearch" : searchScope, "q" : parameters.get("q", null)]));
 		else
 		if (searchScope == "forum")
 			{}

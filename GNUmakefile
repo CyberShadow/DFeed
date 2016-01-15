@@ -14,7 +14,6 @@ TARGETS : \
 	web/static/js/dfeed.min.js \
 	$(patsubst %.css,%.min.css,$(filter-out $(wildcard $(DLANG)/css/*.min.css), $(wildcard $(DLANG)/css/*.css))) \
 	$(patsubst %.js, %.min.js, $(filter-out $(wildcard $(DLANG)/js/*.min.js  ), $(wildcard $(DLANG)/js/*.js  ))) \
-	$(DLANG)/css/cssmenu.min.css \
 	config/groups.ini \
 	deimos/openssl/ssl.d
 
@@ -35,9 +34,6 @@ DDOC=$(DLANG)/macros.ddoc $(DLANG)/html.ddoc $(DLANG)/dlang.org.ddoc $(DLANG)/wi
 $(DLANG)/forum-template.html : $(DLANG)/forum-template.dd $(DDOC)
 	@# cd $(DLANG) && make --debug -f posix.mak forum-template.html DMD=$(shell which dmd) LATEST=latest DOC_OUTPUT_DIR=.
 	dmd -o- -c -D $(DDOC) $^ -Df$@
-
-$(DLANG)/css/cssmenu.css : $(DLANG)/css/cssmenu.css.dd
-	dmd -o- -D $^ -Df$@
 
 $(HTMLCOMPRESSOR) :
 	wget http://htmlcompressor.googlecode.com/files/$(HTMLCOMPRESSOR)
