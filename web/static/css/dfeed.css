@@ -376,6 +376,75 @@ div#footernav a {
 
 /*************** Thread view, individual posts ***************/
 
+/* Thread overview */
+
+#thread-overview {
+	margin-bottom: 0.75em;
+}
+
+#thread-overview .group-index-header > th {
+	overflow: visible;
+	font-weight: normal;
+	text-align: left;
+}
+
+#thread-overview .group-index-header > th > a {
+	color: black;
+}
+
+#thread-overview .group-index-header > th > a:hover {
+	text-decoration: underline;
+}
+
+.thread-overview-pager {
+	float: right;
+	position: relative;
+}
+
+.thread-overview-pager-expanded {
+	position: absolute;
+	top: 100%;
+	z-index: 5;
+	white-space: pre;
+	right: 0;
+	background-color: #E6E6E6;
+	padding: 0.5em;
+	border: 2px solid #CCC;
+	box-shadow: 0 0 10px rgba(128,128,128,0.25);
+}
+
+.thread-overview-pager-pageno {
+	width: 4em;
+}
+
+/* Thread overview - expandos */
+
+body.have-javascript .forum-expand-container .forum-expand-toggle::after
+{
+    content: " \f0d7"; /* caret down */
+    font-family: FontAwesome;
+}
+body.have-javascript .forum-expand-container.open#thread-overview th > a.forum-expand-toggle::after,
+body.have-javascript .forum-expand-container.open.thread-overview-pager .forum-expand-toggle::after
+{
+    content: " \f0d8"; /* caret up */
+}
+
+body.have-javascript .forum-expand-container .forum-expand-content,
+.thread-overview-pager-expanded
+{
+    display: none;
+}
+
+body.have-javascript .forum-expand-container .forum-expand-toggle,
+body.have-javascript .forum-expand-container.open#thread-overview > tbody > tr.forum-expand-content,
+body.have-javascript .forum-expand-container.open.thread-overview-pager .forum-expand-content
+{
+    display: block;
+}
+
+/* Posts */
+
 #thread-posts > .post-wrapper:first-child > .post {
 	margin-top: 0;
 }
@@ -392,7 +461,6 @@ div#footernav a {
 }
 
 .post > tbody > tr > td:nth-child(1) { width: 10em; }
-
 
 /* Header */
 

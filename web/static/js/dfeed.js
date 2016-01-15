@@ -20,6 +20,12 @@ $(document).ready(function() {
 	if ($('#thread-posts').length) {
 		initThreadUrlFixer();
 	}
+
+	$('.forum-expand-toggle').click(function(e) {
+	    var container = $(this).closest('.forum-expand-container');
+	    container.toggleClass('open');
+	    return false;
+	});
 });
 
 // **************************************************************************

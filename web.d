@@ -2221,6 +2221,64 @@ void discussionThread(string id, int page, out GroupInfo groupInfo, out string t
 {
 	enforce(page >= 1, "Invalid page");
 
+	auto postCount = getPostCount(id);
+
+	if (page == 1 && postCount > 2)
+	{
+		// Expandable overview
+
+		html.put(
+			`<table id="thread-overview" class="forum-table forum-expand-container">`
+			`<tr class="group-index-header"><th>`);
+
+		auto pageCount = getPageCount(postCount, POSTS_PER_PAGE);
+		if (pageCount > 1)
+		{
+			html.put(
+				`<div class="thread-overview-pager forum-expand-container">`
+				`Jump to page: <b>1</b> `
+			);
+
+			auto threadUrl = idToUrl(id, "thread");
+
+			void pageLink(int n)
+			{
+				auto nStr = text(n);
+				html.put(`<a href="`); html.putEncodedEntities(threadUrl); html.put(`?page=`, nStr, `">`, nStr, `</a> `);
+			}
+
+			if (pageCount < 4)
+			{
+				foreach (p; 2..pageCount+1)
+					pageLink(p);
+			}
+			else
+			{
+				pageLink(2);
+				html.put(`&hellip; `);
+				pageLink(pageCount);
+
+				html.put(
+					`<a class="thread-overview-pager forum-expand-toggle">&nbsp;</a>`
+					`<div class="thread-overview-pager-expanded forum-expand-content">`
+					`<form action="`); html.putEncodedEntities(threadUrl); html.put(`">`
+					`Page <input name="page" class="thread-overview-pager-pageno"> <input type="submit" value="Go">`
+					`</form>`
+					`</div>`
+					`</div>`
+				);
+			}
+		}
+
+		html.put(
+			`<a class="forum-expand-toggle">Thread overview</a>`
+			`</th></tr>`,
+			`<tr class="forum-expand-content"><td class="group-threads-cell"><div class="group-threads"><table>`);
+		formatThreadedPosts(getThreadPosts(id), false);
+		html.put(`</table></div></td></tr></table>`);
+
+	}
+
 	Rfc850Post[] posts;
 	foreach (int rowid, string postID, string message;
 			query!"SELECT `ROWID`, `ID`, `Message` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC LIMIT ? OFFSET ?"
@@ -2241,8 +2299,6 @@ void discussionThread(string id, int page, out GroupInfo groupInfo, out string t
 		formatPost(post, knownPosts, markAsRead);
 	html.put(`</div>`);
 
-	auto postCount = getPostCount(id);
-
 	if (page > 1 || postCount > POSTS_PER_PAGE)
 	{
 		html.put(`<table class="forum-table post-pager">`);
@@ -2251,18 +2307,22 @@ void discussionThread(string id, int page, out GroupInfo groupInfo, out string t
 	}
 }
 
-void discussionThreadOverview(string threadID, string selectedID)
+PostInfo*[] getThreadPosts(string threadID)
 {
 	PostInfo*[] posts;
 	enum ViewSQL = "SELECT `ROWID`, `ID`, `ParentID`, `Author`, `AuthorEmail`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` = ?";
 	foreach (int rowid, string id, string parent, string author, string authorEmail, string subject, long stdTime; query!ViewSQL.iterate(threadID))
 		posts ~= [PostInfo(rowid, id, null, parent, author, authorEmail, subject, SysTime(stdTime, UTC()))].ptr;
+	return posts;
+}
 
+void discussionThreadOverview(string threadID, string selectedID)
+{
 	html.put(
 		`<table id="thread-index" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(userSettings.groupViewMode), html.put(`">`
 		`<tr class="group-index-header"><th><div>Thread overview</div></th></tr>`,
 		`<tr><td class="group-threads-cell"><div class="group-threads"><table>`);
-	formatThreadedPosts(posts, false, selectedID);
+	formatThreadedPosts(getThreadPosts(threadID), false, selectedID);
 	html.put(`</table></div></td></tr></table>`);
 }
 
