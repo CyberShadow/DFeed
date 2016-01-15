@@ -2,6 +2,12 @@
 # Should not be a subdomain of the main domain.
 #staticDomain = example-static.com
 
+# Whether this instance should be indexed by search engines
+# (or crawled by other web spiders).
+# This affects what is served in robots.txt.
+# The default is false.
+#indexable = true
+
 # HTTP socket parameters.
 [listen]
 

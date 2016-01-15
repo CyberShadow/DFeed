@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -678,8 +678,10 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			case "files":
 			case "ircstats":
 			case "favicon.ico":
-			case "robots.txt":
 				return serveFile(response, pathStr[1..$]);
+
+			case "robots.txt":
+				return serveFile(response, config.indexable ? "robots_public.txt" : "robots_private.txt");
 
 			case "static":
 				enforce(path.length > 2);
@@ -3969,6 +3971,7 @@ struct Config
 {
 	ListenConfig listen;
 	string staticDomain = null;
+	bool indexable = false;
 }
 const Config config;
 
