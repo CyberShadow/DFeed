@@ -2228,26 +2228,19 @@ void discussionThread(string id, int page, out GroupInfo groupInfo, out string t
 	groupInfo = posts[0].getGroup();
 	title     = posts[0].subject;
 
-	auto postCount = getPostCount(id);
-
-	void pager(string position)
-	{
-		if (page > 1 || postCount > POSTS_PER_PAGE)
-		{
-			html.put(`<table class="forum-table post-pager post-pager-`, position, `">`);
-			postPager(id, page, postCount);
-			html.put(`</table>`);
-		}
-	}
-
-	pager("top");
-
 	html.put(`<div id="thread-posts">`);
 	foreach (post; posts)
 		formatPost(post, knownPosts, markAsRead);
 	html.put(`</div>`);
 
-	pager("bottom");
+	auto postCount = getPostCount(id);
+
+	if (page > 1 || postCount > POSTS_PER_PAGE)
+	{
+		html.put(`<table class="forum-table post-pager">`);
+		postPager(id, page, postCount);
+		html.put(`</table>`);
+	}
 }
 
 void discussionThreadOverview(string threadID, string selectedID)
