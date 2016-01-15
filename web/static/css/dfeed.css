@@ -61,7 +61,7 @@ table td:not(:last-child), table th:not(:last-child) {
 }
 
 .subnav + #content {
-	margin-left: 11em;
+	margin-left: 13em;
 }
 
 /*************** Navigation toggle ***************/
