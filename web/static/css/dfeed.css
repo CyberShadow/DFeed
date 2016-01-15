@@ -542,6 +542,11 @@ a > .forcewrap {
 	margin-top: 10px;
 }
 
+.post-pager.post-pager-top {
+	margin-top: 0;
+	margin-bottom: 10px;
+}
+
 /* Keyboard navigation */
 
 .post.focused {
