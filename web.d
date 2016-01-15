@@ -137,13 +137,18 @@ string staticPath(string path)
 
 string optimizedPath(string base, string resource)
 {
-    string optimizedResource = resource.stripExtension ~ ".min" ~ resource.extension;
-	auto origPath = base ~ resource;
-	auto optiPath = base ~ optimizedResource;
-	if (exists(origPath) && exists(optiPath) && timeLastModified(optiPath) >= timeLastModified(origPath))
-		return optimizedResource;
-	else
+	debug
 		return resource;
+	else
+	{
+		string optimizedResource = resource.stripExtension ~ ".min" ~ resource.extension;
+		auto origPath = base ~ resource;
+		auto optiPath = base ~ optimizedResource;
+		if (exists(origPath) && exists(optiPath) && timeLastModified(optiPath) >= timeLastModified(origPath))
+			return optimizedResource;
+		else
+			return resource;
+	}
 }
 
 HttpResponseEx serveFile(HttpResponseEx response, string path)
@@ -825,8 +830,11 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	//scope(failure) std.file.write("bad-tpl.html", page);
 	page = renderNav(page, currentGroup);
 	page = parseTemplate(page, &getVar);
-	page = createBundles(page, re!`<link rel="stylesheet" href="(/[^"]*?)" ?/?>`);
-	page = createBundles(page, re!`<script type="text/javascript" src="(/[^"]*?\.js)"></script>`);
+	debug {} else
+	{
+		page = createBundles(page, re!`<link rel="stylesheet" href="(/[^"]*?)" ?/?>`);
+		page = createBundles(page, re!`<script type="text/javascript" src="(/[^"]*?\.js)"></script>`);
+	}
 	response.serveData(page);
 
 	response.setStatus(status);
