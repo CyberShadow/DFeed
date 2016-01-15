@@ -793,7 +793,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		if (currentGroup)
 			searchOptions ~= SearchOption(currentGroup.publicName ~ " group", "group:" ~ currentGroup.internalName.searchTerm);
 		if (currentThread)
-			searchOptions ~= SearchOption("Current thread", "threadmd5:" ~ currentThread.getDigestString!MD5().toLower());
+			searchOptions ~= SearchOption("This thread", "threadmd5:" ~ currentThread.getDigestString!MD5().toLower());
 
 		foreach (i, option; searchOptions)
 			searchOptionStr ~=
