@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -2211,16 +2211,12 @@ string getPostAtThreadIndex(string threadID, int index)
 
 void discussionThread(string id, int page, out GroupInfo groupInfo, out string title, bool markAsRead)
 {
-	//auto viewMode = user.get("threadviewmode", "flat"); // legacy
-	auto viewMode = "flat";
-	bool nested = viewMode == "nested" || viewMode == "threaded";
-
 	enforce(page >= 1, "Invalid page");
-	auto postsPerPage = nested ? int.max : POSTS_PER_PAGE;
-	if (nested) page = 1;
 
 	Rfc850Post[] posts;
-	foreach (int rowid, string postID, string message; query!"SELECT `ROWID`, `ID`, `Message` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC LIMIT ? OFFSET ?".iterate(id, postsPerPage, (page-1)*postsPerPage))
+	foreach (int rowid, string postID, string message;
+			query!"SELECT `ROWID`, `ID`, `Message` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC LIMIT ? OFFSET ?"
+			.iterate(id, POSTS_PER_PAGE, (page-1)*POSTS_PER_PAGE))
 		posts ~= new Rfc850Post(message, postID, rowid, id);
 
 	Rfc850Post[string] knownPosts;
@@ -2232,24 +2228,18 @@ void discussionThread(string id, int page, out GroupInfo groupInfo, out string t
 	groupInfo = posts[0].getGroup();
 	title     = posts[0].subject;
 
-	if (nested)
-		posts = Rfc850Post.threadify(posts);
-
 	html.put(`<div id="thread-posts">`);
 	foreach (post; posts)
 		formatPost(post, knownPosts, markAsRead);
 	html.put(`</div>`);
 
-	if (!nested)
-	{
-		auto postCount = getPostCount(id);
+	auto postCount = getPostCount(id);
 
-		if (page > 1 || postCount > POSTS_PER_PAGE)
-		{
-			html.put(`<table class="forum-table post-pager">`);
-			postPager(id, page, postCount);
-			html.put(`</table>`);
-		}
+	if (page > 1 || postCount > POSTS_PER_PAGE)
+	{
+		html.put(`<table class="forum-table post-pager">`);
+		postPager(id, page, postCount);
+		html.put(`</table>`);
 	}
 }
 
