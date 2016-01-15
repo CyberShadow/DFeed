@@ -137,13 +137,18 @@ string staticPath(string path)
 
 string optimizedPath(string base, string resource)
 {
-    string optimizedResource = resource.stripExtension ~ ".min" ~ resource.extension;
-	auto origPath = base ~ resource;
-	auto optiPath = base ~ optimizedResource;
-	if (exists(origPath) && exists(optiPath) && timeLastModified(optiPath) >= timeLastModified(origPath))
-		return optimizedResource;
-	else
+	debug
 		return resource;
+	else
+	{
+		string optimizedResource = resource.stripExtension ~ ".min" ~ resource.extension;
+		auto origPath = base ~ resource;
+		auto optiPath = base ~ optimizedResource;
+		if (exists(origPath) && exists(optiPath) && timeLastModified(optiPath) >= timeLastModified(origPath))
+			return optimizedResource;
+		else
+			return resource;
+	}
 }
 
 HttpResponseEx serveFile(HttpResponseEx response, string path)
@@ -795,7 +800,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		if (currentGroup)
 			searchOptions ~= SearchOption(currentGroup.publicName ~ " group", "group:" ~ currentGroup.internalName.searchTerm);
 		if (currentThread)
-			searchOptions ~= SearchOption("Current thread", "threadmd5:" ~ currentThread.getDigestString!MD5().toLower());
+			searchOptions ~= SearchOption("This thread", "threadmd5:" ~ currentThread.getDigestString!MD5().toLower());
 
 		foreach (i, option; searchOptions)
 			searchOptionStr ~=
@@ -827,8 +832,11 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	//scope(failure) std.file.write("bad-tpl.html", page);
 	page = renderNav(page, currentGroup);
 	page = parseTemplate(page, &getVar);
-	page = createBundles(page, re!`<link rel="stylesheet" href="(/[^"]*?)" ?/?>`);
-	page = createBundles(page, re!`<script type="text/javascript" src="(/[^"]*?\.js)"></script>`);
+	debug {} else
+	{
+		page = createBundles(page, re!`<link rel="stylesheet" href="(/[^"]*?)" ?/?>`);
+		page = createBundles(page, re!`<script type="text/javascript" src="(/[^"]*?\.js)"></script>`);
+	}
 	response.serveData(page);
 
 	response.setStatus(status);
@@ -2215,6 +2223,64 @@ void discussionThread(string id, int page, out GroupInfo groupInfo, out string t
 {
 	enforce(page >= 1, "Invalid page");
 
+	auto postCount = getPostCount(id);
+
+	if (page == 1 && postCount > 2)
+	{
+		// Expandable overview
+
+		html.put(
+			`<table id="thread-overview" class="forum-table forum-expand-container">`
+			`<tr class="group-index-header"><th>`);
+
+		auto pageCount = getPageCount(postCount, POSTS_PER_PAGE);
+		if (pageCount > 1)
+		{
+			html.put(
+				`<div class="thread-overview-pager forum-expand-container">`
+				`Jump to page: <b>1</b> `
+			);
+
+			auto threadUrl = idToUrl(id, "thread");
+
+			void pageLink(int n)
+			{
+				auto nStr = text(n);
+				html.put(`<a href="`); html.putEncodedEntities(threadUrl); html.put(`?page=`, nStr, `">`, nStr, `</a> `);
+			}
+
+			if (pageCount < 4)
+			{
+				foreach (p; 2..pageCount+1)
+					pageLink(p);
+			}
+			else
+			{
+				pageLink(2);
+				html.put(`&hellip; `);
+				pageLink(pageCount);
+
+				html.put(
+					`<a class="thread-overview-pager forum-expand-toggle">&nbsp;</a>`
+					`<div class="thread-overview-pager-expanded forum-expand-content">`
+					`<form action="`); html.putEncodedEntities(threadUrl); html.put(`">`
+					`Page <input name="page" class="thread-overview-pager-pageno"> <input type="submit" value="Go">`
+					`</form>`
+					`</div>`
+					`</div>`
+				);
+			}
+		}
+
+		html.put(
+			`<a class="forum-expand-toggle">Thread overview</a>`
+			`</th></tr>`,
+			`<tr class="forum-expand-content"><td class="group-threads-cell"><div class="group-threads"><table>`);
+		formatThreadedPosts(getThreadPosts(id), false);
+		html.put(`</table></div></td></tr></table>`);
+
+	}
+
 	Rfc850Post[] posts;
 	foreach (int rowid, string postID, string message;
 			query!"SELECT `ROWID`, `ID`, `Message` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC LIMIT ? OFFSET ?"
@@ -2230,40 +2296,35 @@ void discussionThread(string id, int page, out GroupInfo groupInfo, out string t
 	groupInfo = posts[0].getGroup();
 	title     = posts[0].subject;
 
-	auto postCount = getPostCount(id);
-
-	void pager(string position)
-	{
-		if (page > 1 || postCount > POSTS_PER_PAGE)
-		{
-			html.put(`<table class="forum-table post-pager post-pager-`, position, `">`);
-			postPager(id, page, postCount);
-			html.put(`</table>`);
-		}
-	}
-
-	pager("top");
-
 	html.put(`<div id="thread-posts">`);
 	foreach (post; posts)
 		formatPost(post, knownPosts, markAsRead);
 	html.put(`</div>`);
 
-	pager("bottom");
+	if (page > 1 || postCount > POSTS_PER_PAGE)
+	{
+		html.put(`<table class="forum-table post-pager">`);
+		postPager(id, page, postCount);
+		html.put(`</table>`);
+	}
 }
 
-void discussionThreadOverview(string threadID, string selectedID)
+PostInfo*[] getThreadPosts(string threadID)
 {
 	PostInfo*[] posts;
 	enum ViewSQL = "SELECT `ROWID`, `ID`, `ParentID`, `Author`, `AuthorEmail`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` = ?";
 	foreach (int rowid, string id, string parent, string author, string authorEmail, string subject, long stdTime; query!ViewSQL.iterate(threadID))
 		posts ~= [PostInfo(rowid, id, null, parent, author, authorEmail, subject, SysTime(stdTime, UTC()))].ptr;
+	return posts;
+}
 
+void discussionThreadOverview(string threadID, string selectedID)
+{
 	html.put(
 		`<table id="thread-index" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(userSettings.groupViewMode), html.put(`">`
 		`<tr class="group-index-header"><th><div>Thread overview</div></th></tr>`,
 		`<tr><td class="group-threads-cell"><div class="group-threads"><table>`);
-	formatThreadedPosts(posts, false, selectedID);
+	formatThreadedPosts(getThreadPosts(threadID), false, selectedID);
 	html.put(`</table></div></td></tr></table>`);
 }
 
