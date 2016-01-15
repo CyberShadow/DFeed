@@ -2267,9 +2267,12 @@ void discussionThread(string id, int page, out GroupInfo groupInfo, out string t
 					`Page <input name="page" class="thread-overview-pager-pageno"> <input type="submit" value="Go">`
 					`</form>`
 					`</div>`
-					`</div>`
 				);
 			}
+
+			html.put(
+				`</div>`
+			);
 		}
 
 		html.put(
