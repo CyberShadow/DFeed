@@ -31,6 +31,10 @@ div#footernav {
 	clear: none;
 }
 
+div#copyright {
+	margin-top: 1em;
+}
+
 pre {
 	background: inherit;
 	border: none;
@@ -57,7 +61,7 @@ table td:not(:last-child), table th:not(:last-child) {
 }
 
 .subnav + #content {
-	margin-left: 11em;
+	margin-left: 13em;
 }
 
 /*************** Navigation toggle ***************/
@@ -289,6 +293,7 @@ a.secretlink:visited {
 /* Footer */
 
 div#footernav {
+	margin-top: 2em;
 	text-align: center;
 }
 div#footernav a {
@@ -542,7 +547,7 @@ tr.mini-post-info-cell > td {
 }
 
 .forum-quote, .forum-signature {
-	color: #999;
+	color: #777;
 }
 
 .forum-quote {
@@ -1126,12 +1131,15 @@ hr {
 		overflow: auto;
 	}
 
+	body {
+		font-size: 75%;
+	}
+
 	body div#content {
 		padding-left: 0;
 		padding-right: 0;
 		padding-bottom: 0;
 		border: 0;
-		font-size: 75%;
 	}
 
 	/* counter default padding */

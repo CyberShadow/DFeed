@@ -261,11 +261,11 @@ function updateSize(resized) {
 	for (var i in resizees)
 		resizees[i].$outer.css('height', '');
 
-	var $bottommost = $('body');
+	var $bottommost = $('#content');
 	var totalWindowSpace = $(window).height();
 
 	function getFreeSpace() {
-		var usedWindowSpace = $bottommost.position().top + $bottommost.outerHeight(true);
+		var usedWindowSpace = $bottommost.offset().top + $bottommost.outerHeight(true);
 		usedWindowSpace = Math.floor(usedWindowSpace);
 
 		var freeWindowSpace  = totalWindowSpace - usedWindowSpace;
