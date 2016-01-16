@@ -303,7 +303,7 @@ div#footernav a {
 /*************** Discussion index ***************/
 
 #forum-index > tbody > tr > td:nth-child(even) {
-	background-color: #F0F0F0;
+	background-color: #FCFCFC;
 }
 
 #forum-index > tbody > tr > td:nth-child(1) { width: 60%; }
@@ -336,7 +336,7 @@ div#footernav a {
 /*************** Group index ***************/
 
 #group-index > tbody > tr > td:nth-child(even) {
-	background-color: #F5F5F5;
+	background-color: #FCFCFC;
 }
 
 #group-index > tbody > tr > td:nth-child(1) { width: 65%; }
