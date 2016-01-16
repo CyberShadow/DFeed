@@ -1063,12 +1063,15 @@ hr {
 		overflow: auto;
 	}
 
+	body {
+		font-size: 75%;
+	}
+
 	body div#content {
 		padding-left: 0;
 		padding-right: 0;
 		padding-bottom: 0;
 		border: 0;
-		font-size: 75%;
 	}
 
 	/* counter default padding */
