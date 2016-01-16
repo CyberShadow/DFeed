@@ -86,6 +86,10 @@ body.navhidden #content {
 }
 #forum-tools-left {
 	float: left;
+	white-space: pre;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 #forum-tools-right {
 	float: right;
