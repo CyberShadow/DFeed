@@ -1080,6 +1080,13 @@ hr {
 
 /*************** Responsive overrides ***************/
 
+body {
+	-webkit-text-size-adjust: none;
+	-moz-text-size-adjust: none;
+	-ms-text-size-adjust: none;
+	text-size-adjust: none;
+}
+
 @media only screen and (max-width: 66em) { /* Narrow layout stage 1 */
 	.subnav {
 		width: auto;
