@@ -1142,10 +1142,6 @@ body {
 		overflow: auto;
 	}
 
-	body {
-		font-size: 75%;
-	}
-
 	body div#content {
 		padding-left: 0;
 		padding-right: 0;
