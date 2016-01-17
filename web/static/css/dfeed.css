@@ -543,7 +543,7 @@ tr.mini-post-info-cell > td {
 }
 .post-text {
 	margin: 0;
-	font-family: Consolas, monospace;
+	font-family: Consolas, Lucida Console, Menlo, monospace;
 	font-size: 1em;
 	white-space: pre; /* old browser compat */
 	white-space: pre-wrap;
