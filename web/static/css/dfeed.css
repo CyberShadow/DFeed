@@ -53,7 +53,7 @@ table td:not(:last-child), table th:not(:last-child) {
 /* Navigation menu */
 
 .subnav, .subnav-helper {
-	width: 9em;
+	width: 7em;
 }
 
 .subnav > ul > li {
@@ -61,7 +61,7 @@ table td:not(:last-child), table th:not(:last-child) {
 }
 
 .subnav + #content {
-	margin-left: 13em;
+	margin-left: 11em;
 }
 
 /*************** Navigation toggle ***************/
