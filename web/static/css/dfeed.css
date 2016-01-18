@@ -334,8 +334,8 @@ div#footernav a {
 }
 
 #forum-index .focused {
-	outline: 1px solid #89F !important;
-	background-color: #EEF;
+	outline: 1px solid #F99 !important;
+	background-color: #FEE;
 }
 #forum-index .focused > td {
 	background: none !important;
@@ -366,8 +366,8 @@ div#footernav a {
 }
 
 #group-index .focused {
-	outline: 1px solid #89F !important;
-	background-color: #EEF;
+	outline: 1px solid #F99 !important;
+	background-color: #FEE;
 }
 #group-index .focused > td {
 	background: none !important;
@@ -626,7 +626,7 @@ a > .forcewrap {
 /* Keyboard navigation */
 
 .post.focused {
-	border-left-color: #89F;
+	border-left-color: #F99;
 }
 
 .linknav:after {
@@ -695,14 +695,14 @@ a > .forcewrap {
 #thread-index         .focused > td > div,
 #group-index-threaded .focused > td > div,
 #group-posts-vsplit   .focused {
-	outline: 1px solid #89F !important;
-	background-color: #EEF;
+	outline: 1px solid #F99 !important;
+	background-color: #FEE;
 }
 
 #thread-index         .selected > td > div,
 #group-index-threaded .selected > td > div,
 #group-posts-vsplit   .selected {
-	background-color: #45F;
+	background-color: #D55;
 	color: white;
 }
 
