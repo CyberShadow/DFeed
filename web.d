@@ -746,7 +746,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		toolStr.replace("__URL__",  encodeUrlParameter(returnPage));
 	toolStr =
 		`<div id="forum-tools-right">` ~ toolStr ~ `</div>`
-		`<div id="forum-tools-left" class="tip">` ~
+		`<div id="forum-tools-left">` ~
 		breadcrumbs.join(` &raquo; `) ~ `</div>`
 	;
 	string htmlStr = cast(string) html.get(); // html contents will be overwritten on next request

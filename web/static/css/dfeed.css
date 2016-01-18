@@ -1154,8 +1154,8 @@ body {
 		overflow: visible;
 	}
 	#forum-content {
-		margin-left: -1.33em;
-		margin-right: -1.33em;
+		margin-left: -1em;
+		margin-right: -1em;
 	}
 
 	.forum-form,
