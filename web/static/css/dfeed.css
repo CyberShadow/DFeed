@@ -61,7 +61,7 @@ table td:not(:last-child), table th:not(:last-child) {
 }
 
 .subnav + #content {
-	margin-left: 11em;
+	margin-left: 10em;
 }
 
 /*************** Navigation toggle ***************/
@@ -305,6 +305,10 @@ div#footernav a {
 }
 
 /*************** Discussion index ***************/
+
+#forum-index-header {
+	margin: 0 0.5em 0.5em 0.5em;
+}
 
 #forum-index > tbody > tr > td:nth-child(even) {
 	background-color: #FCFCFC;
@@ -1161,11 +1165,6 @@ body {
 	.forum-form,
 	#settings-form,
 	#subscription-form,
-	#forum-index-header {
-		display: block;
-		margin: 0 0.5em 0.5em 0.5em;
-	}
-
 	#postform {
 		max-width: 100%;
 	}
