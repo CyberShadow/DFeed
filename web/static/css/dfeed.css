@@ -351,9 +351,9 @@ div#footernav a {
 	background-color: #FCFCFC;
 }
 
-#group-index > tbody > tr > td:nth-child(1) { width: 65%; }
+#group-index > tbody > tr > td:nth-child(1) { width: 75%; }
 #group-index > tbody > tr > td:nth-child(2) { width: 25%; }
-#group-index > tbody > tr > td:nth-child(3) { width: 6.1em; }
+#group-index > tbody > tr > td:nth-child(3) { width: 5.5em; }
 
 .forum-postsummary-time {
 	white-space: nowrap;
@@ -1199,6 +1199,9 @@ body {
 	}
 
 	#group-posts-vsplit > tbody > tr > td:nth-child(3) { width: 0; }
+
+	#group-index > tbody > tr > td:nth-child(2) { width: 8em; }
+	#group-index > tbody > tr > *:nth-child(3) { display: none; }
 }
 
 /*************** Frame view ***************/
