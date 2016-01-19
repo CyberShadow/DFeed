@@ -209,6 +209,10 @@ a.secretlink:visited {
 	font-weight: normal;
 }
 
+.forum-unread:visited, .forum-read:visited {
+	color: #723D39;
+}
+
 /* Use a thinner font for the split-mode index */
 
 .viewmode-horizontal-split {
