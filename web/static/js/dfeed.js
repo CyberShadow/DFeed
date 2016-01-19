@@ -44,14 +44,14 @@ function initThreadUrlFixer() {
 				if ($post.length) {
 					// Chrome is not scrolling to the hash if
 					// we call replaceState inside the load event.
-					setTimeout(focusRow, 0, $post, FocusScroll.none);
+					setTimeout(focusRow, 0, $post, FocusScroll.none, false);
 				}
 			}
 		}
 
 		$('.post').live('click', function() {
 			if (!$(this).is('.focused'))
-				focusRow($(this), FocusScroll.none);
+				focusRow($(this), FocusScroll.none, false);
 			return true;
 		});
 	}
@@ -73,7 +73,7 @@ function initSplitView() {
 
 	$(window).resize(onResize);
 	updateSize(true);
-	focusRow($('tr.thread-post-row').last(), FocusScroll.scroll);
+	focusRow($('tr.thread-post-row').last(), FocusScroll.scroll, false);
 
 	$(window).bind('popstate', onPopState);
 	onPopState();
@@ -143,7 +143,7 @@ function onPopState() {
 
 		$('.group-threads .selected').removeClass('selected');
 		$row.addClass('selected');
-		focusRow($row, FocusScroll.withMargin);
+		focusRow($row, FocusScroll.withMargin, false);
 		currentID = id;
 
 		showText('Loading message\n<'+id+'> ...');
@@ -320,7 +320,7 @@ function updateSize(resized) {
 		$container.scrollTop(containerScrollTop);
 
 	if ($focused.length && wasFocusedInView)
-		focusRow($focused, FocusScroll.withMargin);
+		focusRow($focused, FocusScroll.withMargin, false);
 }
 
 function onResize() {
@@ -380,13 +380,13 @@ function isRowInView($row) {
 
 var FocusScroll = { none:0, scroll:1, withMargin:2 };
 
-function focusRow($row, focusScroll) {
+function focusRow($row, focusScroll, byKeyboard) {
 	$('.focused').removeClass('focused');
 	$row.addClass('focused');
 	if (focusScroll)
 		scrollIntoView($row, getSelectablesContainer(), focusScroll == FocusScroll.withMargin);
 
-	if ($('#group-split').length == 0 && $('#group-vsplit').length == 0)
+	if (byKeyboard && $('#group-split').length == 0 && $('#group-vsplit').length == 0)
 		addLinkNavigation();
 
 	if (updateUrlOnFocus)
@@ -493,7 +493,7 @@ function focusNext(offset, onlyUnread) {
 		var isUnread = $row.find('.forum-unread').length > 0;
 		if (!onlyUnread || isUnread) {
 			//row.mousedown();
-			focusRow($row, FocusScroll.scroll);
+			focusRow($row, FocusScroll.scroll, true);
 			return true;
 		}
 
