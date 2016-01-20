@@ -1238,7 +1238,7 @@ void summarizeFrameThread(PostInfo* info, string infoText)
 		{
 			html.put(
 				`<a target="_top" class="forum-postsummary-gravatar" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`">`
-					`<img alt="Gravatar" class="post-gravatar" src="http://www.gravatar.com/avatar/`, getGravatarHash(info.authorEmail), `?d=identicon">`
+					`<img alt="Gravatar" class="post-gravatar" src="//www.gravatar.com/avatar/`, getGravatarHash(info.authorEmail), `?d=identicon">`
 				`</a>`
 				`<a target="_top" class="forum-postsummary-subject `, (user.isRead(rowid) ? "forum-read" : "forum-unread"), `" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`">`), html.putEncodedEntities(subject), html.put(`</a><br>`
 				`<div class="forum-postsummary-info">`, infoText, `</div>`
@@ -1423,7 +1423,7 @@ void discussionGroup(GroupInfo groupInfo, int page)
 				html.put(
 				//	`<!-- Thread ID: ` ~ encodeEntities(threadID) ~ ` | First Post ID: ` ~ encodeEntities(id) ~ `-->` ~
 					`<a class="forum-postsummary-gravatar" href="`), html.putEncodedEntities(idToUrl(tid, "thread")), html.put(`">`
-						`<img alt="Gravatar" class="post-gravatar" src="http://www.gravatar.com/avatar/`, getGravatarHash(info.authorEmail), `?d=identicon">`
+						`<img alt="Gravatar" class="post-gravatar" src="//www.gravatar.com/avatar/`, getGravatarHash(info.authorEmail), `?d=identicon">`
 					`</a>`
 					`<div class="truncated"><a class="forum-postsummary-subject `, (isRead ? "forum-read" : "forum-unread"), `" href="`), html.putEncodedEntities(idToUrl(tid, "thread")), html.put(`" title="`), html.putEncodedEntities(subject), html.put(`">`), html.putEncodedEntities(subject), html.put(`</a></div>`
 					`<div class="truncated">by <span class="forum-postsummary-author" title="`), html.putEncodedEntities(author), html.put(`">`), html.putEncodedEntities(author), html.put(`</span></div>`);
@@ -1998,7 +1998,7 @@ void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts, bool markAsRead 
 				`<td class="post-info">`
 					`<div class="post-author">`), html.putEncodedEntities(author), html.put(`</div>`
 					`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`), html.putEncodedEntities(author), html.put(`'s Gravatar profile">`
-						`<img alt="Gravatar" class="post-gravatar" width="80" height="80" src="http://www.gravatar.com/avatar/`, gravatarHash, `?d=identicon">`
+						`<img alt="Gravatar" class="post-gravatar" width="80" height="80" src="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon">`
 					`</a><br>`);
 		if (infoBits.length)
 		{
@@ -2054,7 +2054,7 @@ void miniPostInfo(Rfc850Post post, Rfc850Post[string] knownPosts, bool showActio
 			`<table class="mini-post-info"><tr>`
 				`<td class="mini-post-info-avatar">`
 					`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`), html.putEncodedEntities(author), html.put(`'s Gravatar profile">`
-						`<img alt="Gravatar" class="post-gravatar" width="32" height="32" src="http://www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&s=32">`
+						`<img alt="Gravatar" class="post-gravatar" width="32" height="32" src="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&s=32">`
 					`</a>`
 				`</td>`
 				`<td>`
@@ -2135,7 +2135,7 @@ void formatSplitPost(Rfc850Post post, bool footerNav)
 				`<table><tr>`
 					`<td class="post-info-avatar" rowspan="`, text(infoRows.length), `">`
 						`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`), html.putEncodedEntities(author), html.put(`'s Gravatar profile">`
-							`<img alt="Gravatar" class="post-gravatar" width="48" height="48" src="http://www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&s=48">`
+							`<img alt="Gravatar" class="post-gravatar" width="48" height="48" src="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&s=48">`
 						`</a>`
 					`</td>`
 					`<td><table>`);
@@ -3565,7 +3565,7 @@ void formatSearchResult(Rfc850Post post, string snippet)
 				`<td class="post-info">`
 					`<div class="post-author">`), html.putEncodedEntities(author), html.put(`</div>`
 					`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`), html.putEncodedEntities(author), html.put(`'s Gravatar profile">`
-						`<img alt="Gravatar" class="post-gravatar" width="80" height="80" src="http://www.gravatar.com/avatar/`, gravatarHash, `?d=identicon">`
+						`<img alt="Gravatar" class="post-gravatar" width="80" height="80" src="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon">`
 					`</a>`
 		);
 
