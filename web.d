@@ -201,7 +201,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	auto canonicalHeader =
 		`<link rel="canonical" href="http://`~vhost~request.resource~`"/>`;
 	enum horizontalSplitHeaders =
-		`<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Open+Sans:400,600">`;
+		`<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Open+Sans:400,600">`;
 
 	try
 	{
