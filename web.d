@@ -836,8 +836,8 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	page = parseTemplate(page, &getVar);
 	debug {} else
 	{
-		page = createBundles(page, re!`<link rel="stylesheet" href="(/[^"]*?)" ?/?>`);
-		page = createBundles(page, re!`<script type="text/javascript" src="(/[^"]*?\.js)"></script>`);
+		page = createBundles(page, re!`<link rel="stylesheet" href="(/[^/][^"]*?)" ?/?>`);
+		page = createBundles(page, re!`<script type="text/javascript" src="(/[^/][^"]*?\.js)"></script>`);
 	}
 	response.serveData(page);
 
