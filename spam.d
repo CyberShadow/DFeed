@@ -22,7 +22,9 @@ import std.file : readText;
 import std.string;
 
 import ae.net.http.client;
+import ae.sys.data;
 import ae.utils.array;
+import ae.utils.json;
 import ae.utils.text;
 
 import posting;
@@ -152,6 +154,69 @@ class Akismet : SpamChecker
 				handler(false, "Akismet error: " ~ result);
 		}, (string error) {
 			handler(false, "Akismet error: " ~ error);
+		});
+	}
+}
+
+// **************************************************************************
+
+class BlogSpam : SpamChecker
+{
+	private string[string] getParams(PostProcess process)
+	{
+		return [
+			"comment"              : process.draft.clientVars.get("text", ""),
+			"ip"                   : process.ip,
+			"agent"                : process.headers.get("User-Agent", ""),
+			"email"                : process.draft.clientVars.get("email", ""),
+			"name"                 : process.draft.clientVars.get("name", ""),
+			"site"                 : "http://" ~ site.config.host ~ "/",
+			"subject"              : process.draft.clientVars.get("subject", ""),
+			"version"              : "DFeed (+https://github.com/CyberShadow/DFeed)",
+		];
+	}
+
+	override void check(PostProcess process, SpamResultHandler handler)
+	{
+		auto params = getParams(process);
+
+		return httpPost("http://test.blogspam.net:9999/", [Data(toJson(params))], "application/json", (string responseText) {
+			auto response = responseText.jsonParse!(string[string]);
+			auto result = response.get("result", null);
+			auto reason = response.get("reason", "no reason given");
+			if (result == "OK")
+				handler(true, reason);
+			else
+			if (result == "SPAM")
+				handler(false, "BlogSpam.net thinks your post looks like spam: " ~ reason);
+			else
+			if (result == "ERROR")
+				handler(false, "BlogSpam.net error: " ~ reason);
+			else
+				handler(false, "BlogSpam.net unexpected response: " ~ result);
+		}, (string error) {
+			handler(false, "BlogSpam.net error: " ~ error);
+		});
+	}
+
+	override void sendFeedback(PostProcess process, SpamResultHandler handler, SpamFeedback feedback)
+	{
+		auto params = getParams(process);
+		string[SpamFeedback] names = [ SpamFeedback.spam : "spam", SpamFeedback.ham : "ok" ];
+		params["train"] = names[feedback];
+		return httpPost("http://test.blogspam.net:9999/classify", [Data(toJson(params))], "application/json", (string responseText) {
+			auto response = responseText.jsonParse!(string[string]);
+			auto result = response.get("result", null);
+			auto reason = response.get("reason", "no reason given");
+			if (result == "OK")
+				handler(true, reason);
+			else
+			if (result == "ERROR")
+				handler(false, "BlogSpam.net error: " ~ reason);
+			else
+				handler(false, "BlogSpam.net unexpected response: " ~ result);
+		}, (string error) {
+			handler(false, "BlogSpam.net error: " ~ error);
 		});
 	}
 }
@@ -308,4 +373,5 @@ void initSpamCheckers()
 	if (auto c = createService!Akismet("apis/akismet"))
 		spamCheckers ~= c;
 	spamCheckers ~= new StopForumSpam();
+	//spamCheckers ~= new BlogSpam();
 }
