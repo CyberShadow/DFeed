@@ -196,6 +196,27 @@ final class PostProcess
 		post.compile();
 	}
 
+	// Parse back a Rfc850Post (e.g. to check spam of an arbitrary message)
+	this(Rfc850Post post)
+	{
+		this.post = post;
+
+		draft.clientVars["name"] = post.author;
+		draft.clientVars["email"] = post.authorEmail;
+		draft.clientVars["subject"] = post.subject;
+		draft.clientVars["text"] = post.content; // TODO: unwrap
+		draft.serverVars["where"] = post.where;
+
+		foreach (name, value; post.headers)
+			if (name.skipOver("X-Web-"))
+			{
+				if (name == "Originating-IP")
+					this.ip = value;
+				else
+					this.headers.add(name, value);
+			}
+	}
+
 	static string pidToMessageID(string pid)
 	{
 		return format("<%s@%s>", pid, site.config.host);
