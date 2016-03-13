@@ -1097,7 +1097,7 @@ string[] tips =
 	`If you create a Gravatar profile with the email address you post with, it will be accessible when clicking your avatar.`,
 //	`You don't need to create an account to post on this forum, but doing so <a href="/help#accounts">offers a few benefits</a>.`,
 	`To subscribe to a thread, click the "Subscribe" link on that thread's first post. You need to be logged in to create subscriptions.`,
-	`To search the forum, use the search widget on the left, or you can visit <a href="/search">the search page</a> directly.`,
+	`To search the forum, use the search widget at the top, or you can visit <a href="/search">the search page</a> directly.`,
 	`This forum is open-source! Read or fork the code <a href="https://github.com/CyberShadow/DFeed">on GitHub</a>.`,
 	`If you encounter a bug or need a missing feature, you can <a href="https://github.com/CyberShadow/DFeed/issues">create an issue on GitHub</a>.`,
 ];
