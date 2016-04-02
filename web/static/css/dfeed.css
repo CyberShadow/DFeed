@@ -1175,6 +1175,9 @@ body {
 	div#footernav, div#copyright {
 		display: none;
 	}
+	#content {
+		padding-bottom: 0;
+	}
 
 	.horizontal-post-info {
 		display: none;
