@@ -2325,6 +2325,7 @@ PostInfo*[] getThreadPosts(string threadID)
 
 void discussionThreadOverview(string threadID, string selectedID)
 {
+	enum PERF_SCOPE = "discussionThreadOverview"; mixin(MeasurePerformanceMixin);
 	html.put(
 		`<table id="thread-index" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(userSettings.groupViewMode), html.put(`">`
 		`<tr class="group-index-header"><th><div>Thread overview</div></th></tr>`,
