@@ -2484,7 +2484,9 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 		`<div id="postform-info">`
 			`Posting to <b>`), html.putEncodedEntities(info.publicName), html.put(`</b>`,
 			(parent
-				? ` in reply to ` ~ postLink(parentInfo)
+				? parentInfo
+					? ` in reply to ` ~ postLink(parentInfo)
+					: ` in reply to (unknown post)`
 				: info
 					? `:<br>(<b>` ~ encodeEntities(info.description) ~ `</b>)`
 					: ``),
