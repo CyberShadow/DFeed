@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2015, 2016  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -209,7 +209,7 @@ class TopPostingRule : LintRule
 		"<p>When replying a message, it is generally preferred to add your reply under the quoted parent text.</p>"
 		"<p>Depending on the software (or its configuration) used to read your message, your message may not be displayed below its parent post. "
 		   "In such cases, the quoted text provides context for your reply, and readers would need to first read the quoted text below your reply for context.</p>"
-		"<p>Thus, you should add your reply belowe the quoted text (or reply to individual paragraphs inline), rather than above it.</p>";
+		"<p>Thus, you should add your reply below the quoted text (or reply to individual paragraphs inline), rather than above it.</p>";
 	}
 
 	override bool check(PostDraft draft)
