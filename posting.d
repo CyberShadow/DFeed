@@ -41,6 +41,16 @@ import newsgroups;
 import site;
 import spam;
 
+// for upgrading
+static this() {
+	try {
+		query!"SELECT spamchecks,captchas FROM Users LIMIT 1".exec();
+	} catch(Exception e) {
+		query!"ALTER TABLE Users ADD COLUMN captchas INTEGER NOT NULL DEFAULT 0".exec();
+		query!"ALTER TABLE Users ADD COLUMN spamchecks INTEGER NOT NULL DEFAULT 0".exec();
+	}
+}
+
 struct PostDraft
 {
 	int status;
@@ -90,12 +100,14 @@ final class PostProcess
 	PostingStatus status;
 	PostError error;
 	bool captchaPresent;
+	string userID;
 
 	this(PostDraft draft, string userID, string ip, Headers headers, Rfc850Post parent)
 	{
 		this.draft = draft;
 		this.ip = ip;
 		this.headers = headers;
+		this.userID = userID;
 
 		this.post = createPost(draft, headers, ip, parent);
 
@@ -237,6 +249,26 @@ final class PostProcess
 		{
 			log("Checking for spam");
 			status = PostingStatus.spamCheck;
+			if(this.userID) {
+				version(ProbablyNotAGoodIdea) {
+					immutable int spam_threshold = 1000;
+					foreach(int res; query!"SELECT spamchecks FROM Users WHERE id = ?"
+							.iterate(this.userID)) {
+						if(res > spam_threshold) {
+							postMessage();
+							return;
+						}
+					}
+				}
+				immutable int captcha_threshold = 10;
+				foreach(int res; query!"SELECT captchas FROM Users WHERE id = ?"
+						.iterate(this.userID)) {
+					if(res > captcha_threshold) {
+						postMessage();
+						return;
+					}
+				}
+			}
 			spamCheck(this, &onSpamResult);
 		}
 	}
@@ -297,6 +329,8 @@ private:
 			return;
 		}
 		log("CAPTCHA OK");
+		query!"UPDATE Users SET captchas = captchas + 1 WHERE id = ?"
+			.exec(this.userID);
 
 		postMessage();
 	}
@@ -312,7 +346,8 @@ private:
 			return;
 		}
 		log("Spam check OK");
-
+		query!"UPDATE Users SET spamchecks = spamchecks + 1 WHERE id = ?"
+			.exec(this.userID);
 		postMessage();
 	}
 

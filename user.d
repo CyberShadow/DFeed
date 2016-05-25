@@ -276,7 +276,7 @@ class GuestUser : User
 	{
 		enforce(username.length, "Please enter a username");
 		enforce(username.length < 32, "Username too long");
-		enforce(password.length < 64, "Password too long");
+		enforce(password.length < 0x1000, "Password too long");
 
 		// Create user
 		auto session = randomString();
