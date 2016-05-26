@@ -52,7 +52,8 @@ import ae.utils.meta;
 import ae.utils.text;
 import ae.utils.text.html;
 import ae.utils.textout;
-import ae.utils.time;
+import ae.utils.time.format;
+import ae.utils.time.parse;
 import ae.utils.xmllite : putEncodedEntities;
 
 import cache;
