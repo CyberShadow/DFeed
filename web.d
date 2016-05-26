@@ -66,7 +66,7 @@ import lint;
 import list;
 //import mailhide;
 import message;
-import messagedb : searchTerm;
+import messagedb : searchTerm, threadID;
 import posting;
 import site;
 import subscriptions;
