@@ -50,6 +50,7 @@ import ae.utils.feed;
 import ae.utils.json;
 import ae.utils.meta;
 import ae.utils.text;
+import ae.utils.text.html;
 import ae.utils.textout;
 import ae.utils.time;
 import ae.utils.xmllite : putEncodedEntities;
@@ -295,7 +296,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				auto groupInfo = currentGroup = getGroupInfoByUrl(groupUrlName);
 				enforce(groupInfo, "Unknown group");
 				title = groupInfo.publicName ~ " group index" ~ pageStr;
-				breadcrumbs ~= `<a href="/group/`~encodeEntities(groupUrlName)~`">` ~ encodeEntities(groupInfo.publicName) ~ `</a>` ~ pageStr;
+				breadcrumbs ~= `<a href="/group/`~encodeHtmlEntities(groupUrlName)~`">` ~ encodeHtmlEntities(groupInfo.publicName) ~ `</a>` ~ pageStr;
 				auto viewMode = userSettings.groupViewMode;
 				if (viewMode == "basic")
 					discussionGroup(groupInfo, page);
@@ -311,7 +312,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				else
 					discussionGroupVSplit(groupInfo, page);
 				foreach (what; ["posts", "threads"])
-					extraHeaders ~= `<link rel="alternate" type="application/atom+xml" title="New `~what~` on `~encodeEntities(groupInfo.publicName)~`" href="/feed/`~what~`/`~encodeEntities(groupInfo.urlName)~`" />`;
+					extraHeaders ~= `<link rel="alternate" type="application/atom+xml" title="New `~what~` on `~encodeHtmlEntities(groupInfo.publicName)~`" href="/feed/`~what~`/`~encodeHtmlEntities(groupInfo.urlName)~`" />`;
 				break;
 			}
 			case "thread":
@@ -323,7 +324,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				auto firstPostUrl = idToUrl(getPostAtThreadIndex(threadID, getPageOffset(page, POSTS_PER_PAGE)));
 				auto viewMode = userSettings.groupViewMode;
 				if (viewMode != "basic")
-					html.put(`<div class="forum-notice">Viewing thread in basic view mode &ndash; click a post's title to open it in `, encodeEntities(viewMode), ` view mode</div>`);
+					html.put(`<div class="forum-notice">Viewing thread in basic view mode &ndash; click a post's title to open it in `, encodeHtmlEntities(viewMode), ` view mode</div>`);
 				returnPage = firstPostUrl;
 
 				string pageStr = page==1 ? "" : format(" (page %d)", page);
@@ -334,8 +335,8 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				title = subject ~ pageStr;
 				currentGroup = groupInfo;
 				currentThread = threadID;
-				breadcrumbs ~= `<a href="/group/` ~encodeEntities(groupInfo.urlName)~`">` ~ encodeEntities(groupInfo.publicName) ~ `</a>`;
-				breadcrumbs ~= `<a href="/thread/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a>` ~ pageStr;
+				breadcrumbs ~= `<a href="/group/` ~encodeHtmlEntities(groupInfo.urlName)~`">` ~ encodeHtmlEntities(groupInfo.publicName) ~ `</a>`;
+				breadcrumbs ~= `<a href="/thread/`~encodeHtmlEntities(pathX)~`">` ~ encodeHtmlEntities(subject) ~ `</a>` ~ pageStr;
 				extraHeaders ~= canonicalHeader; // Google confuses /post/ URLs with threads
 				break;
 			}
@@ -356,8 +357,8 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 					string subject;
 					discussionSinglePost(id, currentGroup, subject, currentThread);
 					title = subject;
-					breadcrumbs ~= `<a href="/group/` ~encodeEntities(currentGroup.urlName)~`">` ~ encodeEntities(currentGroup.publicName) ~ `</a>`;
-					breadcrumbs ~= `<a href="/post/`~encodeEntities(pathX)~`">` ~ encodeEntities(subject) ~ `</a> (view single post)`;
+					breadcrumbs ~= `<a href="/group/` ~encodeHtmlEntities(currentGroup.urlName)~`">` ~ encodeHtmlEntities(currentGroup.publicName) ~ `</a>`;
+					breadcrumbs ~= `<a href="/post/`~encodeHtmlEntities(pathX)~`">` ~ encodeHtmlEntities(subject) ~ `</a> (view single post)`;
 					break;
 				}
 				else
@@ -370,7 +371,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 
 					string pageStr = page==1 ? "" : format(" (page %d)", page);
 					title = currentGroup.publicName ~ " group index" ~ pageStr;
-					breadcrumbs ~= `<a href="/group/`~encodeEntities(currentGroup.urlName)~`">` ~ encodeEntities(currentGroup.publicName) ~ `</a>` ~ pageStr;
+					breadcrumbs ~= `<a href="/group/`~encodeHtmlEntities(currentGroup.urlName)~`">` ~ encodeHtmlEntities(currentGroup.publicName) ~ `</a>` ~ pageStr;
 					extraHeaders ~= horizontalSplitHeaders;
 
 					break;
@@ -440,8 +441,8 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				string groupUrlName = path[1];
 				currentGroup = getGroupInfoByUrl(groupUrlName).enforce("No such group");
 				title = "Posting to " ~ currentGroup.publicName;
-				breadcrumbs ~= `<a href="/group/`~encodeEntities(currentGroup.urlName)~`">` ~ encodeEntities(currentGroup.publicName) ~ `</a>`;
-				breadcrumbs ~= `<a href="/newpost/`~encodeEntities(currentGroup.urlName)~`">New thread</a>`;
+				breadcrumbs ~= `<a href="/group/`~encodeHtmlEntities(currentGroup.urlName)~`">` ~ encodeHtmlEntities(currentGroup.publicName) ~ `</a>`;
+				breadcrumbs ~= `<a href="/newpost/`~encodeHtmlEntities(currentGroup.urlName)~`">New thread</a>`;
 				if (discussionPostForm(newPostDraft(currentGroup)))
 					bodyClass ~= " formdoc";
 				break;
@@ -454,8 +455,8 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				title = `Replying to "` ~ post.subject ~ `"`; // "
 				currentGroup = post.getGroup();
 				currentThread = post.threadID;
-				breadcrumbs ~= `<a href="/group/`~encodeEntities(currentGroup.urlName)~`">` ~ encodeEntities(currentGroup.publicName) ~ `</a>`;
-				breadcrumbs ~= `<a href="` ~ encodeEntities(idToUrl(post.id)) ~ `">` ~ encodeEntities(post.subject) ~ `</a>`;
+				breadcrumbs ~= `<a href="/group/`~encodeHtmlEntities(currentGroup.urlName)~`">` ~ encodeHtmlEntities(currentGroup.publicName) ~ `</a>`;
+				breadcrumbs ~= `<a href="` ~ encodeHtmlEntities(idToUrl(post.id)) ~ `">` ~ encodeHtmlEntities(post.subject) ~ `</a>`;
 				breadcrumbs ~= `<a href="/reply/`~pathX~`">Post reply</a>`;
 				if (discussionPostForm(newReplyDraft(post)))
 					bodyClass = "formdoc";
@@ -561,7 +562,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				auto post = getPost('<' ~ urlDecode(pathX) ~ '>');
 				enforce(post, "Post not found");
 				title = `Delete "` ~ post.subject ~ `"?`; // "
-				breadcrumbs ~= `<a href="` ~ encodeEntities(idToUrl(post.id)) ~ `">` ~ encodeEntities(post.subject) ~ `</a>`;
+				breadcrumbs ~= `<a href="` ~ encodeHtmlEntities(idToUrl(post.id)) ~ `">` ~ encodeHtmlEntities(post.subject) ~ `</a>`;
 				breadcrumbs ~= `<a href="/delete/`~pathX~`">Delete post</a>`;
 				discussionDeleteForm(post);
 				bodyClass ~= " formdoc";
@@ -718,12 +719,12 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			breadcrumbs ~= title = "Error";
 			status = HttpStatusCode.InternalServerError;
 		}
-		auto text = encodeEntities(e.msg).replace("\n", "<br>");
-		debug text ~= `<pre>` ~ encodeEntities(e.toString()) ~ `</pre>`;
+		auto text = encodeHtmlEntities(e.msg).replace("\n", "<br>");
+		debug text ~= `<pre>` ~ encodeHtmlEntities(e.toString()) ~ `</pre>`;
 		html.clear();
 		html.put(
 			`<table class="forum-table forum-error">`
-				`<tr><th>`, encodeEntities(title), `</th></tr>`
+				`<tr><th>`, encodeHtmlEntities(title), `</th></tr>`
 				`<tr><td class="forum-table-message">`, text, `</td></tr>`
 			`</table>`);
 	}
@@ -733,7 +734,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	if (breadcrumbs.length) breadcrumbs = [`<a href="/">Index</a>`] ~ breadcrumbs;
 
 	if (user.isLoggedIn())
-		tools ~= `<a href="/logout?url=__URL__">Log out ` ~ encodeEntities(user.getName()) ~ `</a>`;
+		tools ~= `<a href="/logout?url=__URL__">Log out ` ~ encodeHtmlEntities(user.getName()) ~ `</a>`;
 	else
 		tools ~= `<a href="/loginform?url=__URL__">Log in</a>`;
 	tools ~= `<a href="/settings">Settings</a>`;
@@ -764,7 +765,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			{
 				auto draftID = parts[2];
 				htmlStr =
-					`<div class="forum-notice">Draft discarded. <a href="/posting/` ~ encodeEntities(draftID) ~ `">Undo</a></div>` ~ htmlStr;
+					`<div class="forum-notice">Draft discarded. <a href="/posting/` ~ encodeHtmlEntities(draftID) ~ `">Undo</a></div>` ~ htmlStr;
 				break;
 			}
 			case "settings-saved":
@@ -806,15 +807,15 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 
 		foreach (i, option; searchOptions)
 			searchOptionStr ~=
-				`<option value="` ~ encodeEntities(option.value) ~ `"` ~ (i==searchOptions.length-1 ? ` selected` : ``) ~ `>` ~
-					encodeEntities(option.name) ~ `</option>`;
+				`<option value="` ~ encodeHtmlEntities(option.value) ~ `"` ~ (i==searchOptions.length-1 ? ` selected` : ``) ~ `>` ~
+					encodeHtmlEntities(option.name) ~ `</option>`;
 	}
 
 	string getVar(string name)
 	{
 		switch (name)
 		{
-			case "title"          : return encodeEntities(title);
+			case "title"          : return encodeHtmlEntities(title);
 			case "content"        : return htmlStr;
 			case "extraheaders"   : return extraHeaders.join();
 			case "extrajs"        : return extraJS.join();
@@ -996,10 +997,10 @@ void discussionIndexHeader()
 			if (subscription.trigger.type == "reply")
 				if (c)
 					bits[0] ~= `<li><b>You have <a href="/subscription-posts/%s">%d new repl%s</a> to <a href="/search?q=authoremail:%s">your posts</a>.</b></li>`
-						.format(encodeEntities(subscription.id), c, c==1 ? "y" : "ies", encodeEntities(encodeUrlParameter(userSettings.email)));
+						.format(encodeHtmlEntities(subscription.id), c, c==1 ? "y" : "ies", encodeHtmlEntities(encodeUrlParameter(userSettings.email)));
 				else
 					bits[2] ~= `<li>No new <a href="/subscription-posts/%s">replies</a> to <a href="/search?q=authoremail:%s">your posts</a>.</li>`
-						.format(encodeEntities(subscription.id), encodeEntities(encodeUrlParameter(userSettings.email)));
+						.format(encodeHtmlEntities(subscription.id), encodeHtmlEntities(encodeUrlParameter(userSettings.email)));
 			else
 			{
 				numSubscriptions++;
@@ -1007,7 +1008,7 @@ void discussionIndexHeader()
 				{
 					numNewSubscriptions++;
 					bits[1] ~= `<li><b>You have <a href="/subscription-posts/%s">%d unread post%s</a> matching your <a href="/settings#subscriptions">%s subscription</a> (%s).</b></li>`
-						.format(encodeEntities(subscription.id), c, c==1 ? "" : "s", subscription.trigger.type, subscription.trigger.getDescription());
+						.format(encodeHtmlEntities(subscription.id), c, c==1 ? "" : "s", subscription.trigger.type, subscription.trigger.getDescription());
 				}
 			}
 		}
@@ -1022,7 +1023,7 @@ void discussionIndexHeader()
 			hasPosts = query!"SELECT EXISTS(SELECT 1 FROM [Posts] WHERE [AuthorEmail] = ? LIMIT 1)".iterate(userSettings.email).selectValue!int;
 		if (hasPosts)
 			bits[2] ~= `<li>If you <a href="/register">create an account</a>, you can track replies to <a href="/search?q=authoremail:%s">your posts</a>.</li>`
-				.format(encodeEntities(encodeUrlParameter(userSettings.email)));
+				.format(encodeHtmlEntities(encodeUrlParameter(userSettings.email)));
 		else
 			bits[0] ~= `<li>You can read and post on this forum without <a href="/register">creating an account</a>, but doing so offers <a href="/help#accounts">a few benefits</a>.</li>`;
 	}
@@ -1148,8 +1149,8 @@ void discussionIndex()
 		if (info)
 			with (*info)
 				return
-					`<div class="truncated"><a class="forum-postsummary-subject ` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `" href="` ~ encodeEntities(idToUrl(id)) ~ `" title="` ~ encodeEntities(subject) ~ `">` ~ encodeEntities(subject) ~ `</a></div>` ~
-					`<div class="truncated">by <span class="forum-postsummary-author" title="` ~ encodeEntities(author) ~ `">` ~ encodeEntities(author) ~ `</span></div>` ~
+					`<div class="truncated"><a class="forum-postsummary-subject ` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `" href="` ~ encodeHtmlEntities(idToUrl(id)) ~ `" title="` ~ encodeHtmlEntities(subject) ~ `">` ~ encodeHtmlEntities(subject) ~ `</a></div>` ~
+					`<div class="truncated">by <span class="forum-postsummary-author" title="` ~ encodeHtmlEntities(author) ~ `">` ~ encodeHtmlEntities(author) ~ `</span></div>` ~
 					`<span class="forum-postsummary-time">` ~ summarizeTime(time) ~ `</span>`;
 
 		return `<div class="forum-no-data">-</div>`;
@@ -1305,7 +1306,7 @@ void pager(string base, int page, int pageCount, int maxWidth = 50)
 	string linkOrNot(string text, int page, bool cond)
 	{
 		if (cond)
-			return `<a href="` ~ encodeEntities(base) ~ (base.canFind('?') ? `&` : `?`) ~ `page=` ~ .text(page) ~ `">` ~ text ~ `</a>`;
+			return `<a href="` ~ encodeHtmlEntities(base) ~ (base.canFind('?') ? `&` : `?`) ~ `page=` ~ .text(page) ~ `">` ~ text ~ `</a>`;
 		else
 			return `<span class="disabled-link">` ~ text ~ `</span>`;
 	}
@@ -1421,7 +1422,7 @@ void discussionGroup(GroupInfo groupInfo, int page)
 			with (*info)
 			{
 				html.put(
-				//	`<!-- Thread ID: ` ~ encodeEntities(threadID) ~ ` | First Post ID: ` ~ encodeEntities(id) ~ `-->` ~
+				//	`<!-- Thread ID: ` ~ encodeHtmlEntities(threadID) ~ ` | First Post ID: ` ~ encodeHtmlEntities(id) ~ `-->` ~
 					`<a class="forum-postsummary-gravatar" href="`), html.putEncodedEntities(idToUrl(tid, "thread")), html.put(`">`
 						`<img alt="Gravatar" class="post-gravatar" src="//www.gravatar.com/avatar/`, getGravatarHash(info.authorEmail), `?d=identicon">`
 					`</a>`
@@ -1737,17 +1738,17 @@ string[] formatPostParts(Rfc850Post post)
 				with (part)
 					partList ~=
 						(name || fileName) ?
-							`<a href="` ~ encodeEntities(partUrl) ~ `" title="` ~ encodeEntities(mimeType) ~ `">` ~
-							encodeEntities(name) ~
+							`<a href="` ~ encodeHtmlEntities(partUrl) ~ `" title="` ~ encodeHtmlEntities(mimeType) ~ `">` ~
+							encodeHtmlEntities(name) ~
 							(name && fileName ? " - " : "") ~
-							encodeEntities(fileName) ~
+							encodeHtmlEntities(fileName) ~
 							`</a>` ~
-							(description ? ` (` ~ encodeEntities(description) ~ `)` : "")
+							(description ? ` (` ~ encodeHtmlEntities(description) ~ `)` : "")
 						:
-							`<a href="` ~ encodeEntities(partUrl) ~ `">` ~
-							encodeEntities(mimeType) ~
+							`<a href="` ~ encodeHtmlEntities(partUrl) ~ `">` ~
+							encodeHtmlEntities(mimeType) ~
 							`</a> part` ~
-							(description ? ` (` ~ encodeEntities(description) ~ `)` : "");
+							(description ? ` (` ~ encodeHtmlEntities(description) ~ `)` : "");
 			}
 		}
 	}
@@ -1950,7 +1951,7 @@ string getParentLink(Rfc850Post post, Rfc850Post[string] knownPosts)
 		}
 
 		if (author && link)
-			return `<a href="` ~ encodeEntities(link) ~ `">` ~ encodeEntities(author) ~ `</a>`;
+			return `<a href="` ~ encodeHtmlEntities(link) ~ `">` ~ encodeHtmlEntities(author) ~ `</a>`;
 	}
 
 	return null;
@@ -1973,9 +1974,9 @@ void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts, bool markAsRead 
 
 	if (knownPosts is null && post.cachedThreadID)
 		infoBits ~=
-			`<a href="` ~ encodeEntities(idToThreadUrl(post.id, post.cachedThreadID)) ~ `">View in thread</a>`;
+			`<a href="` ~ encodeHtmlEntities(idToThreadUrl(post.id, post.cachedThreadID)) ~ `">View in thread</a>`;
 
-	string repliesTitle = `Replies to `~encodeEntities(post.author)~`'s post from `~encodeEntities(formatShortTime(post.time, false));
+	string repliesTitle = `Replies to `~encodeHtmlEntities(post.author)~`'s post from `~encodeHtmlEntities(formatShortTime(post.time, false));
 
 	with (post.msg)
 	{
@@ -1986,7 +1987,7 @@ void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts, bool markAsRead 
 			`<tr class="post-header"><th colspan="2">`
 				`<div class="post-time">`, summarizeTime(time), `</div>`
 				`<a title="Permanent link to this post" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" class="permalink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread"), `">`,
-					encodeEntities(rawSubject),
+					encodeHtmlEntities(rawSubject),
 				`</a>`
 			`</th></tr>`
 			`<tr class="mini-post-info-cell">`
@@ -2017,7 +2018,7 @@ void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts, bool markAsRead 
 				`<td class="post-body">`
 //		); miniPostInfo(post, knownPosts); html.put(
 					`<pre class="post-text">`), formatBody(post), html.put(`</pre>`,
-					(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``),
+					(error ? `<span class="post-error">` ~ encodeHtmlEntities(error) ~ `</span>` : ``),
 				`</td>`
 			`</tr>`
 			`</table>`
@@ -2076,7 +2077,7 @@ string postLink(int rowid, string id, string author)
 {
 	return
 		`<a class="postlink ` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `" ` ~
-			`href="`~ encodeEntities(idToUrl(id)) ~ `">` ~ encodeEntities(author) ~ `</a>`;
+			`href="`~ encodeHtmlEntities(idToUrl(id)) ~ `">` ~ encodeHtmlEntities(author) ~ `</a>`;
 }
 
 string postLink(PostInfo* info)
@@ -2094,7 +2095,7 @@ void formatSplitPost(Rfc850Post post, bool footerNav)
 	InfoRow[] infoRows;
 	string parentLink;
 
-	infoRows ~= InfoRow("From", encodeEntities(post.author));
+	infoRows ~= InfoRow("From", encodeHtmlEntities(post.author));
 	//infoRows ~= InfoRow("Date", format("%s (%s)", formatLongTime(post.time), formatShortTime(post.time, false)));
 	infoRows ~= InfoRow("Date", formatLongTime(post.time));
 
@@ -2128,7 +2129,7 @@ void formatSplitPost(Rfc850Post post, bool footerNav)
 			`<tr class="post-header"><th>`
 				`<div class="post-time">`, summarizeTime(time), `</div>`
 				`<a title="Permanent link to this post" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" class="`, (user.isRead(post.rowid) ? "forum-read" : "forum-unread"), `">`,
-					encodeEntities(rawSubject),
+					encodeHtmlEntities(rawSubject),
 				`</a>`
 			`</th></tr>`
 			`<tr><td class="horizontal-post-info">`
@@ -2153,7 +2154,7 @@ void formatSplitPost(Rfc850Post post, bool footerNav)
 				`</td></tr>`
 				`<tr class="post-layout-body"><td>`
 					`<pre class="post-text">`), formatBody(post), html.put(`</pre>`,
-					(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``),
+					(error ? `<span class="post-error">` ~ encodeHtmlEntities(error) ~ `</span>` : ``),
 				`</td></tr>`
 				`<tr class="post-layout-footer"><td>`
 					); postFooter(footerNav, infoRows[1..$]); html.put(
@@ -2488,7 +2489,7 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 					? ` in reply to ` ~ postLink(parentInfo)
 					: ` in reply to (unknown post)`
 				: info
-					? `:<br>(<b>` ~ encodeEntities(info.description) ~ `</b>)`
+					? `:<br>(<b>` ~ encodeHtmlEntities(info.description) ~ `</b>)`
 					: ``),
 		`</div>`
 		`<input type="hidden" name="secret" value="`, userSettings.secret, `">`
@@ -3554,9 +3555,9 @@ void formatSearchResult(Rfc850Post post, string snippet)
 			`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(2), `</tr>` // Fixed layout dummies
 			`<tr class="post-header"><th colspan="2">`
 				`<div class="post-time">`, summarizeTime(time), `</div>`,
-				encodeEntities(post.publicGroupNames().join(", ")), ` &raquo; `
+				encodeHtmlEntities(post.publicGroupNames().join(", ")), ` &raquo; `
 				`<a title="View this post" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" class="permalink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread"), `">`,
-					encodeEntities(rawSubject),
+					encodeHtmlEntities(rawSubject),
 				`</a>`
 			`</th></tr>`
 			`<tr class="mini-post-info-cell">`
@@ -3576,7 +3577,7 @@ void formatSearchResult(Rfc850Post post, string snippet)
 				`</td>`
 				`<td class="post-body">`
 					`<pre class="post-text">`), formatSearchSnippet(snippet), html.put(`</pre>`,
-					(error ? `<span class="post-error">` ~ encodeEntities(error) ~ `</span>` : ``),
+					(error ? `<span class="post-error">` ~ encodeHtmlEntities(error) ~ `</span>` : ``),
 				`</td>`
 			`</tr>`
 			`</table>`
@@ -3689,7 +3690,7 @@ void formatBody(Rfc850Message post)
 
 		void processText(string s)
 		{
-			html.put(encodeEntities(s));
+			html.put(encodeHtmlEntities(s));
 		}
 
 		void processWrap(string s)
@@ -3799,7 +3800,7 @@ string summarizeTime(SysTime time, bool colorize = false)
 	}
 
 	bool shorter = colorize; // hack
-	return `<span style="` ~ style ~ `" title="` ~ encodeEntities(formatLongTime(time)) ~ `">` ~ encodeEntities(formatShortTime(time, shorter)) ~ `</span>`;
+	return `<span style="` ~ style ~ `" title="` ~ encodeHtmlEntities(formatLongTime(time)) ~ `">` ~ encodeHtmlEntities(formatShortTime(time, shorter)) ~ `</span>`;
 }
 
 string formatShortTime(SysTime time, bool shorter)
@@ -3884,37 +3885,8 @@ string formatNumber(long n)
 
 static string truncateString(string s8, int maxLength = 30)
 {
-	auto encoded = encodeEntities(s8);
+	auto encoded = encodeHtmlEntities(s8);
 	return `<span class="truncated" style="max-width: ` ~ text(maxLength * 0.6) ~ `em" title="`~encoded~`">` ~ encoded ~ `</span>`;
-}
-
-static string encodeEntities(string s)
-{
-	StringBuilder result;
-	size_t start = 0;
-
-	foreach (i, c; s)
-		if (c=='<')
-			result.put(s[start..i], "&lt;"),
-			start = i+1;
-		else
-		if (c=='>')
-			result.put(s[start..i], "&gt;"),
-			start = i+1;
-		else
-		if (c=='&')
-			result.put(s[start..i], "&amp;"),
-			start = i+1;
-		else
-		if (c=='"')
-			result.put(s[start..i], "&quot;"),
-			start = i+1;
-
-	if (!start)
-		return s;
-
-	result.put(s[start..$]);
-	return result.get();
 }
 
 /+
