@@ -2643,7 +2643,7 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 				}
 
 				auto parent = "parent" in draft.serverVars ? getPost(draft.serverVars["parent"]) : null;
-				auto process = new PostProcess(draft, userSettings.id, ip, headers, parent);
+				auto process = new PostProcess(draft, user, userSettings.id, ip, headers, parent);
 				if (process.status == PostingStatus.redirect)
 					return "/posting/" ~ process.pid;
 				process.run();

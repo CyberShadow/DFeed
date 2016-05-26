@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2013, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -31,9 +31,10 @@ import ae.utils.zlib;
 
 enum SettingType
 {
-	server,
-	client,
-	session,
+	registered,  /// Always saved server-side, for registered users only
+	server,      /// Stored on the server for registered users, and cookies for non-registered ones
+	client,      /// Always stored in cookies
+	session,     /// Always stored in cookies, and expires at the end of the session
 }
 
 abstract class User
@@ -241,10 +242,15 @@ class GuestUser : User
 			}
 			else
 			{
+				auto settingType = settingTypes[name];
+
+				if (settingType == SettingType.registered)
+					continue;
+
 				if (name in cookies && cookies[name] == value)
 					continue;
 
-				if (settingTypes[name] == SettingType.session)
+				if (settingType == SettingType.session)
 					result ~= "dfeed_" ~ name ~ "=" ~ value ~ "; Path=/";
 				else
 					// TODO Expires
@@ -315,7 +321,7 @@ final class RegisteredUser : GuestUser
 
 	override string get(string name, string defaultValue, SettingType settingType)
 	{
-		if (settingType != SettingType.server)
+		if (settingType != SettingType.server && settingType != SettingType.registered)
 			return super.get(name, defaultValue, settingType);
 
 		auto pSetting = name in newSettings;
@@ -338,7 +344,7 @@ final class RegisteredUser : GuestUser
 
 	override void set(string name, string value, SettingType settingType)
 	{
-		if (settingType == SettingType.server)
+		if (settingType == SettingType.server || settingType == SettingType.registered)
 			newSettings[name] = value;
 		else
 			super.set(name, value, settingType);

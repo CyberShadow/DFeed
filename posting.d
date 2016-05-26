@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2013, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -17,6 +17,7 @@
 module posting;
 
 import std.algorithm;
+import std.conv;
 import std.datetime;
 import std.exception;
 import std.range.primitives;
@@ -40,6 +41,7 @@ import message;
 import newsgroups;
 import site;
 import spam;
+import user;
 
 struct PostDraft
 {
@@ -90,12 +92,14 @@ final class PostProcess
 	PostingStatus status;
 	PostError error;
 	bool captchaPresent;
+	User user;
 
-	this(PostDraft draft, string userID, string ip, Headers headers, Rfc850Post parent)
+	this(PostDraft draft, User user, string userID, string ip, Headers headers, Rfc850Post parent)
 	{
 		this.draft = draft;
 		this.ip = ip;
 		this.headers = headers;
+		this.user = user;
 
 		this.post = createPost(draft, headers, ip, parent);
 
@@ -235,6 +239,17 @@ final class PostProcess
 		}
 		else
 		{
+			if (user)
+			{
+				auto n = user.get("solved-captchas", "0", SettingType.registered).to!uint;
+				enum captchaThreshold = 10;
+				if (n >= captchaThreshold)
+				{
+					log("User is trusted, skipping spam check");
+					postMessage();
+				}
+			}
+
 			log("Checking for spam");
 			status = PostingStatus.spamCheck;
 			spamCheck(this, &onSpamResult);
@@ -296,7 +311,15 @@ private:
 			log.close();
 			return;
 		}
+
 		log("CAPTCHA OK");
+		if (user)
+		{
+			auto n = user.get("solvedCaptchas", "0", SettingType.registered).to!uint;
+			n++;
+			user.set("solved-captchas", text(n), SettingType.registered);
+			log("  (user solved %d CAPTCHAs))".format(n));
+		}
 
 		postMessage();
 	}
