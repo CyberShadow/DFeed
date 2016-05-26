@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015, 2016  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -74,6 +74,7 @@ protected:
 	override void getPosts()
 	{
 		httpGet(config.url, (string result) {
+			static import std.file;
 			scope(failure) std.file.write("feed-error.xml", result);
 			auto data = new XmlDocument(result);
 			Post[string] r;

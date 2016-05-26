@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2015, 2016  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -117,7 +117,8 @@ import std.process;
 public // template alias parameter
 void createDatabase(string schema, string target)
 {
+	static import std.stdio;
 	std.stdio.stderr.writeln("Creating new database from schema");
 	ensurePathExists(target);
-	enforce(spawnProcess(["sqlite3", target], File(schema, "rb")).wait() == 0, "sqlite3 failed");
+	enforce(spawnProcess(["sqlite3", target], std.stdio.File(schema, "rb")).wait() == 0, "sqlite3 failed");
 }

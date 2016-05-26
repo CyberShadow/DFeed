@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2015, 2016  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -17,6 +17,7 @@
 module backup;
 
 import std.datetime;
+import std.exception;
 import std.file;
 import std.functional;
 import std.process;
