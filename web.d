@@ -2484,15 +2484,18 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 
 	html.put(
 		`<div id="postform-info">`
-			`Posting to <b>`), html.putEncodedEntities(info.publicName), html.put(`</b>`,
-			(parent
-				? parentInfo
+			`Posting to <b>`), html.putEncodedEntities(info.publicName),
+	html.put(`</b>`,(parent ? parentInfo
 					? ` in reply to ` ~ postLink(parentInfo)
 					: ` in reply to (unknown post)`
 				: info
 					? `:<br>(<b>` ~ encodeHtmlEntities(info.description) ~ `</b>)`
-					: ``),
-		`</div>`
+			        : ``));
+    if (info.newThreadGuidelines)
+		html.put(`<br>`
+		         `Please review the <a href="`, info.newThreadGuidelines,`" > guidelines on creating a new thread in `, info.publicName, `</a>`);
+
+	html.put(`</div>`
 		`<input type="hidden" name="secret" value="`, userSettings.secret, `">`
 		`<input type="hidden" name="did" value="`), html.putEncodedEntities(draftID), html.put(`">`
 		`<label for="postform-name">Your name:</label>`
