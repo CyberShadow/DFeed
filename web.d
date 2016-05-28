@@ -4005,7 +4005,7 @@ class NotFoundException : Exception
 struct ListenConfig
 {
 	string addr;
-	ushort port = 80;
+	ushort port = 8000;
 }
 
 struct Config
