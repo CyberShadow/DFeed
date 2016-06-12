@@ -444,7 +444,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				title = "Posting to " ~ currentGroup.publicName;
 				breadcrumbs ~= `<a href="/group/`~encodeHtmlEntities(currentGroup.urlName)~`">` ~ encodeHtmlEntities(currentGroup.publicName) ~ `</a>`;
 				breadcrumbs ~= `<a href="/newpost/`~encodeHtmlEntities(currentGroup.urlName)~`">New thread</a>`;
-				if (discussionPostForm(newPostDraft(currentGroup)))
+				if (discussionPostForm(newPostDraft(currentGroup, parameters)))
 					bodyClass ~= " formdoc";
 				break;
 			}
@@ -2388,13 +2388,14 @@ void autoSaveDraft(UrlParameters clientVars)
 		.exec(clientVars.toJson, Clock.currTime.stdTime, PostDraft.Status.edited, draftID);
 }
 
-PostDraft newPostDraft(GroupInfo groupInfo)
+PostDraft newPostDraft(GroupInfo groupInfo, UrlParameters parameters = null)
 {
 	auto draftID = randomString();
 	auto draft = PostDraft(PostDraft.Status.reserved, UrlParameters([
 		"did" : draftID,
 		"name" : userSettings.name,
 		"email" : userSettings.email,
+		"subject" : parameters.get("subject", null),
 	]), [
 		"where" : groupInfo.internalName,
 	]);
