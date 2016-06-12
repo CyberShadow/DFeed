@@ -2483,6 +2483,8 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 	else
 		html.put(`<input type="hidden" name="where" value="`), html.putEncodedEntities(where), html.put(`">`);
 
+	auto subject = draft.clientVars.get("subject", null);
+
 	html.put(
 		`<div id="postform-info">`
 			`Posting to <b>`), html.putEncodedEntities(info.publicName), html.put(`</b>`,
@@ -2501,9 +2503,9 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 		`<label for="postform-email">Your email address (<a href="/help#email">?</a>):</label>`
 		`<input id="postform-email" type="email" name="email" size="40" value="`), html.putEncodedEntities(draft.clientVars.get("email", null)), html.put(`">`
 		`<label for="postform-subject">Subject:</label>`
-		`<input id="postform-subject" name="subject" size="80"`, parent ? `` : ` autofocus`, ` value="`), html.putEncodedEntities(draft.clientVars.get("subject", null)), html.put(`">`
+		`<input id="postform-subject" name="subject" size="80"`, subject.length ? `` : ` autofocus`, ` value="`), html.putEncodedEntities(subject), html.put(`">`
 		`<label for="postform-text">Message:</label>`
-		`<textarea id="postform-text" name="text" rows="25" cols="80"`, parent ? ` autofocus` : ``, `>`), html.putEncodedEntities(draft.clientVars.get("text", null)), html.put(`</textarea>`);
+		`<textarea id="postform-text" name="text" rows="25" cols="80"`, subject.length ? ` autofocus` : ``, `>`), html.putEncodedEntities(draft.clientVars.get("text", null)), html.put(`</textarea>`);
 
 	if (showCaptcha)
 		html.put(`<div id="postform-captcha">`, theCaptcha.getChallengeHtml(error.captchaError), `</div>`);
