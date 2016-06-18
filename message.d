@@ -123,7 +123,12 @@ class Rfc850Post : Post
 	private this(Rfc850Message msg) { this.msg = msg; }
 
 	static Rfc850Post newPostTemplate(string groups) { return new Rfc850Post(Rfc850Message.newPostTemplate(groups)); }
-	Rfc850Post replyTemplate() { return new Rfc850Post(msg.replyTemplate()); }
+
+	Rfc850Post replyTemplate() {
+	   	auto ret = new Rfc850Post(msg.replyTemplate());
+		ret.content = "";
+		return ret;
+	}
 
 	/// Set headers and message.
 	void compile()

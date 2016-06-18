@@ -481,7 +481,6 @@ class LinkInSubjectRule : LintRule
 	static LintRule[] result;
 	if (!result.length)
 		result = [
-			new NotQuotingRule,
 			new WrongParentRule,
 			new NoParentRule,
 			new MultiParentRule,
