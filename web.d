@@ -3983,7 +3983,11 @@ CachedResource getSubscriptionFeed(string subscriptionID)
 		Rfc850Post[] posts;
 		foreach (string messageID; query!"SELECT [MessageID] FROM [SubscriptionPosts] WHERE [SubscriptionID] = ? ORDER BY [Time] DESC LIMIT 50"
 							.iterate(subscriptionID))
-			posts ~= getPost(messageID);
+		{
+			auto post = getPost(messageID);
+			if (post)
+				posts ~= post;
+		}
 
 		return makeFeed(posts, feedUrl, title, true);
 	}
