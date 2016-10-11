@@ -70,6 +70,7 @@ void main()
 			makeDGroupInfo("digitalmars.D.dwt"       , "DWT"                     , "dwt"                     , "digitalmars/D/dwt"       , "Digitalmars-d-dwt"       , "Discussion of the D Widget Toolkit"                               , false, false),
 		]),
 		makeDGroupSet("D Programming Language - Development", [
+			makeDGroupInfo("digitalmars.D.internals" , "Internals"               , "internals"               , null                      , null                      , "Discussion of language development and internals"                 , false, false),
 			makeDGroupInfo("digitalmars.D.bugs"      , "Issues"                  , "issues"                  , "digitalmars/D/bugs"      , "Digitalmars-d-bugs"      , "Bug reports for D compiler and library"                           , false, true ),
 			makeDGroupInfo("dmd-beta"                , "Beta"                    , "beta"                    , null                      , "dmd-beta"                , "Notifications and discussion of D beta versions"                  , true , false),
 			makeDGroupInfo("dmd-internals"           , "DMD"                     , "dmd"                     , null                      , "dmd-internals"           , "Compiler internal design and implementation"                      , true , false),
