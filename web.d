@@ -197,7 +197,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	// Redirect to canonical domain name
 	auto host = request.headers.get("Host", "");
 	host = request.headers.get("X-Forwarded-Host", host);
-	if (host != vhost && host != "localhost" && ip != "127.0.0.1" && !request.resource.startsWith("/.well-known/acme-challenge/"))
+	if (host != vhost && host != "localhost" && vhost != "localhost" && ip != "127.0.0.1" && !request.resource.startsWith("/.well-known/acme-challenge/"))
 		return response.redirect("http://" ~ vhost ~ request.resource, HttpStatusCode.MovedPermanently);
 
 	auto canonicalHeader =
