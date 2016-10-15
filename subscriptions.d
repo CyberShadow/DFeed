@@ -498,7 +498,7 @@ final class ContentTrigger : Trigger
 			`</select>`
 			`<table>`
 			`<tr><td>`
-				`<input type="checkbox" name="trigger-content-only-in-groups"`, onlyInGroups ? ` checked` : ``, `> only in the groups:`
+				`<label><input type="checkbox" name="trigger-content-only-in-groups"`, onlyInGroups ? ` checked` : ``, `> only in the groups:</label>`
 			`</td><td>`
 				`<select name="trigger-content-groups" multiple size="10">`
 		);
@@ -525,17 +525,17 @@ final class ContentTrigger : Trigger
 		{
 			html.put(
 				`<tr><td>`
-					`<input type="checkbox" name="trigger-content-`, id, `-enabled"`, filter.enabled ? ` checked` : ``, `> `
-					`and when the `, name, ` `
+					`<label><input type="checkbox" name="trigger-content-`, id, `-enabled"`, filter.enabled ? ` checked` : ``, `> `
+					`and when the `, name, `</label>`
 				`</td><td>`
 					`<select name="trigger-content-`, id, `-match-type">`
 						`<option value="substring"`, filter.isRegex ? `` : ` selected`, `>contains the string</option>`
 						`<option value="regex"`    , filter.isRegex ? ` selected` : ``, `>matches the regular expression</option>`
 					`</select> `
 					`<input name="trigger-content-`, id, `-str" value="`), html.putEncodedEntities(filter.str), html.put(`"> `
-					`(`
+					`<label>(`
 					`<input type="checkbox" name="trigger-content-`, id, `-case-sensitive"`, filter.caseSensitive ? ` checked` : ``, `>`
-					` case sensitive )`
+					` case sensitive )</label>`
 				`</td></tr>`
 			);
 		}
@@ -721,8 +721,8 @@ final class IrcAction : Action
 	{
 		html.put(
 			`<p>`
-				`<input type="checkbox" name="saction-irc-enabled"`, enabled ? ` checked` : ``, `> `
-				`Send a private message to <input name="saction-irc-nick" value="`), html.putEncodedEntities(nick), html.put(`"> on the `
+				`<label><input type="checkbox" name="saction-irc-enabled"`, enabled ? ` checked` : ``, `> `
+				`Send a private message to</label> <input name="saction-irc-nick" value="`), html.putEncodedEntities(nick), html.put(`"> on the `
 				`<select name="saction-irc-network">`);
 		foreach (irc; services!IrcSink)
 		{
@@ -798,8 +798,8 @@ final class EmailAction : Action
 	{
 		html.put(
 			`<p>`
-				`<input type="checkbox" name="saction-email-enabled"`, enabled ? ` checked` : ``, `> `
-				`Send an email to <input type="email" size="30" name="saction-email-address" value="`), html.putEncodedEntities(address), html.put(`">`
+				`<label><input type="checkbox" name="saction-email-enabled"`, enabled ? ` checked` : ``, `> `
+				`Send an email to</label> <input type="email" size="30" name="saction-email-address" value="`), html.putEncodedEntities(address), html.put(`">`
 			`</p>`
 		);
 	}
