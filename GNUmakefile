@@ -36,7 +36,7 @@ $(DLANG)/forum-template.html : $(DLANG)/forum-template.dd $(DDOC)
 	dmd -o- -c -D $(DDOC) $^ -Df$@
 
 $(HTMLCOMPRESSOR) :
-	wget http://htmlcompressor.googlecode.com/files/$(HTMLCOMPRESSOR)
+	wget https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/htmlcompressor/$(HTMLCOMPRESSOR)
 
 $(YUICOMPRESSOR) :
 	wget https://github.com/yui/yuicompressor/releases/download/v2.4.8/$(YUICOMPRESSOR)
