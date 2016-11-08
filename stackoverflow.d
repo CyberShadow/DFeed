@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2013, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -120,7 +120,7 @@ protected:
 			{
 				JsonQuestion[] items;
 				bool has_more;
-				int quota_max, quota_remaining;
+				int quota_max, quota_remaining, backoff;
 			}
 
 			scope(failure) std.file.write("so-error.txt", json);
