@@ -35,7 +35,8 @@ struct Config
 
 	struct Group
 	{
-		string internalName, publicName, urlName, groupSet, description, postMessage, sinkType, sinkName;
+		string internalName, publicName, urlName, groupSet, description,
+		       postMessage, sinkType, sinkName, newThreadGuidelines;
 		string[] urlAliases;
 		OrderedMap!(string, AlsoVia) alsoVia;
 	}
