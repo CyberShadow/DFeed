@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -318,7 +318,7 @@ private:
 			auto n = user.get("solvedCaptchas", "0", SettingType.registered).to!uint;
 			n++;
 			user.set("solved-captchas", text(n), SettingType.registered);
-			log("  (user solved %d CAPTCHAs))".format(n));
+			log("  (user solved %d CAPTCHAs)".format(n));
 		}
 
 		postMessage();
