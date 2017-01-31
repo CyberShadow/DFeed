@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -724,9 +724,9 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		debug text ~= `<pre>` ~ encodeHtmlEntities(e.toString()) ~ `</pre>`;
 		html.clear();
 		html.put(
-			`<table class="forum-table forum-error">`
-				`<tr><th>`, encodeHtmlEntities(title), `</th></tr>`
-				`<tr><td class="forum-table-message">`, text, `</td></tr>`
+			`<table class="forum-table forum-error">` ~
+				`<tr><th>`, encodeHtmlEntities(title), `</th></tr>` ~
+				`<tr><td class="forum-table-message">`, text, `</td></tr>` ~
 			`</table>`);
 	}
 
@@ -748,7 +748,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	toolStr =
 		toolStr.replace("__URL__",  encodeUrlParameter(returnPage));
 	toolStr =
-		`<div id="forum-tools-right">` ~ toolStr ~ `</div>`
+		`<div id="forum-tools-right">` ~ toolStr ~ `</div>` ~
 		`<div id="forum-tools-left">` ~
 		breadcrumbs.join(` &raquo; `) ~ `</div>`
 	;
@@ -790,7 +790,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		if (cookie.length > 4096 * 15/16)
 		{
 			htmlStr =
-				`<div class="forum-notice">Warning: cookie size approaching RFC 2109 limit.`
+				`<div class="forum-notice">Warning: cookie size approaching RFC 2109 limit.` ~
 				`Please consider <a href="/registerform">creating an account</a> to avoid losing your read post history.</div>` ~ htmlStr;
 			break;
 		}
@@ -979,9 +979,9 @@ void discussionIndexHeader()
 
 	string name = user.isLoggedIn() ? user.getName() : userSettings.name.length ? userSettings.name.split(' ')[0] : `Guest`;
 	html.put(
-		`<div id="forum-index-header">`
-		`<h1>D Programming Language Forum</h1>`
-		`<p>Welcome`, previousSession ? ` back` : ``, `, `), html.putEncodedEntities(name), html.put(`.</p>`
+		`<div id="forum-index-header">` ~
+		`<h1>D Programming Language Forum</h1>` ~
+		`<p>Welcome`, previousSession ? ` back` : ``, `, `), html.putEncodedEntities(name), html.put(`.</p>` ~
 
 		`<ul>`
 	);
@@ -1081,7 +1081,7 @@ void discussionIndexHeader()
 		foreach (bit; bitGroup)
 			html.put(bit);
 	html.put(
-		`</ul>`
+		`</ul>` ~
 		`</div>`
 	);
 
@@ -1157,7 +1157,7 @@ void discussionIndex()
 		return `<div class="forum-no-data">-</div>`;
 	}
 	html.put(
-		`<table id="forum-index" class="forum-table">`
+		`<table id="forum-index" class="forum-table">` ~
 		`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(5), `</tr>` // Fixed layout dummies
 	);
 	foreach (set; groupHierarchy)
@@ -1166,26 +1166,26 @@ void discussionIndex()
 			continue;
 
 		html.put(
-			`<tr><th colspan="5">`), html.putEncodedEntities(set.name), html.put(`</th></tr>`
+			`<tr><th colspan="5">`), html.putEncodedEntities(set.name), html.put(`</th></tr>` ~
 			`<tr class="subheader"><th>Group</th><th>Last Post</th><th>Threads</th><th>Posts</th><th>Also via</th></tr>`
 		);
 		foreach (group; set.groups)
 		{
 			html.put(
-				`<tr class="group-row">`
-					`<td class="forum-index-col-forum">`
-						`<a href="/group/`), html.putEncodedEntities(group.urlName), html.put(`">`), html.putEncodedEntities(group.publicName), html.put(`</a>`
-						`<div class="truncated forum-index-description" title="`), html.putEncodedEntities(group.description), html.put(`">`), html.putEncodedEntities(group.description), html.put(`</div>`
-					`</td>`
-					`<td class="forum-index-col-lastpost">`, group.internalName in lastPosts    ? summarizePost(   lastPosts[group.internalName]) : `<div class="forum-no-data">-</div>`, `</td>`
-					`<td class="number-column">`,            group.internalName in threadCounts ? formatNumber (threadCounts[group.internalName]) : `-`, `</td>`
-					`<td class="number-column">`,            group.internalName in postCounts   ? formatNumber (  postCounts[group.internalName]) : `-`, `</td>`
+				`<tr class="group-row">` ~
+					`<td class="forum-index-col-forum">` ~
+						`<a href="/group/`), html.putEncodedEntities(group.urlName), html.put(`">`), html.putEncodedEntities(group.publicName), html.put(`</a>` ~
+						`<div class="truncated forum-index-description" title="`), html.putEncodedEntities(group.description), html.put(`">`), html.putEncodedEntities(group.description), html.put(`</div>` ~
+					`</td>` ~
+					`<td class="forum-index-col-lastpost">`, group.internalName in lastPosts    ? summarizePost(   lastPosts[group.internalName]) : `<div class="forum-no-data">-</div>`, `</td>` ~
+					`<td class="number-column">`,            group.internalName in threadCounts ? formatNumber (threadCounts[group.internalName]) : `-`, `</td>` ~
+					`<td class="number-column">`,            group.internalName in postCounts   ? formatNumber (  postCounts[group.internalName]) : `-`, `</td>` ~
 					`<td class="number-column">`
 			);
 			foreach (i, av; group.alsoVia.values)
 				html.put(i ? `<br>` : ``, `<a href="`, av.url, `">`, av.name, `</a>`);
 			html.put(
-					`</td>`
+					`</td>` ~
 				`</tr>`,
 			);
 		}
@@ -1239,11 +1239,11 @@ void summarizeFrameThread(PostInfo* info, string infoText)
 		with (*info)
 		{
 			html.put(
-				`<a target="_top" class="forum-postsummary-gravatar" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`">`
-					`<img alt="Gravatar" class="post-gravatar" src="//www.gravatar.com/avatar/`, getGravatarHash(info.authorEmail), `?d=identicon">`
-				`</a>`
-				`<a target="_top" class="forum-postsummary-subject `, (user.isRead(rowid) ? "forum-read" : "forum-unread"), `" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`">`), html.putEncodedEntities(subject), html.put(`</a><br>`
-				`<div class="forum-postsummary-info">`, infoText, `</div>`
+				`<a target="_top" class="forum-postsummary-gravatar" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`">` ~
+					`<img alt="Gravatar" class="post-gravatar" src="//www.gravatar.com/avatar/`, getGravatarHash(info.authorEmail), `?d=identicon">` ~
+				`</a>` ~
+				`<a target="_top" class="forum-postsummary-subject `, (user.isRead(rowid) ? "forum-read" : "forum-unread"), `" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`">`), html.putEncodedEntities(subject), html.put(`</a><br>` ~
+				`<div class="forum-postsummary-info">`, infoText, `</div>` ~
 				`by <span class="forum-postsummary-author">`), html.putEncodedEntities(author), html.put(`</span>`
 			);
 			return;
@@ -1256,9 +1256,9 @@ void discussionFrameAnnouncements()
 {
 	auto latestAnnouncements = latestAnnouncementsCache(getLatestAnnouncements());
 
-	html.put(`<table class="forum-table"><thead><tr><th>`
-		`<a target="_top" class="feed-icon" title="Subscribe" href="/feed/threads/digitalmars.D.announce"><img src="`, staticPath("/images/rss.png"),`"></img></a>`
-		`<a target="_top" href="/group/digitalmars.D.announce">Latest announcements</a>`
+	html.put(`<table class="forum-table"><thead><tr><th>` ~
+		`<a target="_top" class="feed-icon" title="Subscribe" href="/feed/threads/digitalmars.D.announce"><img src="`, staticPath("/images/rss.png"),`"></img></a>` ~
+		`<a target="_top" href="/group/digitalmars.D.announce">Latest announcements</a>` ~
 		`</th></tr></thead><tbody>`);
 	foreach (row; latestAnnouncements)
 	{
@@ -1293,11 +1293,11 @@ CachedSet!(string, int[]) threadPostIndexCache;
 void newPostButton(GroupInfo groupInfo)
 {
 	html.put(
-		`<form name="new-post-form" method="get" action="/newpost/`), html.putEncodedEntities(groupInfo.urlName), html.put(`">`
-			`<div class="header-tools">`
-				`<input class="btn" type="submit" value="Create thread">`
-				`<input class="img" type="image" src="`, staticPath("/images/newthread.png"), `" alt="Create thread">`
-			`</div>`
+		`<form name="new-post-form" method="get" action="/newpost/`), html.putEncodedEntities(groupInfo.urlName), html.put(`">` ~
+			`<div class="header-tools">` ~
+				`<input class="btn" type="submit" value="Create thread">` ~
+				`<input class="img" type="image" src="`, staticPath("/images/newthread.png"), `" alt="Create thread">` ~
+			`</div>` ~
 		`</form>`);
 }
 
@@ -1353,18 +1353,18 @@ void pager(string base, int page, int pageCount, int maxWidth = 50)
 		pager ~= "&hellip;";
 
 	html.put(
-		`<tr class="pager"><th colspan="3">`
+		`<tr class="pager"><th colspan="3">` ~
 			`<div class="pager-left">`,
 				linkOrNot("&laquo; First", 1, page!=1),
 				`&nbsp;&nbsp;&nbsp;`,
 				linkOrNot("&lsaquo; Prev", page-1, page>1),
-			`</div>`
+			`</div>` ~
 			`<div class="pager-right">`,
 				linkOrNot("Next &rsaquo;", page+1, page<pageCount),
 				`&nbsp;&nbsp;&nbsp;`,
 				linkOrNot("Last &raquo; ", pageCount, page!=pageCount && pageCount!=int.max),
-			`</div>`
-			`<div class="pager-numbers">`, pager.join(` `), `</div>`
+			`</div>` ~
+			`<div class="pager-numbers">`, pager.join(` `), `</div>` ~
 		`</th></tr>`);
 }
 
@@ -1424,10 +1424,10 @@ void discussionGroup(GroupInfo groupInfo, int page)
 			{
 				html.put(
 				//	`<!-- Thread ID: ` ~ encodeHtmlEntities(threadID) ~ ` | First Post ID: ` ~ encodeHtmlEntities(id) ~ `-->` ~
-					`<a class="forum-postsummary-gravatar" href="`), html.putEncodedEntities(idToUrl(tid, "thread")), html.put(`">`
-						`<img alt="Gravatar" class="post-gravatar" src="//www.gravatar.com/avatar/`, getGravatarHash(info.authorEmail), `?d=identicon">`
-					`</a>`
-					`<div class="truncated"><a class="forum-postsummary-subject `, (isRead ? "forum-read" : "forum-unread"), `" href="`), html.putEncodedEntities(idToUrl(tid, "thread")), html.put(`" title="`), html.putEncodedEntities(subject), html.put(`">`), html.putEncodedEntities(subject), html.put(`</a></div>`
+					`<a class="forum-postsummary-gravatar" href="`), html.putEncodedEntities(idToUrl(tid, "thread")), html.put(`">` ~
+						`<img alt="Gravatar" class="post-gravatar" src="//www.gravatar.com/avatar/`, getGravatarHash(info.authorEmail), `?d=identicon">` ~
+					`</a>` ~
+					`<div class="truncated"><a class="forum-postsummary-subject `, (isRead ? "forum-read" : "forum-unread"), `" href="`), html.putEncodedEntities(idToUrl(tid, "thread")), html.put(`" title="`), html.putEncodedEntities(subject), html.put(`">`), html.putEncodedEntities(subject), html.put(`</a></div>` ~
 					`<div class="truncated">by <span class="forum-postsummary-author" title="`), html.putEncodedEntities(author), html.put(`">`), html.putEncodedEntities(author), html.put(`</span></div>`);
 				return;
 			}
@@ -1441,7 +1441,7 @@ void discussionGroup(GroupInfo groupInfo, int page)
 			with (*info)
 			{
 				html.put(
-					`<a class="forum-postsummary-time `, user.isRead(rowid) ? "forum-read" : "forum-unread", `" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`">`, summarizeTime(time), `</a>`
+					`<a class="forum-postsummary-time `, user.isRead(rowid) ? "forum-read" : "forum-unread", `" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`">`, summarizeTime(time), `</a>` ~
 					`<div class="truncated">by <span class="forum-postsummary-author" title="`), html.putEncodedEntities(author), html.put(`">`), html.putEncodedEntities(author), html.put(`</span></div>`);
 				return;
 			}
@@ -1463,16 +1463,16 @@ void discussionGroup(GroupInfo groupInfo, int page)
 	}
 
 	html.put(
-		`<table id="group-index" class="forum-table">`
-		`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(3), `</tr>` // Fixed layout dummies
-		`<tr class="group-index-header"><th colspan="3"><div class="header-with-tools">`), newPostButton(groupInfo), html.putEncodedEntities(groupInfo.publicName), html.put(`</div></th></tr>`
+		`<table id="group-index" class="forum-table">` ~
+		`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(3), `</tr>` ~ // Fixed layout dummies
+		`<tr class="group-index-header"><th colspan="3"><div class="header-with-tools">`), newPostButton(groupInfo), html.putEncodedEntities(groupInfo.publicName), html.put(`</div></th></tr>` ~
 		`<tr class="subheader"><th>Thread / Thread Starter</th><th>Last Post</th><th>Replies</th>`);
 	foreach (thread; threads)
 		html.put(
-			`<tr class="thread-row">`
-				`<td class="group-index-col-first">`), summarizeThread(thread.id, thread.firstPost, thread.isRead), html.put(`</td>`
-				`<td class="group-index-col-last">`), summarizeLastPost(thread.lastPost), html.put(`</td>`
-				`<td class="number-column">`), summarizePostCount(thread), html.put(`</td>`
+			`<tr class="thread-row">` ~
+				`<td class="group-index-col-first">`), summarizeThread(thread.id, thread.firstPost, thread.isRead), html.put(`</td>` ~
+				`<td class="group-index-col-last">`), summarizeLastPost(thread.lastPost), html.put(`</td>` ~
+				`<td class="number-column">`), summarizePostCount(thread), html.put(`</td>` ~
 			`</tr>`);
 	threadPager(groupInfo, page);
 	html.put(
@@ -1625,13 +1625,13 @@ void formatThreadedPosts(PostInfo*[] postInfos, bool narrow, string selectedID =
 			if (post.ghost)
 				return formatPosts(post.children, level, post.subject, false);
 			html.put(
-				`<tr class="thread-post-row`, (post.info && post.info.id==selectedID ? ` focused selected` : ``), `">`
-					`<td>`
-						`<div style="padding-left: `, format("%1.1f", OFFSET_INIT + level * offsetIncrement), OFFSET_UNITS, `">`
+				`<tr class="thread-post-row`, (post.info && post.info.id==selectedID ? ` focused selected` : ``), `">` ~
+					`<td>` ~
+						`<div style="padding-left: `, format("%1.1f", OFFSET_INIT + level * offsetIncrement), OFFSET_UNITS, `">` ~
 							`<div class="thread-post-time">`, summarizeTime(post.info.time, true), `</div>`,
-							`<a class="postlink `, (user.isRead(post.info.rowid) ? "forum-read" : "forum-unread" ), `" href="`), html.putEncodedEntities(idToUrl(post.info.id)), html.put(`">`, truncateString(post.info.author, narrow ? 17 : 50), `</a>`
-						`</div>`
-					`</td>`
+							`<a class="postlink `, (user.isRead(post.info.rowid) ? "forum-read" : "forum-unread" ), `" href="`), html.putEncodedEntities(idToUrl(post.info.id)), html.put(`">`, truncateString(post.info.author, narrow ? 17 : 50), `</a>` ~
+						`</div>` ~
+					`</td>` ~
 				`</tr>`);
 			formatPosts(post.children, level+1, post.subject, false);
 		}
@@ -1645,12 +1645,12 @@ void formatThreadedPosts(PostInfo*[] postInfos, bool narrow, string selectedID =
 			{
 				auto offsetStr = format("%1.1f", OFFSET_INIT + level * offsetIncrement) ~ OFFSET_UNITS;
 				html.put(
-					`<tr><td style="padding-left: `, offsetStr, `">`
-					`<table class="thread-start">`
+					`<tr><td style="padding-left: `, offsetStr, `">` ~
+					`<table class="thread-start">` ~
 						`<tr><th>`), html.putEncodedEntities(post.subject), html.put(`</th></tr>`);
                 formatPost(post, 0);
 				html.put(
-					`</table>`
+					`</table>` ~
 					`</td></tr>`);
 			}
 			else
@@ -1673,7 +1673,7 @@ void discussionGroupThreaded(GroupInfo groupInfo, int page, bool narrow = false)
 		posts ~= [PostInfo(rowid, id, null, parent, author, authorEmail, subject, SysTime(stdTime, UTC()))].ptr; // TODO: optimize?
 
 	html.put(
-		`<table id="group-index-threaded" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(userSettings.groupViewMode), html.put(`">`
+		`<table id="group-index-threaded" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(userSettings.groupViewMode), html.put(`">` ~
 		`<tr class="group-index-header"><th><div>`), newPostButton(groupInfo), html.putEncodedEntities(groupInfo.publicName), html.put(`</div></th></tr>`,
 	//	`<tr class="group-index-captions"><th>Subject / Author</th><th>Time</th>`,
 		`<tr><td class="group-threads-cell"><div class="group-threads"><table>`);
@@ -1686,15 +1686,15 @@ void discussionGroupThreaded(GroupInfo groupInfo, int page, bool narrow = false)
 void discussionGroupSplit(GroupInfo groupInfo, int page)
 {
 	html.put(
-		`<table id="group-split"><tr>`
+		`<table id="group-split"><tr>` ~
 		`<td id="group-split-list"><div>`);
 	discussionGroupThreaded(groupInfo, page, true);
 	html.put(
-		`</div></td>`
-		`<td id="group-split-message" class="group-split-message-none"><span>`
-			`Loading...`
-			`<div class="nojs">Sorry, this view requires JavaScript.</div>`
-		`</span></td>`
+		`</div></td>` ~
+		`<td id="group-split-message" class="group-split-message-none"><span>` ~
+			`Loading...` ~
+			`<div class="nojs">Sorry, this view requires JavaScript.</div>` ~
+		`</span></td>` ~
 		`</tr></table>`);
 }
 
@@ -1770,9 +1770,9 @@ void formatVSplitPosts(PostInfo*[] postInfos, string selectedID = null)
 {
 /*
 	html.put(
-		`<tr class="thread-post-row">`
-			`<th>Subject</th>`
-			`<th>From</th>`
+		`<tr class="thread-post-row">` ~
+			`<th>Subject</th>` ~
+			`<th>From</th>` ~
 		`</tr>`
 	);
 */
@@ -1780,19 +1780,19 @@ void formatVSplitPosts(PostInfo*[] postInfos, string selectedID = null)
 	foreach (postInfo; postInfos)
 	{
 		html.put(
-			`<tr class="thread-post-row`, (postInfo && postInfo.id==selectedID ? ` focused selected` : ``), `">`
-				`<td>`
-					`<a class="postlink `, (user.isRead(postInfo.rowid) ? "forum-read" : "forum-unread" ), `" `
+			`<tr class="thread-post-row`, (postInfo && postInfo.id==selectedID ? ` focused selected` : ``), `">` ~
+				`<td>` ~
+					`<a class="postlink `, (user.isRead(postInfo.rowid) ? "forum-read" : "forum-unread" ), `" ` ~
 						`href="`), html.putEncodedEntities(idToUrl(postInfo.id)), html.put(`">`
 						), html.putEncodedEntities(postInfo.subject), html.put(
-					`</a>`
-				`</td>`
+					`</a>` ~
+				`</td>` ~
 				`<td>`
 					), html.putEncodedEntities(postInfo.author), html.put(
-				`</td>`
-				`<td>`
+				`</td>` ~
+				`<td>` ~
 					`<div class="thread-post-time">`, summarizeTime(postInfo.time, true), `</div>`,
-				`</td>`
+				`</td>` ~
 			`</tr>`
 		);
 	}
@@ -1811,17 +1811,17 @@ void discussionGroupVSplitList(GroupInfo groupInfo, int page)
 	//enum ViewSQL = "SELECT `ROWID`, `ID`, `ParentID`, `Author`, `AuthorEmail`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` IN (SELECT `ID` FROM `Threads` WHERE `Group` = ?) ORDER BY `Time` DESC LIMIT ? OFFSET ?";
 	//enum ViewSQL = "SELECT [Posts].[ROWID], [Posts].[ID], `ParentID`, `Author`, `AuthorEmail`, `Subject`, `Time` FROM `Posts` "
 	//	"INNER JOIN [Threads] ON `ThreadID`==[Threads].[ID] WHERE `Group` = ? ORDER BY `Time` DESC LIMIT ? OFFSET ?";
-	enum ViewSQL = "SELECT [Posts].[ROWID], [Posts].[ID], [ParentID], [Author], [AuthorEmail], [Subject], [Posts].[Time] FROM [Groups] "
+	enum ViewSQL = "SELECT [Posts].[ROWID], [Posts].[ID], [ParentID], [Author], [AuthorEmail], [Subject], [Posts].[Time] FROM [Groups] " ~
 		"INNER JOIN [Posts] ON [Posts].[ID]==[Groups].[ID] WHERE [Group] = ? ORDER BY [Groups].[Time] DESC LIMIT ? OFFSET ?";
 	foreach (int rowid, string id, string parent, string author, string authorEmail, string subject, long stdTime; query!ViewSQL.iterate(groupInfo.internalName, postsPerPage, getPageOffset(page, postsPerPage)))
 		posts ~= [PostInfo(rowid, id, null, parent, author, authorEmail, subject, SysTime(stdTime, UTC()))].ptr; // TODO: optimize?
 	posts.reverse();
 
 	html.put(
-		`<table id="group-index-vsplit" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(userSettings.groupViewMode), html.put(`">`
+		`<table id="group-index-vsplit" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(userSettings.groupViewMode), html.put(`">` ~
 		`<tr class="group-index-header"><th><div>`), newPostButton(groupInfo), html.putEncodedEntities(groupInfo.publicName), html.put(`</div></th></tr>`,
 	//	`<tr class="group-index-captions"><th>Subject / Author</th><th>Time</th>`,
-		`<tr><td class="group-threads-cell"><div class="group-threads"><table id="group-posts-vsplit">`
+		`<tr><td class="group-threads-cell"><div class="group-threads"><table id="group-posts-vsplit">` ~
 		`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(3), `</tr>` // Fixed layout dummies
 	);
 	formatVSplitPosts(posts);
@@ -1833,15 +1833,15 @@ void discussionGroupVSplitList(GroupInfo groupInfo, int page)
 void discussionGroupVSplit(GroupInfo groupInfo, int page)
 {
 	html.put(
-		`<table id="group-vsplit"><tr>`
+		`<table id="group-vsplit"><tr>` ~
 		`<td id="group-vsplit-list"><div>`);
 	discussionGroupVSplitList(groupInfo, page);
 	html.put(
-		`</div></td></tr>`
-		`<tr><td id="group-split-message" class="group-split-message-none">`
-			`Loading...`
-			`<div class="nojs">Sorry, this view requires JavaScript.</div>`
-		`</td>`
+		`</div></td></tr>` ~
+		`<tr><td id="group-split-message" class="group-split-message-none">` ~
+			`Loading...` ~
+			`<div class="nojs">Sorry, this view requires JavaScript.</div>` ~
+		`</td>` ~
 		`</tr></table>`);
 }
 
@@ -1896,37 +1896,37 @@ void postActions(Rfc850Message msg)
 	auto id = msg.id;
 	if (userSettings.groupViewMode == "basic")
 		html.put(
-			`<a class="actionlink permalink" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" `
-				`title="Canonical link to this post. See &quot;Canonical links&quot; on the Help page for more information.">`
-				`<img src="`, staticPath("/images/link.png"), `">Permalink`
+			`<a class="actionlink permalink" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" ` ~
+				`title="Canonical link to this post. See &quot;Canonical links&quot; on the Help page for more information.">` ~
+				`<img src="`, staticPath("/images/link.png"), `">Permalink` ~
 			`</a>`);
 	if (true)
 		html.put(
-			`<a class="actionlink replylink" href="`), html.putEncodedEntities(idToUrl(id, "reply")), html.put(`" title="Reply to this post">`
-				`<img src="`, staticPath("/images/reply.png"), `">Reply`
+			`<a class="actionlink replylink" href="`), html.putEncodedEntities(idToUrl(id, "reply")), html.put(`" title="Reply to this post">` ~
+				`<img src="`, staticPath("/images/reply.png"), `">Reply` ~
 			`</a>`);
 /*
 	if (mailHide)
 		html.put(
-			`<a class="actionlink emaillink" href="`, mailHide.getUrl(msg.authorEmail), `" `
-				`title="Solve a CAPTCHA to obtain this poster's email address.">`
-				`<img src="`, staticPath("/images/email.png"), `">Email`
+			`<a class="actionlink emaillink" href="`, mailHide.getUrl(msg.authorEmail), `" ` ~
+				`title="Solve a CAPTCHA to obtain this poster's email address.">` ~
+				`<img src="`, staticPath("/images/email.png"), `">Email` ~
 			`</a>`);
 */
 	if (user.isLoggedIn() && msg.references.length == 0)
 		html.put(
-			`<a class="actionlink sourcelink" href="`), html.putEncodedEntities(idToUrl(id, "subscribe")), html.put(`" title="Subscribe to this thread">`
-				`<img src="`, staticPath("/images/star.png"), `">Subscribe`
+			`<a class="actionlink sourcelink" href="`), html.putEncodedEntities(idToUrl(id, "subscribe")), html.put(`" title="Subscribe to this thread">` ~
+				`<img src="`, staticPath("/images/star.png"), `">Subscribe` ~
 			`</a>`);
 	if (user.getLevel() >= User.Level.hasRawLink)
 		html.put(
-			`<a class="actionlink sourcelink" href="`), html.putEncodedEntities(idToUrl(id, "source")), html.put(`">`
-				`<img src="`, staticPath("/images/source.png"), `">Source`
+			`<a class="actionlink sourcelink" href="`), html.putEncodedEntities(idToUrl(id, "source")), html.put(`">` ~
+				`<img src="`, staticPath("/images/source.png"), `">Source` ~
 			`</a>`);
 	if (user.getLevel() >= User.Level.canDeletePosts)
 		html.put(
-			`<a class="actionlink deletelink" href="`), html.putEncodedEntities(idToUrl(id, "delete")), html.put(`">`
-				`<img src="`, staticPath("/images/delete.png"), `">Delete`
+			`<a class="actionlink deletelink" href="`), html.putEncodedEntities(idToUrl(id, "delete")), html.put(`">` ~
+				`<img src="`, staticPath("/images/delete.png"), `">Delete` ~
 			`</a>`);
 }
 
@@ -1982,25 +1982,25 @@ void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts, bool markAsRead 
 	with (post.msg)
 	{
 		html.put(
-			`<div class="post-wrapper">`
-			`<table class="post forum-table`, (post.children ? ` with-children` : ``), `" id="`), html.putEncodedEntities(idToFragment(id)), html.put(`">`
-			`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(2), `</tr>` // Fixed layout dummies
-			`<tr class="post-header"><th colspan="2">`
-				`<div class="post-time">`, summarizeTime(time), `</div>`
+			`<div class="post-wrapper">` ~
+			`<table class="post forum-table`, (post.children ? ` with-children` : ``), `" id="`), html.putEncodedEntities(idToFragment(id)), html.put(`">` ~
+			`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(2), `</tr>` ~ // Fixed layout dummies
+			`<tr class="post-header"><th colspan="2">` ~
+				`<div class="post-time">`, summarizeTime(time), `</div>` ~
 				`<a title="Permanent link to this post" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" class="permalink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread"), `">`,
 					encodeHtmlEntities(rawSubject),
-				`</a>`
-			`</th></tr>`
-			`<tr class="mini-post-info-cell">`
+				`</a>` ~
+			`</th></tr>` ~
+			`<tr class="mini-post-info-cell">` ~
 				`<td colspan="2">`
 		); miniPostInfo(post, knownPosts); html.put(
-				`</td>`
-			`</tr>`
-			`<tr>`
-				`<td class="post-info">`
-					`<div class="post-author">`), html.putEncodedEntities(author), html.put(`</div>`
-					`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`), html.putEncodedEntities(author), html.put(`'s Gravatar profile">`
-						`<img alt="Gravatar" class="post-gravatar" width="80" height="80" src="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon">`
+				`</td>` ~
+			`</tr>` ~
+			`<tr>` ~
+				`<td class="post-info">` ~
+					`<div class="post-author">`), html.putEncodedEntities(author), html.put(`</div>` ~
+					`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`), html.putEncodedEntities(author), html.put(`'s Gravatar profile">` ~
+						`<img alt="Gravatar" class="post-gravatar" width="80" height="80" src="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon">` ~
 					`</a><br>`);
 		if (infoBits.length)
 		{
@@ -2014,29 +2014,29 @@ void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts, bool markAsRead 
 			html.put(`<br>`); // guarantee space for the "toolbar"
 
 		html.put(
-					`<div class="post-actions">`), postActions(post.msg), html.put(`</div>`
-				`</td>`
-				`<td class="post-body">`
+					`<div class="post-actions">`), postActions(post.msg), html.put(`</div>` ~
+				`</td>` ~
+				`<td class="post-body">` ~
 //		); miniPostInfo(post, knownPosts); html.put(
 					`<pre class="post-text">`), formatBody(post), html.put(`</pre>`,
 					(error ? `<span class="post-error">` ~ encodeHtmlEntities(error) ~ `</span>` : ``),
-				`</td>`
-			`</tr>`
-			`</table>`
+				`</td>` ~
+			`</tr>` ~
+			`</table>` ~
 			`</div>`);
 
 		if (post.children)
 		{
 			html.put(
-				`<table class="post-nester"><tr>`
-				`<td class="post-nester-bar" title="`, /* for IE */ repliesTitle, `">`
-					`<a href="#`), html.putEncodedEntities(idToFragment(id)), html.put(`" `
-						`title="`, repliesTitle, `"></a>`
-				`</td>`
+				`<table class="post-nester"><tr>` ~
+				`<td class="post-nester-bar" title="`, /* for IE */ repliesTitle, `">` ~
+					`<a href="#`), html.putEncodedEntities(idToFragment(id)), html.put(`" ` ~
+						`title="`, repliesTitle, `"></a>` ~
+				`</td>` ~
 				`<td>`);
 			foreach (child; post.children)
 				formatPost(child, knownPosts);
-			html.put(`</td>`
+			html.put(`</td>` ~
 				`</tr></table>`);
 		}
 	}
@@ -2053,13 +2053,13 @@ void miniPostInfo(Rfc850Post post, Rfc850Post[string] knownPosts, bool showActio
 	with (post.msg)
 	{
 		html.put(
-			`<table class="mini-post-info"><tr>`
-				`<td class="mini-post-info-avatar">`
-					`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`), html.putEncodedEntities(author), html.put(`'s Gravatar profile">`
-						`<img alt="Gravatar" class="post-gravatar" width="32" height="32" src="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&s=32">`
-					`</a>`
-				`</td>`
-				`<td>`
+			`<table class="mini-post-info"><tr>` ~
+				`<td class="mini-post-info-avatar">` ~
+					`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`), html.putEncodedEntities(author), html.put(`'s Gravatar profile">` ~
+						`<img alt="Gravatar" class="post-gravatar" width="32" height="32" src="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&s=32">` ~
+					`</a>` ~
+				`</td>` ~
+				`<td>` ~
 					`Posted by <b>`), html.putEncodedEntities(author), html.put(`</b>`,
 					parentLink ? `<br>in reply to ` ~ parentLink : null,
 				`</td>`
@@ -2125,43 +2125,43 @@ void formatSplitPost(Rfc850Post post, bool footerNav)
 	with (post.msg)
 	{
 		html.put(
-			`<div class="post-wrapper">`
-			`<table class="split-post forum-table" id="`), html.putEncodedEntities(idToFragment(id)), html.put(`">`
-			`<tr class="post-header"><th>`
-				`<div class="post-time">`, summarizeTime(time), `</div>`
+			`<div class="post-wrapper">` ~
+			`<table class="split-post forum-table" id="`), html.putEncodedEntities(idToFragment(id)), html.put(`">` ~
+			`<tr class="post-header"><th>` ~
+				`<div class="post-time">`, summarizeTime(time), `</div>` ~
 				`<a title="Permanent link to this post" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" class="`, (user.isRead(post.rowid) ? "forum-read" : "forum-unread"), `">`,
 					encodeHtmlEntities(rawSubject),
-				`</a>`
-			`</th></tr>`
-			`<tr><td class="horizontal-post-info">`
-				`<table><tr>`
-					`<td class="post-info-avatar" rowspan="`, text(infoRows.length), `">`
-						`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`), html.putEncodedEntities(author), html.put(`'s Gravatar profile">`
-							`<img alt="Gravatar" class="post-gravatar" width="48" height="48" src="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&s=48">`
-						`</a>`
-					`</td>`
+				`</a>` ~
+			`</th></tr>` ~
+			`<tr><td class="horizontal-post-info">` ~
+				`<table><tr>` ~
+					`<td class="post-info-avatar" rowspan="`, text(infoRows.length), `">` ~
+						`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`), html.putEncodedEntities(author), html.put(`'s Gravatar profile">` ~
+							`<img alt="Gravatar" class="post-gravatar" width="48" height="48" src="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&s=48">` ~
+						`</a>` ~
+					`</td>` ~
 					`<td><table>`);
 		foreach (a; infoRows)
 			html.put(`<tr><td class="horizontal-post-info-name">`, a.name, `</td><td class="horizontal-post-info-value">`, a.value, `</td></tr>`);
 		html.put(
-					`</table></td>`
-					`<td class="post-info-actions">`), postActions(post.msg), html.put(`</td>`
-				`</tr></table>`
-			`</td></tr>`
-			`<tr><td class="post-body">`
+					`</table></td>` ~
+					`<td class="post-info-actions">`), postActions(post.msg), html.put(`</td>` ~
+				`</tr></table>` ~
+			`</td></tr>` ~
+			`<tr><td class="post-body">` ~
 				`<table class="post-layout"><tr class="post-layout-header"><td>`);
 		miniPostInfo(post, null);
 		html.put(
-				`</td></tr>`
-				`<tr class="post-layout-body"><td>`
+				`</td></tr>` ~
+				`<tr class="post-layout-body"><td>` ~
 					`<pre class="post-text">`), formatBody(post), html.put(`</pre>`,
 					(error ? `<span class="post-error">` ~ encodeHtmlEntities(error) ~ `</span>` : ``),
-				`</td></tr>`
+				`</td></tr>` ~
 				`<tr class="post-layout-footer"><td>`
 					); postFooter(footerNav, infoRows[1..$]); html.put(
-				`</td></tr></table>`
-			`</td></tr>`
-			`</table>`
+				`</td></tr></table>` ~
+			`</td></tr>` ~
+			`</table>` ~
 			`</div>`
 		);
 	}
@@ -2234,14 +2234,14 @@ void discussionThread(string id, int page, out GroupInfo groupInfo, out string t
 		// Expandable overview
 
 		html.put(
-			`<table id="thread-overview" class="forum-table forum-expand-container">`
+			`<table id="thread-overview" class="forum-table forum-expand-container">` ~
 			`<tr class="group-index-header"><th>`);
 
 		auto pageCount = getPageCount(postCount, POSTS_PER_PAGE);
 		if (pageCount > 1)
 		{
 			html.put(
-				`<div class="thread-overview-pager forum-expand-container">`
+				`<div class="thread-overview-pager forum-expand-container">` ~
 				`Jump to page: <b>1</b> `
 			);
 
@@ -2265,11 +2265,11 @@ void discussionThread(string id, int page, out GroupInfo groupInfo, out string t
 				pageLink(pageCount);
 
 				html.put(
-					`<a class="thread-overview-pager forum-expand-toggle">&nbsp;</a>`
-					`<div class="thread-overview-pager-expanded forum-expand-content">`
-					`<form action="`); html.putEncodedEntities(threadUrl); html.put(`">`
-					`Page <input name="page" class="thread-overview-pager-pageno"> <input type="submit" value="Go">`
-					`</form>`
+					`<a class="thread-overview-pager forum-expand-toggle">&nbsp;</a>` ~
+					`<div class="thread-overview-pager-expanded forum-expand-content">` ~
+					`<form action="`); html.putEncodedEntities(threadUrl); html.put(`">` ~
+					`Page <input name="page" class="thread-overview-pager-pageno"> <input type="submit" value="Go">` ~
+					`</form>` ~
 					`</div>`
 				);
 			}
@@ -2280,7 +2280,7 @@ void discussionThread(string id, int page, out GroupInfo groupInfo, out string t
 		}
 
 		html.put(
-			`<a class="forum-expand-toggle">Thread overview</a>`
+			`<a class="forum-expand-toggle">Thread overview</a>` ~
 			`</th></tr>`,
 			`<tr class="forum-expand-content"><td class="group-threads-cell"><div class="group-threads"><table>`);
 		formatThreadedPosts(getThreadPosts(id), false);
@@ -2329,7 +2329,7 @@ void discussionThreadOverview(string threadID, string selectedID)
 {
 	enum PERF_SCOPE = "discussionThreadOverview"; mixin(MeasurePerformanceMixin);
 	html.put(
-		`<table id="thread-index" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(userSettings.groupViewMode), html.put(`">`
+		`<table id="thread-index" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(userSettings.groupViewMode), html.put(`">` ~
 		`<tr class="group-index-header"><th><div>Thread overview</div></th></tr>`,
 		`<tr><td class="group-threads-cell"><div class="group-threads"><table>`);
 	formatThreadedPosts(getThreadPosts(threadID), false, selectedID);
@@ -2448,21 +2448,21 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 	if (info.postMessage)
 	{
 		html.put(
-			`<table class="forum-table forum-error">`
-				`<tr><th>Can't post to archive</th></tr>`
+			`<table class="forum-table forum-error">` ~
+				`<tr><th>Can't post to archive</th></tr>` ~
 				`<tr><td class="forum-table-message">`
 					, info.postMessage,
-				`</td></tr>`
+				`</td></tr>` ~
 			`</table>`);
 		return false;
 	}
 	if (info.sinkType == "smtp")
 	{
 		auto config = loadIni!SmtpConfig("config/sources/smtp/" ~ info.sinkName ~ ".ini");
-		html.put(`<div class="forum-notice">Note: you are posting to a mailing list.<br>`
-			`Your message will not go through unless you `
-			`<a href="`), html.putEncodedEntities(config.listInfo), html.putEncodedEntities(info.internalName), html.put(`">subscribe to the mailing list</a> first.<br>`
-			`You must then use the same email address when posting here as the one you used to subscribe to the list.<br>`
+		html.put(`<div class="forum-notice">Note: you are posting to a mailing list.<br>` ~
+			`Your message will not go through unless you ` ~
+			`<a href="`), html.putEncodedEntities(config.listInfo), html.putEncodedEntities(info.internalName), html.put(`">subscribe to the mailing list</a> first.<br>` ~
+			`You must then use the same email address when posting here as the one you used to subscribe to the list.<br>` ~
 			`If you do not want to receive mailing list mail, you can disable mail delivery at the above link.</div>`);
 	}
 
@@ -2486,7 +2486,7 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 	auto subject = draft.clientVars.get("subject", null);
 
 	html.put(
-		`<div id="postform-info">`
+		`<div id="postform-info">` ~
 			`Posting to <b>`), html.putEncodedEntities(info.publicName), html.put(`</b>`,
 			(parent
 				? parentInfo
@@ -2495,32 +2495,32 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 				: info
 					? `:<br>(<b>` ~ encodeHtmlEntities(info.description) ~ `</b>)`
 					: ``),
-		`</div>`
-		`<input type="hidden" name="secret" value="`, userSettings.secret, `">`
-		`<input type="hidden" name="did" value="`), html.putEncodedEntities(draftID), html.put(`">`
-		`<label for="postform-name">Your name:</label>`
-		`<input id="postform-name" name="name" size="40" value="`), html.putEncodedEntities(draft.clientVars.get("name", null)), html.put(`">`
-		`<label for="postform-email">Your email address (<a href="/help#email">?</a>):</label>`
-		`<input id="postform-email" type="email" name="email" size="40" value="`), html.putEncodedEntities(draft.clientVars.get("email", null)), html.put(`">`
-		`<label for="postform-subject">Subject:</label>`
-		`<input id="postform-subject" name="subject" size="80"`, subject.length ? `` : ` autofocus`, ` value="`), html.putEncodedEntities(subject), html.put(`">`
-		`<label for="postform-text">Message:</label>`
+		`</div>` ~
+		`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
+		`<input type="hidden" name="did" value="`), html.putEncodedEntities(draftID), html.put(`">` ~
+		`<label for="postform-name">Your name:</label>` ~
+		`<input id="postform-name" name="name" size="40" value="`), html.putEncodedEntities(draft.clientVars.get("name", null)), html.put(`">` ~
+		`<label for="postform-email">Your email address (<a href="/help#email">?</a>):</label>` ~
+		`<input id="postform-email" type="email" name="email" size="40" value="`), html.putEncodedEntities(draft.clientVars.get("email", null)), html.put(`">` ~
+		`<label for="postform-subject">Subject:</label>` ~
+		`<input id="postform-subject" name="subject" size="80"`, subject.length ? `` : ` autofocus`, ` value="`), html.putEncodedEntities(subject), html.put(`">` ~
+		`<label for="postform-text">Message:</label>` ~
 		`<textarea id="postform-text" name="text" rows="25" cols="80"`, subject.length ? ` autofocus` : ``, `>`), html.putEncodedEntities(draft.clientVars.get("text", null)), html.put(`</textarea>`);
 
 	if (showCaptcha)
 		html.put(`<div id="postform-captcha">`, theCaptcha.getChallengeHtml(error.captchaError), `</div>`);
 
 	html.put(
-		`<div>`
-			`<div class="postform-action-left">`
-				`<input name="action-send" type="submit" value="Send">`
-				`<input name="action-save" type="submit" value="Save and preview">`
-			`</div>`
-			`<div class="postform-action-right">`
-				`<input name="action-discard" type="submit" value="Discard draft">`
-			`</div>`
-			`<div style="clear:right"></div>`
-		`</div>`
+		`<div>` ~
+			`<div class="postform-action-left">` ~
+				`<input name="action-send" type="submit" value="Send">` ~
+				`<input name="action-save" type="submit" value="Save and preview">` ~
+			`</div>` ~
+			`<div class="postform-action-right">` ~
+				`<input name="action-discard" type="submit" value="Discard draft">` ~
+			`</div>` ~
+			`<div style="clear:right"></div>` ~
+		`</div>` ~
 	`</form>`);
 	return true;
 }
@@ -2566,13 +2566,13 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 			{
 				draft.serverVars["lint-undo"] = draft.clientVars.get("text", null);
 				getLintRule(ruleID).fix(draft);
-				draft.clientVars["html-top"] = `<div class="forum-notice">Automatic fix applied. `
+				draft.clientVars["html-top"] = `<div class="forum-notice">Automatic fix applied. ` ~
 					`<input name="action-lint-undo" type="submit" value="Undo"></div>`;
 			}
 			catch (Exception e)
 			{
 				draft.serverVars["lint-ignore-" ~ ruleID] = null;
-				html.put(`<div class="forum-notice">Sorry, a problem occurred while attempting to fix your post `
+				html.put(`<div class="forum-notice">Sorry, a problem occurred while attempting to fix your post ` ~
 					`(`), html.putEncodedEntities(e.msg), html.put(`).</div>`);
 			}
 			discussionPostForm(draft);
@@ -2688,9 +2688,9 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 void discussionPostStatusMessage(string messageHtml)
 {
 	html.put(
-		`<table class="forum-table">`
-			`<tr><th>Posting status</th></tr>`
-			`<tr><td class="forum-table-message">`, messageHtml, `</th></tr>`
+		`<table class="forum-table">` ~
+			`<tr><th>Posting status</th></tr>` ~
+			`<tr><td class="forum-table-message">`, messageHtml, `</th></tr>` ~
 		`</table>`);
 }
 
@@ -2774,18 +2774,18 @@ string findPostingLog(string id)
 void discussionDeleteForm(Rfc850Post post)
 {
 	html.put(
-		`<form action="/dodelete" method="post" class="forum-form delete-form" id="deleteform">`
-		`<input type="hidden" name="id" value="`), html.putEncodedEntities(post.id), html.put(`">`
-		`<div id="deleteform-info">`
-			`Are you sure you want to delete this post from DFeed's database?`
-		`</div>`
-		`<input type="hidden" name="secret" value="`, userSettings.secret, `">`
-		`<textarea id="deleteform-message" readonly="readonly" rows="25" cols="80">`), html.putEncodedEntities(post.message), html.put(`</textarea><br>`
+		`<form action="/dodelete" method="post" class="forum-form delete-form" id="deleteform">` ~
+		`<input type="hidden" name="id" value="`), html.putEncodedEntities(post.id), html.put(`">` ~
+		`<div id="deleteform-info">` ~
+			`Are you sure you want to delete this post from DFeed's database?` ~
+		`</div>` ~
+		`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
+		`<textarea id="deleteform-message" readonly="readonly" rows="25" cols="80">`), html.putEncodedEntities(post.message), html.put(`</textarea><br>` ~
 		`Reason: <input name="reason" value="spam"></input><br>`,
 		 findPostingLog(post.id)
 			? `<input type="checkbox" name="ban" value="Yes" id="deleteform-ban"></input><label for="deleteform-ban">Also ban the poster from accessing the forum</label><br>`
 			: ``,
-		`<input type="submit" value="Delete"></input>`
+		`<input type="submit" value="Delete"></input>` ~
 	`</form>`);
 }
 
@@ -2944,31 +2944,31 @@ bool banCheck(string ip, HttpRequest request)
 void discussionLoginForm(UrlParameters parameters, string errorMessage = null)
 {
 
-	html.put(`<form action="/login" method="post" id="loginform" class="forum-form loginform">`
-		`<table class="forum-table">`
-			`<tr><th>Log in</th></tr>`
+	html.put(`<form action="/login" method="post" id="loginform" class="forum-form loginform">` ~
+		`<table class="forum-table">` ~
+			`<tr><th>Log in</th></tr>` ~
 			`<tr><td class="loginform-cell">`);
 
 	if ("url" in parameters)
 		html.put(`<input type="hidden" name="url" value="`), html.putEncodedEntities(parameters["url"]), html.put(`">`);
 
 	html.put(
-			`<label for="loginform-username">Username:</label>`
-			`<input id="loginform-username" name="username" value="`), html.putEncodedEntities(parameters.get("username", "")), html.put(`" autofocus>`
-			`<label for="loginform-password">Password:</label>`
-			`<input id="loginform-password" type="password" name="password" value="`), html.putEncodedEntities(parameters.get("password", "")), html.put(`">`
-			`<input id="loginform-remember" type="checkbox" name="remember" `, "username" !in  parameters || "remember" in parameters ? ` checked` : ``, `>`
-			`<label for="loginform-remember"> Remember me</label>`
-			`<input type="submit" value="Log in">`
+			`<label for="loginform-username">Username:</label>` ~
+			`<input id="loginform-username" name="username" value="`), html.putEncodedEntities(parameters.get("username", "")), html.put(`" autofocus>` ~
+			`<label for="loginform-password">Password:</label>` ~
+			`<input id="loginform-password" type="password" name="password" value="`), html.putEncodedEntities(parameters.get("password", "")), html.put(`">` ~
+			`<input id="loginform-remember" type="checkbox" name="remember" `, "username" !in  parameters || "remember" in parameters ? ` checked` : ``, `>` ~
+			`<label for="loginform-remember"> Remember me</label>` ~
+			`<input type="submit" value="Log in">` ~
 		`</td></tr>`);
 	if (errorMessage)
 		html.put(`<tr><td class="loginform-info"><div class="form-error loginform-error">`), html.putEncodedEntities(errorMessage), html.put(`</div></td></tr>`);
 	else
 		html.put(
-			`<tr><td class="loginform-info">`
+			`<tr><td class="loginform-info">` ~
 				`<a href="/registerform`,
 					("url" in parameters ? `?url=` ~ encodeUrlParameter(parameters["url"]) : ``),
-					`">Register</a> to keep your preferences<br>and read post history on the server.`
+					`">Register</a> to keep your preferences<br>and read post history on the server.` ~
 			`</td></tr>`);
 	html.put(`</table></form>`);
 }
@@ -2980,31 +2980,31 @@ void discussionLogin(UrlParameters parameters)
 
 void discussionRegisterForm(UrlParameters parameters, string errorMessage = null)
 {
-	html.put(`<form action="/register" method="post" id="registerform" class="forum-form loginform">`
-		`<table class="forum-table">`
-			`<tr><th>Register</th></tr>`
+	html.put(`<form action="/register" method="post" id="registerform" class="forum-form loginform">` ~
+		`<table class="forum-table">` ~
+			`<tr><th>Register</th></tr>` ~
 			`<tr><td class="loginform-cell">`);
 
 	if ("url" in parameters)
 		html.put(`<input type="hidden" name="url" value="`), html.putEncodedEntities(parameters["url"]), html.put(`">`);
 
 	html.put(
-		`<label for="loginform-username">Username:</label>`
-		`<input id="loginform-username" name="username" value="`), html.putEncodedEntities(parameters.get("username", "")), html.put(`" autofocus>`
-		`<label for="loginform-password">Password:</label>`
-		`<input id="loginform-password" type="password" name="password" value="`), html.putEncodedEntities(parameters.get("password", "")), html.put(`">`
-		`<label for="loginform-password2">Confirm:</label>`
-		`<input id="loginform-password2" type="password" name="password2" value="`), html.putEncodedEntities(parameters.get("password2", "")), html.put(`">`
-		`<input id="loginform-remember" type="checkbox" name="remember" `, "username" !in  parameters || "remember" in parameters ? ` checked` : ``, `>`
-		`<label for="loginform-remember"> Remember me</label>`
-		`<input type="submit" value="Register">`
+		`<label for="loginform-username">Username:</label>` ~
+		`<input id="loginform-username" name="username" value="`), html.putEncodedEntities(parameters.get("username", "")), html.put(`" autofocus>` ~
+		`<label for="loginform-password">Password:</label>` ~
+		`<input id="loginform-password" type="password" name="password" value="`), html.putEncodedEntities(parameters.get("password", "")), html.put(`">` ~
+		`<label for="loginform-password2">Confirm:</label>` ~
+		`<input id="loginform-password2" type="password" name="password2" value="`), html.putEncodedEntities(parameters.get("password2", "")), html.put(`">` ~
+		`<input id="loginform-remember" type="checkbox" name="remember" `, "username" !in  parameters || "remember" in parameters ? ` checked` : ``, `>` ~
+		`<label for="loginform-remember"> Remember me</label>` ~
+		`<input type="submit" value="Register">` ~
 		`</td></tr>`);
 	if (errorMessage)
 		html.put(`<tr><td class="loginform-info"><div class="form-error loginform-error">`), html.putEncodedEntities(errorMessage), html.put(`</div></td></tr>`);
 	else
 		html.put(
-			`<tr><td class="loginform-info">`
-				`Please pick your password carefully.<br>There are no password recovery options.`
+			`<tr><td class="loginform-info">` ~
+				`Please pick your password carefully.<br>There are no password recovery options.` ~
 			`</td></tr>`);
 	html.put(`</table></form>`);
 }
@@ -3157,9 +3157,9 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 			enforce(subscriptionExists(subscriptionID), "This subscription doesn't exist.");
 
 			html.put(
-				`<div class="forum-notice">Subscription deleted. `
-				`<input type="submit" name="action-subscription-undelete" value="Undo" form="subscription-form">`
-				`</div>`
+				`<div class="forum-notice">Subscription deleted. ` ~
+				`<input type="submit" name="action-subscription-undelete" value="Undo" form="subscription-form">` ~
+				`</div>` ~
 				`<div style="display:none">`
 			);
 			// Replicate the entire edit form here (but make it invisible),
@@ -3179,12 +3179,12 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 	}
 
 	html.put(
-		`<form method="post" id="settings-form">`
-		`<h1>Settings</h1>`
-		`<input type="hidden" name="referrer" value="`), html.putEncodedEntities(settingsReferrer), html.put(`">`
-		`<input type="hidden" name="secret" value="`, userSettings.secret, `">`
+		`<form method="post" id="settings-form">` ~
+		`<h1>Settings</h1>` ~
+		`<input type="hidden" name="referrer" value="`), html.putEncodedEntities(settingsReferrer), html.put(`">` ~
+		`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
 
-		`<h2>User Interface</h2>`
+		`<h2>User Interface</h2>` ~
 
 		`View mode: <select name="groupviewmode">`
 	);
@@ -3192,22 +3192,22 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 	foreach (mode; ["basic", "threaded", "horizontal-split", "vertical-split"])
 		html.put(`<option value="`, mode, `"`, mode == currentMode ? ` selected` : null, `>`, mode, `</option>`);
 	html.put(
-		`</select><br>`
+		`</select><br>` ~
 
-		`<input type="checkbox" name="enable-keynav" id="enable-keynav"`, userSettings.enableKeyNav == "true" ? ` checked` : null, `>`
-		`<label for="enable-keynav">Enable keyboard shortcuts</label> (<a href="/help#keynav">?</a>)<br>`
+		`<input type="checkbox" name="enable-keynav" id="enable-keynav"`, userSettings.enableKeyNav == "true" ? ` checked` : null, `>` ~
+		`<label for="enable-keynav">Enable keyboard shortcuts</label> (<a href="/help#keynav">?</a>)<br>` ~
 
-		`<span title="Automatically open messages after selecting them.&#13;&#10;Applicable to threaded, horizontal-split and vertical-split view modes.">`
-			`<input type="checkbox" name="auto-open" id="auto-open"`, userSettings.autoOpen == "true" ? ` checked` : null, `>`
-			`<label for="auto-open">Focus follows message</label>`
-		`</span><br>`
+		`<span title="Automatically open messages after selecting them.&#13;&#10;Applicable to threaded, horizontal-split and vertical-split view modes.">` ~
+			`<input type="checkbox" name="auto-open" id="auto-open"`, userSettings.autoOpen == "true" ? ` checked` : null, `>` ~
+			`<label for="auto-open">Focus follows message</label>` ~
+		`</span><br>` ~
 
-		`<p>`
-			`<input type="submit" name="action-save" value="Save">`
-			`<input type="submit" name="action-cancel" value="Cancel">`
-		`</p>`
+		`<p>` ~
+			`<input type="submit" name="action-save" value="Save">` ~
+			`<input type="submit" name="action-cancel" value="Cancel">` ~
+		`</p>` ~
 
-		`<hr>`
+		`<hr>` ~
 
 		`<h2>Subscriptions</h2>`
 	);
@@ -3221,12 +3221,12 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 			foreach (subscription; subscriptions)
 			{
 				html.put(
-					`<tr>`
-						`<td>`), subscription.trigger.putDescription(html), html.put(`</td>`
-						`<td><input type="submit" form="subscriptions-form" name="action-subscription-view-`  , subscription.id, `" value="View posts"></td>`
-						`<td><input type="submit" form="subscriptions-form" name="action-subscription-feed-`  , subscription.id, `" value="Get ATOM feed"></td>`
-						`<td><input type="submit" form="subscriptions-form" name="action-subscription-edit-`  , subscription.id, `" value="Edit"></td>`
-						`<td><input type="submit" form="subscriptions-form" name="action-subscription-delete-`, subscription.id, `" value="Delete"></td>`
+					`<tr>` ~
+						`<td>`), subscription.trigger.putDescription(html), html.put(`</td>` ~
+						`<td><input type="submit" form="subscriptions-form" name="action-subscription-view-`  , subscription.id, `" value="View posts"></td>` ~
+						`<td><input type="submit" form="subscriptions-form" name="action-subscription-feed-`  , subscription.id, `" value="Get ATOM feed"></td>` ~
+						`<td><input type="submit" form="subscriptions-form" name="action-subscription-edit-`  , subscription.id, `" value="Edit"></td>` ~
+						`<td><input type="submit" form="subscriptions-form" name="action-subscription-delete-`, subscription.id, `" value="Delete"></td>` ~
 					`</tr>`
 				);
 			}
@@ -3244,11 +3244,11 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 		html.put(`<p>Please <a href="/loginform">log in</a> to manage your subscriptions.</p>`);
 
 	html.put(
-		`</form>`
+		`</form>` ~
 
-		`<form method="post" id="subscriptions-form">`
-		`<input type="hidden" name="referrer" value="`), html.putEncodedEntities(settingsReferrer), html.put(`">`
-		`<input type="hidden" name="secret" value="`, userSettings.secret, `">`
+		`<form method="post" id="subscriptions-form">` ~
+		`<input type="hidden" name="referrer" value="`), html.putEncodedEntities(settingsReferrer), html.put(`">` ~
+		`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
 		`</form>`
 	);
 }
@@ -3256,13 +3256,13 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 void discussionSubscriptionEdit(Subscription subscription)
 {
 	html.put(
-		`<form action="/settings" method="post" id="subscription-form">`
-		`<h1>Edit subscription</h1>`
-		`<input type="hidden" name="referrer" value="`), html.putEncodedEntities(settingsReferrer), html.put(`">`
-		`<input type="hidden" name="secret" value="`, userSettings.secret, `">`
-		`<input type="hidden" name="id" value="`, subscription.id, `">`
+		`<form action="/settings" method="post" id="subscription-form">` ~
+		`<h1>Edit subscription</h1>` ~
+		`<input type="hidden" name="referrer" value="`), html.putEncodedEntities(settingsReferrer), html.put(`">` ~
+		`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
+		`<input type="hidden" name="id" value="`, subscription.id, `">` ~
 
-		`<h2>Condition</h2>`
+		`<h2>Condition</h2>` ~
 		`<input type="hidden" name="trigger-type" value="`, subscription.trigger.type, `">`
 	);
 	subscription.trigger.putEditHTML(html);
@@ -3275,10 +3275,10 @@ void discussionSubscriptionEdit(Subscription subscription)
 		action.putEditHTML(html);
 
 	html.put(
-		`<p>`
-			`<input type="submit" name="action-subscription-save" value="Save">`
-			`<input type="submit" name="action-subscription-cancel" value="Cancel">`
-		`</p>`
+		`<p>` ~
+			`<input type="submit" name="action-subscription-save" value="Save">` ~
+			`<input type="submit" name="action-subscription-cancel" value="Cancel">` ~
+		`</p>` ~
 		`</form>`
 	);
 }
@@ -3288,8 +3288,8 @@ void discussionSubscriptionUnsubscribe(string subscriptionID)
 	auto subscription = getSubscription(subscriptionID);
 	subscription.unsubscribe();
 	html.put(
-		`<h1>Unsubscribe</h1>`
-		`<p>This subscription has been deactivated.</p>`
+		`<h1>Unsubscribe</h1>` ~
+		`<p>This subscription has been deactivated.</p>` ~
 		`<p>If you did not intend to do this, you can reactivate the subscription's actions on your <a href="/settings">settings page</a>.</p>`
 	);
 }
@@ -3328,10 +3328,10 @@ void discussionSubscriptionPosts(string subscriptionID, int page, out string tit
 	}
 
 	html.put(
-		`<form style="display:block;float:right;margin-top:0.5em" action="/settings" method="post">`
-			`<input type="hidden" name="secret" value="`), html.putEncodedEntities(userSettings.secret), html.put(`">`
-			`<input type="submit" name="action-subscription-edit-`), html.putEncodedEntities(subscriptionID), html.put(`" value="Edit subscription">`
-		`</form>`
+		`<form style="display:block;float:right;margin-top:0.5em" action="/settings" method="post">` ~
+			`<input type="hidden" name="secret" value="`), html.putEncodedEntities(userSettings.secret), html.put(`">` ~
+			`<input type="submit" name="action-subscription-edit-`), html.putEncodedEntities(subscriptionID), html.put(`" value="Edit subscription">` ~
+		`</form>` ~
 		`<div style="clear:right"></div>`
 	);
 }
@@ -3389,23 +3389,23 @@ void discussionSearch(UrlParameters parameters)
 	if ("advsearch" in parameters)
 	{
 		html.put(
-			`<form method="get" id="advanced-search-form">`
-			`<h1>Advanced Search</h1>`
-			`<p>Find posts with...</p>`
-			`<table>`
-				`<tr><td>all these words:`     ` </td><td><input size="50" name="q" value="`), html.putEncodedEntities(searchString), html.put(`" autofocus></td></tr>`
-				`<tr><td>this exact phrase:`   ` </td><td><input size="50" name="exact"></td></tr>`
-				`<tr><td>none of these words:` ` </td><td><input size="50" name="not"></td></tr>`
-				`<tr><td>posted in the group:` ` </td><td><input size="50" name="group"></td></tr>`
-				`<tr><td>posted by:`           ` </td><td><input size="50" name="author"></td></tr>`
-				`<tr><td>posted by (email):`   ` </td><td><input size="50" name="authoremail"></td></tr>`
-				`<tr><td>in threads titled:`   ` </td><td><input size="50" name="subject"></td></tr>`
-				`<tr><td>containing:`          ` </td><td><input size="50" name="content"></td></tr>`
-				`<tr><td>posted between:`      ` </td><td><input type="date" placeholder="yyyy-mm-dd" name="startdate"> and <input type="date" placeholder="yyyy-mm-dd" name="enddate"></td></tr>`
-			`</table>`
-			`<br>`
-			`<input name="search" type="submit" value="Advanced search">`
-			`</table>`
+			`<form method="get" id="advanced-search-form">` ~
+			`<h1>Advanced Search</h1>` ~
+			`<p>Find posts with...</p>` ~
+			`<table>` ~
+				`<tr><td>all these words:`     ~ ` </td><td><input size="50" name="q" value="`), html.putEncodedEntities(searchString), html.put(`" autofocus></td></tr>` ~
+				`<tr><td>this exact phrase:`   ~ ` </td><td><input size="50" name="exact"></td></tr>` ~
+				`<tr><td>none of these words:` ~ ` </td><td><input size="50" name="not"></td></tr>` ~
+				`<tr><td>posted in the group:` ~ ` </td><td><input size="50" name="group"></td></tr>` ~
+				`<tr><td>posted by:`           ~ ` </td><td><input size="50" name="author"></td></tr>` ~
+				`<tr><td>posted by (email):`   ~ ` </td><td><input size="50" name="authoremail"></td></tr>` ~
+				`<tr><td>in threads titled:`   ~ ` </td><td><input size="50" name="subject"></td></tr>` ~
+				`<tr><td>containing:`          ~ ` </td><td><input size="50" name="content"></td></tr>` ~
+				`<tr><td>posted between:`      ~ ` </td><td><input type="date" placeholder="yyyy-mm-dd" name="startdate"> and <input type="date" placeholder="yyyy-mm-dd" name="enddate"></td></tr>` ~
+			`</table>` ~
+			`<br>` ~
+			`<input name="search" type="submit" value="Advanced search">` ~
+			`</table>` ~
 			`</form>`
 		);
 		doSearch = false;
@@ -3413,11 +3413,11 @@ void discussionSearch(UrlParameters parameters)
 	else
 	{
 		html.put(
-			`<form method="get" id="search-form">`
-			`<h1>Search</h1>`
-			`<input name="q" size="50" value="`), html.putEncodedEntities(searchString), html.put(`" autofocus>`
-			`<input name="search" type="submit" value="Search">`
-			`<input name="advsearch" type="submit" value="Advanced search">`
+			`<form method="get" id="search-form">` ~
+			`<h1>Search</h1>` ~
+			`<input name="q" size="50" value="`), html.putEncodedEntities(searchString), html.put(`" autofocus>` ~
+			`<input name="search" type="submit" value="Search">` ~
+			`<input name="advsearch" type="submit" value="Advanced search">` ~
 			`</form>`
 		);
 	}
@@ -3474,7 +3474,7 @@ void discussionSearch(UrlParameters parameters)
 			int n = 0;
 
 			enum queryCommon =
-				"SELECT [ROWID], snippet([PostSearch], '" ~ searchDelimStartMatch ~ "', '" ~ searchDelimEndMatch ~ "', '" ~ searchDelimEllipses ~ "', 6) "
+				"SELECT [ROWID], snippet([PostSearch], '" ~ searchDelimStartMatch ~ "', '" ~ searchDelimEndMatch ~ "', '" ~ searchDelimEllipses ~ "', 6) " ~
 				"FROM [PostSearch]";
 			auto iterator =
 				queryTerms.length
@@ -3554,37 +3554,37 @@ void formatSearchResult(Rfc850Post post, string snippet)
 	with (post.msg)
 	{
 		html.put(
-			`<div class="post-wrapper">`
-			`<table class="post forum-table`, (post.children ? ` with-children` : ``), `" id="`), html.putEncodedEntities(idToFragment(id)), html.put(`">`
-			`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(2), `</tr>` // Fixed layout dummies
-			`<tr class="post-header"><th colspan="2">`
+			`<div class="post-wrapper">` ~
+			`<table class="post forum-table`, (post.children ? ` with-children` : ``), `" id="`), html.putEncodedEntities(idToFragment(id)), html.put(`">` ~
+			`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(2), `</tr>` ~ // Fixed layout dummies
+			`<tr class="post-header"><th colspan="2">` ~
 				`<div class="post-time">`, summarizeTime(time), `</div>`,
-				encodeHtmlEntities(post.publicGroupNames().join(", ")), ` &raquo; `
+				encodeHtmlEntities(post.publicGroupNames().join(", ")), ` &raquo; ` ~
 				`<a title="View this post" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" class="permalink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread"), `">`,
 					encodeHtmlEntities(rawSubject),
-				`</a>`
-			`</th></tr>`
-			`<tr class="mini-post-info-cell">`
+				`</a>` ~
+			`</th></tr>` ~
+			`<tr class="mini-post-info-cell">` ~
 				`<td colspan="2">`
 		); miniPostInfo(post, null, false); html.put(
-				`</td>`
-			`</tr>`
-			`<tr>`
-				`<td class="post-info">`
-					`<div class="post-author">`), html.putEncodedEntities(author), html.put(`</div>`
-					`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`), html.putEncodedEntities(author), html.put(`'s Gravatar profile">`
-						`<img alt="Gravatar" class="post-gravatar" width="80" height="80" src="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon">`
+				`</td>` ~
+			`</tr>` ~
+			`<tr>` ~
+				`<td class="post-info">` ~
+					`<div class="post-author">`), html.putEncodedEntities(author), html.put(`</div>` ~
+					`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`), html.putEncodedEntities(author), html.put(`'s Gravatar profile">` ~
+						`<img alt="Gravatar" class="post-gravatar" width="80" height="80" src="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon">` ~
 					`</a>`
 		);
 
 		html.put(
-				`</td>`
-				`<td class="post-body">`
+				`</td>` ~
+				`<td class="post-body">` ~
 					`<pre class="post-text">`), formatSearchSnippet(snippet), html.put(`</pre>`,
 					(error ? `<span class="post-error">` ~ encodeHtmlEntities(error) ~ `</span>` : ``),
-				`</td>`
-			`</tr>`
-			`</table>`
+				`</td>` ~
+			`</tr>` ~
+			`</table>` ~
 			`</div>`
 		);
 	}

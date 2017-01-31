@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2015, 2016  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2015, 2016, 2017  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -55,9 +55,9 @@ class NotQuotingRule : LintRule
 	override @property string id() { return "notquoting"; }
 	override @property string shortDescription() { return "Parent post is not quoted."; }
 	override @property string longDescription() { return
-		"<p>When replying to someone's post, you should provide some context for your replies by quoting the revelant parts of their post.</p>"
-		"<p>Depending on the software (or its configuration) used to read your message, it may not be obvious which post you're replying to.</p>"
-		"<p>Thus, when writing a reply, don't delete all quoted text: instead, leave just enough to provide context for your reply. "
+		"<p>When replying to someone's post, you should provide some context for your replies by quoting the revelant parts of their post.</p>" ~
+		"<p>Depending on the software (or its configuration) used to read your message, it may not be obvious which post you're replying to.</p>" ~
+		"<p>Thus, when writing a reply, don't delete all quoted text: instead, leave just enough to provide context for your reply. " ~
 		   "You can also insert your replies inline (interleaved with quoted text) to address specific parts of the parent post.</p>";
 	}
 
@@ -115,7 +115,7 @@ class WrongParentRule : LintRule
 	override @property string shortDescription() { return "You are quoting a post other than the parent."; }
 	override @property string longDescription() { return
 		"<p>When replying a message, the message you are replying to is referenced in the post's headers.</p>" ~
-		"<p>Depending on the software (or its configuration) used to read your message, your message may be displayed below its parent post. "
+		"<p>Depending on the software (or its configuration) used to read your message, your message may be displayed below its parent post. " ~
 		   "If your message contains a reply to a different post, following the conversation may become somewhat confusing.</p>" ~
 		"<p>Thus, make sure to click the \"Reply\" link on the actual post you're replying to, and quote the parent post for context.</p>";
 	}
@@ -142,8 +142,8 @@ class NoParentRule : LintRule
 	override @property string id() { return "noparent"; }
 	override @property string shortDescription() { return "Parent post is not indicated."; }
 	override @property string longDescription() { return
-		"<p>When quoting someone's post, you should leave the \"On (date), (author) wrote:\" line.</p>"
-		"<p>Depending on the software (or its configuration) used to read your message, it may not be obvious which post you're replying to.</p>"
+		"<p>When quoting someone's post, you should leave the \"On (date), (author) wrote:\" line.</p>" ~
+		"<p>Depending on the software (or its configuration) used to read your message, it may not be obvious which post you're replying to.</p>" ~
 		"<p>Thus, this line provides important context for your replies regarding the structure of the conversation.</p>";
 	}
 
@@ -182,10 +182,10 @@ class MultiParentRule : LintRule
 	override @property string id() { return "multiparent"; }
 	override @property string shortDescription() { return "You are quoting multiple posts."; }
 	override @property string longDescription() { return
-		"<p>When replying a message, the message you are replying to is referenced in the post's headers.</p>"
-		"<p>Depending on the software (or its configuration) used to read your message, your message may be displayed below its parent post. "
-		   "If your message contains a reply to a different post, following the conversation may become somewhat confusing.</p>"
-		"<p>Thus, you should avoid replying to multiple posts in one reply. "
+		"<p>When replying a message, the message you are replying to is referenced in the post's headers.</p>" ~
+		"<p>Depending on the software (or its configuration) used to read your message, your message may be displayed below its parent post. " ~
+		   "If your message contains a reply to a different post, following the conversation may become somewhat confusing.</p>" ~
+		"<p>Thus, you should avoid replying to multiple posts in one reply. " ~
 		   "If applicable, you should split your message into several, each as a reply to its corresponding parent post.</p>";
 	}
 
@@ -206,9 +206,9 @@ class TopPostingRule : LintRule
 	override @property string id() { return "topposting"; }
 	override @property string shortDescription() { return "You are top-posting."; }
 	override @property string longDescription() { return
-		"<p>When replying a message, it is generally preferred to add your reply under the quoted parent text.</p>"
-		"<p>Depending on the software (or its configuration) used to read your message, your message may not be displayed below its parent post. "
-		   "In such cases, the quoted text provides context for your reply, and readers would need to first read the quoted text below your reply for context.</p>"
+		"<p>When replying a message, it is generally preferred to add your reply under the quoted parent text.</p>" ~
+		"<p>Depending on the software (or its configuration) used to read your message, your message may not be displayed below its parent post. " ~
+		   "In such cases, the quoted text provides context for your reply, and readers would need to first read the quoted text below your reply for context.</p>" ~
 		"<p>Thus, you should add your reply below the quoted text (or reply to individual paragraphs inline), rather than above it.</p>";
 	}
 
@@ -256,9 +256,9 @@ class OverquotingRule : LintRule
 	override @property string id() { return "overquoting"; }
 	override @property string shortDescription() { return "You are overquoting."; }
 	override @property string longDescription() { return
-		"<p>The ratio between quoted and added text is vastly disproportional.</p>"
-		"<p>Quoting should be limited to the amount necessary to provide context for your replies. "
-		   "Quoting posts in their entirety is thus rarely necessary, and is a waste of vertical space.</p>"
+		"<p>The ratio between quoted and added text is vastly disproportional.</p>" ~
+		"<p>Quoting should be limited to the amount necessary to provide context for your replies. " ~
+		   "Quoting posts in their entirety is thus rarely necessary, and is a waste of vertical space.</p>" ~
 		"<p>Please trim the quoted text to just the relevant parts you're addressing in your reply, or add more content to your post.</p>";
 	}
 
@@ -381,11 +381,11 @@ class ShortLinkRule : LintRule
 	override @property string id() { return "shortlink"; }
 	override @property string shortDescription() { return "Don't use URL shorteners."; }
 	override @property string longDescription() { return
-		"<p>URL shortening services, such as TinyURL, are useful in cases where space is at a premium, e.g. in IRC or Twitter messages. "
-		   "In other circumstances, however, they provide little benefit, and have the significant disadvantage of being opaque: "
-		   "readers can only guess where the link will lead to before they click it.</p>"
-		"<p>Additionally, URL shortening services come and go - your link may work today, but might not in a year or two.</p>"
-		"<p>Thus, do not use URL shorteners when posting messages online - post the full link instead, even if it seems exceedingly long. "
+		"<p>URL shortening services, such as TinyURL, are useful in cases where space is at a premium, e.g. in IRC or Twitter messages. " ~
+		   "In other circumstances, however, they provide little benefit, and have the significant disadvantage of being opaque: " ~
+		   "readers can only guess where the link will lead to before they click it.</p>" ~
+		"<p>Additionally, URL shortening services come and go - your link may work today, but might not in a year or two.</p>" ~
+		"<p>Thus, do not use URL shorteners when posting messages online - post the full link instead, even if it seems exceedingly long. " ~
 		   "If it is too long to be inserted inline, add it as a footnote instead.</p>";
 	}
 
@@ -450,7 +450,7 @@ class LinkInSubjectRule : LintRule
 	override @property string id() { return "linkinsubject"; }
 	override @property string shortDescription() { return "Don't put links in the subject."; }
 	override @property string longDescription() { return
-		"<p>Links in message subjects are usually not clickable.</p>"
+		"<p>Links in message subjects are usually not clickable.</p>" ~
 		"<p>Please move the link in the message body instead.</p>";
 	}
 

@@ -1,4 +1,4 @@
-/*  Copyright (C) 2012, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2012, 2014, 2015, 2017  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -44,13 +44,13 @@ final class Dcaptcha : Captcha
 		auto challenge = challenges[key];
 
 		return
-			challenge.question.encodeEntities() ~ "\n"
-			`<pre>` ~ challenge.code.encodeEntities() ~ `</pre>`
-			`<input type="hidden" name="dcaptcha_challenge_field" value="` ~ key ~ `">`
-			`<input type="hidden" "dcaptcha_response_field"></input>`
-			`<input name="dcaptcha_response_field"></input>`
-			`<p><b>Hint</b>: ` ~ challenge.hint ~ `</p>`
-			`<p>Is the CAPTCHA too hard?<br>Refresh the page to get a different question,<br>or ask in the `
+			challenge.question.encodeEntities() ~ "\n" ~
+			`<pre>` ~ challenge.code.encodeEntities() ~ `</pre>` ~
+			`<input type="hidden" name="dcaptcha_challenge_field" value="` ~ key ~ `">` ~
+			`<input type="hidden" "dcaptcha_response_field"></input>` ~
+			`<input name="dcaptcha_response_field"></input>` ~
+			`<p><b>Hint</b>: ` ~ challenge.hint ~ `</p>` ~
+			`<p>Is the CAPTCHA too hard?<br>Refresh the page to get a different question,<br>or ask in the ` ~
 				`<a href="http://webchat.freenode.net?randomnick=1&channels=%23d">#d IRC channel on Freenode</a>.</p>`
 		;
 	}

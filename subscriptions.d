@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2015, 2016  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2015, 2016, 2017  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -346,7 +346,7 @@ final class ThreadTrigger : Trigger
 	{
 		auto post = getPost(threadID);
 		html.put(
-			`<input type="hidden" name="trigger-thread-id" value="`), html.putEncodedEntities(threadID), html.put(`">`
+			`<input type="hidden" name="trigger-thread-id" value="`), html.putEncodedEntities(threadID), html.put(`">` ~
 			`When someone posts a reply to the thread `), putThreadName(html), html.put(`:`
 		);
 	}
@@ -490,16 +490,16 @@ final class ContentTrigger : Trigger
 	override void putEditHTML(ref StringBuffer html)
 	{
 		html.put(
-			`<div id="trigger-content">`
-			`When someone `
-			`<select name="trigger-content-message-type">`
-				`<option value="posts"`  , onlyNewThreads ? `` : ` selected`, `>posts or replies to a thread</option>`
-				`<option value="threads"`, onlyNewThreads ? ` selected` : ``, `>posts a new thread</option>`
-			`</select>`
-			`<table>`
-			`<tr><td>`
-				`<input type="checkbox" name="trigger-content-only-in-groups"`, onlyInGroups ? ` checked` : ``, `> only in the groups:`
-			`</td><td>`
+			`<div id="trigger-content">` ~
+			`When someone ` ~
+			`<select name="trigger-content-message-type">` ~
+				`<option value="posts"`  , onlyNewThreads ? `` : ` selected`, `>posts or replies to a thread</option>` ~
+				`<option value="threads"`, onlyNewThreads ? ` selected` : ``, `>posts a new thread</option>` ~
+			`</select>` ~
+			`<table>` ~
+			`<tr><td>` ~
+				`<input type="checkbox" name="trigger-content-only-in-groups"`, onlyInGroups ? ` checked` : ``, `> only in the groups:` ~
+			`</td><td>` ~
 				`<select name="trigger-content-groups" multiple size="10">`
 		);
 		foreach (set; groupHierarchy)
@@ -512,30 +512,30 @@ final class ContentTrigger : Trigger
 			);
 			foreach (group; set.groups)
 				html.put(
-					`<option value="`), html.putEncodedEntities(group.internalName), html.put(`"`, groups.canFind(group.internalName) ? ` selected` : ``, `>`
+					`<option value="`), html.putEncodedEntities(group.internalName), html.put(`"`, groups.canFind(group.internalName) ? ` selected` : ``, `>` ~
 						`&nbsp;&nbsp;&nbsp;`), html.putEncodedEntities(group.publicName), html.put(`</option>`
 				);
 		}
 		html.put(
-				`</select>`
+				`</select>` ~
 			`</td></tr>`
 		);
 
 		void putStringFilter(string name, string id, ref StringFilter filter)
 		{
 			html.put(
-				`<tr><td>`
-					`<input type="checkbox" name="trigger-content-`, id, `-enabled"`, filter.enabled ? ` checked` : ``, `> `
-					`and when the `, name, ` `
-				`</td><td>`
-					`<select name="trigger-content-`, id, `-match-type">`
-						`<option value="substring"`, filter.isRegex ? `` : ` selected`, `>contains the string</option>`
-						`<option value="regex"`    , filter.isRegex ? ` selected` : ``, `>matches the regular expression</option>`
-					`</select> `
-					`<input name="trigger-content-`, id, `-str" value="`), html.putEncodedEntities(filter.str), html.put(`"> `
-					`(`
-					`<input type="checkbox" name="trigger-content-`, id, `-case-sensitive"`, filter.caseSensitive ? ` checked` : ``, `>`
-					` case sensitive )`
+				`<tr><td>` ~
+					`<input type="checkbox" name="trigger-content-`, id, `-enabled"`, filter.enabled ? ` checked` : ``, `> ` ~
+					`and when the `, name, ` ` ~
+				`</td><td>` ~
+					`<select name="trigger-content-`, id, `-match-type">` ~
+						`<option value="substring"`, filter.isRegex ? `` : ` selected`, `>contains the string</option>` ~
+						`<option value="regex"`    , filter.isRegex ? ` selected` : ``, `>matches the regular expression</option>` ~
+					`</select> ` ~
+					`<input name="trigger-content-`, id, `-str" value="`), html.putEncodedEntities(filter.str), html.put(`"> ` ~
+					`(` ~
+					`<input type="checkbox" name="trigger-content-`, id, `-case-sensitive"`, filter.caseSensitive ? ` checked` : ``, `>` ~
+					` case sensitive )` ~
 				`</td></tr>`
 			);
 		}
@@ -720,9 +720,9 @@ final class IrcAction : Action
 	override void putEditHTML(ref StringBuffer html)
 	{
 		html.put(
-			`<p>`
-				`<input type="checkbox" name="saction-irc-enabled"`, enabled ? ` checked` : ``, `> `
-				`Send a private message to <input name="saction-irc-nick" value="`), html.putEncodedEntities(nick), html.put(`"> on the `
+			`<p>` ~
+				`<input type="checkbox" name="saction-irc-enabled"`, enabled ? ` checked` : ``, `> ` ~
+				`Send a private message to <input name="saction-irc-nick" value="`), html.putEncodedEntities(nick), html.put(`"> on the ` ~
 				`<select name="saction-irc-network">`);
 		foreach (irc; services!IrcSink)
 		{
@@ -732,7 +732,7 @@ final class IrcAction : Action
 					html.put(`</option>`);
 		}
 		html.put(
-				`</select> IRC network`
+				`</select> IRC network` ~
 			`</p>`
 		);
 	}
@@ -797,9 +797,9 @@ final class EmailAction : Action
 	override void putEditHTML(ref StringBuffer html)
 	{
 		html.put(
-			`<p>`
-				`<input type="checkbox" name="saction-email-enabled"`, enabled ? ` checked` : ``, `> `
-				`Send an email to <input type="email" size="30" name="saction-email-address" value="`), html.putEncodedEntities(address), html.put(`">`
+			`<p>` ~
+				`<input type="checkbox" name="saction-email-enabled"`, enabled ? ` checked` : ``, `> ` ~
+				`Send an email to <input type="email" size="30" name="saction-email-address" value="`), html.putEncodedEntities(address), html.put(`">` ~
 			`</p>`
 		);
 	}
@@ -934,7 +934,7 @@ final class DatabaseAction : Action
 	override void putEditHTML(ref StringBuffer html)
 	{
 		html.put(
-			`<p>Additionally, you can <a href="/subscription-feed/`, subscriptionID, `">subscribe to an ATOM feed of matched posts</a>, `
+			`<p>Additionally, you can <a href="/subscription-feed/`, subscriptionID, `">subscribe to an ATOM feed of matched posts</a>, ` ~
 			`or <a href="/subscription-posts/`, subscriptionID, `">read them online</a>.</p>`
 		);
 	}
