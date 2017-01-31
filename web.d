@@ -2525,7 +2525,17 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 	return true;
 }
 
-SysTime[string] lastPostAttempt;
+SysTime[][string] lastPostAttempts;
+
+// Reject posts if the threshold of post attempts is met under the
+// given time limit.
+enum postThrottleRejectTime = 30.seconds;
+enum postThrottleRejectCount = 3;
+
+// Challenge posters with a CAPTCHA if the threshold of post attempts
+// is met under the given time limit.
+enum postThrottleCaptchaTime = 3.minutes;
+enum postThrottleCaptchaCount = 3;
 
 string discussionSend(UrlParameters clientVars, Headers headers)
 {
@@ -2629,18 +2639,23 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 
 				auto now = Clock.currTime();
 
-				if (ip in lastPostAttempt && now - lastPostAttempt[ip] < 15.seconds)
+				auto ipPostAttempts = lastPostAttempts.get(ip, null);
+				if (ipPostAttempts.length >= postThrottleRejectCount && now - ipPostAttempts[$-postThrottleRejectCount+1] < postThrottleRejectTime)
 				{
-					discussionPostForm(draft, false, PostError("Your last post was less than 15 seconds ago. Please wait a few seconds before trying again."));
+					discussionPostForm(draft, false,
+						PostError("You've attempted to post %d times in the past %s. Please wait a little bit before trying again."
+							.format(postThrottleRejectCount, postThrottleRejectTime)));
 					return null;
 				}
 
 				bool captchaPresent = theCaptcha.isPresent(clientVars);
 				if (!captchaPresent)
 				{
-					if (ip in lastPostAttempt && now - lastPostAttempt[ip] < 1.minutes)
+					if (ipPostAttempts.length >= postThrottleCaptchaCount && now - ipPostAttempts[$-postThrottleCaptchaCount+1] < postThrottleCaptchaTime)
 					{
-						discussionPostForm(draft, true, PostError("Your last post was less than a minute ago. Please solve a CAPTCHA to continue."));
+						discussionPostForm(draft, true,
+							PostError("You've attempted to post %d times in the past %s. Please solve a CAPTCHA to continue."
+								.format(postThrottleCaptchaCount, postThrottleCaptchaTime)));
 						return null;
 					}
 				}
@@ -2650,7 +2665,7 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 				if (process.status == PostingStatus.redirect)
 					return "/posting/" ~ process.pid;
 				process.run();
-				lastPostAttempt[ip] = Clock.currTime();
+				lastPostAttempts[ip] ~= Clock.currTime();
 				draft.serverVars["pid"] = process.pid;
 
 				if (user.isLoggedIn())
