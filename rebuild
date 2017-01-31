@@ -6,7 +6,7 @@ cd "$(dirname "$0")"
 test -f build.local && source build.local
 
 MODEL=64
-DFLAGS="-m$MODEL -g -L-lcurl"
+DFLAGS="-m$MODEL -g -L-lcurl -L-lsqlite3 -L-lssl -L-lcrypto"
 #DFLAGS="$DFLAGS -debug"
 #DFLAGS="$DFLAGS -debug=ASOCKETS"
 #DFLAGS="$DFLAGS -version=LIBEV"
