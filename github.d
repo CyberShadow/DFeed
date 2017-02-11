@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2017  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -192,7 +192,7 @@ class GitHubPost : Post
 			switch (event)
 			{
 				case "pull_request":
-					return data["action"].str != "synchronize";
+					return data["action"].str.isOneOf("opened", "closed", "reopened");
 				default:
 					return false;
 			}
