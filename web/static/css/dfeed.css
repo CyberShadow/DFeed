@@ -54,6 +54,7 @@ table td:not(:last-child), table th:not(:last-child) {
 
 .subnav, .subnav-helper {
 	width: 7em;
+	border-bottom-width: 1px;
 }
 
 .subnav > ul > li {
