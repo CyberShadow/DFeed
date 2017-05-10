@@ -223,7 +223,7 @@ abstract class FormSection
 
 class Trigger : FormSection
 {
-	mixin GenerateContructorProxies;
+	mixin GenerateConstructorProxies;
 
 	/// TriggerType
 	abstract @property string type() const;
@@ -250,7 +250,7 @@ class Trigger : FormSection
 
 final class ReplyTrigger : Trigger
 {
-	mixin GenerateContructorProxies;
+	mixin GenerateConstructorProxies;
 
 	override @property string type() const { return "reply"; }
 
@@ -694,7 +694,7 @@ protected:
 
 class Action : FormSection
 {
-	mixin GenerateContructorProxies;
+	mixin GenerateConstructorProxies;
 
 	/// Execute this action, if it is enabled.
 	abstract void run(ref Subscription subscription, Rfc850Post post);
@@ -929,7 +929,7 @@ EOF"
 
 final class DatabaseAction : Action
 {
-	mixin GenerateContructorProxies;
+	mixin GenerateConstructorProxies;
 
 	override void putEditHTML(ref StringBuffer html)
 	{
