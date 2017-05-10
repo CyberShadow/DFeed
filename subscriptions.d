@@ -86,7 +86,7 @@ struct Subscription
 		{
 			mixin(DB_TRANSACTION);
 			query!"INSERT OR REPLACE INTO [Subscriptions] ([ID], [Username], [Data]) VALUES (?, ?, ?)"
-				.exec(id, userName, data.toJson());
+				.exec(id, userName, SubscriptionData(data).toJson());
 			foreach (section; sections)
 				section.save();
 		}
@@ -134,6 +134,14 @@ struct Subscription
 	}
 }
 
+/// POD serialization type to avoid depending on UrlParameters internals
+struct SubscriptionData
+{
+	string[][string] items;
+	this(UrlParameters parameters) { items = parameters.items; }
+	@property UrlParameters data() { UrlParameters result; result.items = items; return result; }
+}
+
 bool subscriptionExists(string subscriptionID)
 {
 	return query!`SELECT COUNT(*) FROM [Subscriptions] WHERE [ID]=?`.iterate(subscriptionID).selectValue!int > 0;
@@ -144,7 +152,7 @@ out(result) { assert(result.id == subscriptionID); }
 body
 {
 	foreach (string userName, string data; query!`SELECT [Username], [Data] FROM [Subscriptions] WHERE [ID] = ?`.iterate(subscriptionID))
-		return Subscription(userName, data.jsonParse!(UrlParameters));
+		return Subscription(userName, data.jsonParse!SubscriptionData.data);
 	throw new Exception("No such subscription");
 }
 
@@ -154,7 +162,7 @@ body
 {
 	enforce(userName.length, "Not logged in");
 	foreach (string data; query!`SELECT [Data] FROM [Subscriptions] WHERE [Username] = ? AND [ID] = ?`.iterate(userName, subscriptionID))
-		return Subscription(userName, data.jsonParse!(UrlParameters));
+		return Subscription(userName, data.jsonParse!SubscriptionData.data);
 	throw new Exception("No such user subscription");
 }
 
@@ -164,7 +172,7 @@ Subscription[] getUserSubscriptions(string userName)
 
 	Subscription[] results;
 	foreach (string data; query!`SELECT [Data] FROM [Subscriptions] WHERE [Username] = ?`.iterate(userName))
-		results ~= Subscription(userName, data.jsonParse!(UrlParameters));
+		results ~= Subscription(userName, data.jsonParse!SubscriptionData.data);
 	return results;
 }
 
