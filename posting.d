@@ -346,7 +346,7 @@ private:
 		auto groups = post.xref.map!(x => x.group.getGroupInfo());
 		enforce(groups.length, "No groups");
 		auto group = groups.front;
-		auto sinkTypes = groups.map!(group => group.sinkType);
+		auto sinkTypes = groups.map!(group => group.sinkType.dup); // Issue 17264
 		enforce(sinkTypes.uniq.walkLength == 1, "Can't cross-post across protocols");
 		switch (group.sinkType)
 		{
