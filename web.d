@@ -1172,7 +1172,7 @@ void discussionIndex()
 		foreach (group; set.groups)
 		{
 			html.put(
-				`<tr class="group-row">` ~
+				`<tr class="group-row post-collapsed" id="`, group.urlName,`-row">` ~
 					`<td class="forum-index-col-forum">` ~
 						`<a href="/group/`), html.putEncodedEntities(group.urlName), html.put(`">`), html.putEncodedEntities(group.publicName), html.put(`</a>` ~
 						`<div class="truncated forum-index-description" title="`), html.putEncodedEntities(group.description), html.put(`">`), html.putEncodedEntities(group.description), html.put(`</div>` ~
@@ -1469,7 +1469,7 @@ void discussionGroup(GroupInfo groupInfo, int page)
 		`<tr class="subheader"><th>Thread / Thread Starter</th><th>Last Post</th><th>Replies</th>`);
 	foreach (thread; threads)
 		html.put(
-			`<tr class="thread-row">` ~
+			`<tr class="thread-row post-collapsed" id="`, thread.id,`">` ~
 				`<td class="group-index-col-first">`), summarizeThread(thread.id, thread.firstPost, thread.isRead), html.put(`</td>` ~
 				`<td class="group-index-col-last">`), summarizeLastPost(thread.lastPost), html.put(`</td>` ~
 				`<td class="number-column">`), summarizePostCount(thread), html.put(`</td>` ~
@@ -1625,7 +1625,7 @@ void formatThreadedPosts(PostInfo*[] postInfos, bool narrow, string selectedID =
 			if (post.ghost)
 				return formatPosts(post.children, level, post.subject, false);
 			html.put(
-				`<tr class="thread-post-row`, (post.info && post.info.id==selectedID ? ` focused selected` : ``), `">` ~
+				`<tr class="thread-post-row`, (post.info && post.info.id==selectedID ? ` focused selected` : ``), ` post-collapsed" id="`, to!string(post.info.rowid), `">` ~
 					`<td>` ~
 						`<div style="padding-left: `, format("%1.1f", OFFSET_INIT + level * offsetIncrement), OFFSET_UNITS, `">` ~
 							`<div class="thread-post-time">`, summarizeTime(post.info.time, true), `</div>`,

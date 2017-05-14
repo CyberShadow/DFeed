@@ -26,6 +26,14 @@ $(document).ready(function() {
 	    container.toggleClass('open');
 	    return false;
 	});
+
+	$('.post-collapsed').click(function(event) {
+		return expandPost(event, $(this).attr('id'));
+	});
+
+	$('.post-expanded').click(function(event) {
+		return expandPost(event, $(this).attr('id'));
+	});
 });
 
 // **************************************************************************
@@ -55,6 +63,46 @@ function initThreadUrlFixer() {
 			return true;
 		});
 	}
+}
+
+// **************************************************************************
+// Toggle a forum summary post in a thread between expanded and collapsed
+
+function expandPost(event, elm_id) {
+	// Don't expand if it was a redirect link. A redirect can happen if the
+	// event fired or any of its parents contains an href.
+	// Threaded views don't redirect but they have 'postlink' as a class.
+	let elm = event.target;
+	let postlink_found = false;
+	while (elm.id != elm_id) {
+		if (elm.href) {
+			return true;
+		}
+		if ($(elm).hasClass("postlink")) {
+			postlink_found = true;
+		}
+		elm = elm.parentNode;
+	}
+
+	let expand = "not-set-yet";
+	function recurseChildren(elm) {
+		if ($(elm).hasClass("truncated")) {
+			$(elm).css("whiteSpace", expand ? "normal" : "nowrap");
+		}
+		$.map(elm.childNodes, recurseChildren);
+	}
+	const collapsed_name = "post-collapsed";
+	const expanded_name = "post-expanded";
+	if ($(elm).hasClass(collapsed_name)) {
+		$(elm).removeClass(collapsed_name).addClass(expanded_name);
+		expand = true;
+	}
+	else {
+		$(elm).removeClass(expanded_name).addClass(collapsed_name);
+		expand = false;
+	}
+	recurseChildren(elm);
+	return postlink_found ? true : false;
 }
 
 // **************************************************************************
