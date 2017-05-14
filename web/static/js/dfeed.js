@@ -34,6 +34,27 @@ $(document).ready(function() {
 	$('.post-expanded').click(function(event) {
 		return expandPost(event, $(this).attr('id'));
 	});
+
+	$('#posts-settings').click(function(event) {
+		let elm = $(event.target);
+		if (elm.hasClass('posts-settings-collapsed')) {
+			$('.post-collapsed').each(function(i, post) {
+				$(post).trigger( "click" );
+			});
+			elm.text('collapse posts [-]')
+				.removeClass('posts-settings-collapsed')
+				.addClass('posts-settings-expanded');
+		}
+		else {
+			$('.post-expanded').each(function(i, post) {
+				$(post).trigger( "click" );
+			});
+			elm.text('expand posts [+]')
+				.removeClass('posts-settings-expanded')
+				.addClass('posts-settings-collapsed');
+		}
+		return false;
+	});
 });
 
 // **************************************************************************

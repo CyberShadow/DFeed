@@ -1104,6 +1104,11 @@ string[] tips =
 	`If you encounter a bug or need a missing feature, you can <a href="https://github.com/CyberShadow/DFeed/issues">create an issue on GitHub</a>.`,
 ];
 
+void expandCollpseButton()
+{
+    html.put(`<div align="left"><a href="#" id="posts-settings" class="posts-settings-collapsed">expand posts [+]</a></div>`);
+}
+
 int[string] getThreadCounts()
 {
 	enum PERF_SCOPE = "getThreadCounts"; mixin(MeasurePerformanceMixin);
@@ -1139,6 +1144,7 @@ Cached!(string[string]) lastPostCache;
 void discussionIndex()
 {
 	discussionIndexHeader();
+	expandCollpseButton();
 
 	auto threadCounts = threadCountCache(getThreadCounts());
 	auto postCounts = postCountCache(getPostCounts());
@@ -1462,6 +1468,7 @@ void discussionGroup(GroupInfo groupInfo, int page)
 				`<br>(<a href="`, idToUrl(thread.id, "first-unread"), `">`, formatNumber(thread.unreadPostCount), ` new</a>)`);
 	}
 
+	expandCollpseButton();
 	html.put(
 		`<table id="group-index" class="forum-table">` ~
 		`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(3), `</tr>` ~ // Fixed layout dummies
@@ -1685,6 +1692,7 @@ void discussionGroupThreaded(GroupInfo groupInfo, int page, bool narrow = false)
 
 void discussionGroupSplit(GroupInfo groupInfo, int page)
 {
+	expandCollpseButton();
 	html.put(
 		`<table id="group-split"><tr>` ~
 		`<td id="group-split-list"><div>`);
