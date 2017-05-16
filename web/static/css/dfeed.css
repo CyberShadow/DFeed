@@ -1210,7 +1210,8 @@ body {
 
 	#group-posts-vsplit > tbody > tr > td:nth-child(3) { width: 0; }
 
-	#group-index > tbody > tr > td:nth-child(2) { width: 8em; }
+	#group-index > tbody > tr > td:nth-child(2) { width: 7em; }
+	#group-index > tbody > tr > td:nth-child(3) { width: 4.5em; white-space: pre; padding: 0; }
 	#group-index a.forum-postsummary-gravatar { display: none; }
 }
 
