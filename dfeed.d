@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015, 2017  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -49,20 +49,25 @@ import captcha_dcaptcha;
 void main(string[] args)
 {
 	bool refresh;
+	bool noSources;
 	getopt(args,
 		"q|quiet", {}, // handled by ae.sys.log
-		"refresh", &refresh
+		"refresh", &refresh,
+		"no-sources", &noSources,
 	);
 
 	// Create sources
-	createServices!NntpSource   ("sources/nntp");
-	createServices!MailRelay    ("sources/mailrelay");
-	createServices!Feed         ("sources/feeds");
-	createServices!StackOverflow("sources/stackoverflow");
-	createServices!Reddit       ("sources/reddit");
-	createServices!SocketSource ("sources/socket");
-	createServices!Mailman      ("sources/mailman");
-	createServices!GitHub       ("sources/github");
+	if (!noSources)
+	{
+		createServices!NntpSource   ("sources/nntp");
+		createServices!MailRelay    ("sources/mailrelay");
+		createServices!Feed         ("sources/feeds");
+		createServices!StackOverflow("sources/stackoverflow");
+		createServices!Reddit       ("sources/reddit");
+		createServices!SocketSource ("sources/socket");
+		createServices!Mailman      ("sources/mailman");
+		createServices!GitHub       ("sources/github");
+	}
 	if (refresh)
 		new MessageDBSource();
 
