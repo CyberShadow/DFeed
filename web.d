@@ -1175,7 +1175,7 @@ void discussionIndex()
 				`<tr class="group-row">` ~
 					`<td class="forum-index-col-forum">` ~
 						`<a href="/group/`), html.putEncodedEntities(group.urlName), html.put(`">`), html.putEncodedEntities(group.publicName), html.put(`</a>` ~
-						`<div class="truncated forum-index-description" title="`), html.putEncodedEntities(group.description), html.put(`">`), html.putEncodedEntities(group.description), html.put(`</div>` ~
+						`<div class="forum-index-description" title="`), html.putEncodedEntities(group.description), html.put(`">`), html.putEncodedEntities(group.description), html.put(`</div>` ~
 					`</td>` ~
 					`<td class="forum-index-col-lastpost">`, group.internalName in lastPosts    ? summarizePost(   lastPosts[group.internalName]) : `<div class="forum-no-data">-</div>`, `</td>` ~
 					`<td class="number-column">`,            group.internalName in threadCounts ? formatNumber (threadCounts[group.internalName]) : `-`, `</td>` ~

@@ -326,6 +326,13 @@ div#footernav a {
 
 .forum-index-description {
 	color: #777;
+	line-height: 1.2em;
+	height: 2.4em;
+	overflow: hidden;
+
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
 }
 
 .forum-index-description,
