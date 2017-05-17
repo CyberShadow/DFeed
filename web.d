@@ -205,6 +205,35 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	enum horizontalSplitHeaders =
 		`<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Open+Sans:400,600">`;
 
+	void addMetadata(string description, string canonicalLocation, string image)
+	{
+		assert(title, "No title for metadata");
+
+		if (!description)
+			description = "D Programming Language Discussion Forum";
+
+		if (!image)
+			image = "https://dlang.org/images/dlogo_opengraph.png";
+
+		auto canonicalURL = "http://" ~ site.config.host ~ canonicalLocation;
+
+		extraHeaders ~= [
+			`<meta property="og:title" content="` ~ encodeHtmlEntities(title) ~ `" />`,
+			`<meta property="og:type" content="website" />`,
+			`<meta property="og:url" content="` ~ encodeHtmlEntities(canonicalURL) ~ `" />`,
+			`<meta property="og:image" content="` ~ encodeHtmlEntities(image) ~ `" />`,
+			`<meta property="og:description" content="` ~ encodeHtmlEntities(description) ~ `" />`,
+		];
+
+		// Maybe emit <meta name="description" ...> here as well one day
+		// Needs changes to forum-template.dd
+	}
+
+	static string gravatar(string authorEmail)
+	{
+		return `https://www.gravatar.com/avatar/` ~ getGravatarHash(authorEmail) ~ `?d=identicon&s=256`;
+	}
+
 	try
 	{
 		if (banCheck(ip, request))
@@ -278,6 +307,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				//breadcrumbs ~= `<a href="/">Forum Index</a>`;
 				foreach (what; ["posts", "threads"])
 					extraHeaders ~= `<link rel="alternate" type="application/atom+xml" title="New `~what~`" href="/feed/`~what~`" />`;
+				addMetadata(null, "/", null);
 				discussionIndex();
 				break;
 			case "group":
@@ -314,6 +344,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 					discussionGroupVSplit(groupInfo, page);
 				foreach (what; ["posts", "threads"])
 					extraHeaders ~= `<link rel="alternate" type="application/atom+xml" title="New `~what~` on `~encodeHtmlEntities(groupInfo.publicName)~`" href="/feed/`~what~`/`~encodeHtmlEntities(groupInfo.urlName)~`" />`;
+				addMetadata(groupInfo.description, "/group/" ~ groupInfo.urlName, null);
 				break;
 			}
 			case "thread":
@@ -330,8 +361,8 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 
 				string pageStr = page==1 ? "" : format(" (page %d)", page);
 				GroupInfo groupInfo;
-				string subject;
-				discussionThread(threadID, page, groupInfo, subject, viewMode == "basic");
+				string subject, authorEmail;
+				discussionThread(threadID, page, groupInfo, subject, authorEmail, viewMode == "basic");
 				enforce(groupInfo, "Unknown group");
 				title = subject ~ pageStr;
 				currentGroup = groupInfo;
@@ -339,6 +370,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				breadcrumbs ~= `<a href="/group/` ~encodeHtmlEntities(groupInfo.urlName)~`">` ~ encodeHtmlEntities(groupInfo.publicName) ~ `</a>`;
 				breadcrumbs ~= `<a href="/thread/`~encodeHtmlEntities(pathX)~`">` ~ encodeHtmlEntities(subject) ~ `</a>` ~ pageStr;
 				extraHeaders ~= canonicalHeader; // Google confuses /post/ URLs with threads
+				addMetadata(null, idToUrl(threadID, "thread"), gravatar(authorEmail));
 				break;
 			}
 			case "post":
@@ -355,11 +387,12 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				else
 				if (viewMode == "threaded")
 				{
-					string subject;
-					discussionSinglePost(id, currentGroup, subject, currentThread);
+					string subject, authorEmail;
+					discussionSinglePost(id, currentGroup, subject, authorEmail, currentThread);
 					title = subject;
 					breadcrumbs ~= `<a href="/group/` ~encodeHtmlEntities(currentGroup.urlName)~`">` ~ encodeHtmlEntities(currentGroup.publicName) ~ `</a>`;
 					breadcrumbs ~= `<a href="/post/`~encodeHtmlEntities(pathX)~`">` ~ encodeHtmlEntities(subject) ~ `</a> (view single post)`;
+					addMetadata(null, idToUrl(id), gravatar(authorEmail));
 					break;
 				}
 				else
@@ -374,7 +407,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 					title = currentGroup.publicName ~ " group index" ~ pageStr;
 					breadcrumbs ~= `<a href="/group/`~encodeHtmlEntities(currentGroup.urlName)~`">` ~ encodeHtmlEntities(currentGroup.publicName) ~ `</a>` ~ pageStr;
 					extraHeaders ~= horizontalSplitHeaders;
-
+					addMetadata(null, idToUrl(id), null);
 					break;
 				}
 			case "raw":
@@ -2223,7 +2256,7 @@ string getPostAtThreadIndex(string threadID, int index)
 	throw new NotFoundException(format("Post #%d of thread %s not found", index, threadID));
 }
 
-void discussionThread(string id, int page, out GroupInfo groupInfo, out string title, bool markAsRead)
+void discussionThread(string id, int page, out GroupInfo groupInfo, out string title, out string authorEmail, bool markAsRead)
 {
 	enforce(page >= 1, "Invalid page");
 
@@ -2300,8 +2333,9 @@ void discussionThread(string id, int page, out GroupInfo groupInfo, out string t
 
 	enforce(posts.length, "Thread not found");
 
-	groupInfo = posts[0].getGroup();
-	title     = posts[0].subject;
+	groupInfo   = posts[0].getGroup();
+	title       = posts[0].subject;
+	authorEmail = posts[0].authorEmail;
 
 	html.put(`<div id="thread-posts">`);
 	foreach (post; posts)
@@ -2336,13 +2370,14 @@ void discussionThreadOverview(string threadID, string selectedID)
 	html.put(`</table></div></td></tr></table>`);
 }
 
-void discussionSinglePost(string id, out GroupInfo groupInfo, out string title, out string threadID)
+void discussionSinglePost(string id, out GroupInfo groupInfo, out string title, out string authorEmail, out string threadID)
 {
 	auto post = getPost(id);
 	enforce(post, "Post not found");
 	groupInfo = post.getGroup();
 	enforce(groupInfo, "Unknown group");
-	title     = post.subject;
+	title       = post.subject;
+	authorEmail = post.authorEmail;
 	threadID = post.cachedThreadID;
 
 	formatSplitPost(post, false);
