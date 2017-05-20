@@ -1266,10 +1266,8 @@ void summarizeFrameThread(PostInfo* info, string infoText)
 	if (info)
 		with (*info)
 		{
+			putGravatar(getGravatarHash(info.authorEmail), idToUrl(id), `target="_top" class="forum-postsummary-gravatar" `);
 			html.put(
-				`<a target="_top" class="forum-postsummary-gravatar" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`">` ~
-					`<img alt="Gravatar" class="post-gravatar" src="//www.gravatar.com/avatar/`, getGravatarHash(info.authorEmail), `?d=identicon">` ~
-				`</a>` ~
 				`<a target="_top" class="forum-postsummary-subject `, (user.isRead(rowid) ? "forum-read" : "forum-unread"), `" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`">`), html.putEncodedEntities(subject), html.put(`</a><br>` ~
 				`<div class="forum-postsummary-info">`, infoText, `</div>` ~
 				`by <span class="forum-postsummary-author">`), html.putEncodedEntities(author), html.put(`</span>`
@@ -1450,11 +1448,9 @@ void discussionGroup(GroupInfo groupInfo, int page)
 		if (info)
 			with (*info)
 			{
+				putGravatar(getGravatarHash(info.authorEmail), idToUrl(tid, "thread"), `class="forum-postsummary-gravatar" `);
 				html.put(
 				//	`<!-- Thread ID: ` ~ encodeHtmlEntities(threadID) ~ ` | First Post ID: ` ~ encodeHtmlEntities(id) ~ `-->` ~
-					`<a class="forum-postsummary-gravatar" href="`), html.putEncodedEntities(idToUrl(tid, "thread")), html.put(`">` ~
-						`<img alt="Gravatar" class="post-gravatar" src="//www.gravatar.com/avatar/`, getGravatarHash(info.authorEmail), `?d=identicon">` ~
-					`</a>` ~
 					`<div class="truncated"><a class="forum-postsummary-subject `, (isRead ? "forum-read" : "forum-unread"), `" href="`), html.putEncodedEntities(idToUrl(tid, "thread")), html.put(`" title="`), html.putEncodedEntities(subject), html.put(`">`), html.putEncodedEntities(subject), html.put(`</a></div>` ~
 					`<div class="truncated">by <span class="forum-postsummary-author" title="`), html.putEncodedEntities(author), html.put(`">`), html.putEncodedEntities(author), html.put(`</span></div>`);
 				return;
@@ -1799,6 +1795,19 @@ string getGravatarHash(string email)
 	return email.toLower().strip().md5Of().toHexString!(LetterCase.lower)().idup; // Issue 9279
 }
 
+void putGravatar(string gravatarHash, string linkTarget, string aProps = null, int size = 0)
+{
+	html.put(
+		`<a `, aProps, ` href="`), html.putEncodedEntities(linkTarget), html.put(`">`);
+	if (size)
+	{
+		string sizeStr = size ? text(size) : null;
+		html.put(`<img alt="Gravatar" class="post-gravatar" width="`, sizeStr, `" height="`, sizeStr, `" src="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&s=`, sizeStr, `">`);
+	}
+	else
+		html.put(`<img alt="Gravatar" class="post-gravatar" src="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon">`);
+	html.put(`</a>`);
+}
 // ***********************************************************************
 
 void formatVSplitPosts(PostInfo*[] postInfos, string selectedID = null)
@@ -2033,10 +2042,8 @@ void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts, bool markAsRead 
 			`</tr>` ~
 			`<tr>` ~
 				`<td class="post-info">` ~
-					`<div class="post-author">`), html.putEncodedEntities(author), html.put(`</div>` ~
-					`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`), html.putEncodedEntities(author), html.put(`'s Gravatar profile">` ~
-						`<img alt="Gravatar" class="post-gravatar" width="80" height="80" src="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon">` ~
-					`</a><br>`);
+					`<div class="post-author">`), html.putEncodedEntities(author), html.put(`</div>`);
+		putGravatar(gravatarHash, "http://www.gravatar.com/" ~ gravatarHash, `title="` ~ encodeHtmlEntities(author) ~ `'s Gravatar profile"`, 80);
 		if (infoBits.length)
 		{
 			html.put(`<hr>`);
@@ -2089,10 +2096,9 @@ void miniPostInfo(Rfc850Post post, Rfc850Post[string] knownPosts, bool showActio
 	{
 		html.put(
 			`<table class="mini-post-info"><tr>` ~
-				`<td class="mini-post-info-avatar">` ~
-					`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`), html.putEncodedEntities(author), html.put(`'s Gravatar profile">` ~
-						`<img alt="Gravatar" class="post-gravatar" width="32" height="32" src="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&s=32">` ~
-					`</a>` ~
+				`<td class="mini-post-info-avatar">`);
+		putGravatar(gravatarHash, "http://www.gravatar.com/" ~ gravatarHash, `title="` ~ encodeHtmlEntities(author) ~ `'s Gravatar profile"`, 32);
+		html.put(
 				`</td>` ~
 				`<td>` ~
 					`Posted by <b>`), html.putEncodedEntities(author), html.put(`</b>`,
@@ -2170,10 +2176,9 @@ void formatSplitPost(Rfc850Post post, bool footerNav)
 			`</th></tr>` ~
 			`<tr><td class="horizontal-post-info">` ~
 				`<table><tr>` ~
-					`<td class="post-info-avatar" rowspan="`, text(infoRows.length), `">` ~
-						`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`), html.putEncodedEntities(author), html.put(`'s Gravatar profile">` ~
-							`<img alt="Gravatar" class="post-gravatar" width="48" height="48" src="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&s=48">` ~
-						`</a>` ~
+					`<td class="post-info-avatar" rowspan="`, text(infoRows.length), `">`);
+		putGravatar(gravatarHash, "http://www.gravatar.com/" ~ gravatarHash, `title="` ~ encodeHtmlEntities(author) ~ `'s Gravatar profile"`, 80);
+		html.put(
 					`</td>` ~
 					`<td><table>`);
 		foreach (a; infoRows)
@@ -3623,11 +3628,8 @@ void formatSearchResult(Rfc850Post post, string snippet)
 			`</tr>` ~
 			`<tr>` ~
 				`<td class="post-info">` ~
-					`<div class="post-author">`), html.putEncodedEntities(author), html.put(`</div>` ~
-					`<a href="http://www.gravatar.com/`, gravatarHash, `" title="`), html.putEncodedEntities(author), html.put(`'s Gravatar profile">` ~
-						`<img alt="Gravatar" class="post-gravatar" width="80" height="80" src="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon">` ~
-					`</a>`
-		);
+					`<div class="post-author">`), html.putEncodedEntities(author), html.put(`</div>`);
+		putGravatar(gravatarHash, "http://www.gravatar.com/" ~ gravatarHash, `title="` ~ encodeHtmlEntities(author) ~ `'s Gravatar profile"`, 80);
 
 		html.put(
 				`</td>` ~
