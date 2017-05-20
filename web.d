@@ -229,11 +229,6 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		// Needs changes to forum-template.dd
 	}
 
-	static string gravatar(string authorEmail)
-	{
-		return `https://www.gravatar.com/avatar/` ~ getGravatarHash(authorEmail) ~ `?d=identicon&s=256`;
-	}
-
 	try
 	{
 		if (banCheck(ip, request))
@@ -370,7 +365,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				breadcrumbs ~= `<a href="/group/` ~encodeHtmlEntities(groupInfo.urlName)~`">` ~ encodeHtmlEntities(groupInfo.publicName) ~ `</a>`;
 				breadcrumbs ~= `<a href="/thread/`~encodeHtmlEntities(pathX)~`">` ~ encodeHtmlEntities(subject) ~ `</a>` ~ pageStr;
 				extraHeaders ~= canonicalHeader; // Google confuses /post/ URLs with threads
-				addMetadata(null, idToUrl(threadID, "thread"), gravatar(authorEmail));
+				addMetadata(null, idToUrl(threadID, "thread"), gravatar(authorEmail, gravatarMetaSize));
 				break;
 			}
 			case "post":
@@ -392,7 +387,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 					title = subject;
 					breadcrumbs ~= `<a href="/group/` ~encodeHtmlEntities(currentGroup.urlName)~`">` ~ encodeHtmlEntities(currentGroup.publicName) ~ `</a>`;
 					breadcrumbs ~= `<a href="/post/`~encodeHtmlEntities(pathX)~`">` ~ encodeHtmlEntities(subject) ~ `</a> (view single post)`;
-					addMetadata(null, idToUrl(id), gravatar(authorEmail));
+					addMetadata(null, idToUrl(id), gravatar(authorEmail, gravatarMetaSize));
 					break;
 				}
 				else
@@ -1789,6 +1784,13 @@ string[] formatPostParts(Rfc850Post post)
 	visitParts(post.parts, null);
 	return partList;
 }
+
+string gravatar(string authorEmail, int size)
+{
+	return `https://www.gravatar.com/avatar/%s?d=identicon&s=%d`.format(getGravatarHash(authorEmail), size);
+}
+
+enum gravatarMetaSize = 256;
 
 string getGravatarHash(string email)
 {
