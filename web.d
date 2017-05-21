@@ -2184,7 +2184,7 @@ void formatSplitPost(Rfc850Post post, bool footerNav)
 			`<tr><td class="horizontal-post-info">` ~
 				`<table><tr>` ~
 					`<td class="post-info-avatar" rowspan="`, text(infoRows.length), `">`);
-		putGravatar(gravatarHash, "http://www.gravatar.com/" ~ gravatarHash, `title="` ~ encodeHtmlEntities(author) ~ `'s Gravatar profile"`, 80);
+		putGravatar(gravatarHash, "http://www.gravatar.com/" ~ gravatarHash, `title="` ~ encodeHtmlEntities(author) ~ `'s Gravatar profile"`, 48);
 		html.put(
 					`</td>` ~
 					`<td><table>`);
