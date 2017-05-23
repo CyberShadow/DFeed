@@ -198,6 +198,10 @@ a.secretlink:visited {
 	border: none;
 }
 
+img.post-gravatar {
+	display: block;
+}
+
 /* Read/unread messages */
 
 .forum-unread,
@@ -394,8 +398,7 @@ div#footernav a {
 	width : 2.2em;
 	height: 2.2em;
 	border-width: 0.3em;
-	margin: -0.05em;
-	display: block;
+	margin: 0;
 }
 
 /*************** Thread view, individual posts ***************/
@@ -516,7 +519,7 @@ body.have-javascript .forum-expand-container.open.thread-overview-pager .forum-e
 	font-size: 130%;
 }
 #forum-content a img.post-gravatar {
-	margin-top: 0.35em;
+	margin: 0.35em;
 	border: 5px solid #E6E6E6;
 }
 .post-info > hr {
