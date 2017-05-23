@@ -1807,12 +1807,16 @@ void putGravatar(string gravatarHash, string linkTarget, string aProps = null, i
 		html.put(
 			`width="`, sizeStr, `" height="`, sizeStr, `" ` ~
 			`src="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&amp;s=`, sizeStr, `" ` ~
-			`srcset="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&amp;s=`, x2str, ` `, x2str, `w">`);
+			`srcset="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&amp;s=`, x2str, ` `, x2str, `w"` ~
+			`>`
+		);
 	}
 	else
 		html.put(
 			`src="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon" ` ~
-			`srcset="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&amp;s=160 2x">`);
+			`srcset="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&amp;s=160 2x"` ~
+			`>`
+		);
 	html.put(`</a>`);
 }
 // ***********************************************************************
