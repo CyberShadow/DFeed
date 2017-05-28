@@ -3417,8 +3417,6 @@ void discussionSearch(UrlParameters parameters)
 {
 	// HTTP form parameters => search string (visible in form, ?q= parameter) => search query (sent to database)
 
-	bool doSearch = true;
-
 	string[] terms;
 	if (string searchScope = parameters.get("scope", null))
 	{
@@ -3453,6 +3451,8 @@ void discussionSearch(UrlParameters parameters)
 		terms ~= "date:" ~ parameters.get("startdate", null) ~ ".." ~ parameters.get("enddate", null);
 
 	auto searchString = terms.map!strip.filter!(not!empty).join(" ");
+	bool doSearch = searchString.length > 0;
+	string autoFocus = doSearch ? "" : " autofocus";
 
 	if ("advsearch" in parameters)
 	{
@@ -3461,7 +3461,7 @@ void discussionSearch(UrlParameters parameters)
 			`<h1>Advanced Search</h1>` ~
 			`<p>Find posts with...</p>` ~
 			`<table>` ~
-				`<tr><td>all these words:`     ~ ` </td><td><input size="50" name="q" value="`), html.putEncodedEntities(searchString), html.put(`" autofocus></td></tr>` ~
+				`<tr><td>all these words:`     ~ ` </td><td><input size="50" name="q" value="`), html.putEncodedEntities(searchString), html.put(`"`, autoFocus, `></td></tr>` ~
 				`<tr><td>this exact phrase:`   ~ ` </td><td><input size="50" name="exact"></td></tr>` ~
 				`<tr><td>none of these words:` ~ ` </td><td><input size="50" name="not"></td></tr>` ~
 				`<tr><td>posted in the group:` ~ ` </td><td><input size="50" name="group"></td></tr>` ~
@@ -3483,14 +3483,14 @@ void discussionSearch(UrlParameters parameters)
 		html.put(
 			`<form method="get" id="search-form">` ~
 			`<h1>Search</h1>` ~
-			`<input name="q" size="50" value="`), html.putEncodedEntities(searchString), html.put(`" autofocus>` ~
+			`<input name="q" size="50" value="`), html.putEncodedEntities(searchString), html.put(`"`, autoFocus, `>` ~
 			`<input name="search" type="submit" value="Search">` ~
 			`<input name="advsearch" type="submit" value="Advanced search">` ~
 			`</form>`
 		);
 	}
 
-	if (searchString.length && doSearch)
+	if (doSearch)
 		try
 		{
 			long startDate = 0;
