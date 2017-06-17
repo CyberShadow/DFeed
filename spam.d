@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015, 2017  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -353,6 +353,9 @@ class SimpleChecker : SpamChecker
 		foreach (keyword; ["<a href=", "[url=", "[url]http"])
 			if (text.contains(keyword))
 				return handler(false, "Your post contains a suspicious keyword or character sequence");
+
+		if (subject.length + text.length < 30 && "parent" !in process.draft.serverVars)
+			return handler(false, "Your top-level post is suspiciously short");
 
 		handler(true, null);
 	}
