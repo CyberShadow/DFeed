@@ -605,6 +605,16 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				deletePost(postVars);
 				break;
 			}
+			case "api-delete":
+			{
+				enforce(config.apiSecret.length, "No API secret configured");
+				enforce(parameters.get("secret", null) == config.apiSecret, "Incorrect secret");
+				enforce(path.length == 3, "Invalid URL");
+				auto group = path[1];
+				auto id = path[2].to!int;
+				deletePostApi(group, id);
+				return response.serveText(html.get().idup);
+			}
 			case "loginform":
 			{
 				discussionLoginForm(parameters);
@@ -2861,15 +2871,38 @@ void deletePost(UrlParameters vars)
 {
 	if (vars.get("secret", "") != userSettings.secret)
 		throw new Exception("XSRF secret verification failed. Are your cookies enabled?");
-	auto post = getPost(vars.get("id", ""));
-	enforce(post, "Post not found");
 
+	string messageID = vars.get("id", "");
+	string userName = user.getName();
 	string reason = vars.get("reason", "");
+	bool ban = vars.get("ban", "No") == "Yes";
+
+	deletePostImpl(messageID, reason, userName, ban, (string s) { html.put(s ~ "<br>"); });
+}
+
+void deletePostApi(string group, int artNum)
+{
+	string messageID;
+	foreach (string id; query!"SELECT [ID] FROM [Groups] WHERE [Group] = ? AND [ArtNum] = ?".iterate(group, artNum))
+		messageID = id;
+	enforce(messageID, "No such article in this group");
+
+	string reason = "API call";
+	string userName = "API";
+	bool ban = false;
+
+	deletePostImpl(messageID, reason, userName, ban, (string s) { html.put(s ~ "\n"); });
+}
+
+void deletePostImpl(string messageID, string reason, string userName, bool ban, void delegate(string) feedback)
+{
+	auto post = getPost(messageID);
+	enforce(post, "Post not found");
 
 	auto deletionLog = new FileLogger("Deleted");
 	scope(exit) deletionLog.close();
 	scope(failure) deletionLog("An error occurred");
-	deletionLog("User %s is deleting post %s (%s)".format(user.getName(), post.id, reason));
+	deletionLog("User %s is deleting post %s (%s)".format(userName, post.id, reason));
 	foreach (line; post.message.splitAsciiLines())
 		deletionLog("> " ~ line);
 
@@ -2878,18 +2911,18 @@ void deletePost(UrlParameters vars)
 	foreach (string[string] values; query!"SELECT * FROM `Threads` WHERE `ID` = ?".iterate(post.id))
 		deletionLog("[Threads] row: " ~ values.toJson());
 
-	if (vars.get("ban", "No") == "Yes")
+	if (ban)
 	{
-		banPoster(user.getName(), post.id, reason);
+		banPoster(userName, post.id, reason);
 		deletionLog("User was banned for this post.");
-		html.put("User banned.<br>");
+		feedback("User banned.<br>");
 	}
 
 	query!"DELETE FROM `Posts` WHERE `ID` = ?".exec(post.id);
 	query!"DELETE FROM `Threads` WHERE `ID` = ?".exec(post.id);
 
 	dbVersion++;
-	html.put("Post deleted.");
+	feedback("Post deleted.");
 }
 
 // Create logger on demand, to avoid creating empty log files
@@ -4084,6 +4117,7 @@ struct Config
 {
 	ListenConfig listen;
 	string staticDomain = null;
+	string apiSecret = null;
 	bool indexable = false;
 }
 const Config config;
