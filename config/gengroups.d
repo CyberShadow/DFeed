@@ -35,8 +35,8 @@ DGroupInfo makeDGroupInfo(string internalName, string publicName, string urlName
 	{
 		info.alsoVia["03-bugzilla"] = DAlsoVia("Bugzilla", `https://issues.dlang.org/`);
 		info.postMessage =
-			`You are viewing a Bugzilla message archive.<br>`
-			`To report a bug, please visit the <a href="https://issues.dlang.org/">D Bugzilla</a> or `
+			`You are viewing a Bugzilla message archive.<br>` ~
+			`To report a bug, please visit the <a href="https://issues.dlang.org/">D Bugzilla</a> or `~
 				`<a href="/newpost/digitalmars.D">post to digitalmars.D</a>.`;
 	}
 	if (mlOnly)
