@@ -3591,12 +3591,17 @@ void discussionSearch(UrlParameters parameters)
 
 			foreach (int rowid, string snippet; iterator)
 			{
+				//html.put(`<pre>`, snippet, `</pre>`);
+				string messageID;
+				foreach (string id; query!"SELECT [ID] FROM [Posts] WHERE [ROWID] = ?".iterate(rowid))
+					messageID = id;
+				if (!messageID)
+					continue; // Can occur with deleted posts
+
 				n++;
 				if (n > postsPerPage)
 					break;
 
-				//html.put(`<pre>`, snippet, `</pre>`);
-				auto messageID = query!"SELECT [ID] FROM [Posts] WHERE [ROWID] = ?".iterate(rowid).selectValue!string();
 				auto post = getPost(messageID);
 				if (post)
 				{
