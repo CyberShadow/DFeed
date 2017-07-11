@@ -80,7 +80,6 @@ void main(string[] args)
 	startWebUI();
 
 	startNewsSources();
-	startBackup();
 
 	socketManager.loop();
 
