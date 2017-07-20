@@ -2839,7 +2839,7 @@ string findPostingLog(string id)
 		else
 		{
 			import std.process;
-			auto result = execute(["find", "logs", "-name", "*PostProcess-" ~ post ~ ".log"]); // This is MUCH faster than dirEntries.
+			auto result = execute(["find", "logs/", "-name", "*PostProcess-" ~ post ~ ".log"]); // This is MUCH faster than dirEntries.
 			enforce(result.status == 0, "find error");
 			auto logs = splitLines(result.output);
 		}
