@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2015, 2016  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2015, 2016, 2017  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -60,6 +60,10 @@ shared static this()
 
 	db = new SQLite(dbFileName);
 	dumpSchema();
+
+	// Protect against locked database due to queries from command
+	// line or cron
+	db.exec("PRAGMA busy_timeout = 100;");
 }
 
 // ***************************************************************************
