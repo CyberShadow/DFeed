@@ -2428,11 +2428,26 @@ void createDraft(PostDraft draft)
 		.exec(draft.clientVars["did"], userSettings.id, draft.status, draft.clientVars.toJson, draft.serverVars.toJson, Clock.currTime.stdTime);
 }
 
+// Handle backwards compatibility in stored drafts
+UrlParameters jsonParseUrlParameters(string json)
+{
+	if (!json)
+		return UrlParameters.init;
+	try
+		return jsonParse!UrlParameters(json);
+	catch (Exception e)
+	{
+		static struct S { string[][string] items; }
+		S s = jsonParse!S(json);
+		return UrlParameters(s.items);
+	}
+}
+
 PostDraft getDraft(string draftID)
 {
 	T parse(T)(string json) { return json ? json.jsonParse!T : T.init; }
 	foreach (int status, string clientVars, string serverVars; query!"SELECT [Status], [ClientVars], [ServerVars] FROM [Drafts] WHERE [ID] == ?".iterate(draftID))
-		return PostDraft(status, parse!UrlParameters(clientVars), parse!(string[string])(serverVars));
+		return PostDraft(status, jsonParseUrlParameters(clientVars), parse!(string[string])(serverVars));
 	throw new Exception("Can't find this message draft");
 }
 
