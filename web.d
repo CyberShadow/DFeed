@@ -3486,7 +3486,7 @@ void discussionSearch(UrlParameters parameters)
 		foreach (word; parameters["not"].split)
 			terms ~= "-" ~ word.stripLeft('-');
 
-	foreach (param; ["group", "author", "authoremail", "subject", "content"])
+	foreach (param; ["group", "author", "authoremail", "subject", "content", "newthread"])
 		if (parameters.get(param, null).length)
 			foreach (word; parameters[param].split)
 			{
@@ -3518,6 +3518,7 @@ void discussionSearch(UrlParameters parameters)
 				`<tr><td>in threads titled:`   ~ ` </td><td><input size="50" name="subject"></td></tr>` ~
 				`<tr><td>containing:`          ~ ` </td><td><input size="50" name="content"></td></tr>` ~
 				`<tr><td>posted between:`      ~ ` </td><td><input type="date" placeholder="yyyy-mm-dd" name="startdate"> and <input type="date" placeholder="yyyy-mm-dd" name="enddate"></td></tr>` ~
+				`<tr><td>posted as new thread:`~ ` </td><td><input type="checkbox" name="newthread" value="y"><input size="1" tabindex="-1" style="visibility:hidden"></td></tr>` ~
 			`</table>` ~
 			`<br>` ~
 			`<input name="search" type="submit" value="Advanced search">` ~
