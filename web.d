@@ -3607,9 +3607,9 @@ void discussionSearch(UrlParameters parameters)
 				queryTerms.length
 				?
 					(startDate == 0 && endDate == long.max)
-					? query!(queryCommon ~ " WHERE [PostSearch] MATCH ?                            LIMIT ? OFFSET ?")
+					? query!(queryCommon ~ " WHERE [PostSearch] MATCH ?                            ORDER BY [Time] DESC LIMIT ? OFFSET ?")
 						.iterate(queryString,                     postsPerPage + 1, (page-1)*postsPerPage)
-					: query!(queryCommon ~ " WHERE [PostSearch] MATCH ? AND [Time] BETWEEN ? AND ? LIMIT ? OFFSET ?")
+					: query!(queryCommon ~ " WHERE [PostSearch] MATCH ? AND [Time] BETWEEN ? AND ? ORDER BY [Time] DESC LIMIT ? OFFSET ?")
 						.iterate(queryString, startDate, endDate, postsPerPage + 1, (page-1)*postsPerPage)
 				: query!("SELECT [ROWID], '' FROM [Posts] WHERE [Time] BETWEEN ? AND ? ORDER BY [Time] DESC LIMIT ? OFFSET ?")
 					.iterate(startDate, endDate, postsPerPage + 1, (page-1)*postsPerPage)
