@@ -177,7 +177,19 @@ private:
 				{
 					msg = "X-DFeed-List: " ~ list ~ "\n" ~ msg;
 					scope(failure) std.file.write("errormsg", msg);
-					auto post = new Rfc850Post(msg);
+					Rfc850Post post;
+					version (mailman_strict)
+						post = new Rfc850Post(msg);
+					else
+					{
+						try
+							post = new Rfc850Post(msg);
+						catch (Exception e)
+						{
+							log("Invalid message: " ~ e.msg);
+							continue;
+						}
+					}
 					foreach (int n; query!"SELECT COUNT(*) FROM `Posts` WHERE `ID` = ?".iterate(post.id))
 						if (n == 0)
 						{
