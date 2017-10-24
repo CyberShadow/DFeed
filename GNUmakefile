@@ -5,8 +5,6 @@ HTMLTOOL=java -jar $(HTMLCOMPRESSOR) --compress-css
 JSTOOL=java -jar $(YUICOMPRESSOR) --type js
 CSSTOOL=java -jar $(YUICOMPRESSOR) --type css
 
-DLANG=web/static/dlang.org
-
 TARGETS : \
 	web/skel.min.htt \
 	web/help.min.htt \
@@ -25,15 +23,6 @@ TARGETS : \
 
 %.min.css : %.css $(YUICOMPRESSOR)
 	$(CSSTOOL) < $< > $@
-
-web/skel.htt : $(DLANG)/forum-template.html
-	cp $^ $@
-
-DDOC=$(DLANG)/macros.ddoc $(DLANG)/html.ddoc $(DLANG)/dlang.org.ddoc $(DLANG)/windows.ddoc $(DLANG)/doc.ddoc
-
-$(DLANG)/forum-template.html : $(DLANG)/forum-template.dd $(DDOC)
-	@# cd $(DLANG) && make --debug -f posix.mak forum-template.html DMD=$(shell which dmd) LATEST=latest DOC_OUTPUT_DIR=.
-	dmd -o- -c -D $(DDOC) $^ -Df$@
 
 $(HTMLCOMPRESSOR) :
 	wget https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/htmlcompressor/$(HTMLCOMPRESSOR)

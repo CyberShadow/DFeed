@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <title><?title?> - notmuch forum</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.1, maximum-scale=10.0">
+    <?extraheaders?>
+    <link rel="stylesheet" href="<?static:/css/dfeed.css?>">
+    <link rel="stylesheet" href="<?static:/css/notmuch.css?>">
+  </head>
+  <body id='' class='forum <?bodyclass?>'>
+    <script type="text/javascript">document.body.className += ' have-javascript'</script>
+    <div class="container">    
+      <div class="subnav-helper"></div>
+      <div class="subnav">
+        <div class="head">
+          <h2>Forums</h2>
+          <p><a href="/">Forum Index</a></p>
+        </div>
+        <ul>
+          <li><?category1?>
+            <ul>
+              <li><a href="<?url1?>"><?title1?></a></li>
+              <li><a href="<?url2?>"><?title2?></a></li>
+            </ul>
+          </li>
+          <li>
+            <?category2?>
+            <ul>
+              <li><a href="<?url1?>"><?title1?></a></li>
+              <li><a href="<?url2?>"><?title2?></a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+
+      <div class="" id="content">
+        <div class="smallprint" id="tools"><?tools?></div>
+        <h1></h1>
+
+        <div id="forum-content"><?content?></div>
+        
+        <div id="footernav">
+          <a href="#top" title="Jump to the top of the page">Top</a> |
+	  <a href="/">Forum index</a> |
+	  <a href="/help#about">About this forum</a>
+        </div>
+      </div>
+    </div>
+
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+    <script type="text/javascript" src="<?static:/js/dfeed.js?>"></script>
+  </body>
+</html>
