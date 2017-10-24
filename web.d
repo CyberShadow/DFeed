@@ -2544,7 +2544,7 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 			`</table>`);
 		return false;
 	}
-	if (info.sinkType == "smtp")
+	if (info.sinkType == "smtp" && info.subscriptionRequired)
 	{
 		auto config = loadIni!SmtpConfig("config/sources/smtp/" ~ info.sinkName ~ ".ini");
 		html.put(`<div class="forum-notice">Note: you are posting to a mailing list.<br>` ~

@@ -39,3 +39,8 @@ alsoVia.nntp.url=news://news.example.com/example
 # will be consulted.
 sinkType=smtp
 sinkName=example
+
+# Whether to show a warning that a subscription is required
+# when attempting to post to a mailing list (sinkType==smtp).
+# Enabled by default.
+subscriptionRequired=true

@@ -1,4 +1,4 @@
-/*  Copyright (C) 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2015, 2017  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -38,6 +38,7 @@ struct Config
 		string internalName, publicName, urlName, groupSet, description, postMessage, sinkType, sinkName;
 		string[] urlAliases;
 		OrderedMap!(string, AlsoVia) alsoVia;
+		bool subscriptionRequired = true;
 	}
 	OrderedMap!(string, Group) groups;
 }
