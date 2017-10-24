@@ -30,9 +30,6 @@ $(HTMLCOMPRESSOR) :
 $(YUICOMPRESSOR) :
 	wget https://github.com/yui/yuicompressor/releases/download/v2.4.8/$(YUICOMPRESSOR)
 
-config/groups.ini : config/gengroups.d
-	cd config && rdmd -I.. gengroups
-
 # Create junction on Windows, in lieu of Git/Windows symlink support
 deimos/openssl/ssl.d : deimos-openssl/deimos/openssl/ssl.d
 	rm -f deimos/openssl

@@ -38,6 +38,3 @@
 
 # Deimos
 /deimos/openssl/
-
-# Generated from dlang.org
-/config/gengroups
