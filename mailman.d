@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015, 2017  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -137,7 +137,7 @@ private:
 					return;
 				}
 				auto html = readText(fn);
-				auto re = regex(`<A href="(\d+-\w+\.txt(\.gz)?)">`);
+				auto re = regex(`<A href="(\d+(-\w+)?\.txt(\.gz)?)">`);
 				foreach (line; splitLines(html))
 				{
 					auto m = match(line, re);
