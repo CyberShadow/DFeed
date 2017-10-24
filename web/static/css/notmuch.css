@@ -12,6 +12,9 @@ body {
     display: inline-block;
     padding-left: .5em;
 }
+#forum-index-header h1 {
+    display: none;
+}
 
 #search-box {
 	float: right;
