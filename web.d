@@ -210,7 +210,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		assert(title, "No title for metadata");
 
 		if (!description)
-			description = "D Programming Language Discussion Forum";
+			description = site.config.name;
 
 		if (!image)
 			image = "https://dlang.org/images/dlogo_opengraph.png";
@@ -1018,7 +1018,7 @@ void discussionIndexHeader()
 	string name = user.isLoggedIn() ? user.getName() : userSettings.name.length ? userSettings.name.split(' ')[0] : `Guest`;
 	html.put(
 		`<div id="forum-index-header">` ~
-		`<h1>D Programming Language Forum</h1>` ~
+		`<h1>`), html.putEncodedEntities(site.config.name), html.put(`</h1>` ~
 		`<p>Welcome`, previousSession ? ` back` : ``, `, `), html.putEncodedEntities(name), html.put(`.</p>` ~
 
 		`<ul>`
