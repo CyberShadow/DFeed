@@ -10,3 +10,7 @@ name = Example Forum
 # Default is "localhost".
 
 host = forum.example.com
+
+# A description of this DFeed instance to be shown on the help page (in the About section).
+
+about = <p>This is an example DFeed instance.</p>

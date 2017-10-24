@@ -680,7 +680,17 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				break;
 			case "help":
 				breadcrumbs ~= title = "Help";
-				html.put(readText(optimizedPath(null, "web/help.htt")));
+				html.put(readText(optimizedPath(null, "web/help.htt"))
+					.parseTemplate(
+						(string name)
+						{
+							switch (name)
+							{
+								case "about" : return site.config.about;
+								default: throw new Exception("Unknown variable in help template: " ~ name);
+							}
+						}
+					));
 				break;
 
 			// dlang.org front page iframes

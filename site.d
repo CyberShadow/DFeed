@@ -1,4 +1,4 @@
-/*  Copyright (C) 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2014, 2015, 2017  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -20,6 +20,7 @@ struct Config
 {
 	string name;
 	string host = "localhost";
+	string about;
 }
 immutable Config config;
 
