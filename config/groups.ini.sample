@@ -30,3 +30,12 @@ groupSet=example-set
 # alsoVia is an optional set of links for other ways to access this group.
 alsoVia.nntp.name=NNTP
 alsoVia.nntp.url=news://news.example.com/example
+
+# How posted messages are propagated.
+# sinkType can be smtp or nntp.
+#
+# The corresponding configuration file from
+# config/sinks/<sinkType>/<sinkName>.ini
+# will be consulted.
+sinkType=smtp
+sinkName=example
