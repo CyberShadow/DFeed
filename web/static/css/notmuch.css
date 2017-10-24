@@ -1,1 +1,18 @@
-.subnav { display: none; }
+.navigation { display: none; }
+.left { float: left; padding-right: 0.5em; }
+
+body {
+	font-family: sans-serif;
+}
+
+#tools {
+	padding: 0.2em;
+}
+#content #tools .tip {
+    display: inline-block;
+    padding-left: .5em;
+}
+
+#search-box {
+	float: right;
+}

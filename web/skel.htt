@@ -11,8 +11,24 @@
   <body id='' class='forum <?bodyclass?>'>
     <script type="text/javascript">document.body.className += ' have-javascript'</script>
     <div class="container">    
-      <div class="subnav-helper"></div>
-      <div class="subnav">
+
+      <div id="search-box">
+        <form method="get" action="/search">
+          <span id="search-query"><input id="q" name="q" placeholder="Search"></span>
+          <span id="search-dropdown"><span class="helper">
+              <select id="search-scope" name="scope" size="1">
+                <?search-options?>
+                </select>
+            </span>
+          </span>
+          <span id="search-submit"><button type="submit"><span>go</span></button></span>
+        </form>
+      </div>
+      
+      <p><a href="/"><img src="https://notmuchmail.org/notmuch-logo.png" width="58" height="50" alt="Notmuch logo" class="left" /></a></p>
+      <h1>Notmuch Discussion Forum</h1>
+      
+      <div class="navigation">
         <div class="head">
           <h2>Forums</h2>
           <p><a href="/">Forum Index</a></p>
@@ -36,7 +52,6 @@
 
       <div class="" id="content">
         <div class="smallprint" id="tools"><?tools?></div>
-        <h1></h1>
 
         <div id="forum-content"><?content?></div>
         
@@ -49,6 +64,7 @@
     </div>
 
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+    <script type="text/javascript"><?extrajs?></script>
     <script type="text/javascript" src="<?static:/js/dfeed.js?>"></script>
   </body>
 </html>
