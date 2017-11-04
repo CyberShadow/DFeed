@@ -491,6 +491,20 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 					bodyClass = "formdoc";
 				break;
 			}
+			case "share":
+			{
+				enforce(path.length > 1, "No post specified");
+				auto post = getPost('<' ~ urlDecode(pathX) ~ '>');
+				enforce(post, "Post not found");
+				title = `Sharing "` ~ post.subject ~ `"`;
+				currentGroup = post.getGroup();
+				currentThread = post.threadID;
+				breadcrumbs ~= `<a href="/group/`~encodeHtmlEntities(currentGroup.urlName)~`">` ~ encodeHtmlEntities(currentGroup.publicName) ~ `</a>`;
+				breadcrumbs ~= `<a href="` ~ encodeHtmlEntities(idToUrl(post.id)) ~ `">` ~ encodeHtmlEntities(post.subject) ~ `</a>`;
+				breadcrumbs ~= `<a href="/share/`~pathX~`">Share thread</a>`;
+				showShareLinks(post);
+				break;
+			}
 			case "send":
 			{
 				auto postVars = request.decodePostData();
@@ -1970,11 +1984,19 @@ void postActions(Rfc850Message msg)
 {
 	auto id = msg.id;
 	if (userSettings.groupViewMode == "basic")
+	{
 		html.put(
 			`<a class="actionlink permalink" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" ` ~
 				`title="Canonical link to this post. See &quot;Canonical links&quot; on the Help page for more information.">` ~
 				`<img src="`, staticPath("/images/link.png"), `">Permalink` ~
 			`</a>`);
+
+		html.put(
+			`<a class="actionlink sharelink" href="`), html.putEncodedEntities(idToUrl(id, "share")), html.put(`" `
+				`title="Share this post on various platforms">`
+				`<img src="`, staticPath("/images/share.png"), `">Share`
+			`</a>`);
+	}
 	if (true)
 		html.put(
 			`<a class="actionlink replylink" href="`), html.putEncodedEntities(idToUrl(id, "reply")), html.put(`" title="Reply to this post">` ~
@@ -2850,6 +2872,53 @@ void discussionPostStatus(PostProcess process, out bool refresh, out string redi
 			refresh = true;
 			return;
 	}
+}
+
+void showShareLinks(Rfc850Post post)
+{
+    auto url = urlEncodeMessageUrl(post.url);
+    auto subject = urlEncodeMessageUrl(post.msg.subject);
+    html.put(`<ul>`);
+    html.put(`<li><a href="https://www.facebook.com/sharer/sharer.php?u=`, url, `&t=`, subject, `" target="_blank" class="social-share-link">Share on Facebook</a></li>`);
+    // TODO: should we use the url shortener here?
+    html.put(`<li><a href="https://www.twitter.com/intent/tweet?url=`, url, `&text=`, subject ,`" target="_blank" class="social-share-link">Share on Twitter</a></li>`);
+    html.put(`<li><a href="https://plus.google.com/share?url=`,url, `" target="_blank" class="social-share-link">Share on Google+</a></li>`);
+    html.put(`<li><a href="https://www.reddit.com/submit?url=`,url,`&title=`, subject, `" target="_blank">Share on Reddit</a></li>`);
+    html.put(`<li><a href="https://news.ycombinator.com/submitlink?u=`, url,`&t=`, subject,`" target="_blank" class="social-share-link">Share on HackerNews</a></li>`);
+    html.put(`<li><a href="https://www.linkedin.com/shareArticle?url=`, url,`&mini=true&title=`, subject,`&source=DLang Forum" target="_blank" class="social-share-link">Share on LinkedIn</a></li>`);
+    // slashdot doesn't support prefilling the URL, but we keep it to remind people
+    html.put(`<li><a href="https://slashdot.org/submission" target="_blank" class="social-share-link">Share on Slashdot</a></li>`);
+    // is this even useful?
+    //html.put(`<li><a href="whatsapp://send?text=`, url ,`" class="social-mobile">Share on WhatsApp</a></li>`);
+    //html.put(`<li><a href="telegram://send?text=`, url ,`" class="social-mobile">Share on Telegram</a></li>`);
+    html.put(`<li><a href="mailto:?subject=`, subject,`&body=`, url,`">Share via mail</a></li>`);
+    html.put(`</ul>`);
+    html.put(`<script>Array.prototype.forEach.call(document.getElementsByClassName("social-share-link"), function(el){
+        el.addEventListener("click", function() {
+            var window_size = "";
+            var url = this.href;
+            var domain = url.split("/")[2];
+            switch(domain) {
+                case "www.facebook.com":
+                    window_size = "width=585,height=368";
+                    break;
+                case "www.twitter.com":
+                    window_size = "width=585,height=261";
+                    break;
+                case "plus.google.com":
+                    window_size = "width=600,height=600";
+                    break;
+                case "www.linkedin.com":
+                    window_size = "width=520,height=570";
+                    break;
+                case "news.ycombinator.com":
+                    window_size = "width=750,height=228";
+                    break;
+            }
+            window.open(url, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,' + window_size);
+            return false;
+        })
+    });</script>`);
 }
 
 // ***********************************************************************
