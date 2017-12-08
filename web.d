@@ -615,6 +615,20 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				deletePostApi(group, id);
 				return response.serveText(html.get().idup);
 			}
+			case "flag":
+			case "unflag":
+			{
+				enforce(user.getLevel() >= User.Level.canFlag, "You can't flag posts");
+				enforce(path.length > 1, "No post specified");
+				auto post = getPost('<' ~ urlDecode(pathX) ~ '>');
+				enforce(post, "Post not found");
+				title = `Flag "` ~ post.subject ~ `" by ` ~ post.author; // "
+				breadcrumbs ~= `<a href="` ~ encodeHtmlEntities(idToUrl(post.id)) ~ `">` ~ encodeHtmlEntities(post.subject) ~ `</a>`;
+				breadcrumbs ~= `<a href="/`~path[0]~`/`~pathX~`">Flag post</a>`;
+				discussionFlagPage(post, path[0] == "flag", request.method == "POST" ? request.decodePostData() : UrlParameters.init);
+				bodyClass ~= " formdoc";
+				break;
+			}
 			case "loginform":
 			{
 				discussionLoginForm(parameters);
@@ -1964,7 +1978,7 @@ void discussionVSplitPost(string id)
 
 // ***********************************************************************
 
-enum maxPostActions = 4;
+enum maxPostActions = 5;
 
 void postActions(Rfc850Message msg)
 {
@@ -1992,6 +2006,11 @@ void postActions(Rfc850Message msg)
 		html.put(
 			`<a class="actionlink sourcelink" href="`), html.putEncodedEntities(idToUrl(id, "subscribe")), html.put(`" title="Subscribe to this thread">` ~
 				`<img src="`, staticPath("/images/star.png"), `">Subscribe` ~
+			`</a>`);
+	if (user.getLevel() >= User.Level.canFlag && user.createdAt() < msg.time)
+		html.put(
+			`<a class="actionlink sourcelink" href="`), html.putEncodedEntities(idToUrl(id, "flag")), html.put(`" title="Flag this post for moderator intervention">` ~
+				`<img src="`, staticPath("/images/flag.png"), `">Flag` ~
 			`</a>`);
 	if (user.getLevel() >= User.Level.hasRawLink)
 		html.put(
@@ -3063,6 +3082,63 @@ bool banCheck(string ip, HttpRequest request)
 		saveBanList();
 
 	return true;
+}
+
+void discussionFlagPage(Rfc850Post post, bool flag, UrlParameters postParams)
+{
+	static immutable string[2] actions = ["unflag", "flag"];
+	bool isFlagged = query!`SELECT COUNT(*) FROM [Flags] WHERE [Username]=? AND [PostID]=?`.iterate(user.getName(), post.id).selectValue!int > 0;
+	if (postParams == UrlParameters.init)
+	{
+		if (flag == isFlagged)
+		{
+		html.put(
+			`<div id="flagform-info" class="forum-notice">` ~
+				`It looks like you've already ` ~ actions[flag] ~ `ged this post. ` ~
+				`Would you like to <a href="`), html.putEncodedEntities(idToUrl(post.id, actions[!flag])), html.put(`"` ~ actions[!flag] ~ ` it?` ~
+			`</div>`);
+		}
+		else
+		{
+			html.put(
+				`<div id="flagform-info" class="forum-notice">` ~
+					`Are you sure you want to ` ~ actions[flag] ~ ` this post?` ~
+				`</div>`);
+			formatPost(post, null, false);
+			html.put(
+				`<form action="" method="post" class="forum-form flag-form" id="flagform">` ~
+					`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
+					`<input type="submit" name="flag" value="` ~ actions[flag].capitalize ~ `"></input>` ~
+					`<input type="submit" name="cancel" value="Cancel"></input>` ~
+				`</form>`);
+		}
+	}
+	else
+	{
+		if (postParams.get("secret", "") != userSettings.secret)
+			throw new Exception("XSRF secret verification failed. Are your cookies enabled?");
+
+		if ("flag" in postParams)
+		{
+			enforce(flag != isFlagged, "You've already " ~ actions[flag] ~ "ged this post.");
+
+			if (flag)
+				query!`INSERT INTO [Flags] ([PostID], [Username], [Date]) VALUES (?, ?, ?)`.exec(post.id, user.getName(), Clock.currTime.stdTime);
+			else
+				query!`DELETE FROM [Flags] WHERE [PostID]=? AND [Username]=?`.exec(post.id, user.getName());
+
+			html.put(
+				`<div id="flagform-info" class="forum-notice">` ~
+					`Post ` ~ actions[flag] ~ `ged.` ~
+				`</div>` ~
+				`<form action="" method="post" class="forum-form flag-form" id="flagform">` ~
+					`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
+					`<input type="submit" name="cancel" value="Return to post"></input>` ~
+				`</form>`);
+		}
+		else
+			throw new Redirect(idToUrl(post.id));
+	}
 }
 
 // ***********************************************************************
