@@ -18,6 +18,7 @@ Quick start guide:
     cd DFeed
     make
     echo "host = news.digitalmars.com" > config/sources/nntp/digitalmars.ini
+    echo "listen.port = 8080" > config/web.ini
     rdmd dfeed
 
 On first start, DFeed will download messages from the NNTP server
@@ -26,4 +27,4 @@ If you don't want to download the entire archive, stop DFeed at any time
 and delete the `digitalmars.ini` configuration file.
 
 After starting `dfeed`, you should be able to access the web
-interface at http://localhost/.
+interface at http://localhost:8080/.
