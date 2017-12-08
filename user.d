@@ -56,6 +56,7 @@ abstract class User
 	{
 		guest          =   0, /// Default user level
 		hasRawLink     =   1, /// Get a clickable "raw post" link.
+		canFlag        =   2, /// Can flag posts
 		canDeletePosts = 100, /// Can delete posts locally
 	}
 

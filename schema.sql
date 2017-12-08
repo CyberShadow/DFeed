@@ -132,3 +132,9 @@ CREATE INDEX [ThreadCreated] ON [Threads] ([Created] DESC);
 -- Index `PostAuthorEmail` on table `Posts`
 CREATE INDEX [PostAuthorEmail] ON [Posts] ([AuthorEmail]);
 
+-- Table `Flags`
+CREATE TABLE [Flags] ([PostID] VARCHAR(50), [Username] VARCHAR(50), [Date] INTEGER);
+
+-- Index `UserFlags` on table `Flags`
+CREATE INDEX [UserFlags] ON [Flags] ([Username], [PostID]);
+
