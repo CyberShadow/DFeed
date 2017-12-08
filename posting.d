@@ -315,7 +315,7 @@ private:
 		log("CAPTCHA OK");
 		if (user)
 		{
-			auto n = user.get("solvedCaptchas", "0", SettingType.registered).to!uint;
+			auto n = user.get("solved-captchas", "0", SettingType.registered).to!uint;
 			n++;
 			user.set("solved-captchas", text(n), SettingType.registered);
 			log("  (user solved %d CAPTCHAs)".format(n));
