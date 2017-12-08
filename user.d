@@ -18,6 +18,7 @@ module user;
 
 import core.bitop;
 
+import std.datetime.systime : SysTime, Clock;
 import std.functional;
 import std.string;
 import std.exception;
@@ -27,6 +28,7 @@ import ae.sys.data;
 import ae.sys.log;
 import ae.sys.timing;
 import ae.utils.text;
+import ae.utils.time : StdTime;
 import ae.utils.zlib;
 
 enum SettingType
@@ -48,6 +50,7 @@ abstract class User
 	abstract void logOut();
 	abstract void register(string username, string password, bool remember);
 	abstract bool isLoggedIn();
+	abstract SysTime createdAt();
 
 	enum Level : int
 	{
@@ -286,7 +289,8 @@ class GuestUser : User
 
 		// Create user
 		auto session = randomString();
-		query!"INSERT INTO `Users` (`Username`, `Password`, `Session`) VALUES (?, ?, ?)".exec(username, encryptPassword(password), session);
+		query!"INSERT INTO `Users` (`Username`, `Password`, `Session`, `Created`) VALUES (?, ?, ?, ?)"
+			.exec(username, encryptPassword(password), session, Clock.currTime.stdTime);
 
 		// Copy cookies to database
 		auto user = new RegisteredUser(username);
@@ -300,6 +304,7 @@ class GuestUser : User
 
 	override void logOut() { throw new Exception("Not logged in"); }
 	override bool isLoggedIn() { return false; }
+	override SysTime createdAt() { return Clock.currTime(); }
 }
 
 // ***************************************************************************
@@ -311,12 +316,14 @@ final class RegisteredUser : GuestUser
 	string[string] settings, newSettings;
 	string username;
 	Level level;
+	StdTime creationTime;
 
-	this(string username, string cookieHeader = null, Level level = Level.init)
+	this(string username, string cookieHeader = null, Level level = Level.init, StdTime creationTime = 0)
 	{
 		super(cookieHeader);
 		this.username = username;
 		this.level = level;
+		this.creationTime = creationTime;
 	}
 
 	override string get(string name, string defaultValue, SettingType settingType)
@@ -388,6 +395,7 @@ final class RegisteredUser : GuestUser
 	override void register(string username, string password, bool remember) { throw new Exception("Already registered"); }
 	override string getName() { return username; }
 	override Level getLevel() { return level; }
+	override SysTime createdAt() { return SysTime(creationTime); }
 
 	override void logOut()
 	{
@@ -474,8 +482,8 @@ User getUser(string cookieHeader)
 	auto guest = new GuestUser(cookieHeader);
 	if ("session" in guest.cookies)
 	{
-		foreach (string username, int level; query!"SELECT `Username`, `Level` FROM `Users` WHERE `Session` = ?".iterate(guest.cookies["session"]))
-			return new RegisteredUser(username, cookieHeader, cast(User.Level)level);
+		foreach (string username, int level, StdTime creationTime; query!"SELECT `Username`, `Level`, `Created` FROM `Users` WHERE `Session` = ?".iterate(guest.cookies["session"]))
+			return new RegisteredUser(username, cookieHeader, cast(User.Level)level, creationTime);
 	}
 	return guest;
 }
