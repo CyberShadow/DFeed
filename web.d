@@ -1978,49 +1978,52 @@ void discussionVSplitPost(string id)
 
 // ***********************************************************************
 
-enum maxPostActions = 5;
+struct PostAction { string className, text, title, url, icon; }
 
-void postActions(Rfc850Message msg)
+PostAction[] getPostActions(Rfc850Message msg)
 {
+	PostAction[] actions;
 	auto id = msg.id;
 	if (userSettings.groupViewMode == "basic")
-		html.put(
-			`<a class="actionlink permalink" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" ` ~
-				`title="Canonical link to this post. See &quot;Canonical links&quot; on the Help page for more information.">` ~
-				`<img src="`, staticPath("/images/link.png"), `">Permalink` ~
-			`</a>`);
+		actions ~= PostAction("permalink", "Permalink",
+			"Canonical link to this post. See \"Canonical links\" on the Help page for more information.",
+			idToUrl(id), "link");
 	if (true)
-		html.put(
-			`<a class="actionlink replylink" href="`), html.putEncodedEntities(idToUrl(id, "reply")), html.put(`" title="Reply to this post">` ~
-				`<img src="`, staticPath("/images/reply.png"), `">Reply` ~
-			`</a>`);
+		actions ~= PostAction("replylink", "Reply",
+			"Reply to this post",
+			idToUrl(id, "reply"), "reply");
 /*
 	if (mailHide)
-		html.put(
-			`<a class="actionlink emaillink" href="`, mailHide.getUrl(msg.authorEmail), `" ` ~
-				`title="Solve a CAPTCHA to obtain this poster's email address.">` ~
-				`<img src="`, staticPath("/images/email.png"), `">Email` ~
-			`</a>`);
+		actions ~= PostAction("emaillink", "Email",
+			"Solve a CAPTCHA to obtain this poster's email address.",
+			mailHide.getUrl(msg.authorEmail), "email");
 */
 	if (user.isLoggedIn() && msg.references.length == 0)
-		html.put(
-			`<a class="actionlink sourcelink" href="`), html.putEncodedEntities(idToUrl(id, "subscribe")), html.put(`" title="Subscribe to this thread">` ~
-				`<img src="`, staticPath("/images/star.png"), `">Subscribe` ~
-			`</a>`);
+		actions ~= PostAction("subscribelink", "Subscribe",
+			"Subscribe to this thread",
+			idToUrl(id, "subscribe"), "star");
 	if (user.getLevel() >= User.Level.canFlag && user.createdAt() < msg.time)
-		html.put(
-			`<a class="actionlink sourcelink" href="`), html.putEncodedEntities(idToUrl(id, "flag")), html.put(`" title="Flag this post for moderator intervention">` ~
-				`<img src="`, staticPath("/images/flag.png"), `">Flag` ~
-			`</a>`);
+		actions ~= PostAction("flaglink", "Flag",
+			"Flag this post for moderator intervention",
+			idToUrl(id, "flag"), "flag");
 	if (user.getLevel() >= User.Level.hasRawLink)
-		html.put(
-			`<a class="actionlink sourcelink" href="`), html.putEncodedEntities(idToUrl(id, "source")), html.put(`">` ~
-				`<img src="`, staticPath("/images/source.png"), `">Source` ~
-			`</a>`);
+		actions ~= PostAction("sourcelink", "Source",
+			"View this message's source code",
+			idToUrl(id, "source"), "source");
 	if (user.getLevel() >= User.Level.canDeletePosts)
+		actions ~= PostAction("deletelink", "Delete",
+			"Delete this message from DFeed's database",
+			idToUrl(id, "delete"), "delete");
+	return actions;
+}
+
+void postActions(PostAction[] actions)
+{
+	foreach (action; actions)
 		html.put(
-			`<a class="actionlink deletelink" href="`), html.putEncodedEntities(idToUrl(id, "delete")), html.put(`">` ~
-				`<img src="`, staticPath("/images/delete.png"), `">Delete` ~
+			`<a class="actionlink `, action.className, `" href="`), html.putEncodedEntities(action.url), html.put(`" ` ~
+				`title="`), html.putEncodedEntities(action.title), html.put(`">` ~
+				`<img src="`, staticPath("/images/" ~ action.icon~ ".png"), `">`), html.putEncodedEntities(action.text), html.put(
 			`</a>`);
 }
 
@@ -2102,11 +2105,12 @@ void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts, bool markAsRead 
 		}
 		else
 			html.put(`<br>`);
-		foreach (n; 0..maxPostActions)
+		auto actions = getPostActions(post.msg);
+		foreach (n; 0..actions.length)
 			html.put(`<br>`); // guarantee space for the "toolbar"
 
 		html.put(
-					`<div class="post-actions">`), postActions(post.msg), html.put(`</div>` ~
+					`<div class="post-actions">`), postActions(actions), html.put(`</div>` ~
 				`</td>` ~
 				`<td class="post-body">` ~
 //		); miniPostInfo(post, knownPosts); html.put(
@@ -2157,7 +2161,7 @@ void miniPostInfo(Rfc850Post post, Rfc850Post[string] knownPosts, bool showActio
 		);
 		if (showActions)
 			html.put(
-				`<td class="post-info-actions">`), postActions(post.msg), html.put(`</td>`
+				`<td class="post-info-actions">`), postActions(getPostActions(post.msg)), html.put(`</td>`
 			);
 		html.put(
 			`</tr></table>`
@@ -2235,7 +2239,7 @@ void formatSplitPost(Rfc850Post post, bool footerNav)
 			html.put(`<tr><td class="horizontal-post-info-name">`, a.name, `</td><td class="horizontal-post-info-value">`, a.value, `</td></tr>`);
 		html.put(
 					`</table></td>` ~
-					`<td class="post-info-actions">`), postActions(post.msg), html.put(`</td>` ~
+					`<td class="post-info-actions">`), postActions(getPostActions(post.msg)), html.put(`</td>` ~
 				`</tr></table>` ~
 			`</td></tr>` ~
 			`<tr><td class="post-body">` ~
