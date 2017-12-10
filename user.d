@@ -18,7 +18,7 @@ module user;
 
 import core.bitop;
 
-import std.datetime.systime : SysTime, Clock;
+import std.datetime : SysTime, Clock;
 import std.functional;
 import std.string;
 import std.exception;
