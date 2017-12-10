@@ -3119,8 +3119,9 @@ void discussionFlagPage(Rfc850Post post, bool flag, UrlParameters postParams)
 	}
 	else
 	{
-		if (postParams.get("secret", "") != userSettings.secret)
-			throw new Exception("XSRF secret verification failed. Are your cookies enabled?");
+		enforce(postParams.get("secret", "") == userSettings.secret, "XSRF secret verification failed. Are your cookies enabled?");
+		enforce(user.getLevel() >= User.Level.canFlag, "You can't flag posts!");
+		enforce(user.createdAt() < post.time, "You can't flag this post!");
 
 		if ("flag" in postParams)
 		{
