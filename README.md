@@ -16,6 +16,8 @@ Quick start guide:
 
     git clone --recursive git://github.com/CyberShadow/DFeed.git
     cd DFeed
+    git submodule init
+    git submodule update
     make
     echo "host = news.digitalmars.com" > config/sources/nntp/digitalmars.ini
     echo "listen.port = 8080" > config/web.ini
