@@ -9,7 +9,7 @@ DFeed is:
 - an ATOM aggregator
 - an IRC bot
 
-DFeed is running on [forum.dlang.org](http://forum.dlang.org/)
+DFeed is running on [forum.dlang.org](https://forum.dlang.org/)
 and the [#d channel on FreeNode](irc://chat.freenode.net/d).
 
 Quick start guide:
