@@ -198,14 +198,14 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	auto host = request.headers.get("Host", "");
 	host = request.headers.get("X-Forwarded-Host", host);
 	if (host != vhost && host != "localhost" && vhost != "localhost" && ip != "127.0.0.1" && !request.resource.startsWith("/.well-known/acme-challenge/"))
-		return response.redirect("http://" ~ vhost ~ request.resource, HttpStatusCode.MovedPermanently);
+		return response.redirect(site.config.proto ~ "://" ~ vhost ~ request.resource, HttpStatusCode.MovedPermanently);
 
 	// Redirect to HTTPS
 	if (site.config.proto == "https" && request.headers.get("X-Scheme", "") == "http")
 		return response.redirect("https://" ~ vhost ~ request.resource, HttpStatusCode.MovedPermanently);
 
 	auto canonicalHeader =
-		`<link rel="canonical" href="http://`~vhost~request.resource~`"/>`;
+		`<link rel="canonical" href="`~site.config.proto~`://`~vhost~request.resource~`"/>`;
 	enum horizontalSplitHeaders =
 		`<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Open+Sans:400,600">`;
 
@@ -219,7 +219,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		if (!image)
 			image = "https://dlang.org/images/dlogo_opengraph.png";
 
-		auto canonicalURL = "http://" ~ site.config.host ~ canonicalLocation;
+		auto canonicalURL = site.config.proto ~ "://" ~ site.config.host ~ canonicalLocation;
 
 		extraHeaders ~= [
 			`<meta property="og:title" content="` ~ encodeHtmlEntities(title) ~ `" />`,
@@ -4124,7 +4124,7 @@ CachedSet!(string, CachedResource) feedCache;
 
 CachedResource getFeed(GroupInfo groupInfo, bool threadsOnly, int hours)
 {
-	string feedUrl = "http://" ~ vhost ~ "/feed" ~
+	string feedUrl = site.config.proto ~ "://" ~ vhost ~ "/feed" ~
 		(threadsOnly ? "/threads" : "/posts") ~
 		(groupInfo ? "/" ~ groupInfo.urlName : "") ~
 		(hours!=FEED_HOURS_DEFAULT ? "?hours=" ~ text(hours) : "");
@@ -4188,7 +4188,7 @@ CachedResource makeFeed(Rfc850Post[] posts, string feedUrl, string feedTitle, bo
 
 CachedResource getSubscriptionFeed(string subscriptionID)
 {
-	string feedUrl = "http://" ~ vhost ~ "/subscription-feed/" ~ subscriptionID;
+	string feedUrl = site.config.proto ~ "://" ~ vhost ~ "/subscription-feed/" ~ subscriptionID;
 
 	CachedResource getFeed()
 	{

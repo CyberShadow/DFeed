@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -114,7 +114,7 @@ class Rfc850Post : Post
 		else
 		if (id.length)
 		{
-			url = format("http://%s%s", site.config.host, idToUrl(id));
+			url = format("%s://%s%s", site.config.proto, site.config.host, idToUrl(id));
 		}
 
 		super.time = msg.time;

@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2015, 2016, 2017  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -889,10 +889,10 @@ Here is the message that has just been posted:
 ----------------------------------------------
 
 To reply to this message, please visit this page:
-http://%s%s
+%s://%s%s
 
 There may also be other messages matching your subscription, but you will not receive any more notifications for this subscription until you've read all messages matching this subscription:
-http://%s/subscription-posts/%s
+%s://%s/subscription-posts/%s
 
 All the best,
 %s
@@ -901,10 +901,10 @@ All the best,
 Unsubscription information:
 
 To stop receiving emails for this subscription, please visit this page:
-http://%s/subscription-unsubscribe/%s
+%s://%s/subscription-unsubscribe/%s
 
 Or, visit your settings page to edit your subscriptions:
-http://%s/settings
+%s://%s/settings
 .
 EOF"
 		.format(
@@ -913,11 +913,11 @@ EOF"
 			post.references.length ? "post" : "thread",
 			post.url,
 			post.content.strip.splitAsciiLines.map!(line => line.startsWith('.') ? '.' ~ line : line),
-			site.config.host, idToUrl(post.id, "reply"),
-			site.config.host, subscription.id,
+			site.config.proto, site.config.host, idToUrl(post.id, "reply"),
+			site.config.proto, site.config.host, subscription.id,
 			site.config.name.length ? site.config.name : site.config.host,
-			site.config.host, subscription.id,
-			site.config.host,
+			site.config.proto, site.config.host, subscription.id,
+			site.config.proto, site.config.host,
 		);
 	}
 

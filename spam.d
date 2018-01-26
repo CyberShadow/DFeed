@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014, 2015, 2017  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -109,7 +109,7 @@ class Akismet : SpamChecker
 			return handler(true, "Akismet is not set up");
 
 		string[string] params = [
-			"blog"                 : "http://" ~ site.config.host ~ "/",
+			"blog"                 : site.config.proto ~ "://" ~ site.config.host ~ "/",
 			"user_ip"              : process.ip,
 			"user_agent"           : process.headers.get("User-Agent", ""),
 			"referrer"             : process.headers.get("Referer", ""),
@@ -137,7 +137,7 @@ class Akismet : SpamChecker
 			return handler(true, "Akismet is not set up");
 
 		string[string] params = [
-			"blog"                 : "http://" ~ site.config.host ~ "/",
+			"blog"                 : site.config.proto ~ "://" ~ site.config.host ~ "/",
 			"user_ip"              : process.ip,
 			"user_agent"           : process.headers.get("User-Agent", ""),
 			"referrer"             : process.headers.get("Referer", ""),
@@ -170,7 +170,7 @@ class BlogSpam : SpamChecker
 			"agent"                : process.headers.get("User-Agent", ""),
 			"email"                : process.draft.clientVars.get("email", ""),
 			"name"                 : process.draft.clientVars.get("name", ""),
-			"site"                 : "http://" ~ site.config.host ~ "/",
+			"site"                 : site.config.proto ~ "://" ~ site.config.host ~ "/",
 			"subject"              : process.draft.clientVars.get("subject", ""),
 			"version"              : "DFeed (+https://github.com/CyberShadow/DFeed)",
 		];
