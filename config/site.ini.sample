@@ -11,6 +11,11 @@ name = Example Forum
 
 host = forum.example.com
 
+# Default HTTP URI protocol (http or https).
+# Used as above. When set to https, will redirect detected http requests to https.
+
+proto = http
+
 # A description of this DFeed instance to be shown on the help page (in the About section).
 
 about = <p>This is an example DFeed instance.</p>

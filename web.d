@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -199,6 +199,10 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	host = request.headers.get("X-Forwarded-Host", host);
 	if (host != vhost && host != "localhost" && vhost != "localhost" && ip != "127.0.0.1" && !request.resource.startsWith("/.well-known/acme-challenge/"))
 		return response.redirect("http://" ~ vhost ~ request.resource, HttpStatusCode.MovedPermanently);
+
+	// Redirect to HTTPS
+	if (site.config.proto == "https" && request.headers.get("X-Scheme", "") == "http")
+		return response.redirect("https://" ~ vhost ~ request.resource, HttpStatusCode.MovedPermanently);
 
 	auto canonicalHeader =
 		`<link rel="canonical" href="http://`~vhost~request.resource~`"/>`;
