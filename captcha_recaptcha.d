@@ -1,4 +1,4 @@
-/*  Copyright (C) 2012, 2014, 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2012, 2014, 2015, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -35,32 +35,32 @@ class Recaptcha : Captcha
 
 		auto publicKey = config.publicKey;
 		return
-			`<script type="text/javascript" src="http://www.google.com/recaptcha/api/challenge?k=` ~ publicKey ~ (error ? `&error=` ~ error : ``) ~ `">`
-			`</script>`
-			`<noscript>`
-				`<iframe src="http://www.google.com/recaptcha/api/noscript?k=` ~ publicKey ~ (error ? `&error=` ~ error : ``) ~ `"`
-					` height="300" width="500" frameborder="0"></iframe><br>`
-				`<textarea name="recaptcha_challenge_field" rows="3" cols="40">`
-				`</textarea>`
-				`<input type="hidden" name="recaptcha_response_field" value="manual_challenge">`
+			`<script type="text/javascript" src="http://www.google.com/recaptcha/api/challenge?k=` ~ publicKey ~ (error ? `&error=` ~ error : ``) ~ `">` ~
+			`</script>` ~
+			`<noscript>` ~
+				`<iframe src="http://www.google.com/recaptcha/api/noscript?k=` ~ publicKey ~ (error ? `&error=` ~ error : ``) ~ `"` ~
+					` height="300" width="500" frameborder="0"></iframe><br>` ~
+				`<textarea name="recaptcha_challenge_field" rows="3" cols="40">` ~
+				`</textarea>` ~
+				`<input type="hidden" name="recaptcha_response_field" value="manual_challenge">` ~
 			`</noscript>`;
 	}
 
-	override bool isPresent(string[string] fields)
+	override bool isPresent(UrlParameters fields)
 	{
 		return "recaptcha_challenge_field" in fields && "recaptcha_response_field" in fields;
 	}
 
-	override void verify(string[string] fields, string ip, void delegate(bool success, string errorMessage, CaptchaErrorData errorData) handler)
+	override void verify(UrlParameters fields, string ip, void delegate(bool success, string errorMessage, CaptchaErrorData errorData) handler)
 	{
 		assert(isPresent(fields));
 
-		httpPost("http://www.google.com/recaptcha/api/verify", [
+		httpPost("http://www.google.com/recaptcha/api/verify", UrlParameters([
 			"privatekey" : config.privateKey,
 			"remoteip" : ip,
 			"challenge" : fields["recaptcha_challenge_field"],
 			"response" : fields["recaptcha_response_field"],
-		], (string result) {
+		]), (string result) {
 			auto lines = result.splitLines();
 			if (lines[0] == "true")
 				handler(true, null, null);
