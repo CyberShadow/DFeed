@@ -1,4 +1,4 @@
-/*  Copyright (C) 2015  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2015, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -76,8 +76,8 @@ public:
 
 	string getUrl(string email)
 	{
-		return API_MAILHIDE_SERVER ~ "/d"
-			"?hl=en"
+		return API_MAILHIDE_SERVER ~ "/d" ~
+			"?hl=en" ~
 			"&k=" ~ encodeComponent(pubKey) ~ 
 			"&c=" ~ cast(string)Base64URL.encode(aesEncrypt(cast(ubyte[])email))
 		;
