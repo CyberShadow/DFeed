@@ -1,0 +1,48 @@
+name "dfeed"
+description "D news aggregator, newsgroup client, web newsreader and IRC bot"
+authors "Vladimir Panteleev <vladimir@thecybershadow.net>"
+homepage "https://github.com/CyberShadow/DFeed"
+license "Affero GPL v3"
+
+---------------------------
+
+# Main package is the DFeed program itself.
+sourcePaths
+sourceFiles "src/dfeed/progs/dfeed.d"
+dependency "dfeed:lib" version="*" path="."
+targetType "executable"
+
+---------------------------
+
+# All modules.
+subPackage {
+	name "lib"
+        excludedSourceFiles "src/dfeed/progs/*.d"
+        targetType "sourceLibrary"
+	dependency "ae" version="==0.0.1969"
+	dependency "ae:sqlite" version="==0.0.1969"
+	dependency "ae:openssl" version="==0.0.1969"
+        dependency "dcaptcha" version="==1.0.0"
+}
+
+---------------------------
+
+# NNTP downloader program.
+subPackage {
+	name "nntpdownload"
+        sourcePaths
+        sourceFiles "src/dfeed/progs/nntpdownload.d"
+        dependency "dfeed:lib" version="*" path="."
+        targetType "executable"
+}
+
+---------------------------
+
+# Spam feedback program
+subPackage {
+	name "sendspamfeedback"
+        sourcePaths
+        sourceFiles "src/dfeed/progs/sendspamfeedback.d"
+        dependency "dfeed:lib" version="*" path="."
+        targetType "executable"
+}
