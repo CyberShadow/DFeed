@@ -6,8 +6,6 @@ import std.array;
 import std.stdio;
 import std.string;
 
-import ae.utils.array;
-
 struct DAlsoVia { string name, url; }
 struct DGroupInfo { string internalName, publicName, urlName, description, postMessage, mlName; bool mlOnly; DAlsoVia[string] alsoVia; }
 struct DGroupSet { string id, name, shortName; DGroupInfo[] groups; bool visible; }

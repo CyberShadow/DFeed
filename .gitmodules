@@ -1,12 +1,12 @@
 [submodule "ae"]
-	path = ae
+	path = lib/ae
 	url = git://github.com/CyberShadow/ae.git
 [submodule "dcaptcha"]
-	path = dcaptcha
+	path = lib/dcaptcha
 	url = https://github.com/CyberShadow/dcaptcha
 [submodule "web/static/dlang.org"]
 	path = web/static/dlang.org
 	url = https://github.com/D-Programming-Language/dlang.org
 [submodule "deimos-openssl"]
-	path = deimos-openssl
+	path = lib/deimos-openssl
 	url = https://github.com/D-Programming-Deimos/openssl

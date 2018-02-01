@@ -1,19 +1,40 @@
 #!/bin/bash
-
 set -eu
+
 cd "$(dirname "$0")"
 
 test -f build.local && source build.local
 
-MODEL=64
-DFLAGS="-m$MODEL -g -L-lcurl -L-lsqlite3 -L-lssl -L-lcrypto"
-#DFLAGS="$DFLAGS -debug"
-#DFLAGS="$DFLAGS -debug=ASOCKETS"
-#DFLAGS="$DFLAGS -version=LIBEV"
-for PROGRAM in dfeed nntpdownload sendspamfeedback
+flags=(
+	-m64
+	-g
+	-L-lcurl
+	-L-lsqlite3
+#	-debug
+#	-debug=ASOCKETS
+#	-version=LIBEV
+)
+
+if [[ -f /usr/lib/libssl.so.1.0.0 ]]
+then
+	flags+=(
+		-L/usr/lib/libssl.so.1.0.0
+		-L/usr/lib/libcrypto.so.1.0.0
+	)
+else
+	flags+=(
+		-L-lssl
+		-L-lcrypto
+	)
+fi
+
+flags+=("$@")
+
+for fn in src/dfeed/progs/*.d
 do
-	echo Rebuilding $PROGRAM...
-	rdmd --build-only $DFLAGS $PROGRAM.d
+	prog=$(basename "$fn" .d)
+	echo "Rebuilding $prog..."
+	rdmd --build-only -of"$prog" "${flags[@]}" "$fn"
 	echo OK.
 done
 echo Rebuilding resources...
