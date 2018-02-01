@@ -19,7 +19,7 @@ Quick start guide:
     make
     echo "host = news.digitalmars.com" > config/sources/nntp/digitalmars.ini
     echo "listen.port = 8080" > config/web.ini
-    rdmd dfeed
+    ./rebuild # or: dub build
 
 On first start, DFeed will download messages from the NNTP server
 and save them in the DB. This will need to be done once.
