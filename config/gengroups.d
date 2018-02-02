@@ -149,6 +149,7 @@ void main()
 				f.writefln("alsoVia.%s.name=%s", k, av.name);
 				f.writefln("alsoVia.%s.url=%s", k, av.url);
 			}
+			f.writeln("announce=", group.urlName == "announce");
 		}
 	}
 

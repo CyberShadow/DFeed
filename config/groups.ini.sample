@@ -44,3 +44,7 @@ sinkName=example
 # when attempting to post to a mailing list (sinkType==smtp).
 # Enabled by default.
 subscriptionRequired=true
+
+# Whether new threads in the post are considered very important, and
+# will be announced to e.g. Twitter (if configured).
+announce=false

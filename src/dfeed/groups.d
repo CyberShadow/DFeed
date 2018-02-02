@@ -39,6 +39,7 @@ struct Config
 		string[] urlAliases;
 		OrderedMap!(string, AlsoVia) alsoVia;
 		bool subscriptionRequired = true;
+		bool announce;
 	}
 	OrderedMap!(string, Group) groups;
 }

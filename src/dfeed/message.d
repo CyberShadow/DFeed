@@ -157,6 +157,10 @@ class Rfc850Post : Post
 
 	override Importance getImportance()
 	{
+		auto group = getGroup(this);
+		if (!reply && group && group.announce)
+			return Importance.high;
+
 		// GitHub notifications are already grabbed from RSS
 		if (author == "GitHub")
 			return Importance.low;
