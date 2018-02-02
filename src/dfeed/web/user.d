@@ -27,6 +27,7 @@ import ae.net.shutdown;
 import ae.sys.data;
 import ae.sys.log;
 import ae.sys.timing;
+import ae.utils.math : flipBits;
 import ae.utils.text;
 import ae.utils.time : StdTime;
 import ae.utils.zlib;
@@ -164,7 +165,7 @@ final:
 		if (value)
 			*pbyte = *pbyte | mask;
 		else
-			*pbyte = *pbyte & ~mask;
+			*pbyte = *pbyte & mask.flipBits;
 		readPostsDirty = true;
 	}
 
