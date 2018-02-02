@@ -8,6 +8,7 @@ test -f build.local && source build.local
 flags=(
 	-m64
 	-g
+	-Isrc
 	-Ilib
 	-L-lcurl
 	-L-lsqlite3
