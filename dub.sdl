@@ -17,12 +17,12 @@ targetType "executable"
 # All modules.
 subPackage {
 	name "lib"
-        excludedSourceFiles "src/dfeed/progs/*.d"
-        targetType "sourceLibrary"
+	excludedSourceFiles "src/dfeed/progs/*.d"
+	targetType "sourceLibrary"
 	dependency "ae" version="==0.0.2139"
 	dependency "ae:sqlite" version="==0.0.2139"
 	dependency "ae:openssl" version="==0.0.2139"
-        dependency "dcaptcha" version="==1.0.0"
+	dependency "dcaptcha" version="==1.0.0"
 }
 
 ---------------------------
@@ -30,10 +30,10 @@ subPackage {
 # NNTP downloader program.
 subPackage {
 	name "nntpdownload"
-        sourcePaths
-        sourceFiles "src/dfeed/progs/nntpdownload.d"
-        dependency "dfeed:lib" version="*" path="."
-        targetType "executable"
+	sourcePaths
+	sourceFiles "src/dfeed/progs/nntpdownload.d"
+	dependency "dfeed:lib" version="*" path="."
+	targetType "executable"
 }
 
 ---------------------------
@@ -41,8 +41,8 @@ subPackage {
 # Spam feedback program
 subPackage {
 	name "sendspamfeedback"
-        sourcePaths
-        sourceFiles "src/dfeed/progs/sendspamfeedback.d"
-        dependency "dfeed:lib" version="*" path="."
-        targetType "executable"
+	sourcePaths
+	sourceFiles "src/dfeed/progs/sendspamfeedback.d"
+	dependency "dfeed:lib" version="*" path="."
+	targetType "executable"
 }
