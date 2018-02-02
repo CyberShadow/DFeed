@@ -101,7 +101,7 @@ void startWebUI()
 
 	loadBanList();
 
-	vhost = dfeed.site.config.host;
+	vhost = site.host;
 
 	server = new HttpServer();
 	server.log = log;
@@ -206,14 +206,14 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	auto host = request.headers.get("Host", "");
 	host = request.headers.get("X-Forwarded-Host", host);
 	if (host != vhost && host != "localhost" && vhost != "localhost" && ip != "127.0.0.1" && !request.resource.startsWith("/.well-known/acme-challenge/"))
-		return response.redirect(dfeed.site.config.proto ~ "://" ~ vhost ~ request.resource, HttpStatusCode.MovedPermanently);
+		return response.redirect(site.proto ~ "://" ~ vhost ~ request.resource, HttpStatusCode.MovedPermanently);
 
 	// Redirect to HTTPS
-	if (dfeed.site.config.proto == "https" && request.headers.get("X-Scheme", "") == "http")
+	if (site.proto == "https" && request.headers.get("X-Scheme", "") == "http")
 		return response.redirect("https://" ~ vhost ~ request.resource, HttpStatusCode.MovedPermanently);
 
 	auto canonicalHeader =
-		`<link rel="canonical" href="`~dfeed.site.config.proto~`://`~vhost~request.resource~`"/>`;
+		`<link rel="canonical" href="`~site.proto~`://`~vhost~request.resource~`"/>`;
 	enum horizontalSplitHeaders =
 		`<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Open+Sans:400,600">`;
 
@@ -222,12 +222,12 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		assert(title, "No title for metadata");
 
 		if (!description)
-			description = dfeed.site.config.name;
+			description = site.name;
 
 		if (!image)
 			image = "https://dlang.org/images/dlogo_opengraph.png";
 
-		auto canonicalURL = dfeed.site.config.proto ~ "://" ~ dfeed.site.config.host ~ canonicalLocation;
+		auto canonicalURL = site.proto ~ "://" ~ site.host ~ canonicalLocation;
 
 		extraHeaders ~= [
 			`<meta property="og:title" content="` ~ encodeHtmlEntities(title) ~ `" />`,
@@ -712,7 +712,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 						{
 							switch (name)
 							{
-								case "about" : return dfeed.site.config.about;
+								case "about" : return site.about;
 								default: throw new Exception("Unknown variable in help template: " ~ name);
 							}
 						}
@@ -1054,7 +1054,7 @@ void discussionIndexHeader()
 	string name = user.isLoggedIn() ? user.getName() : userSettings.name.length ? userSettings.name.split(' ')[0] : `Guest`;
 	html.put(
 		`<div id="forum-index-header">` ~
-		`<h1>`), html.putEncodedEntities(dfeed.site.config.name), html.put(`</h1>` ~
+		`<h1>`), html.putEncodedEntities(site.name), html.put(`</h1>` ~
 		`<p>Welcome`, previousSession ? ` back` : ``, `, `), html.putEncodedEntities(name), html.put(`.</p>` ~
 
 		`<ul>`
@@ -4132,7 +4132,7 @@ CachedSet!(string, CachedResource) feedCache;
 
 CachedResource getFeed(GroupInfo groupInfo, bool threadsOnly, int hours)
 {
-	string feedUrl = dfeed.site.config.proto ~ "://" ~ vhost ~ "/feed" ~
+	string feedUrl = site.proto ~ "://" ~ vhost ~ "/feed" ~
 		(threadsOnly ? "/threads" : "/posts") ~
 		(groupInfo ? "/" ~ groupInfo.urlName : "") ~
 		(hours!=FEED_HOURS_DEFAULT ? "?hours=" ~ text(hours) : "");
@@ -4196,7 +4196,7 @@ CachedResource makeFeed(Rfc850Post[] posts, string feedUrl, string feedTitle, bo
 
 CachedResource getSubscriptionFeed(string subscriptionID)
 {
-	string feedUrl = dfeed.site.config.proto ~ "://" ~ vhost ~ "/subscription-feed/" ~ subscriptionID;
+	string feedUrl = site.proto ~ "://" ~ vhost ~ "/subscription-feed/" ~ subscriptionID;
 
 	CachedResource getFeed()
 	{

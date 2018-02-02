@@ -280,7 +280,7 @@ final class ReplyTrigger : Trigger
 			post.time.formatTime!`F j`,
 			post.subject,
 			post.xref[0].group,
-			dfeed.site.config.host,
+			site.host,
 		);
 	}
 
@@ -348,7 +348,7 @@ final class ThreadTrigger : Trigger
 			post.author,
 			post.subject,
 			post.xref[0].group,
-			dfeed.site.config.host,
+			site.host,
 		);
 	}
 
@@ -491,7 +491,7 @@ final class ContentTrigger : Trigger
 			post.references.length ? "replied to" : "created",
 			post.subject,
 			post.xref[0].group,
-			dfeed.site.config.host,
+			site.host,
 			post.references.length ? "post" : "thread",
 			getTextDescription(),
 		);
@@ -857,7 +857,7 @@ final class EmailAction : Action
 
 		queue[address] = Email([
 			"-s", subscription.trigger.getShortPostDescription(post),
-			"-r", "%s <no-reply@%s>".format(dfeed.site.config.host, dfeed.site.config.host),
+			"-r", "%s <no-reply@%s>".format(site.host, site.host),
 			address], formatMessage(subscription, post));
 
 		if (!queueTask)
@@ -915,11 +915,11 @@ EOF"
 			post.references.length ? "post" : "thread",
 			post.url,
 			post.content.strip.splitAsciiLines.map!(line => line.startsWith('.') ? '.' ~ line : line),
-			dfeed.site.config.proto, dfeed.site.config.host, idToUrl(post.id, "reply"),
-			dfeed.site.config.proto, dfeed.site.config.host, subscription.id,
-			dfeed.site.config.name.length ? dfeed.site.config.name : dfeed.site.config.host,
-			dfeed.site.config.proto, dfeed.site.config.host, subscription.id,
-			dfeed.site.config.proto, dfeed.site.config.host,
+			site.proto, site.host, idToUrl(post.id, "reply"),
+			site.proto, site.host, subscription.id,
+			site.name.length ? site.name : site.host,
+			site.proto, site.host, subscription.id,
+			site.proto, site.host,
 		);
 	}
 

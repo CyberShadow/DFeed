@@ -16,14 +16,14 @@
 
 module dfeed.site;
 
-struct Config
+struct SiteConfig
 {
 	string name;
 	string host = "localhost";
 	string proto = "http";
 	string about;
 }
-immutable Config config;
+immutable SiteConfig site;
 
 import ae.utils.sini;
-shared static this() { config = loadIni!Config("config/site.ini"); }
+shared static this() { site = loadIni!SiteConfig("config/site.ini"); }

@@ -34,7 +34,7 @@ class Akismet : SpamChecker
 			return handler(true, "Akismet is not set up");
 
 		string[string] params = [
-			"blog"                 : dfeed.site.config.proto ~ "://" ~ dfeed.site.config.host ~ "/",
+			"blog"                 : site.proto ~ "://" ~ site.host ~ "/",
 			"user_ip"              : process.ip,
 			"user_agent"           : process.headers.get("User-Agent", ""),
 			"referrer"             : process.headers.get("Referer", ""),
@@ -62,7 +62,7 @@ class Akismet : SpamChecker
 			return handler(true, "Akismet is not set up");
 
 		string[string] params = [
-			"blog"                 : dfeed.site.config.proto ~ "://" ~ dfeed.site.config.host ~ "/",
+			"blog"                 : site.proto ~ "://" ~ site.host ~ "/",
 			"user_ip"              : process.ip,
 			"user_agent"           : process.headers.get("User-Agent", ""),
 			"referrer"             : process.headers.get("Referer", ""),

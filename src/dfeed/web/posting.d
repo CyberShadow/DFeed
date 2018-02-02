@@ -223,7 +223,7 @@ final class PostProcess
 
 	static string pidToMessageID(string pid)
 	{
-		return format("<%s@%s>", pid, dfeed.site.config.host);
+		return format("<%s@%s>", pid, site.host);
 	}
 
 	void run()
@@ -289,7 +289,7 @@ final class PostProcess
 		post.headers["X-Web-Originating-IP"] = ip;
 
 		if ("did" in draft.clientVars)
-			post.id = format("<draft-%s@%s>", draft.clientVars["did"], dfeed.site.config.host);
+			post.id = format("<draft-%s@%s>", draft.clientVars["did"], site.host);
 		post.msg.time = post.time;
 
 		return post;
@@ -442,7 +442,7 @@ private:
 		auto config = loadIni!SmtpConfig("config/sources/smtp/" ~ group.sinkName ~ ".ini");
 		auto recipient = "<" ~ toLower(group.internalName) ~ "@" ~ config.domain ~ ">";
 
-		smtp = new SmtpClient(log, dfeed.site.config.host, config.server, config.port);
+		smtp = new SmtpClient(log, site.host, config.server, config.port);
 		smtp.handleSent = &onSent;
 		smtp.handleError = &onError;
 		smtp.handleStateChanged = &onStateChanged;
@@ -473,7 +473,7 @@ final class PostingNotifySink : NewsSink
 		if (rfc850post)
 		{
 			auto id = rfc850post.id;
-			if (id.endsWith("@" ~ dfeed.site.config.host ~ ">"))
+			if (id.endsWith("@" ~ site.host ~ ">"))
 			{
 				auto pid = id.split("@")[0][1..$];
 				if (pid in postProcesses)

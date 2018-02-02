@@ -114,7 +114,7 @@ class Rfc850Post : Post
 		else
 		if (id.length)
 		{
-			url = format("%s://%s%s", dfeed.site.config.proto, dfeed.site.config.host, idToUrl(id));
+			url = format("%s://%s%s", site.proto, site.host, idToUrl(id));
 		}
 
 		super.time = msg.time;

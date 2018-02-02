@@ -34,7 +34,7 @@ class BlogSpam : SpamChecker
 			"agent"                : process.headers.get("User-Agent", ""),
 			"email"                : process.draft.clientVars.get("email", ""),
 			"name"                 : process.draft.clientVars.get("name", ""),
-			"site"                 : dfeed.site.config.proto ~ "://" ~ dfeed.site.config.host ~ "/",
+			"site"                 : site.proto ~ "://" ~ site.host ~ "/",
 			"subject"              : process.draft.clientVars.get("subject", ""),
 			"version"              : "DFeed (+https://github.com/CyberShadow/DFeed)",
 		];
