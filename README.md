@@ -15,7 +15,7 @@ and the [#d channel on FreeNode](irc://chat.freenode.net/d).
 Quick start guide:
 
 ```bash
-git clone --recursive git://github.com/CyberShadow/DFeed.git
+git clone --recursive https://github.com/CyberShadow/DFeed.git
 cd DFeed
 make
 echo "host = news.digitalmars.com" > config/sources/nntp/digitalmars.ini
