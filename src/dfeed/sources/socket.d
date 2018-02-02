@@ -118,7 +118,7 @@ private:
 
 		announcePost(new class Post
 		{
-			override bool isImportant() { return !info.isMinor; }
+			override Importance getImportance() { return info.isMinor ? Importance.low : Importance.normal; }
 
 			override void formatForIRC(void delegate(string) handler)
 			{

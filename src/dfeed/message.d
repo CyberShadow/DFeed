@@ -134,7 +134,7 @@ class Rfc850Post : Post
 
 	override void formatForIRC(void delegate(string) handler)
 	{
-		if (isImportant() && url && !shortURL)
+		if (getImportance() >= Importance.normal && url && !shortURL)
 			return shortenURL(url, (string shortenedURL) {
 				shortURL = shortenedURL;
 				formatForIRC(handler);
@@ -155,19 +155,19 @@ class Rfc850Post : Post
 		));
 	}
 
-	override bool isImportant()
+	override Importance getImportance()
 	{
 		// GitHub notifications are already grabbed from RSS
 		if (author == "GitHub")
-			return false;
+			return Importance.low;
 
 		if (where == "")
-			return false;
+			return Importance.low;
 
 		if (where.isIn(ANNOUNCE_REPLIES))
-			return true;
+			return Importance.normal;
 
-		return !reply || author.isIn(VIPs);
+		return !reply || author.isIn(VIPs) ? Importance.normal : Importance.low;
 	}
 
 	@property string[] publicGroupNames()

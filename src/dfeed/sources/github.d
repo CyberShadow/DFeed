@@ -172,7 +172,7 @@ class GitHubPost : Post
 
 		str = "[GitHub] " ~ str;
 
-		if (url && isImportant)
+		if (url && getImportance() >= Importance.normal)
 			shortenURL(url, (string shortenedURL) {
 				handler(str ~ ": " ~ shortenedURL);
 			});
@@ -184,17 +184,17 @@ class GitHubPost : Post
 		}
 	}
 
-	override bool isImportant()
+	override Importance getImportance()
 	{
 		debug
-			return false;
+			return Importance.low;
 		else
 			switch (event)
 			{
 				case "pull_request":
-					return data["action"].str.isOneOf("opened", "closed", "reopened");
+					return data["action"].str.isOneOf("opened", "closed", "reopened") ? Importance.normal : Importance.low;
 				default:
-					return false;
+					return Importance.low;
 			}
 	}
 

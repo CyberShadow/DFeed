@@ -31,9 +31,20 @@ abstract class Post
 	/// Asynchronously summarise this post to a single line, ready to be sent to IRC.
 	abstract void formatForIRC(void delegate(string) handler);
 
-	/// Whether this post is important enough to be announced in the main D channel.
-	/// If false, it should only be announced in the feed channel (#d.feed).
-	bool isImportant() { return true; }
+	enum Importance
+	{
+		/// Replies to threads, general activity.
+		/// Should only be shown in "all activity" feeds.
+		low,
+
+		/// Suitable to be announced on general feeds.
+		normal,
+
+		/// Project announcements and other important posts.
+		high,
+	}
+
+	Importance getImportance() { return Importance.normal; }
 
 	this()
 	{
