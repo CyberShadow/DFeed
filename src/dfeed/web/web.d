@@ -87,7 +87,6 @@ else
 Logger log;
 version(MeasurePerformance) Logger perfLog;
 HttpServer server;
-string vhost;
 User user;
 string ip;
 HttpRequest currentRequest;
@@ -100,8 +99,6 @@ void startWebUI()
 	version(MeasurePerformance) perfLog = createLogger("Performance");
 
 	loadBanList();
-
-	vhost = site.host;
 
 	server = new HttpServer();
 	server.log = log;
@@ -205,15 +202,15 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	// Redirect to canonical domain name
 	auto host = request.headers.get("Host", "");
 	host = request.headers.get("X-Forwarded-Host", host);
-	if (host != vhost && host != "localhost" && vhost != "localhost" && ip != "127.0.0.1" && !request.resource.startsWith("/.well-known/acme-challenge/"))
-		return response.redirect(site.proto ~ "://" ~ vhost ~ request.resource, HttpStatusCode.MovedPermanently);
+	if (host != site.host && host != "localhost" && site.host != "localhost" && ip != "127.0.0.1" && !request.resource.startsWith("/.well-known/acme-challenge/"))
+		return response.redirect(site.proto ~ "://" ~ site.host ~ request.resource, HttpStatusCode.MovedPermanently);
 
 	// Redirect to HTTPS
 	if (site.proto == "https" && request.headers.get("X-Scheme", "") == "http")
-		return response.redirect("https://" ~ vhost ~ request.resource, HttpStatusCode.MovedPermanently);
+		return response.redirect("https://" ~ site.host ~ request.resource, HttpStatusCode.MovedPermanently);
 
 	auto canonicalHeader =
-		`<link rel="canonical" href="`~site.proto~`://`~vhost~request.resource~`"/>`;
+		`<link rel="canonical" href="`~site.proto~`://`~site.host~request.resource~`"/>`;
 	enum horizontalSplitHeaders =
 		`<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Open+Sans:400,600">`;
 
@@ -2891,7 +2888,7 @@ void discussionPostStatus(PostProcess process, out bool refresh, out string redi
 
 string findPostingLog(string id)
 {
-	if (id.match(`^<[a-z]{20}@` ~ vhost.escapeRE() ~ `>`))
+	if (id.match(`^<[a-z]{20}@` ~ site.host.escapeRE() ~ `>`))
 	{
 		auto post = id[1..21];
 		version (Windows)
@@ -4132,7 +4129,7 @@ CachedSet!(string, CachedResource) feedCache;
 
 CachedResource getFeed(GroupInfo groupInfo, bool threadsOnly, int hours)
 {
-	string feedUrl = site.proto ~ "://" ~ vhost ~ "/feed" ~
+	string feedUrl = site.proto ~ "://" ~ site.host ~ "/feed" ~
 		(threadsOnly ? "/threads" : "/posts") ~
 		(groupInfo ? "/" ~ groupInfo.urlName : "") ~
 		(hours!=FEED_HOURS_DEFAULT ? "?hours=" ~ text(hours) : "");
@@ -4196,12 +4193,12 @@ CachedResource makeFeed(Rfc850Post[] posts, string feedUrl, string feedTitle, bo
 
 CachedResource getSubscriptionFeed(string subscriptionID)
 {
-	string feedUrl = site.proto ~ "://" ~ vhost ~ "/subscription-feed/" ~ subscriptionID;
+	string feedUrl = site.proto ~ "://" ~ site.host ~ "/subscription-feed/" ~ subscriptionID;
 
 	CachedResource getFeed()
 	{
 		auto subscription = getSubscription(subscriptionID);
-		auto title = "%s subscription (%s)".format(vhost, subscription.trigger.getTextDescription());
+		auto title = "%s subscription (%s)".format(site.host, subscription.trigger.getTextDescription());
 		Rfc850Post[] posts;
 		foreach (string messageID; query!"SELECT [MessageID] FROM [SubscriptionPosts] WHERE [SubscriptionID] = ? ORDER BY [Time] DESC LIMIT 50"
 							.iterate(subscriptionID))
