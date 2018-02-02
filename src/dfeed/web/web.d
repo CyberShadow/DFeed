@@ -82,7 +82,7 @@ static if (is(typeof({import std.datetime.stopwatch;})))
 	Duration readStopwatch(ref StopWatch sw) { return sw.peek(); }
 }
 else
-	Duration readStopwatch(ref StopWatch sw) { return sw.peek().msecs; }
+	Duration readStopwatch(ref StopWatch sw) { return sw.peek().msecs.msecs; }
 
 Logger log;
 version(MeasurePerformance) Logger perfLog;
@@ -1032,7 +1032,7 @@ q{
 	scope(success)
 	{
 		performanceSW.stop();
-		perfLog(PERF_SCOPE ~ ": " ~ text(performanceSW.readStopwatch) ~ "ms");
+		perfLog(PERF_SCOPE ~ ": " ~ text(performanceSW.readStopwatch));
 	}
 };
 
