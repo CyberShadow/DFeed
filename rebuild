@@ -28,13 +28,30 @@ else
 	)
 fi
 
-flags+=("$@")
+progs=()
 
-for fn in src/dfeed/progs/*.d
+for arg in "$@"
 do
-	prog=$(basename "$fn" .d)
+	if [[ "$arg" == -* ]]
+	then
+		flags+=("$arg")
+	else
+		progs+=("$arg")
+	fi
+done
+
+if [[ "${#progs[@]}" -eq 0 ]]
+then
+	for fn in src/dfeed/progs/*.d
+	do
+		progs+=("$(basename "$fn" .d)")
+	done
+fi
+
+for prog in "${progs[@]}"
+do
 	echo "Rebuilding $prog..."
-	rdmd --build-only -of"$prog" "${flags[@]}" "$fn"
+	rdmd --build-only -of"$prog" "${flags[@]}" "src/dfeed/progs/$prog.d"
 	echo OK.
 done
 echo Rebuilding resources...
