@@ -42,6 +42,7 @@ import dfeed.sources.web.stackoverflow;
 import dfeed.sinks.irc;
 import dfeed.sinks.messagedb;
 import dfeed.sinks.subscriptions;
+import dfeed.sinks.twitter;
 
 // Captcha
 import dfeed.web.captcha.dcaptcha;
@@ -78,6 +79,7 @@ void main(string[] args)
 	createServices!IrcSink("sinks/irc");
 	new MessageDBSink(refresh ? Yes.update : No.update);
 	new SubscriptionSink();
+	createServices!TwitterSink("sinks/twitter");
 
 	// Start web server
 	startWebUI();

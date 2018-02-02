@@ -1,0 +1,11 @@
+# Twitter sink parameters.
+
+# OAuth parameters.
+oauth.consumerKey = abcdefghijklmnopqrstuvwxy
+oauth.consumerSecret = abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWX
+oauthAccessToken = 123456789012345678-abcdefghijklmnopqrstuvwxyzABCDE
+oauthAccessTokenSecret = abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRS
+
+# How to format the tweet, as std.string.format arguments.
+# Arguments passed are, in order: subject, author name, URL
+formatString = %s by %s: %s #dlang
