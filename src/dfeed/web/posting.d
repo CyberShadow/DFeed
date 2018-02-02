@@ -38,7 +38,7 @@ import dfeed.database;
 import dfeed.groups;
 import dfeed.message;
 import dfeed.site;
-import dfeed.sources.newsgroups;
+import dfeed.sources.newsgroups : NntpConfig;
 import dfeed.web.captcha;
 import dfeed.web.spam;
 import dfeed.web.user;
