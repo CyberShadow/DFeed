@@ -14,12 +14,14 @@ and the [#d channel on FreeNode](irc://chat.freenode.net/d).
 
 Quick start guide:
 
-    git clone --recursive git://github.com/CyberShadow/DFeed.git
-    cd DFeed
-    make
-    echo "host = news.digitalmars.com" > config/sources/nntp/digitalmars.ini
-    echo "listen.port = 8080" > config/web.ini
-    ./rebuild # or: dub build
+```bash
+git clone --recursive git://github.com/CyberShadow/DFeed.git
+cd DFeed
+make
+echo "host = news.digitalmars.com" > config/sources/nntp/digitalmars.ini
+echo "listen.port = 8080" > config/web.ini
+./rebuild # or: dub build
+```
 
 On first start, DFeed will download messages from the NNTP server
 and save them in the DB. This will need to be done once.
