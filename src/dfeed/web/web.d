@@ -75,6 +75,15 @@ import dfeed.web.user : User, getUser, SettingType;
 
 version = MeasurePerformance;
 
+static if (is(typeof({import std.datetime.stopwatch;})))
+{
+	import std.datetime.stopwatch;
+	alias StopWatch = std.datetime.stopwatch.StopWatch;
+	Duration readStopwatch(ref StopWatch sw) { return sw.peek(); }
+}
+else
+	Duration readStopwatch(ref StopWatch sw) { return sw.peek().msecs; }
+
 Logger log;
 version(MeasurePerformance) Logger perfLog;
 HttpServer server;
@@ -169,8 +178,6 @@ void onRequest(HttpRequest request, HttpServerConnection conn)
 
 HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 {
-	StopWatch responseTime;
-	responseTime.start();
 	currentRequest = request;
 	auto response = new HttpResponseEx();
 
@@ -1028,7 +1035,7 @@ q{
 	scope(success)
 	{
 		performanceSW.stop();
-		perfLog(PERF_SCOPE ~ ": " ~ text(performanceSW.peek().msecs) ~ "ms");
+		perfLog(PERF_SCOPE ~ ": " ~ text(performanceSW.readStopwatch) ~ "ms");
 	}
 };
 
