@@ -23,6 +23,7 @@ version(Posix) import ae.sys.signals;
 
 int dbVersion = 1;
 
+/// Fake sink used only to invalidate the cache on new data.
 final class CacheSink : NewsSink
 {
 	override void handlePost(Post post, Fresh fresh)
