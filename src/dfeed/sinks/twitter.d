@@ -78,10 +78,11 @@ protected:
 		auto request = new HttpRequest;
 		//auto queryString = encodeUrlParameters(parameters);
 		auto queryString = parameters.pairs.map!(p => session.encode(p.key) ~ "=" ~ session.encode(p.value)).join("&");
-		auto url = config.postStatusURL ~ "?" ~ queryString;
-		request.resource = url;
+		auto baseURL = config.postStatusURL;
+		auto fullURL = baseURL ~ "?" ~ queryString;
+		request.resource = fullURL;
 		request.method = "POST";
-		request.headers["Authorization"] = session.prepareRequest(url, "POST", parameters).oauthHeader;
+		request.headers["Authorization"] = session.prepareRequest(baseURL, "POST", parameters).oauthHeader;
 		request.data = [Data([])];
 		httpRequest(request, null);
 	}
