@@ -877,36 +877,36 @@ final class EmailAction : Action
 	string formatMessage(ref Subscription subscription, Rfc850Post post)
 	{
 		return q"EOF
-Howdy %s,
+Howdy %1$s,
 
-%s
+%2$s
 
-This %s is located at:
-%s
+This %3$s is located at:
+%4$s
 
 Here is the message that has just been posted:
 ----------------------------------------------
-%-(%s
+%5$-(%s
 %)
 ----------------------------------------------
 
 To reply to this message, please visit this page:
-%s://%s%s
+%6$s://%7$s%8$s
 
 There may also be other messages matching your subscription, but you will not receive any more notifications for this subscription until you've read all messages matching this subscription:
-%s://%s/subscription-posts/%s
+%9$s://%10$s/subscription-posts/%11$s
 
 All the best,
-%s
+%12$s
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Unsubscription information:
 
 To stop receiving emails for this subscription, please visit this page:
-%s://%s/subscription-unsubscribe/%s
+%13$s://%14$s/subscription-unsubscribe/%15$s
 
 Or, visit your settings page to edit your subscriptions:
-%s://%s/settings
+%16$s://%17$s/settings
 .
 EOF"
 		.format(
