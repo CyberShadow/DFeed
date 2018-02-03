@@ -856,9 +856,9 @@ final class EmailAction : Action
 		}
 
 		queue[address] = Email([
-			"-s", subscription.trigger.getShortPostDescription(post),
+			"-t",
 			"-r", "%s <no-reply@%s>".format(site.host, site.host),
-			address], formatMessage(subscription, post));
+		], formatMessage(subscription, post));
 
 		if (!queueTask)
 			queueTask = setTimeout({
@@ -866,7 +866,7 @@ final class EmailAction : Action
 				scope(exit) queue = null;
 				foreach (address, email; queue)
 				{
-					auto pipes = pipeProcess(["mail"] ~ email.args, Redirect.stdin);
+					auto pipes = pipeProcess(["sendmail"] ~ email.args, Redirect.stdin);
 					pipes.stdin.rawWrite(email.content);
 					pipes.stdin.close();
 					enforce(wait(pipes.pid) == 0, "mail program failed");
@@ -876,7 +876,13 @@ final class EmailAction : Action
 
 	string formatMessage(ref Subscription subscription, Rfc850Post post)
 	{
+		enforce(!address.canFind("\n"), "Shenanigans detected");
+
 		return q"EOF
+From: %10$s <no-reply@%7$s>
+To: %11$s
+Subject: %12$s
+
 Howdy %1$s,
 
 %2$s
@@ -920,6 +926,8 @@ EOF"
 			/* 8*/ idToUrl(post.id, "reply"),
 			/* 9*/ subscription.id,
 			/*10*/ site.name.length ? site.name : site.host,
+			/*11*/ address,
+			/*12*/ subscription.trigger.getShortPostDescription(post),
 		);
 	}
 
