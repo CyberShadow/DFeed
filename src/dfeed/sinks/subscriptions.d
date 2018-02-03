@@ -910,16 +910,16 @@ Or, visit your settings page to edit your subscriptions:
 .
 EOF"
 		.format(
-			getUserRealName(userName).split(" ")[0],
-			subscription.trigger.getLongPostDescription(post),
-			post.references.length ? "post" : "thread",
-			post.url,
-			post.content.strip.splitAsciiLines.map!(line => line.startsWith('.') ? '.' ~ line : line),
-			site.proto,
-			site.host,
-			idToUrl(post.id, "reply"),
-			subscription.id,
-			site.name.length ? site.name : site.host,
+			/* 1*/ getUserRealName(userName).split(" ")[0],
+			/* 2*/ subscription.trigger.getLongPostDescription(post),
+			/* 3*/ post.references.length ? "post" : "thread",
+			/* 4*/ post.url,
+			/* 5*/ post.content.strip.splitAsciiLines.map!(line => line.startsWith('.') ? '.' ~ line : line),
+			/* 6*/ site.proto,
+			/* 7*/ site.host,
+			/* 8*/ idToUrl(post.id, "reply"),
+			/* 9*/ subscription.id,
+			/*10*/ site.name.length ? site.name : site.host,
 		);
 	}
 
