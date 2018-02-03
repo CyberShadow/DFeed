@@ -920,7 +920,7 @@ EOF"
 			/* 2*/ subscription.trigger.getLongPostDescription(post),
 			/* 3*/ post.references.length ? "post" : "thread",
 			/* 4*/ post.url,
-			/* 5*/ post.content.strip.splitAsciiLines.map!(line => line.startsWith('.') ? '.' ~ line : line),
+			/* 5*/ post.content.strip.splitAsciiLines.map!(line => line.length ? "> " ~ line : ">"),
 			/* 6*/ site.proto,
 			/* 7*/ site.host,
 			/* 8*/ idToUrl(post.id, "reply"),
