@@ -884,6 +884,7 @@ From: %10$s <no-reply@%7$s>
 To: %13$s <%11$s>
 Subject: %12$s
 Precedence: bulk
+Content-Type: text/plain; charset=utf-8
 
 Howdy %1$s,
 
