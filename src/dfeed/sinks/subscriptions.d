@@ -885,6 +885,8 @@ To: %13$s <%11$s>
 Subject: %12$s
 Precedence: bulk
 Content-Type: text/plain; charset=utf-8
+List-Unsubscribe-Post: List-Unsubscribe=One-Click
+List-Unsubscribe: <%6$s://%7$s/subscription-unsubscribe/%9$s>
 
 Howdy %1$s,
 
