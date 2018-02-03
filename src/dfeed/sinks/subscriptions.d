@@ -866,10 +866,15 @@ final class EmailAction : Action
 				scope(exit) queue = null;
 				foreach (address, email; queue)
 				{
-					auto pipes = pipeProcess(["sendmail"] ~ email.args, Redirect.stdin);
-					pipes.stdin.rawWrite(email.content);
-					pipes.stdin.close();
-					enforce(wait(pipes.pid) == 0, "mail program failed");
+					try
+					{
+						auto pipes = pipeProcess(["sendmail"] ~ email.args, Redirect.stdin);
+						pipes.stdin.rawWrite(email.content);
+						pipes.stdin.close();
+						enforce(wait(pipes.pid) == 0, "mail program failed");
+					}
+					catch (Exception e)
+						log("Error: " ~ e.msg);
 				}
 			}, 1.msecs);
 	}
