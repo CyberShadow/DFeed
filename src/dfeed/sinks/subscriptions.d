@@ -857,7 +857,7 @@ final class EmailAction : Action
 
 		queue[address] = Email([
 			"-t",
-			"-r", "%s <no-reply@%s>".format(site.host, site.host),
+			"-r", "%s <no-reply@%s>".format(site.name.length ? site.name : site.host, site.host),
 		], formatMessage(subscription, post));
 
 		if (!queueTask)
