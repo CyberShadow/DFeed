@@ -876,11 +876,12 @@ final class EmailAction : Action
 
 	string formatMessage(ref Subscription subscription, Rfc850Post post)
 	{
-		enforce(!address.canFind("\n"), "Shenanigans detected");
+		auto realName = getUserRealName(userName);
+		enforce(!(address~realName).canFind("\n"), "Shenanigans detected");
 
 		return q"EOF
 From: %10$s <no-reply@%7$s>
-To: %11$s
+To: %13$s <%11$s>
 Subject: %12$s
 
 Howdy %1$s,
@@ -916,7 +917,7 @@ Or, visit your settings page to edit your subscriptions:
 .
 EOF"
 		.format(
-			/* 1*/ getUserRealName(userName).split(" ")[0],
+			/* 1*/ realName.split(" ")[0],
 			/* 2*/ subscription.trigger.getLongPostDescription(post),
 			/* 3*/ post.references.length ? "post" : "thread",
 			/* 4*/ post.url,
@@ -928,6 +929,7 @@ EOF"
 			/*10*/ site.name.length ? site.name : site.host,
 			/*11*/ address,
 			/*12*/ subscription.trigger.getShortPostDescription(post),
+			/*13*/ realName,
 		);
 	}
 
