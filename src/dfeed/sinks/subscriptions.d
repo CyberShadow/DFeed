@@ -894,19 +894,19 @@ To reply to this message, please visit this page:
 %6$s://%7$s%8$s
 
 There may also be other messages matching your subscription, but you will not receive any more notifications for this subscription until you've read all messages matching this subscription:
-%9$s://%10$s/subscription-posts/%11$s
+%6$s://%7$s/subscription-posts/%9$s
 
 All the best,
-%12$s
+%10$s
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Unsubscription information:
 
 To stop receiving emails for this subscription, please visit this page:
-%13$s://%14$s/subscription-unsubscribe/%15$s
+%6$s://%7$s/subscription-unsubscribe/%9$s
 
 Or, visit your settings page to edit your subscriptions:
-%16$s://%17$s/settings
+%6$s://%7$s/settings
 .
 EOF"
 		.format(
@@ -915,11 +915,11 @@ EOF"
 			post.references.length ? "post" : "thread",
 			post.url,
 			post.content.strip.splitAsciiLines.map!(line => line.startsWith('.') ? '.' ~ line : line),
-			site.proto, site.host, idToUrl(post.id, "reply"),
-			site.proto, site.host, subscription.id,
+			site.proto,
+			site.host,
+			idToUrl(post.id, "reply"),
+			subscription.id,
 			site.name.length ? site.name : site.host,
-			site.proto, site.host, subscription.id,
-			site.proto, site.host,
 		);
 	}
 
