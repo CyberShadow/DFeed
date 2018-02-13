@@ -21,8 +21,6 @@ import std.exception;
 import ae.sys.sqlite3;
 public import ae.sys.sqlite3 : SQLiteException;
 
-SQLite db;
-
 SQLite.PreparedStatement query(string sql)()
 {
 	debug(DATABASE) std.stdio.writeln(sql);
@@ -52,18 +50,24 @@ T selectValue(T, Iter)(Iter iter)
 	throw new Exception("No results for query");
 }
 
-shared static this()
+@property SQLite db()
 {
+	static SQLite instance;
+	if (instance)
+		return instance;
+
 	auto dbFileName = "data/dfeed.s3db";
 	if (!dbFileName.exists)
 		atomic!createDatabase(schemaFileName, dbFileName);
 
-	db = new SQLite(dbFileName);
+	instance = new SQLite(dbFileName);
 	dumpSchema();
 
 	// Protect against locked database due to queries from command
 	// line or cron
-	db.exec("PRAGMA busy_timeout = 100;");
+	instance.exec("PRAGMA busy_timeout = 100;");
+
+	return instance;
 }
 
 // ***************************************************************************
