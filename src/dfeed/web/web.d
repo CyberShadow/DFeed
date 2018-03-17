@@ -2633,8 +2633,8 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 	html.put(
 		`<div>` ~
 			`<div class="postform-action-left">` ~
-				`<input name="action-send" type="submit" value="Send">` ~
 				`<input name="action-save" type="submit" value="Save and preview">` ~
+				`<input name="action-send" type="submit" value="Send">` ~
 			`</div>` ~
 			`<div class="postform-action-right">` ~
 				`<input name="action-discard" type="submit" value="Discard draft">` ~
