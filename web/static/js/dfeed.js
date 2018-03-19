@@ -742,7 +742,7 @@ function initAutoSave() {
 			$('<span>')
 				.text(xhr.status == 200 ? 'Draft saved.' : 'Error auto-saving draft.')
 				.addClass('autosave-notice')
-				.insertAfter($('#postform input[name=action-save]'))
+				.insertAfter($('#postform input[name=action-send]'))
 				.fadeOut(autoSaveCooldown)
 		});
 	}
