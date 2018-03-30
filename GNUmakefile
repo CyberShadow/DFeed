@@ -1,7 +1,10 @@
 # Compile resources
 
-HTMLCOMPRESSOR=htmlcompressor-1.5.3.jar
-YUICOMPRESSOR=yuicompressor-2.4.8.jar
+HTMLCOMPRESSOR_VERSION=1.5.3
+YUICOMPRESSOR_VERSION=2.4.8
+
+HTMLCOMPRESSOR=htmlcompressor-$(HTMLCOMPRESSOR_VERSION).jar
+YUICOMPRESSOR=yuicompressor-$(YUICOMPRESSOR_VERSION).jar
 
 HTMLTOOL=java -jar $(HTMLCOMPRESSOR) --compress-css
 JSTOOL=java -jar $(YUICOMPRESSOR) --type js
@@ -40,7 +43,7 @@ $(HTMLCOMPRESSOR) :
 	wget https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/htmlcompressor/$(HTMLCOMPRESSOR)
 
 $(YUICOMPRESSOR) :
-	wget https://github.com/yui/yuicompressor/releases/download/v2.4.8/$(YUICOMPRESSOR)
+	wget https://github.com/yui/yuicompressor/releases/download/v$(YUICOMPRESSOR_VERSION)/$(YUICOMPRESSOR)
 
 config/groups.ini : config/gengroups.d
 	cd config && rdmd gengroups
