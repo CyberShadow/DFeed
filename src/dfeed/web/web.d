@@ -3740,7 +3740,7 @@ void discussionSearch(UrlParameters parameters)
 			if (page != 1 || n > postsPerPage)
 			{
 				html.put(`<table class="forum-table post-pager">`);
-				pager("?q=" ~ searchString, page, n > postsPerPage ? int.max : page);
+				pager("?" ~ encodeUrlParameters(["q" : searchString]), page, n > postsPerPage ? int.max : page);
 				html.put(`</table>`);
 			}
 		}
