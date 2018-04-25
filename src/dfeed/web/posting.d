@@ -486,8 +486,3 @@ final class PostingNotifySink : NewsSink
 		}
 	}
 }
-
-static this()
-{
-	new PostingNotifySink();
-}

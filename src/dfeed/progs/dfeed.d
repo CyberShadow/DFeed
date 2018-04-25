@@ -43,6 +43,7 @@ import dfeed.sinks.irc;
 import dfeed.sinks.messagedb;
 import dfeed.sinks.subscriptions;
 import dfeed.sinks.twitter;
+import dfeed.web.posting;
 
 // Captcha
 import dfeed.web.captcha.dcaptcha;
@@ -78,6 +79,7 @@ void main(string[] args)
 	// Create sinks
 	createServices!IrcSink("sinks/irc");
 	new MessageDBSink(refresh ? Yes.update : No.update);
+	new PostingNotifySink();
 	new SubscriptionSink();
 	createServices!TwitterSink("sinks/twitter");
 
