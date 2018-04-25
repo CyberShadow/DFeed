@@ -30,6 +30,7 @@ import ae.utils.text;
 import dfeed.site;
 import dfeed.web.posting;
 import dfeed.web.spam.akismet;
+import dfeed.web.spam.bayes;
 import dfeed.web.spam.blogspam;
 import dfeed.web.spam.projecthoneypot;
 import dfeed.web.spam.simple;
@@ -116,6 +117,7 @@ void initSpamCheckers()
 
 	import dfeed.common;
 	spamCheckers ~= new SimpleChecker();
+	spamCheckers ~= new BayesChecker();
 	if (auto c = createService!ProjectHoneyPot("apis/projecthoneypot"))
 		spamCheckers ~= c;
 	if (auto c = createService!Akismet("apis/akismet"))
