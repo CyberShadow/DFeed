@@ -252,7 +252,7 @@ final class PostProcess
 
 			log("Checking for spam");
 			status = PostingStatus.spamCheck;
-			spamCheck(this, &onSpamResult);
+			spamCheck(this, &onSpamResult, &(log.log));
 		}
 	}
 

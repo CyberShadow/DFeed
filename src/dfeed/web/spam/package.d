@@ -35,7 +35,7 @@ import dfeed.web.spam.projecthoneypot;
 import dfeed.web.spam.simple;
 import dfeed.web.spam.stopforumspam;
 
-void spamCheck(PostProcess process, SpamResultHandler handler)
+void spamCheck(PostProcess process, SpamResultHandler handler, void delegate(string) log = null)
 {
 	if (!spamCheckers)
 		initSpamCheckers();
@@ -47,24 +47,30 @@ void spamCheck(PostProcess process, SpamResultHandler handler)
 	foreach (checker; spamCheckers)
 	{
 		try
-			checker.check(process, (bool ok, string message) {
-				totalResults++;
-				if (!foundSpam)
-				{
-					if (!ok)
+			(SpamChecker checker) {
+				checker.check(process, (bool ok, string message) {
+					totalResults++;
+					if (log) log("Got reply from spam checker %s: %s (%s)".format(
+						checker.classinfo.name, ok ? "ham" : "spam", message));
+					if (!foundSpam)
 					{
-						handler(false, message);
-						foundSpam = true;
+						if (!ok)
+						{
+							handler(false, message);
+							foundSpam = true;
+						}
+						else
+						{
+							if (totalResults == spamCheckers.length)
+								handler(true, null);
+						}
 					}
-					else
-					{
-						if (totalResults == spamCheckers.length)
-							handler(true, null);
-					}
-				}
-			});
+				});
+			} (checker);
 		catch (Exception e)
 		{
+			if (log) log("Error with spam checker %s: %s".format(
+				checker.classinfo.name, e.msg));
 			foundSpam = true;
 			handler(false, "Spam check error: " ~ e.msg);
 		}
