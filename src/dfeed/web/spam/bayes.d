@@ -57,6 +57,10 @@ class BayesChecker : SpamChecker
 		auto prob = model.checkMessage(message);
 		bool isSpam = prob >= probThreshold;
 
-		handler(!isSpam, "Your post looks like spam (probability %d%%)".format(cast(int)(prob * 100)));
+		auto percent = cast(int)(prob * 100);
+		if (isSpam)
+			handler(false, "Your post looks like spam (%d%% spamicity)".format(percent));
+		else
+			handler(true, "%d%%".format(percent));
 	}
 }
