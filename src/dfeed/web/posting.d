@@ -247,6 +247,7 @@ final class PostProcess
 				{
 					log("User is trusted, skipping spam check");
 					postMessage();
+					return;
 				}
 			}
 
