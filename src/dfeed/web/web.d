@@ -2956,7 +2956,7 @@ void deletePostImpl(string messageID, string reason, string userName, bool ban, 
 	auto post = getPost(messageID);
 	enforce(post, "Post not found");
 
-	auto deletionLog = new FileLogger("Deleted");
+	auto deletionLog = fileLogger("Deleted");
 	scope(exit) deletionLog.close();
 	scope(failure) deletionLog("An error occurred");
 	deletionLog("User %s is deleting post %s (%s)".format(userName, post.id, reason));
@@ -2984,7 +2984,7 @@ void deletePostImpl(string messageID, string reason, string userName, bool ban, 
 
 // Create logger on demand, to avoid creating empty log files
 Logger banLog;
-void needBanLog() { if (!banLog) banLog = new FileLogger("Banned"); }
+void needBanLog() { if (!banLog) banLog = fileLogger("Banned"); }
 
 void banPoster(string who, string id, string reason)
 {
