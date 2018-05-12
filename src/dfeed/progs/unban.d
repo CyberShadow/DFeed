@@ -81,7 +81,7 @@ void main(string[] args)
 		return;
 	}
 
-	auto logFile = new FileLogger("Unban");
+	auto logFile = fileLogger("Unban");
 	foreach (line; logLines)
 		logFile(line);
 	logFile.close();
