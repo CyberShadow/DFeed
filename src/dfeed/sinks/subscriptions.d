@@ -125,6 +125,15 @@ struct Subscription
 			action.run(this, post);
 	}
 
+	bool haveUnread()
+	{
+		auto user = new RegisteredUser(userName);
+		foreach (int rowid; query!"SELECT [MessageRowID] FROM [SubscriptionPosts] WHERE [SubscriptionID] = ?".iterate(id))
+			if (!user.isRead(rowid))
+				return true;
+		return false;
+	}
+
 	int getUnreadCount()
 	{
 		auto user = new RegisteredUser(userName);
@@ -834,11 +843,10 @@ final class EmailAction : Action
 		if (!enabled)
 			return;
 
-		auto unreadCount = subscription.getUnreadCount();
-		if (unreadCount)
+		if (subscription.haveUnread())
 		{
-			log("User %s has %d unread messages in subscription %s - not emailing"
-				.format(subscription.userName, unreadCount, subscription.id));
+			log("User %s has unread messages in subscription %s - not emailing"
+				.format(subscription.userName, subscription.id));
 			return;
 		}
 
