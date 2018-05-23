@@ -226,6 +226,13 @@ final class PostProcess
 		return format("<%s@%s>", pid, site.host);
 	}
 
+	void logLine(string s)
+	{
+		try
+			log.log(s);
+		catch (Exception e) {}
+	}
+
 	void run()
 	{
 		assert(status != PostingStatus.redirect, "Attempting to run a duplicate PostProcess");
@@ -253,7 +260,7 @@ final class PostProcess
 
 			log("Checking for spam");
 			status = PostingStatus.spamCheck;
-			spamCheck(this, &onSpamResult, &(log.log));
+			spamCheck(this, &onSpamResult, &logLine);
 		}
 	}
 
