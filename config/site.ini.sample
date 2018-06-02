@@ -19,3 +19,9 @@ proto = http
 # A description of this DFeed instance to be shown on the help page (in the About section).
 
 about = <p>This is an example DFeed instance.</p>
+
+# List of email addresses of site moderators.
+# These will be used for notifications when a post is flagged.
+# E.g.: moderators=["John Doe <johndoe@example.tld>", "Jane Doe <janedoe@example.tld>"]
+
+moderators=[]

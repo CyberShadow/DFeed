@@ -60,6 +60,7 @@ import ae.utils.xmllite : putEncodedEntities;
 import dfeed.common;
 import dfeed.database;
 import dfeed.groups;
+import dfeed.mail;
 import dfeed.message;
 import dfeed.sinks.cache;
 import dfeed.sinks.messagedb : searchTerm, threadID;
@@ -3149,6 +3150,58 @@ void discussionFlagPage(Rfc850Post post, bool flag, UrlParameters postParams)
 					`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
 					`<input type="submit" name="cancel" value="Return to post"></input>` ~
 				`</form>`);
+
+			if (flag)
+			{
+				auto subject = "%s flagged %s's post in the thread \"%s\"".format(
+					user.getName(),
+					post.author,
+					post.subject,
+				);
+
+				foreach (mod; site.moderators)
+					sendMail(q"EOF
+From: %1$s <no-reply@%2$s>
+To: %3$s
+Subject: %4%s
+Content-Type: text/plain; charset=utf-8
+
+Howdy %5$s,
+
+%4$s
+%6$s://%7$s%8$s
+
+Here is the message that was flagged:
+----------------------------------------------
+%9$-(%s
+%)
+----------------------------------------------
+
+If you believe this message should be deleted, you can click here to do so:
+%6$s://%7$s%10$s
+
+All the best,
+%1$s
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You are receiving this message because you are configured as a site moderator on %2$s.
+
+To stop receiving messages like this, please ask the administrator of %1$s to remove you from the list of moderators.
+.
+EOF"
+						.format(
+							/* 1*/ site.name.length ? site.name : site.host,
+							/* 2*/ site.host,
+							/* 3*/ mod,
+							/* 4*/ subject,
+							/* 5*/ mod.canFind("<") ? mod.findSplit("<")[0].findSplit(" ")[0] : mod.findSplit("@")[0],
+							/* 6*/ site.proto,
+							/* 7*/ site.host,
+							/* 8*/ idToUrl(post.id),
+							/* 9*/ post.content.strip.splitAsciiLines.map!(line => line.length ? "> " ~ line : ">"),
+							/*10*/ idToUrl(post.id, "delete"),
+						));
+			}
 		}
 		else
 			throw new Redirect(idToUrl(post.id));

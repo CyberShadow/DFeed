@@ -22,6 +22,7 @@ struct SiteConfig
 	string host = "localhost";
 	string proto = "http";
 	string about;
+	immutable(string)[] moderators;
 }
 immutable SiteConfig site;
 
