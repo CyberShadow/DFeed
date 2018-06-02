@@ -41,6 +41,7 @@ import ae.utils.xmllite : putEncodedEntities;
 import dfeed.common;
 import dfeed.database;
 import dfeed.groups;
+import dfeed.mail;
 import dfeed.message;
 import dfeed.site;
 import dfeed.sinks.irc;
@@ -851,9 +852,7 @@ final class EmailAction : Action
 		}
 
 		// Queue messages to avoid sending more than 1 email per message.
-		static struct Email { string[] args; string content; }
-
-		static Email[string] queue;
+		static string[string] queue;
 		static TimerTask queueTask;
 
 		if (address in queue)
@@ -863,24 +862,16 @@ final class EmailAction : Action
 			return;
 		}
 
-		queue[address] = Email([
-			"-t",
-			"-r", "%s <no-reply@%s>".format(site.name.length ? site.name : site.host, site.host),
-		], formatMessage(subscription, post));
+		queue[address] = formatMessage(subscription, post);
 
 		if (!queueTask)
 			queueTask = setTimeout({
 				queueTask = null;
 				scope(exit) queue = null;
-				foreach (address, email; queue)
+				foreach (address, message; queue)
 				{
 					try
-					{
-						auto pipes = pipeProcess(["sendmail"] ~ email.args, Redirect.stdin);
-						pipes.stdin.rawWrite(email.content);
-						pipes.stdin.close();
-						enforce(wait(pipes.pid) == 0, "mail program failed");
-					}
+						sendMail(message);
 					catch (Exception e)
 						log("Error: " ~ e.msg);
 				}
