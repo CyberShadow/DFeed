@@ -20,8 +20,10 @@ import core.time;
 
 import std.algorithm;
 import std.array;
+import std.base64;
 import std.conv;
 import std.datetime;
+import std.digest.sha;
 import std.exception;
 import std.file;
 import std.functional;
@@ -605,6 +607,21 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				breadcrumbs ~= `<a href="/delete/`~pathX~`">Delete post</a>`;
 				discussionDeleteForm(post);
 				bodyClass ~= " formdoc";
+				break;
+			}
+			case "approve-moderated-draft":
+			{
+				title = "Approving moderated draft";
+				enforce(user.getLevel() >= User.Level.canApproveDrafts, "You can't approve moderated drafts");
+				enforce(path.length == 3, "Wrong URL format");
+				auto draftID = path[1];
+				enforce(path[2] == authHash(draftID), "Invalid authentication");
+
+				auto draft = getDraft(draftID);
+				auto headers = Headers(draft.serverVars.get("headers", "null").jsonParse!(string[][string]));
+				auto pid = postDraft(draft, headers);
+
+				html.put(`Post approved! <a href="/posting/` ~ pid ~ `">View posting</a>`);
 				break;
 			}
 			case "dodelete":
@@ -2646,6 +2663,23 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 	return true;
 }
 
+/// Should this post be queued for moderation instead of being posted immediately?
+/// If yes, return a reason; if no, return null.
+string shouldModerate(ref PostDraft draft)
+{
+	return null;
+}
+
+/// Calculate a secret string from a key.
+/// Can be used in URLs in emails to authenticate an action on a
+/// public/guessable identifier.
+string authHash(string s)
+{
+	import dfeed.web.user : userConfig = config;
+	auto digest = sha256Of(s ~ userConfig.salt);
+	return Base64.encode(digest)[0..10];
+}
+
 SysTime[][string] lastPostAttempts;
 
 // Reject posts if the threshold of post attempts is met under the
@@ -2677,6 +2711,9 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 		if (clientVars.get("secret", "") != userSettings.secret)
 			throw new Exception("XSRF secret verification failed. Are your cookies enabled?");
 
+		if (draft.status == PostDraft.Status.moderation)
+			throw new Exception("This message is awaiting moderation.");
+		
 		draft.clientVars = clientVars;
 		draft.status = PostDraft.Status.edited;
 		scope(exit) saveDraft(draft);
@@ -2781,18 +2818,71 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 					}
 				}
 
-				auto parent = "parent" in draft.serverVars ? getPost(draft.serverVars["parent"]) : null;
-				auto process = new PostProcess(draft, user, userSettings.id, ip, headers, parent);
-				if (process.status == PostingStatus.redirect)
-					return "/posting/" ~ process.pid;
-				process.run();
-				lastPostAttempts[ip] ~= Clock.currTime();
-				draft.serverVars["pid"] = process.pid;
+				if (auto reason = shouldModerate(draft))
+				{
+					draft.status = PostDraft.Status.moderation;
+					draft.serverVars["headers"] = headers.to!(string[][string]).toJson;
+					// draft will be saved by scope(exit) above
 
+					string sanitize(string s) { return "%(%s%)".format(s.only)[1..$-1]; }
+					foreach (mod; site.moderators)
+						sendMail(q"EOF
+From: %1$s <no-reply@%2$s>
+To: %3$s
+Subject: Please moderate: post by %5$s with subject "%7$s"
+Content-Type: text/plain; charset=utf-8
+
+Howdy %4$s,
+
+User %5$s <%6$s> attempted to post a message with the subject "%7$s".
+This post was held for moderation for the following reason: %8$s
+
+Here is the message:
+----------------------------------------------
+%9$-(%s
+%)
+----------------------------------------------
+
+If you believe this message should be approved and posted, you can click here to do so:
+%10$s://%2$s/approve-moderated-draft/%11$s/%12$s
+
+Otherwise, no action is necessary.
+
+All the best,
+%1$s
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You are receiving this message because you are configured as a site moderator on %2$s.
+
+To stop receiving messages like this, please ask the administrator of %1$s to remove you from the list of moderators.
+.
+EOF"
+						.format(
+							/* 1*/ site.name.length ? site.name : site.host,
+							/* 2*/ site.host,
+							/* 3*/ mod,
+							/* 4*/ mod.canFind("<") ? mod.findSplit("<")[0].findSplit(" ")[0] : mod.findSplit("@")[0],
+							/* 5*/ clientVars.get("name", "").I!sanitize,
+							/* 6*/ clientVars.get("email", "").I!sanitize,
+							/* 7*/ clientVars.get("subject", "").I!sanitize,
+							/* 8*/ reason,
+							/* 9*/ draft.clientVars.get("text", "").strip.splitAsciiLines.map!(line => line.length ? "> " ~ line : ">"),
+							/*10*/ site.proto,
+							/*11*/ draftID,
+							/*12*/ authHash(draftID),
+						));
+
+					html.put(`<p>Your message has been saved, and will be posted after being approved by a moderator.</p>`);
+					return null;
+				}
+
+				auto pid = postDraft(draft, headers);
+
+				lastPostAttempts[ip] ~= Clock.currTime();
 				if (user.isLoggedIn())
 					createReplySubscription(user.getName());
 
-				return "/posting/" ~ process.pid;
+				return "/posting/" ~ pid;
 			}
 			case "discard":
 			{
@@ -2819,6 +2909,18 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 		discussionPostForm(draft, false, PostError(error));
 		return null;
 	}
+}
+
+string postDraft(ref PostDraft draft, Headers headers)
+{
+	auto parent = "parent" in draft.serverVars ? getPost(draft.serverVars["parent"]) : null;
+	auto process = new PostProcess(draft, user, userSettings.id, ip, headers, parent);
+	if (process.status == PostingStatus.redirect)
+		return process.pid;
+	process.run();
+	draft.serverVars["pid"] = process.pid;
+
+	return process.pid;
 }
 
 void discussionPostStatusMessage(string messageHtml)

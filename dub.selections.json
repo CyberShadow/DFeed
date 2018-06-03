@@ -1,7 +1,7 @@
 {
 	"fileVersion": 1,
 	"versions": {
-		"ae": "0.0.2190",
+		"ae": "0.0.2230",
 		"dcaptcha": "1.0.0",
 		"openssl": "1.1.6+1.0.1g"
 	}
