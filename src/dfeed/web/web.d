@@ -75,7 +75,7 @@ import dfeed.web.list;
 //import dfeed.web.mailhide;
 import dfeed.web.posting;
 import dfeed.web.user : User, getUser, SettingType;
-import dfeed.web.spam : bayes;
+import dfeed.web.spam : getSpamicity;
 
 version = MeasurePerformance;
 
@@ -2665,7 +2665,7 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 /// If yes, return a reason; if no, return null.
 string shouldModerate(ref PostDraft draft)
 {
-	auto spamicity = bayes.checkDraft(draft);
+	auto spamicity = getSpamicity(draft);
 	if (spamicity >= 0.98)
 		return "Very high Bayes spamicity (%s%%)".format(spamicity * 100);
 

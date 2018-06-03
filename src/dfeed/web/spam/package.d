@@ -109,6 +109,16 @@ class SpamChecker
 
 // **************************************************************************
 
+double getSpamicity(PostDraft draft)
+{
+	if (!spamCheckers)
+		initSpamCheckers();
+
+	return bayes.checkDraft(draft);
+}
+
+// **************************************************************************
+
 SpamChecker[] spamCheckers;
 BayesChecker bayes;
 
