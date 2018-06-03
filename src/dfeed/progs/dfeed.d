@@ -70,8 +70,9 @@ void main(string[] args)
 		createServices!StackOverflow("sources/stackoverflow");
 		createServices!Reddit       ("sources/reddit");
 		createServices!SocketSource ("sources/socket");
-		createServices!Mailman      ("sources/mailman");
 		createServices!GitHub       ("sources/github");
+		if (!noDownload)
+			createServices!Mailman      ("sources/mailman");
 	}
 	if (refresh)
 		new MessageDBSource();
