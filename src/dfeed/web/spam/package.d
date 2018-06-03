@@ -110,6 +110,7 @@ class SpamChecker
 // **************************************************************************
 
 SpamChecker[] spamCheckers;
+BayesChecker bayes;
 
 void initSpamCheckers()
 {
@@ -117,7 +118,7 @@ void initSpamCheckers()
 
 	import dfeed.common;
 	spamCheckers ~= new SimpleChecker();
-	spamCheckers ~= new BayesChecker();
+	spamCheckers ~= bayes = new BayesChecker();
 	if (auto c = createService!ProjectHoneyPot("apis/projecthoneypot"))
 		spamCheckers ~= c;
 	if (auto c = createService!Akismet("apis/akismet"))
