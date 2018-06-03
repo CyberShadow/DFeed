@@ -3265,12 +3265,12 @@ void discussionFlagPage(Rfc850Post post, bool flag, UrlParameters postParams)
 					sendMail(q"EOF
 From: %1$s <no-reply@%2$s>
 To: %3$s
-Subject: %4%s
+Subject: %4$s
 Content-Type: text/plain; charset=utf-8
 
 Howdy %5$s,
 
-%4$s
+%4$s:
 %6$s://%7$s%8$s
 
 Here is the message that was flagged:
