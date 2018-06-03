@@ -244,9 +244,6 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 
 	try
 	{
-		if (banCheck(ip, request))
-			return response.writeError(HttpStatusCode.Forbidden, "You're banned!");
-
 		auto pathStr = request.resource;
 		enforce(pathStr.startsWith('/'), "Invalid path");
 		UrlParameters parameters;
@@ -2671,6 +2668,10 @@ string shouldModerate(ref PostDraft draft)
 	auto spamicity = bayes.checkDraft(draft);
 	if (spamicity >= 0.98)
 		return "Very high Bayes spamicity (%s%%)".format(spamicity * 100);
+
+	if (auto reason = banCheck(ip, currentRequest))
+		return "Post from banned user (ban reason: " ~ reason ~ ")";
+
 	return null;
 }
 
