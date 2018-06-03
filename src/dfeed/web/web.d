@@ -3153,8 +3153,9 @@ void saveBanList()
 	rename(inProgressFileName, banListFileName);
 }
 
-/// Returns true if the user is banned.
-bool banCheck(string ip, HttpRequest request)
+/// If the user is banned, returns the ban reason.
+/// Otherwise, returns null.
+string banCheck(string ip, HttpRequest request)
 {
 	string[] keys = [ip];
 	foreach (cookie; request.headers.get("Cookie", null).split("; "))
@@ -3181,7 +3182,7 @@ bool banCheck(string ip, HttpRequest request)
 		}
 
 	if (!bannedKey)
-		return false;
+		return null;
 
 	needBanLog();
 	banLog("Request from banned user: " ~ request.resource);
@@ -3201,7 +3202,7 @@ bool banCheck(string ip, HttpRequest request)
 	if (propagated)
 		saveBanList();
 
-	return true;
+	return reason;
 }
 
 void discussionFlagPage(Rfc850Post post, bool flag, UrlParameters postParams)
