@@ -44,16 +44,17 @@ done
 
 if [[ "${#progs[@]}" -eq 0 ]]
 then
-	for fn in src/dfeed/progs/*.d
+	for fn in $(find src/dfeed/progs -name '*.d')
 	do
-		progs+=("$(basename "$fn" .d)")
+		name=$(realpath --relative-to=src/dfeed/progs "$fn")
+		progs+=("${name%.d}")
 	done
 fi
 
 for prog in "${progs[@]}"
 do
 	echo "Rebuilding $prog..."
-	rdmd --build-only -of"$prog" "${flags[@]}" "src/dfeed/progs/$prog.d"
+	rdmd --build-only -of"${prog//\//-}" "${flags[@]}" "src/dfeed/progs/$prog.d"
 	echo OK.
 done
 echo Rebuilding resources...

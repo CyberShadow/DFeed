@@ -35,6 +35,10 @@
 /rebuildthreads
 /sanitizedb
 /sendspamfeedback
+/bayes-checkall
+/bayes-checkdatum
+/bayes-prepdata
+/bayes-train
 
 # Deimos
 /deimos/openssl/
