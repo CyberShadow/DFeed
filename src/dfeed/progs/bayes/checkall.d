@@ -19,10 +19,12 @@
 module dfeed.progs.bayes.checkall;
 
 import std.algorithm.iteration;
+import std.algorithm.sorting;
 import std.file;
 import std.getopt;
 import std.path;
 import std.stdio;
+import std.typecons;
 
 import ae.utils.json;
 
@@ -42,9 +44,20 @@ void main(string[] args)
 
 	void scanDir(string dir, bool isSpam)
 	{
+		Tuple!(string, double)[] results;
 		foreach (de; dirEntries("data/" ~ dir, "*.txt", SpanMode.shallow))
 		{
 			auto prob = model.checkMessage(de.readText);
+			results ~= tuple(de.name, prob);
+		}
+
+		results.sort!((a, b) => a[1] < b[1]);
+
+		foreach (pair; results)
+		{
+			auto name = pair[0];
+			auto prob = pair[1];
+
 			bool rSpam = prob >= probThreshold;
 			counts[rSpam][rSpam == isSpam]++;
 			counts2[isSpam][rSpam == isSpam]++;
@@ -53,13 +66,15 @@ void main(string[] args)
 				continue;
 
 			writefln("%s\t%s\t%s\t%s (%1.3f)",
-				de.name,
-				threshold && de.baseName > threshold ? "verify" : "train",
+				name,
+				threshold && name.baseName > threshold ? "verify" : "train",
 				isSpam ? "spam" : "ham",
 				rSpam == isSpam ? rSpam ? "spam" : "ham" : rSpam ? "SPAM" : "HAM",
 				prob,
 			);
 		}
+
+		writeln();
 	}
 
 	scanDir("bayes/ok"                    , false);
@@ -68,7 +83,6 @@ void main(string[] args)
 	scanDir("bayes/deleted"               , true );
 	scanDir("bayes-manual/false-positives", false);
 
-	writeln();
 	foreach (isPositive; [false, true])
 	{
 		auto total = sum(counts[isPositive][]);
