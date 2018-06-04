@@ -19,22 +19,28 @@
 module dfeed.progs.bayes.checkall;
 
 import std.algorithm.iteration;
+import std.algorithm.mutation;
 import std.algorithm.sorting;
 import std.file;
 import std.getopt;
 import std.path;
 import std.stdio;
+import std.string;
 import std.typecons;
 
 import ae.utils.json;
 
 import dfeed.bayes;
+import dfeed.site;
 
 void main(string[] args)
 {
 	string threshold;
+	bool classify;
+
 	getopt(args,
 		"threshold", &threshold,
+		"classify", &classify,
 	);
 
 	auto model = "data/bayes/model.json".readText.jsonParse!BayesModel;
@@ -44,6 +50,10 @@ void main(string[] args)
 
 	void scanDir(string dir, bool isSpam)
 	{
+		stderr.writeln("###########################################################################");
+		stderr.writeln("Scanning ", dir, "/...");
+		stderr.writeln;
+
 		Tuple!(string, double)[] results;
 		foreach (de; dirEntries("data/bayes/" ~ dir, "*.txt", SpanMode.shallow))
 		{
@@ -52,7 +62,10 @@ void main(string[] args)
 		}
 
 		results.sort!((a, b) => a[1] < b[1]);
+		if (!isSpam)
+			results.reverse();
 
+	resultLoop:
 		foreach (pair; results)
 		{
 			auto name = pair[0];
@@ -72,6 +85,43 @@ void main(string[] args)
 				rSpam == isSpam ? rSpam ? "spam" : "ham" : rSpam ? "SPAM" : "HAM",
 				prob,
 			);
+
+			if (classify)
+			{
+				writefln("%s://%s/post/%s@%s", site.proto, site.host, name.baseName.stripExtension, site.host);
+				writeln("=======================================");
+				name.readText.splitLines.each!(line => writeln("> ", line));
+				writeln("=======================================");
+
+				bool userSpam;
+				do
+				{
+					writeln;
+					write("Classify [ham/spam/skip/done]? ");
+					stdout.flush();
+					switch (readln.strip)
+					{
+						case "ham":
+							userSpam = false;
+							break;
+						case "spam":
+							userSpam = true;
+							break;
+						case "skip":
+							continue resultLoop;
+						case "done":
+							return;
+						default:
+							continue;
+					}
+					break;
+				} while (true);
+
+				auto destDir = "data/bayes-manual/" ~ (userSpam ? "spam" : "ham") ~ "/" ~ dir ~ "-classified/";
+				mkdirRecurse(destDir);
+				rename(name, destDir ~ "/" ~ name.baseName);
+				writeln();
+			}
 		}
 
 		writeln();
