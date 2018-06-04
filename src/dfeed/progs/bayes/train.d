@@ -21,6 +21,7 @@ module dfeed.progs.bayes.train;
 import std.file;
 import std.getopt;
 import std.path;
+import std.stdio : stderr;
 
 import ae.utils.json;
 
@@ -37,7 +38,14 @@ void main(string[] args)
 
 	void scanDir(string dir, bool isSpam)
 	{
-		foreach (de; dirEntries("data/bayes/" ~ dir, "*.txt", SpanMode.shallow))
+		auto path = "data/bayes/" ~ dir;
+		if (!path.exists)
+		{
+			stderr.writeln("Skipping nonexisting dir: ", path);
+			return;
+		}
+
+		foreach (de; dirEntries(path, "*.txt", SpanMode.shallow))
 		{
 			if (threshold && de.baseName > threshold)
 				continue;
