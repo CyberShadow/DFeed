@@ -42,7 +42,7 @@ void main(string[] args)
 
 	void scanDir(string dir, bool isSpam)
 	{
-		foreach (de; dirEntries("data/bayes/" ~ dir, "*.txt", SpanMode.shallow))
+		foreach (de; dirEntries("data/" ~ dir, "*.txt", SpanMode.shallow))
 		{
 			auto prob = model.checkMessage(de.readText);
 			bool rSpam = prob >= probThreshold;
@@ -62,11 +62,11 @@ void main(string[] args)
 		}
 	}
 
-	scanDir("ok"           , false);
-	scanDir("failed"       , true );
-	scanDir("redeemed"     , false);
-	scanDir("deleted"      , true );
-	scanDir("falsePositive", false);
+	scanDir("bayes/ok"                    , false);
+	scanDir("bayes/failed"                , true );
+	scanDir("bayes/redeemed"              , false);
+	scanDir("bayes/deleted"               , true );
+	scanDir("bayes-manual/false-positives", false);
 
 	writeln();
 	foreach (isPositive; [false, true])
