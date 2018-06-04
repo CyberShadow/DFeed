@@ -50,7 +50,7 @@ void main()
 				continue;
 			line = line.findSplit("] ")[2];
 
-			if (auto m = line.matchFirst(re!`^User .* is deleting post <(.*)@.*> \(.*\)$`))
+			if (auto m = line.matchFirst(re!`^User .* is deleting post <(.*)@.*> \(spam\)$`))
 				deletedPosts[m[1]] = true;
 		}
 	}
