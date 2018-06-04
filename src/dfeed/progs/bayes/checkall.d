@@ -45,7 +45,7 @@ void main(string[] args)
 	void scanDir(string dir, bool isSpam)
 	{
 		Tuple!(string, double)[] results;
-		foreach (de; dirEntries("data/" ~ dir, "*.txt", SpanMode.depth))
+		foreach (de; dirEntries("data/bayes/" ~ dir, "*.txt", SpanMode.shallow))
 		{
 			auto prob = model.checkMessage(de.readText);
 			results ~= tuple(de.name, prob);
@@ -77,12 +77,12 @@ void main(string[] args)
 		writeln();
 	}
 
-	scanDir("bayes/ok"         , false);
-	scanDir("bayes/failed"     , true );
-	scanDir("bayes/redeemed"   , false);
-	scanDir("bayes/deleted"    , true );
-	scanDir("bayes-manual/ham" , false);
-	scanDir("bayes-manual/spam", true );
+	scanDir("ok"         , false);
+	scanDir("failed"     , true );
+	scanDir("redeemed"   , false);
+	scanDir("deleted"    , true );
+	scanDir("manualHam"  , false);
+	scanDir("manualSpam" , true );
 
 	foreach (isPositive; [false, true])
 	{
