@@ -28,6 +28,7 @@ import std.path;
 import std.regex;
 import std.stdio;
 import std.string;
+import std.typecons;
 
 import ae.sys.file;
 import ae.utils.aa;
@@ -55,11 +56,27 @@ void main()
 		}
 	}
 
-	auto falsePositives = dirEntries("data/bayes-manual/false-positives/", "*.txt", SpanMode.shallow)
-		.map!(de => de.baseName.stripExtension)
-		.toSet();
+	version (none) // linker error! >:(
+	{
+		auto manual = [false, true]
+			.map!(isSpam =>
+				("data/bayes-manual/" ~ ["ham", "spam"][isSpam] ~ "/")
+				.dirEntries("*.txt", SpanMode.depth)
+				.map!(de => tuple(de.baseName.stripExtension, isSpam))
+			)
+			.joiner
+			.assocArray;
+	}
+	else
+	{
+		bool[string] manual;
+		foreach (de; dirEntries("data/bayes-manual/ham/", "*.txt", SpanMode.depth))
+			manual[de.baseName.stripExtension] = false;
+		foreach (de; dirEntries("data/bayes-manual/spam/", "*.txt", SpanMode.depth))
+			manual[de.baseName.stripExtension] = true;
+	}
 
-	enum Status { unknown, ok, failed, redeemed, deleted, falsePositive }
+	enum Status { unknown, ok, failed, redeemed, deleted, manualHam, manualSpam }
 	Status[string] posts;
 	string[string] ids;
 	string[][string] byDid;
@@ -119,8 +136,8 @@ void main()
 		if (post.pid in deletedPosts)
 			status = Status.deleted;
 
-		if (post.pid in falsePositives)
-			status = Status.falsePositive;
+		if (auto pIsSpam = post.pid in manual)
+			status = *pIsSpam ? Status.manualSpam : Status.manualHam;
 
 		posts[message] = max(status, posts.get(message, Status.ok));
 		ids[message] = post.pid;

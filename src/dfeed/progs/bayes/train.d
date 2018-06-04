@@ -37,7 +37,7 @@ void main(string[] args)
 
 	void scanDir(string dir, bool isSpam)
 	{
-		foreach (de; dirEntries("data/" ~ dir, "*.txt", SpanMode.shallow))
+		foreach (de; dirEntries("data/" ~ dir, "*.txt", SpanMode.depth))
 		{
 			if (threshold && de.baseName > threshold)
 				continue;
@@ -61,11 +61,12 @@ void main(string[] args)
 		}
 	}
 
-	scanDir("bayes/ok"                    , false);
-	scanDir("bayes/failed"                , true );
-	scanDir("bayes/redeemed"              , false);
-	scanDir("bayes/deleted"               , true );
-	scanDir("bayes-manual/false-positives", false);
+	scanDir("bayes/ok"         , false);
+	scanDir("bayes/failed"     , true );
+	scanDir("bayes/redeemed"   , false);
+	scanDir("bayes/deleted"    , true );
+	scanDir("bayes-manual/ham" , false);
+	scanDir("bayes-manual/spam", true );
 
 	write("data/bayes/model.json", model.toJson);
 }
