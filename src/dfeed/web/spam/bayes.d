@@ -43,15 +43,19 @@ class BayesChecker : SpamChecker
 		}
 	}
 
-	double checkDraft(in ref PostDraft draft)
+	static string messageFromDraft(in ref PostDraft draft)
 	{
 		string message;
 		auto subject = draft.clientVars.get("subject", "").toLower();
 		if ("parent" !in draft.serverVars || !subject.startsWith("Re: ")) // top-level or custom subject
 			message = subject ~ "\n\n";
 		message ~= draft.getNonQuoteLines().join("\n");
+		return message;
+	}
 
-		return model.checkMessage(message);
+	double checkDraft(in ref PostDraft draft)
+	{
+		return model.checkMessage(messageFromDraft(draft));
 	}
 
 	override void check(PostProcess process, SpamResultHandler handler)
