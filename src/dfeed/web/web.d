@@ -3340,6 +3340,7 @@ void discussionApprovePage(string draftID, UrlParameters postParams)
 		{
 			auto headers = Headers(draft.serverVars.get("headers", "null").jsonParse!(string[][string]));
 			auto pid = postDraft(draft, headers);
+			saveDraft(draft);
 
 			html.put(`Post approved! <a href="/posting/` ~ pid ~ `">View posting</a>`);
 		}
