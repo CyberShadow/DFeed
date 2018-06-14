@@ -2551,6 +2551,12 @@ PostDraft newReplyDraft(Rfc850Post post)
 	return draft;
 }
 
+Rfc850Post draftToPost(PostDraft draft, Headers headers = Headers.init, string ip = null)
+{
+	auto parent = "parent" in draft.serverVars ? getPost(draft.serverVars["parent"]) : null;
+	return PostProcess.createPost(draft, headers, ip, parent);
+}
+
 void draftNotices(string except = null)
 {
 	foreach (string id, long time; query!"SELECT [ID], [Time] FROM [Drafts] WHERE [UserID]==? AND [Status]==?".iterate(userSettings.id, PostDraft.Status.edited))
@@ -2769,8 +2775,7 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 			{
 				discussionPostForm(draft);
 				// Show preview
-				auto parent = "parent" in draft.serverVars ? getPost(draft.serverVars["parent"]) : null;
-				auto post = PostProcess.createPost(draft, headers, ip, parent);
+				auto post = draftToPost(draft, headers, ip);
 				formatPost(post, null);
 				return null;
 			}
@@ -3328,8 +3333,7 @@ void discussionApprovePage(string draftID, UrlParameters postParams)
 			`<div id="approveform-info" class="forum-notice">` ~
 				`Are you sure you want to approve this post?` ~
 			`</div>`);
-		auto parent = "parent" in draft.serverVars ? getPost(draft.serverVars["parent"]) : null;
-		auto post = PostProcess.createPost(draft, Headers.init, "127.0.0.1", parent);
+		auto post = draftToPost(draft);
 		formatPost(post, null, false);
 		html.put(
 			`<form action="" method="post" class="forum-form approve-form" id="approveform">` ~
