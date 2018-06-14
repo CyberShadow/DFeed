@@ -109,7 +109,7 @@ class SpamChecker
 
 // **************************************************************************
 
-double getSpamicity(PostDraft draft)
+double getSpamicity(in ref PostDraft draft)
 {
 	if (!spamCheckers)
 		initSpamCheckers();

@@ -43,7 +43,7 @@ class BayesChecker : SpamChecker
 		}
 	}
 
-	double checkDraft(PostDraft draft)
+	double checkDraft(in ref PostDraft draft)
 	{
 		string message;
 		auto subject = draft.clientVars.get("subject", "").toLower();

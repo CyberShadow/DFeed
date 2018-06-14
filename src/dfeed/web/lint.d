@@ -41,10 +41,10 @@ class LintRule
 	abstract @property string longDescription();
 
 	/// Check if the lint rule is triggered.
-	abstract bool check(PostDraft);
+	abstract bool check(in ref PostDraft);
 
 	/// Should the "Fix it for me" option be presented to the user?
-	abstract bool canFix(PostDraft);
+	abstract bool canFix(in ref PostDraft);
 
 	/// Fix up the post according to the rule.
 	abstract void fix(ref PostDraft);
@@ -61,7 +61,7 @@ class NotQuotingRule : LintRule
 		   "You can also insert your replies inline (interleaved with quoted text) to address specific parts of the parent post.</p>";
 	}
 
-	override bool check(PostDraft draft)
+	override bool check(in ref PostDraft draft)
 	{
 		if (!hasParent(draft))
 			return false;
@@ -69,7 +69,7 @@ class NotQuotingRule : LintRule
 		return !lines.canFind!(line => line.startsWith(">"));
 	}
 
-	override bool canFix(PostDraft draft) { return true; }
+	override bool canFix(in ref PostDraft draft) { return true; }
 
 	override void fix(ref PostDraft draft)
 	{
@@ -79,32 +79,32 @@ class NotQuotingRule : LintRule
 	}
 }
 
-string[] getLines(ref PostDraft draft)
+string[] getLines(in ref PostDraft draft)
 {
 	return draft.clientVars.get("text", null).strip().splitLines();
 }
 
 bool isWroteLine(string line) { return line.startsWith("On ") && line.canFind(", ") && line.endsWith(" wrote:"); }
 
-string[] getWroteLines(ref PostDraft draft)
+string[] getWroteLines(in ref PostDraft draft)
 {
 	return getLines(draft).filter!isWroteLine.array();
 }
 
-string[] getNonQuoteLines(ref PostDraft draft)
+string[] getNonQuoteLines(in ref PostDraft draft)
 {
 	return getLines(draft).filter!(line => !line.startsWith(">") && !line.isWroteLine).array();
 }
 
-bool hasParent(ref PostDraft draft) { return "parent" in draft.serverVars && getPost(draft.serverVars["parent"]) !is null; }
-Rfc850Post getParent(ref PostDraft draft) { return getPost(draft.serverVars["parent"]).enforce("Can't find parent post"); }
+bool hasParent(in ref PostDraft draft) { return "parent" in draft.serverVars && getPost(draft.serverVars["parent"]) !is null; }
+Rfc850Post getParent(in ref PostDraft draft) { return getPost(draft.serverVars["parent"]).enforce("Can't find parent post"); }
 
-string[] getParentLines(ref PostDraft draft)
+string[] getParentLines(in ref PostDraft draft)
 {
 	return getParent(draft).content.strip().splitLines();
 }
 
-string[] getQuotedParentLines(ref PostDraft draft)
+string[] getQuotedParentLines(in ref PostDraft draft)
 {
 	return getParent(draft).replyTemplate().content.strip().splitLines();
 }
@@ -120,7 +120,7 @@ class WrongParentRule : LintRule
 		"<p>Thus, make sure to click the \"Reply\" link on the actual post you're replying to, and quote the parent post for context.</p>";
 	}
 
-	override bool check(PostDraft draft)
+	override bool check(in ref PostDraft draft)
 	{
 		if (!hasParent(draft))
 			return false;
@@ -128,7 +128,7 @@ class WrongParentRule : LintRule
 		return wroteLines.length && !wroteLines.canFind(getQuotedParentLines(draft)[0]);
 	}
 
-	override bool canFix(PostDraft draft) { return false; }
+	override bool canFix(in ref PostDraft draft) { return false; }
 
 	override void fix(ref PostDraft draft)
 	{
@@ -147,14 +147,14 @@ class NoParentRule : LintRule
 		"<p>Thus, this line provides important context for your replies regarding the structure of the conversation.</p>";
 	}
 
-	override bool check(PostDraft draft)
+	override bool check(in ref PostDraft draft)
 	{
 		if (!hasParent(draft))
 			return false;
 		return getWroteLines(draft).length == 0 && getLines(draft).canFind!(line => line.startsWith(">"));
 	}
 
-	override bool canFix(PostDraft draft) { return true; }
+	override bool canFix(in ref PostDraft draft) { return true; }
 
 	override void fix(ref PostDraft draft)
 	{
@@ -189,14 +189,14 @@ class MultiParentRule : LintRule
 		   "If applicable, you should split your message into several, each as a reply to its corresponding parent post.</p>";
 	}
 
-	override bool check(PostDraft draft)
+	override bool check(in ref PostDraft draft)
 	{
 		if (!hasParent(draft))
 			return false;
 		return getWroteLines(draft).sort().uniq().walkLength > 1;
 	}
 
-	override bool canFix(PostDraft draft) { return false; }
+	override bool canFix(in ref PostDraft draft) { return false; }
 
 	override void fix(ref PostDraft draft) { assert(false); }
 }
@@ -212,7 +212,7 @@ class TopPostingRule : LintRule
 		"<p>Thus, you should add your reply below the quoted text (or reply to individual paragraphs inline), rather than above it.</p>";
 	}
 
-	override bool check(PostDraft draft)
+	override bool check(in ref PostDraft draft)
 	{
 		if (!hasParent(draft))
 			return false;
@@ -230,7 +230,7 @@ class TopPostingRule : LintRule
 		return inQuote;
 	}
 
-	override bool canFix(PostDraft draft) { return true; }
+	override bool canFix(in ref PostDraft draft) { return true; }
 
 	override void fix(ref PostDraft draft)
 	{
@@ -271,13 +271,13 @@ class OverquotingRule : LintRule
 		return unquoted && quoted > unquoted * 4;
 	}
 
-	override bool check(PostDraft draft)
+	override bool check(in ref PostDraft draft)
 	{
 		auto lines = draft.clientVars.get("text", null).splitLines();
 		return checkLines(lines);
 	}
 
-	override bool canFix(PostDraft draft) { return true; }
+	override bool canFix(in ref PostDraft draft) { return true; }
 
 	override void fix(ref PostDraft draft)
 	{
@@ -425,12 +425,12 @@ class ShortLinkRule : LintRule
 	enum urlCache = "data/shorturls.json";
 	auto expandURL = PersistentMemoized!expandURLImpl(urlCache);
 
-	override bool check(PostDraft draft)
+	override bool check(in ref PostDraft draft)
 	{
 		return !draft.getNonQuoteLines.join("\n").match(re).empty;
 	}
 
-	override bool canFix(PostDraft draft) { return true; }
+	override bool canFix(in ref PostDraft draft) { return true; }
 
 	override void fix(ref PostDraft draft)
 	{
@@ -454,7 +454,7 @@ class LinkInSubjectRule : LintRule
 		"<p>Please move the link in the message body instead.</p>";
 	}
 
-	override bool check(PostDraft draft)
+	override bool check(in ref PostDraft draft)
 	{
 		auto subject = draft.clientVars.get("subject", null);
 		if (subject.startsWith("Re: ") || !subject.canFind("://"))
@@ -466,7 +466,7 @@ class LinkInSubjectRule : LintRule
 		return false; // all URLs are also in the body
 	}
 
-	override bool canFix(PostDraft draft) { return true; }
+	override bool canFix(in ref PostDraft draft) { return true; }
 
 	override void fix(ref PostDraft draft)
 	{

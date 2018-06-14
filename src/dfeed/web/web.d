@@ -2678,7 +2678,7 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 
 /// Should this post be queued for moderation instead of being posted immediately?
 /// If yes, return a reason; if no, return null.
-string shouldModerate(ref PostDraft draft)
+string shouldModerate(in ref PostDraft draft)
 {
 	auto spamicity = getSpamicity(draft);
 	if (spamicity >= 0.98)
