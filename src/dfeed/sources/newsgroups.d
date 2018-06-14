@@ -34,6 +34,7 @@ import dfeed.message;
 struct NntpConfig
 {
 	string host;
+	bool postingAllowed = true;
 }
 
 /// Poll the server periodically for new messages

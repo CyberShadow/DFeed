@@ -430,6 +430,8 @@ private:
 		status = PostingStatus.connecting;
 
 		auto config = loadIni!NntpConfig("config/sources/nntp/" ~ name ~ ".ini");
+		if (!config.postingAllowed)
+			throw new Exception("Posting is disabled");
 
 		nntp = new NntpClient(log);
 		nntp.handleDisconnect = &onDisconnect;

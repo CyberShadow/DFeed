@@ -1,2 +1,9 @@
 # NNTP source.
 host = news.example.com
+
+# Whether posting is allowed.
+# This SHOULD be configured in groups.ini, but it can be disabled here as well.
+# Note that currently this will work only as a last-minute check,
+# i.e. the user will be notified only as they attempt to send the
+# message.
+postingAllowed = true
