@@ -59,6 +59,7 @@ import ae.utils.time.format;
 import ae.utils.time.parse;
 import ae.utils.xmllite : putEncodedEntities;
 
+import dfeed.bayes;
 import dfeed.common;
 import dfeed.database;
 import dfeed.groups;
@@ -75,7 +76,7 @@ import dfeed.web.list;
 //import dfeed.web.mailhide;
 import dfeed.web.posting;
 import dfeed.web.user : User, getUser, SettingType;
-import dfeed.web.spam : getSpamicity;
+import dfeed.web.spam : bayes, getSpamicity;
 
 version = MeasurePerformance;
 
@@ -2676,6 +2677,38 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 	return true;
 }
 
+/// Bayes model trained to detect recently moderated messages. RAM only.
+/// The model is based off the spam model, but we throw away all spam data at first.
+BayesModel* getModerationModel()
+{
+	static BayesModel* model;
+	if (!model)
+	{
+		model = new BayesModel;
+		*model = bayes.model;
+		model.words = model.words.dup;
+		foreach (word, ref counts; model.words)
+			counts.spamCount = 0;
+		model.spamPosts =  0;
+	}
+	return model;
+}
+
+void learnModeratedMessage(in ref PostDraft draft, bool isBad, int weight)
+{
+	auto message = bayes.messageFromDraft(draft);
+	auto model = getModerationModel();
+	auto words = message.splitWords.array;
+	train(*model, words, isBad, weight);
+}
+
+double checkModeratedMessage(in ref PostDraft draft)
+{
+	auto message = bayes.messageFromDraft(draft);
+	auto model = getModerationModel();
+	return checkMessage(*model, message);
+}
+
 /// Should this post be queued for moderation instead of being posted immediately?
 /// If yes, return a reason; if no, return null.
 string shouldModerate(in ref PostDraft draft)
@@ -2686,6 +2719,10 @@ string shouldModerate(in ref PostDraft draft)
 
 	if (auto reason = banCheck(ip, currentRequest))
 		return "Post from banned user (ban reason: " ~ reason ~ ")";
+
+	auto modScore = checkModeratedMessage(draft);
+	if (modScore >= 0.95)
+		return "Very similar to recently moderated messages (%s%%)".format(modScore * 100);
 
 	return null;
 }
@@ -2840,6 +2877,8 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 
 				if (auto reason = shouldModerate(draft))
 				{
+					learnModeratedMessage(draft, true, 1);
+
 					draft.status = PostDraft.Status.moderation;
 					draft.serverVars["headers"] = headers.to!(string[][string]).toJson;
 					// draft will be saved by scope(exit) above
@@ -3369,6 +3408,8 @@ void discussionApprovePage(string draftID, UrlParameters postParams)
 			auto headers = Headers(draft.serverVars.get("headers", "null").jsonParse!(string[][string]));
 			auto pid = postDraft(draft, headers);
 			saveDraft(draft);
+
+			learnModeratedMessage(draft, false, 10);
 
 			html.put(`Post approved! <a href="/posting/` ~ pid ~ `">View posting</a>`);
 		}
