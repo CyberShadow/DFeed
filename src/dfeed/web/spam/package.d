@@ -109,18 +109,23 @@ class SpamChecker
 
 // **************************************************************************
 
-double getSpamicity(in ref PostDraft draft)
+BayesChecker bayes()
 {
 	if (!spamCheckers)
 		initSpamCheckers();
 
+	return bayesInst;
+}
+
+double getSpamicity(in ref PostDraft draft)
+{
 	return bayes.checkDraft(draft);
 }
 
 // **************************************************************************
 
 SpamChecker[] spamCheckers;
-BayesChecker bayes;
+private BayesChecker bayesInst;
 
 void initSpamCheckers()
 {
@@ -128,7 +133,7 @@ void initSpamCheckers()
 
 	import dfeed.common;
 	spamCheckers ~= new SimpleChecker();
-	spamCheckers ~= bayes = new BayesChecker();
+	spamCheckers ~= bayesInst = new BayesChecker();
 	if (auto c = createService!ProjectHoneyPot("apis/projecthoneypot"))
 		spamCheckers ~= c;
 	if (auto c = createService!Akismet("apis/akismet"))
