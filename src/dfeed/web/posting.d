@@ -45,33 +45,33 @@ import dfeed.web.user;
 
 struct PostDraft
 {
-	int status;
-	UrlParameters clientVars;
-	string[string] serverVars;
-
-	// Fake enum (force the type to be int)
-	struct Status
+	/// Note: convert this to int before writing to database!
+	enum Status : int
 	{
 		/// Unused. Default value, invalid.
-		enum reserved   = 0;
+		reserved   = 0,
 
 		/// Unsent draft.
-		enum edited     = 1;
+		edited     = 1,
 
 		/// Sent draft.
-		enum sent       = 2;
+		sent       = 2,
 
 		/// Discarded draft.
 		/// Persisted in the database, at least for a while, to enable one-click undo.
-		enum discarded  = 3;
+		discarded  = 3,
 
 		/// In the moderation queue.
 		/// Inaccessible to the author while in this state (mainly so
 		/// they can't vandalize the message if they know a moderator
 		/// will reject it, or recover its text and attempt to repost
 		/// it from another identity).
-		enum moderation = 4;
+		moderation = 4,
 	}
+
+	Status status;
+	UrlParameters clientVars;
+	string[string] serverVars;
 }
 
 enum PostingStatus

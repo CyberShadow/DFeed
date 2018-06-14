@@ -2477,7 +2477,7 @@ string discussionFirstUnread(string threadID)
 void createDraft(PostDraft draft)
 {
 	query!"INSERT INTO [Drafts] ([ID], [UserID], [Status], [ClientVars], [ServerVars], [Time]) VALUES (?, ?, ?, ?, ?, ?)"
-		.exec(draft.clientVars["did"], userSettings.id, draft.status, draft.clientVars.toJson, draft.serverVars.toJson, Clock.currTime.stdTime);
+		.exec(draft.clientVars["did"], userSettings.id, int(draft.status), draft.clientVars.toJson, draft.serverVars.toJson, Clock.currTime.stdTime);
 }
 
 // Handle backwards compatibility in stored drafts
@@ -2499,7 +2499,7 @@ PostDraft getDraft(string draftID)
 {
 	T parse(T)(string json) { return json ? json.jsonParse!T : T.init; }
 	foreach (int status, string clientVars, string serverVars; query!"SELECT [Status], [ClientVars], [ServerVars] FROM [Drafts] WHERE [ID] == ?".iterate(draftID))
-		return PostDraft(status, jsonParseUrlParameters(clientVars), parse!(string[string])(serverVars));
+		return PostDraft(status.to!(PostDraft.Status), jsonParseUrlParameters(clientVars), parse!(string[string])(serverVars));
 	throw new Exception("Can't find this message draft");
 }
 
@@ -2508,7 +2508,7 @@ void saveDraft(PostDraft draft)
 	auto draftID = draft.clientVars.get("did", null);
 	auto postID = draft.serverVars.get("pid", null);
 	query!"UPDATE [Drafts] SET [PostID]=?, [ClientVars]=?, [ServerVars]=?, [Time]=?, [Status]=? WHERE [ID] == ?"
-		.exec(postID, draft.clientVars.toJson, draft.serverVars.toJson, Clock.currTime.stdTime, draft.status, draftID);
+		.exec(postID, draft.clientVars.toJson, draft.serverVars.toJson, Clock.currTime.stdTime, int(draft.status), draftID);
 }
 
 void autoSaveDraft(UrlParameters clientVars)
