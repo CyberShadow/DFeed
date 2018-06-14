@@ -48,7 +48,7 @@ auto splitWords(string s)
 		.uniq;
 }
 
-void train(R)(ref BayesModel model, R words, bool isSpam)
+void train(R)(ref BayesModel model, R words, bool isSpam, int weight = 1)
 {
 	foreach (word; words)
 	{
@@ -59,14 +59,14 @@ void train(R)(ref BayesModel model, R words, bool isSpam)
 			pWord = word in model.words;
 		}
 		if (isSpam)
-			pWord.spamCount++;
+			pWord.spamCount += weight;
 		else
-			pWord.hamCount++;
+			pWord.hamCount += weight;
 	}
 	if (isSpam)
-		model.spamPosts++;
+		model.spamPosts += weight;
 	else
-		model.hamPosts++;
+		model.hamPosts += weight;
 }
 
 double checkMessage(in ref BayesModel model, string s)
