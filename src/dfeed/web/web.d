@@ -607,21 +607,6 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				bodyClass ~= " formdoc";
 				break;
 			}
-			case "approve-moderated-draft":
-			{
-				title = "Approving moderated draft";
-				enforce(user.getLevel() >= User.Level.canApproveDrafts, "You can't approve moderated drafts");
-				enforce(path.length == 3, "Wrong URL format");
-				auto draftID = path[1];
-				enforce(path[2] == authHash(draftID), "Invalid authentication");
-
-				auto draft = getDraft(draftID);
-				auto headers = Headers(draft.serverVars.get("headers", "null").jsonParse!(string[][string]));
-				auto pid = postDraft(draft, headers);
-
-				html.put(`Post approved! <a href="/posting/` ~ pid ~ `">View posting</a>`);
-				break;
-			}
 			case "dodelete":
 			{
 				enforce(user.getLevel() >= User.Level.canDeletePosts, "You can't delete posts");
@@ -652,6 +637,15 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				breadcrumbs ~= `<a href="/`~path[0]~`/`~pathX~`">Flag post</a>`;
 				discussionFlagPage(post, path[0] == "flag", request.method == "POST" ? request.decodePostData() : UrlParameters.init);
 				bodyClass ~= " formdoc";
+				break;
+			}
+			case "approve-moderated-draft":
+			{
+				enforce(user.getLevel() >= User.Level.canApproveDrafts, "You can't approve moderated drafts");
+				title = "Approving moderated draft";
+				enforce(path.length == 2 || path.length == 3, "Wrong URL format"); // Backwards compatibility with old one-click URLs
+				auto draftID = path[1];
+				discussionApprovePage(draftID, request.method == "POST" ? request.decodePostData() : UrlParameters.init);
 				break;
 			}
 			case "loginform":
@@ -2678,6 +2672,7 @@ string shouldModerate(ref PostDraft draft)
 /// Calculate a secret string from a key.
 /// Can be used in URLs in emails to authenticate an action on a
 /// public/guessable identifier.
+version(none)
 string authHash(string s)
 {
 	import dfeed.web.user : userConfig = config;
@@ -2848,8 +2843,8 @@ Here is the message:
 %)
 ----------------------------------------------
 
-If you believe this message should be approved and posted, you can click here to do so:
-%10$s://%2$s/approve-moderated-draft/%11$s/%12$s
+You can preview and approve this message here:
+%10$s://%2$s/approve-moderated-draft/%11$s
 
 Otherwise, no action is necessary.
 
@@ -2874,7 +2869,6 @@ EOF"
 							/* 9*/ draft.clientVars.get("text", "").strip.splitAsciiLines.map!(line => line.length ? "> " ~ line : ">"),
 							/*10*/ site.proto,
 							/*11*/ draftID,
-							/*12*/ authHash(draftID),
 						));
 
 					html.put(`<p>Your message has been saved, and will be posted after being approved by a moderator.</p>`);
@@ -3313,6 +3307,44 @@ EOF"
 		}
 		else
 			throw new Redirect(idToUrl(post.id));
+	}
+}
+
+void discussionApprovePage(string draftID, UrlParameters postParams)
+{
+	auto draft = getDraft(draftID);
+	enforce(draft.status == PostDraft.Status.moderation,
+		"This is not a post in need of moderation. Its status is currently: " ~ text(draft.status));
+
+	if (postParams == UrlParameters.init)
+	{
+		html.put(
+			`<div id="approveform-info" class="forum-notice">` ~
+				`Are you sure you want to approve this post?` ~
+			`</div>`);
+		auto parent = "parent" in draft.serverVars ? getPost(draft.serverVars["parent"]) : null;
+		auto post = PostProcess.createPost(draft, Headers.init, "127.0.0.1", parent);
+		formatPost(post, null, false);
+		html.put(
+			`<form action="" method="post" class="forum-form approve-form" id="approveform">` ~
+				`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
+				`<input type="submit" name="approve" value="Approve"></input>` ~
+				`<input type="submit" name="cancel" value="Cancel"></input>` ~
+			`</form>`);
+	}
+	else
+	{
+		enforce(postParams.get("secret", "") == userSettings.secret, "XSRF secret verification failed. Are your cookies enabled?");
+
+		if ("approve" in postParams)
+		{
+			auto headers = Headers(draft.serverVars.get("headers", "null").jsonParse!(string[][string]));
+			auto pid = postDraft(draft, headers);
+
+			html.put(`Post approved! <a href="/posting/` ~ pid ~ `">View posting</a>`);
+		}
+		else
+			throw new Redirect("/");
 	}
 }
 
