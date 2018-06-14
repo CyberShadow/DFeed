@@ -2860,6 +2860,8 @@ Here is the message:
 %)
 ----------------------------------------------
 
+IP address this message was posted from: %12$s
+
 You can preview and approve this message here:
 %10$s://%2$s/approve-moderated-draft/%11$s
 
@@ -2886,6 +2888,7 @@ EOF"
 							/* 9*/ draft.clientVars.get("text", "").strip.splitAsciiLines.map!(line => line.length ? "> " ~ line : ">"),
 							/*10*/ site.proto,
 							/*11*/ draftID,
+							/*12*/ ip,
 						));
 
 					html.put(`<p>Your message has been saved, and will be posted after being approved by a moderator.</p>`);
