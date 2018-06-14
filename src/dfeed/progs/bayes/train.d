@@ -49,23 +49,7 @@ void main(string[] args)
 		{
 			if (threshold && de.baseName > threshold)
 				continue;
-			foreach (word; de.readText.splitWords)
-			{
-				auto pWord = word in model.words;
-				if (!pWord)
-				{
-					model.words[word] = BayesModel.Word();
-					pWord = word in model.words;
-				}
-				if (isSpam)
-					pWord.spamCount++;
-				else
-					pWord.hamCount++;
-			}
-			if (isSpam)
-				model.spamPosts++;
-			else
-				model.hamPosts++;
+			model.train(de.readText.splitWords, isSpam);
 		}
 	}
 

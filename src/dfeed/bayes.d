@@ -48,6 +48,27 @@ auto splitWords(string s)
 		.uniq;
 }
 
+void train(R)(ref BayesModel model, R words, bool isSpam)
+{
+	foreach (word; words)
+	{
+		auto pWord = word in model.words;
+		if (!pWord)
+		{
+			model.words[word] = BayesModel.Word();
+			pWord = word in model.words;
+		}
+		if (isSpam)
+			pWord.spamCount++;
+		else
+			pWord.hamCount++;
+	}
+	if (isSpam)
+		model.spamPosts++;
+	else
+		model.hamPosts++;
+}
+
 double checkMessage(in ref BayesModel model, string s)
 {
 	import std.math;
