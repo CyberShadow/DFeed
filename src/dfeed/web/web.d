@@ -3313,6 +3313,12 @@ EOF"
 void discussionApprovePage(string draftID, UrlParameters postParams)
 {
 	auto draft = getDraft(draftID);
+	if (draft.status == PostDraft.Status.sent && "pid" in draft.serverVars)
+	{
+		html.put(`This message has already been posted.`);
+		html.put(`<a href="`), html.putEncodedEntities(idToUrl(PostProcess.pidToMessageID(draft.serverVars["pid"]))), html.put(`">You can view it here.</a>`);
+		return;
+	}
 	enforce(draft.status == PostDraft.Status.moderation,
 		"This is not a post in need of moderation. Its status is currently: " ~ text(draft.status));
 
