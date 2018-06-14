@@ -71,6 +71,9 @@ void train(R)(ref BayesModel model, R words, bool isSpam)
 
 double checkMessage(in ref BayesModel model, string s)
 {
+	if (model.spamPosts == 0 || model.hamPosts == 0)
+		return 0.5;
+
 	import std.math;
 	debug(bayes) import std.stdio;
 
@@ -82,7 +85,10 @@ double checkMessage(in ref BayesModel model, string s)
 		{
 			auto p_w_s = (pWord.spamCount + bias) / model.spamPosts;
 			auto p_w_h = (pWord.hamCount + bias) / model.hamPosts;
-			auto prob = p_w_s / (p_w_s + p_w_h);
+			auto p_w_t = p_w_s + p_w_h;
+			if (p_w_t == 0)
+				continue;
+			auto prob = p_w_s / p_w_t;
 			plsum += log(1 - prob) - log(prob);
 			debug(bayes) writefln("%s: %s (%d/%d vs. %d/%d)", w, prob,
 				pWord.spamCount, model.spamPosts,
