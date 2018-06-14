@@ -310,7 +310,8 @@ final class PostProcess
 
 		if (auto pUserAgent = "User-Agent" in headers)
 			post.headers["X-Web-User-Agent"] = *pUserAgent;
-		post.headers["X-Web-Originating-IP"] = ip;
+		if (ip)
+			post.headers["X-Web-Originating-IP"] = ip;
 
 		if ("did" in draft.clientVars)
 			post.id = format("<draft-%s@%s>", draft.clientVars["did"], site.host);
