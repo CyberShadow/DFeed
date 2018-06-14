@@ -35,6 +35,7 @@
 /rebuildthreads
 /sanitizedb
 /sendspamfeedback
+/unban
 /bayes-checkall
 /bayes-checkdatum
 /bayes-prepdata
