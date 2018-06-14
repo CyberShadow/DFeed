@@ -434,6 +434,18 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			{
 				enforce(path.length > 1, "Invalid URL");
 				auto message = getPostSource('<' ~ urlDecode(path[1]) ~ '>');
+				if (message is null)
+				{
+					auto slug = urlDecode(path[1]);
+					if (slug.skipOver("draft-") && slug.endsWith("@" ~ site.host))
+					{
+						auto did = slug.skipUntil("@");
+						auto draft = getDraft(did);
+						auto post = draftToPost(draft);
+						post.compile();
+						message = post.message;
+					}
+				}
 				enforce(message !is null, "Post not found");
 				return response.serveData(Data(message), "text/plain");
 			}
