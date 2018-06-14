@@ -308,7 +308,8 @@ final class PostProcess
 		post.subject = post.rawSubject = draft.clientVars.get("subject", null);
 		post.setText(draft.clientVars.get("text", null));
 
-		post.headers["X-Web-User-Agent"] = aaGet(headers, "User-Agent");
+		if (auto pUserAgent = "User-Agent" in headers)
+			post.headers["X-Web-User-Agent"] = *pUserAgent;
 		post.headers["X-Web-Originating-IP"] = ip;
 
 		if ("did" in draft.clientVars)
