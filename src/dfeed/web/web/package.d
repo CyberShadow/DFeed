@@ -80,6 +80,7 @@ import dfeed.web.user : User, getUser, SettingType;
 import dfeed.web.spam : bayes, getSpamicity;
 import dfeed.web.web.config;
 import dfeed.web.web.perf;
+import dfeed.web.web.statics;
 
 Logger log;
 HttpServer server;
@@ -104,64 +105,6 @@ void startWebUI()
 	server.listen(config.listen.port, config.listen.addr);
 
 	addShutdownHandler({ server.close(); });
-}
-
-// ***********************************************************************
-
-/// Caching wrapper
-SysTime timeLastModified(string path)
-{
-	static if (is(MonoTimeImpl!(ClockType.coarse)))
-		alias CoarseTime = MonoTimeImpl!(ClockType.coarse);
-	else
-		alias CoarseTime = MonoTime;
-
-	static SysTime[string] cache;
-	static CoarseTime cacheTime;
-
-	enum expiration = isDebug ? 1.seconds : 5.seconds;
-
-	auto now = CoarseTime.currTime();
-	if (now - cacheTime > expiration)
-	{
-		cacheTime = now;
-		cache = null;
-	}
-
-	auto pcache = path in cache;
-	if (pcache)
-		return *pcache;
-	return cache[path] = std.file.timeLastModified(path);
-}
-
-string staticPath(string path)
-{
-	auto url = "/static/" ~ text(timeLastModified("web/static" ~ path).stdTime) ~ path;
-	if (config.staticDomain !is null)
-		url = "//" ~ config.staticDomain ~ url;
-	return url;
-}
-
-string optimizedPath(string base, string resource)
-{
-	debug
-		return resource;
-	else
-	{
-		string optimizedResource = resource.stripExtension ~ ".min" ~ resource.extension;
-		auto origPath = base ~ resource;
-		auto optiPath = base ~ optimizedResource;
-		if (exists(origPath) && exists(optiPath) && timeLastModified(optiPath) >= timeLastModified(origPath))
-			return optimizedResource;
-		else
-			return resource;
-	}
-}
-
-HttpResponseEx serveFile(HttpResponseEx response, string path)
-{
-	response.cacheForever();
-	return response.serveFile(optimizedPath("web/static/", path), "web/static/");
 }
 
 // ***********************************************************************
@@ -932,67 +875,6 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 
 	response.setStatus(status);
 	return response;
-}
-
-string createBundles(string page, Regex!char re)
-{
-	string[] paths;
-	foreach (m; page.matchAll(re))
-		paths ~= m.captures[1];
-	auto maxTime = paths.map!(path => path[8..26].to!long).reduce!max;
-	string bundleUrl = "/static-bundle/%d/%-(%s+%)".format(maxTime, paths.map!(path => path[27..$]));
-	int index;
-	page = page.replaceAll!(captures => index++ ? null : captures[0].replace(captures[1], bundleUrl))(re);
-	return page;
-}
-
-HttpResponseEx makeBundle(string time, string url)
-{
-	static struct Bundle
-	{
-		string time;
-		HttpResponseEx response;
-	}
-	static Bundle[string] cache;
-
-	if (url !in cache || cache[url].time != time || isDebug)
-	{
-		auto bundlePaths = url.split("+");
-		enforce(bundlePaths.length > 0, "Empty bundle");
-		HttpResponseEx bundleResponse;
-		foreach (n, bundlePath; bundlePaths)
-		{
-			auto pathResponse = new HttpResponseEx;
-			serveFile(pathResponse, bundlePath);
-			assert(pathResponse.data.length == 1);
-			if (bundlePath.endsWith(".css"))
-			{
-				auto oldText = cast(string)pathResponse.data[0].contents;
-				auto newText = fixCSS(oldText, bundlePath, n == 0);
-				if (oldText !is newText)
-					pathResponse.data = [Data(newText)];
-			}
-			if (!bundleResponse)
-				bundleResponse = pathResponse;
-			else
-				bundleResponse.data ~= pathResponse.data;
-		}
-		cache[url] = Bundle(time, bundleResponse);
-	}
-	return cache[url].response.dup;
-}
-
-string fixCSS(string css, string path, bool first)
-{
-	css = css.replace(re!(`@charset "utf-8";`, "i"), ``);
-	if (first)
-		css = `@charset "utf-8";` ~ css;
-	css = css.replaceAll!(captures =>
-		captures[2].canFind("//")
-		? captures[0]
-		: captures[0].replace(captures[2], staticPath(buildNormalizedPath(dirName("/" ~ path), captures[2]).replace(`\`, `/`)))
-	)(re!`\burl\(('?)(.*?)\1\)`);
-	return css;
 }
 
 string renderNav(string html, GroupInfo currentGroup)
