@@ -2884,6 +2884,34 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 					// draft will be saved by scope(exit) above
 
 					string sanitize(string s) { return "%(%s%)".format(s.only)[1..$-1]; }
+
+					string context;
+					{
+						context = `The message was submitted`;
+						string contextURL = null;
+						auto urlPrefix = site.proto ~ "://" ~ site.host;
+						if (auto parentID = "parent" in draft.serverVars)
+						{
+							context ~= ` in reply to `;
+							auto parent = getPostInfo(*parentID);
+							if (parent)
+								context ~= parent.author.I!sanitize ~ "'s post";
+							else
+								context ~= "a post";
+							contextURL = urlPrefix ~ idToUrl(*parentID);
+						}
+						if ("where" in draft.serverVars)
+						{
+							context ~= ` on the ` ~ draft.serverVars["where"] ~ ` group`;
+							if (!contextURL)
+								contextURL = urlPrefix ~  `/group/` ~ draft.serverVars["where"];
+						}
+						else
+							context ~= ` on an unknown group`;
+
+						context ~= contextURL ? ":\n" ~ contextURL : ".";
+					}
+
 					foreach (mod; site.moderators)
 						sendMail(q"EOF
 From: %1$s <no-reply@%2$s>
@@ -2901,6 +2929,8 @@ Here is the message:
 %9$-(%s
 %)
 ----------------------------------------------
+
+%13$s
 
 IP address this message was posted from: %12$s
 
@@ -2931,6 +2961,7 @@ EOF"
 							/*10*/ site.proto,
 							/*11*/ draftID,
 							/*12*/ ip,
+							/*13*/ context,
 						));
 
 					html.put(`<p>Your message has been saved, and will be posted after being approved by a moderator.</p>`);
