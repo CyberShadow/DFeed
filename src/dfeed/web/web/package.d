@@ -22,7 +22,7 @@ import std.algorithm;
 import std.array;
 import std.base64;
 import std.conv;
-import std.datetime;
+import std.datetime : SysTime, Clock, UTC;
 import std.digest.sha;
 import std.exception;
 import std.file;
@@ -77,20 +77,9 @@ import dfeed.web.list;
 import dfeed.web.posting;
 import dfeed.web.user : User, getUser, SettingType;
 import dfeed.web.spam : bayes, getSpamicity;
-
-version = MeasurePerformance;
-
-static if (is(typeof({import std.datetime.stopwatch;})))
-{
-	import std.datetime.stopwatch;
-	alias StopWatch = std.datetime.stopwatch.StopWatch;
-	Duration readStopwatch(ref StopWatch sw) { return sw.peek(); }
-}
-else
-	Duration readStopwatch(ref StopWatch sw) { return sw.peek().msecs.msecs; }
+import dfeed.web.web.perf;
 
 Logger log;
-version(MeasurePerformance) Logger perfLog;
 HttpServer server;
 User user;
 string ip;
@@ -101,7 +90,7 @@ string[string] banned;
 void startWebUI()
 {
 	log = createLogger("Web");
-	version(MeasurePerformance) perfLog = createLogger("Performance");
+	static if (measurePerformance) perfLog = createLogger("Performance");
 
 	loadBanList();
 
@@ -1047,17 +1036,6 @@ static string parseTemplate(string data, string delegate(string) dictionary)
 }
 
 // ***********************************************************************
-
-enum MeasurePerformanceMixin =
-q{
-	StopWatch performanceSW;
-	performanceSW.start();
-	scope(success)
-	{
-		performanceSW.stop();
-		perfLog(PERF_SCOPE ~ ": " ~ text(performanceSW.readStopwatch));
-	}
-};
 
 Cached!int totalPostCountCache, totalThreadCountCache;
 
