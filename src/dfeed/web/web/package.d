@@ -52,6 +52,7 @@ import ae.utils.feed;
 import ae.utils.json;
 import ae.utils.meta;
 import ae.utils.regex;
+import ae.utils.sini : loadIni;
 import ae.utils.text;
 import ae.utils.text.html;
 import ae.utils.textout;
@@ -77,6 +78,7 @@ import dfeed.web.list;
 import dfeed.web.posting;
 import dfeed.web.user : User, getUser, SettingType;
 import dfeed.web.spam : bayes, getSpamicity;
+import dfeed.web.web.config;
 import dfeed.web.web.perf;
 
 Logger log;
@@ -86,6 +88,8 @@ string ip;
 HttpRequest currentRequest;
 StringBuffer html;
 string[string] banned;
+
+alias config = dfeed.web.web.config.config;
 
 void startWebUI()
 {
@@ -4497,23 +4501,3 @@ class NotFoundException : Exception
 {
 	this(string str = "The specified resource cannot be found on this server.") { super(str); }
 }
-
-// **************************************************************************
-
-struct ListenConfig
-{
-	string addr;
-	ushort port = 80;
-}
-
-struct Config
-{
-	ListenConfig listen;
-	string staticDomain = null;
-	string apiSecret = null;
-	bool indexable = false;
-}
-const Config config;
-
-import ae.utils.sini;
-shared static this() { config = loadIni!Config("config/web.ini"); }
