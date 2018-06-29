@@ -252,6 +252,13 @@ final class PostProcess
 	{
 		assert(status != PostingStatus.redirect, "Attempting to run a duplicate PostProcess");
 
+		if ("preapproved" in draft.serverVars)
+		{
+			log("Pre-approved, skipping spam check / CAPTCHA");
+			postMessage();
+			return;
+		}
+
 		captchaPresent = theCaptcha.isPresent(draft.clientVars);
 		if (captchaPresent)
 		{
