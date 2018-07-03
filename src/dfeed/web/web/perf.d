@@ -41,6 +41,7 @@ q{
 		scope(success)
 		{
 			performanceSW.stop();
+			import std.conv : text;
 			perfLog(PERF_SCOPE ~ ": " ~ text(performanceSW.readStopwatch));
 		}
 	}
