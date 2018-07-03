@@ -80,6 +80,7 @@ import dfeed.web.spam : bayes, getSpamicity;
 import dfeed.web.web.cache;
 import dfeed.web.web.config;
 import dfeed.web.web.index : discussionIndex;
+import dfeed.web.web.pager;
 import dfeed.web.web.perf;
 import dfeed.web.web.request : onRequest, currentRequest, ip, user;
 import dfeed.web.web.statics;
@@ -110,90 +111,6 @@ void newPostButton(GroupInfo groupInfo)
 				`<input class="img" type="image" src="`, staticPath("/images/newthread.png"), `" alt="Create thread">` ~
 			`</div>` ~
 		`</form>`);
-}
-
-/// pageCount==int.max indicates unknown number of pages
-void pager(string base, int page, int pageCount, int maxWidth = 50)
-{
-	string linkOrNot(string text, int page, bool cond)
-	{
-		if (cond)
-			return `<a href="` ~ encodeHtmlEntities(base) ~ (base.canFind('?') ? `&` : `?`) ~ `page=` ~ .text(page) ~ `">` ~ text ~ `</a>`;
-		else
-			return `<span class="disabled-link">` ~ text ~ `</span>`;
-	}
-
-	// Try to make the pager as wide as it will fit in the alotted space
-
-	int widthAt(int radius)
-	{
-		import std.math : log10;
-
-		int pagerStart = max(1, page - radius);
-		int pagerEnd = min(pageCount, page + radius);
-		if (pageCount==int.max)
-			pagerEnd = page + 1;
-
-		int width = pagerEnd - pagerStart;
-		foreach (n; pagerStart..pagerEnd+1)
-			width += 1 + cast(int)log10(n);
-		if (pagerStart > 1)
-			width += 3;
-		if (pagerEnd < pageCount)
-			width += 3;
-		return width;
-	}
-
-	int radius = 0;
-	for (; radius < 10 && widthAt(radius+1) < maxWidth; radius++) {}
-
-	int pagerStart = max(1, page - radius);
-	int pagerEnd = min(pageCount, page + radius);
-	if (pageCount==int.max)
-		pagerEnd = page + 1;
-
-	string[] pager;
-	if (pagerStart > 1)
-		pager ~= "&hellip;";
-	foreach (pagerPage; pagerStart..pagerEnd+1)
-		if (pagerPage == page)
-			pager ~= `<b>` ~ text(pagerPage) ~ `</b>`;
-		else
-			pager ~= linkOrNot(text(pagerPage), pagerPage, true);
-	if (pagerEnd < pageCount)
-		pager ~= "&hellip;";
-
-	html.put(
-		`<tr class="pager"><th colspan="3">` ~
-			`<div class="pager-left">`,
-				linkOrNot("&laquo; First", 1, page!=1),
-				`&nbsp;&nbsp;&nbsp;`,
-				linkOrNot("&lsaquo; Prev", page-1, page>1),
-			`</div>` ~
-			`<div class="pager-right">`,
-				linkOrNot("Next &rsaquo;", page+1, page<pageCount),
-				`&nbsp;&nbsp;&nbsp;`,
-				linkOrNot("Last &raquo; ", pageCount, page!=pageCount && pageCount!=int.max),
-			`</div>` ~
-			`<div class="pager-numbers">`, pager.join(` `), `</div>` ~
-		`</th></tr>`);
-}
-
-enum THREADS_PER_PAGE = 15;
-enum POSTS_PER_PAGE = 10;
-
-static int indexToPage(int index, int perPage)  { return index / perPage + 1; } // Return value is 1-based, index is 0-based
-static int getPageCount(int count, int perPage) { return indexToPage(count-1, perPage); }
-static int getPageOffset(int page, int perPage) { return (page-1) * perPage; }
-
-void threadPager(GroupInfo groupInfo, int page, int maxWidth = 40)
-{
-	auto threadCounts = threadCountCache(getThreadCounts());
-	enforce(groupInfo.internalName in threadCounts, "Empty group: " ~ groupInfo.publicName);
-	auto threadCount = threadCounts[groupInfo.internalName];
-	auto pageCount = getPageCount(threadCount, THREADS_PER_PAGE);
-
-	pager(`/group/` ~ groupInfo.urlName, page, pageCount, maxWidth);
 }
 
 void discussionGroup(GroupInfo groupInfo, int page)
