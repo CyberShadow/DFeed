@@ -42,6 +42,7 @@ import dfeed.web.web;
 import dfeed.web.web.pager : getPageOffset, POSTS_PER_PAGE;
 import dfeed.web.web.statics : optimizedPath, serveFile, makeBundle, staticPath, createBundles, createBundles;
 import dfeed.web.web.view.index : discussionIndex;
+import dfeed.web.web.view.group : discussionGroup, discussionGroupThreaded, discussionGroupSplit, discussionGroupVSplit, discussionGroupSplitFromPost, discussionGroupVSplitFromPost;
 import dfeed.web.web.view.widgets;
 
 import ae.net.http.common : HttpRequest, HttpResponse, HttpStatusCode;
