@@ -15,7 +15,7 @@
  */
 
 /// Rendering of iframe widgets.
-module dfeed.web.web.widgets;
+module dfeed.web.web.view.widgets;
 
 import std.algorithm.searching;
 import std.format : format;

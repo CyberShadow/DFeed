@@ -15,7 +15,7 @@
  */
 
 /// Front page.
-module dfeed.web.web.index;
+module dfeed.web.web.view.index;
 
 import core.time;
 
