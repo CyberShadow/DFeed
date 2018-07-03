@@ -1,0 +1,4 @@
+#!/bin/bash
+set -eu
+
+git ls-files | grep '^src/.*\.d$' | xargs dmd -Xfdfeed.json -o-

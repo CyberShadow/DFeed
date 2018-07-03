@@ -13,6 +13,7 @@
 *.ilk
 *.min.*
 *.jar
+/dfeed.json
 
 /core
 /bad-zlib.z
