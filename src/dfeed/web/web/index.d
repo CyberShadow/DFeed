@@ -36,6 +36,7 @@ import dfeed.sinks.cache;
 import dfeed.sinks.subscriptions;
 import dfeed.site : site;
 import dfeed.web.web : user, userSettings, html, formatNumber, formatDuration, summarizeTime, getPostInfo;
+import dfeed.web.web.cache;
 import dfeed.web.web.perf;
 
 Cached!int totalPostCountCache, totalThreadCountCache;
@@ -177,24 +178,6 @@ string[] tips =
 	`If you encounter a bug or need a missing feature, you can <a href="https://github.com/CyberShadow/DFeed/issues">create an issue on GitHub</a>.`,
 ];
 
-int[string] getThreadCounts()
-{
-	enum PERF_SCOPE = "getThreadCounts"; mixin(MeasurePerformanceMixin);
-	int[string] threadCounts;
-	foreach (string group, int count; query!"SELECT `Group`, COUNT(*) FROM `Threads` GROUP BY `Group`".iterate())
-		threadCounts[group] = count;
-	return threadCounts;
-}
-
-int[string] getPostCounts()
-{
-	enum PERF_SCOPE = "getPostCounts"; mixin(MeasurePerformanceMixin);
-	int[string] postCounts;
-	foreach (string group, int count; query!"SELECT `Group`, COUNT(*) FROM `Groups`  GROUP BY `Group`".iterate())
-		postCounts[group] = count;
-	return postCounts;
-}
-
 string[string] getLastPosts()
 {
 	enum PERF_SCOPE = "getLastPosts"; mixin(MeasurePerformanceMixin);
@@ -206,7 +189,6 @@ string[string] getLastPosts()
 	return lastPosts;
 }
 
-Cached!(int[string]) threadCountCache, postCountCache;
 Cached!(string[string]) lastPostCache;
 
 void discussionIndex()
