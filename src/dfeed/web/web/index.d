@@ -35,7 +35,8 @@ import dfeed.groups;
 import dfeed.sinks.cache;
 import dfeed.sinks.subscriptions;
 import dfeed.site : site;
-import dfeed.web.web : user, userSettings, html, formatNumber, formatDuration, summarizeTime, getPostInfo;
+import dfeed.web.web : userSettings, html, formatNumber, formatDuration, summarizeTime, getPostInfo;
+import dfeed.web.web.request : user;
 import dfeed.web.web.cache;
 import dfeed.web.web.perf;
 
