@@ -79,7 +79,7 @@ import dfeed.web.user : User, getUser, SettingType;
 import dfeed.web.spam : bayes, getSpamicity;
 import dfeed.web.web.cache;
 import dfeed.web.web.config;
-import dfeed.web.web.pager;
+import dfeed.web.web.part.pager;
 import dfeed.web.web.perf;
 import dfeed.web.web.request : onRequest, currentRequest, ip, user;
 import dfeed.web.web.statics;

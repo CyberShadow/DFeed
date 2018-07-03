@@ -38,7 +38,7 @@ import dfeed.message;
 import dfeed.sinks.cache;
 import dfeed.web.web : html, PostInfo, getPostInfo, putGravatar, getGravatarHash, summarizeTime, formatNumber, getPost, userSettings, truncateString, formatPost, formatThreadedPosts;
 import dfeed.web.web.cache : postCountCache, getPostCounts;
-import dfeed.web.web.pager : THREADS_PER_PAGE, getPageOffset, threadPager, indexToPage, getPageCount, getPageCount, pager;
+import dfeed.web.web.part.pager : THREADS_PER_PAGE, getPageOffset, threadPager, indexToPage, getPageCount, getPageCount, pager;
 import dfeed.web.web.request : user;
 import dfeed.web.web.statics : staticPath;
 

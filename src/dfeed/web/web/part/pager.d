@@ -15,7 +15,7 @@
  */
 
 /// Paging.
-module dfeed.web.web.pager;
+module dfeed.web.web.part.pager;
 
 import std.algorithm.comparison;
 import std.algorithm.searching;
