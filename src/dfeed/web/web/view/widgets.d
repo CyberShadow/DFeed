@@ -23,8 +23,9 @@ import std.format : format;
 import ae.utils.xmllite : putEncodedEntities;
 
 import dfeed.sinks.cache;
-import dfeed.web.web : PostInfo, getPostInfo, putGravatar, getGravatarHash, html, summarizeTime;
+import dfeed.web.web : PostInfo, getPostInfo, html, summarizeTime;
 import dfeed.web.web.perf;
+import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
 import dfeed.web.web.request : user;
 import dfeed.web.web.statics;
 import dfeed.database;

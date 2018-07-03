@@ -79,6 +79,7 @@ import dfeed.web.user : User, getUser, SettingType;
 import dfeed.web.spam : bayes, getSpamicity;
 import dfeed.web.web.cache;
 import dfeed.web.web.config;
+import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
 import dfeed.web.web.part.pager;
 import dfeed.web.web.perf;
 import dfeed.web.web.request : onRequest, currentRequest, ip, user;
@@ -303,47 +304,6 @@ string[] formatPostParts(Rfc850Post post)
 	}
 	visitParts(post.parts, null);
 	return partList;
-}
-
-// ***********************************************************************
-
-string gravatar(string authorEmail, int size)
-{
-	return `https://www.gravatar.com/avatar/%s?d=identicon&s=%d`.format(getGravatarHash(authorEmail), size);
-}
-
-enum gravatarMetaSize = 256;
-
-string getGravatarHash(string email)
-{
-	import std.digest.md;
-	import std.ascii : LetterCase;
-	return email.toLower().strip().md5Of().toHexString!(LetterCase.lower)().idup; // Issue 9279
-}
-
-void putGravatar(string gravatarHash, string linkTarget, string aProps = null, int size = 0)
-{
-	html.put(
-		`<a `, aProps, ` href="`), html.putEncodedEntities(linkTarget), html.put(`">` ~
-			`<img alt="Gravatar" class="post-gravatar" `);
-	if (size)
-	{
-		string sizeStr = size ? text(size) : null;
-		string x2str = text(size * 2);
-		html.put(
-			`width="`, sizeStr, `" height="`, sizeStr, `" ` ~
-			`src="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&amp;s=`, sizeStr, `" ` ~
-			`srcset="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&amp;s=`, x2str, ` `, x2str, `w"` ~
-			`>`
-		);
-	}
-	else
-		html.put(
-			`src="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon" ` ~
-			`srcset="//www.gravatar.com/avatar/`, gravatarHash, `?d=identicon&amp;s=160 2x"` ~
-			`>`
-		);
-	html.put(`</a>`);
 }
 
 // ***********************************************************************
