@@ -26,7 +26,7 @@ import ae.utils.sini;
 
 import dfeed.backup;
 import dfeed.common;
-import dfeed.web.web;
+import dfeed.web.web.server;
 
 // Sources
 import dfeed.sources.github;

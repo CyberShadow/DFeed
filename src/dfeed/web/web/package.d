@@ -43,7 +43,6 @@ import ae.net.http.server;
 import ae.net.ietf.headers;
 import ae.net.ietf.url;
 import ae.net.ietf.wrap;
-import ae.net.shutdown;
 import ae.sys.log;
 import ae.utils.array;
 import ae.utils.digest;
@@ -86,27 +85,9 @@ import dfeed.web.web.request : onRequest, currentRequest, ip, user;
 import dfeed.web.web.statics;
 import dfeed.web.web.widgets;
 
-Logger log;
-HttpServer server;
 StringBuffer html;
-string[string] banned;
 
 alias config = dfeed.web.web.config.config;
-
-void startWebUI()
-{
-	log = createLogger("Web");
-	static if (measurePerformance) perfLog = createLogger("Performance");
-
-	loadBanList();
-
-	server = new HttpServer();
-	server.log = log;
-	server.handleRequest = toDelegate(&onRequest);
-	server.listen(config.listen.port, config.listen.addr);
-
-	addShutdownHandler({ server.close(); });
-}
 
 // ***********************************************************************
 
@@ -1957,6 +1938,8 @@ void banPoster(string who, string id, string reason)
 }
 
 enum banListFileName = "data/banned.txt";
+
+string[string] banned;
 
 void loadBanList()
 {
