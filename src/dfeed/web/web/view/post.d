@@ -27,10 +27,12 @@ import ae.utils.text.html : encodeHtmlEntities;
 import ae.utils.xmllite : putEncodedEntities;
 
 import dfeed.database : query;
-import dfeed.message : Rfc850Post, idToUrl, idToFragment;
+import dfeed.groups : GroupInfo;
+import dfeed.message : Rfc850Post, idToUrl, idToFragment, getGroup;
 import dfeed.web.web : PostInfo, getPost, idToThreadUrl, formatShortTime, html, summarizeTime, formatBody, formatLongTime, getPostInfo;
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
 import dfeed.web.web.part.post : getParentLink, miniPostInfo, getPostActions, postActions, postLink;
+import dfeed.web.web.part.thread : discussionThreadOverview;
 import dfeed.web.web.request : user;
 
 string[] formatPostParts(Rfc850Post post)
@@ -266,4 +268,18 @@ void discussionSplitPost(string id)
 	enforce(post, "Post not found");
 
 	formatSplitPost(post, true);
+}
+
+void discussionSinglePost(string id, out GroupInfo groupInfo, out string title, out string authorEmail, out string threadID)
+{
+	auto post = getPost(id);
+	enforce(post, "Post not found");
+	groupInfo = post.getGroup();
+	enforce(groupInfo, "Unknown group");
+	title       = post.subject;
+	authorEmail = post.authorEmail;
+	threadID = post.cachedThreadID;
+
+	formatSplitPost(post, false);
+	discussionThreadOverview(threadID, id);
 }

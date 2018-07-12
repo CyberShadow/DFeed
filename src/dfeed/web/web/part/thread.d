@@ -20,12 +20,15 @@ module dfeed.web.web.part.thread;
 import std.algorithm.comparison : min;
 import std.algorithm.sorting : sort;
 import std.datetime.systime : SysTime;
+import std.datetime.timezone : UTC;
 import std.format : format;
 
 import ae.utils.xmllite : putEncodedEntities;
 
+import dfeed.database : query;
 import dfeed.message : idToUrl;
 import dfeed.web.web : PostInfo, getPost, userSettings, html, summarizeTime, truncateString;
+import dfeed.web.web.perf;
 import dfeed.web.web.request : user;
 
 string[][string] referenceCache; // invariant
@@ -211,3 +214,26 @@ void formatThreadedPosts(PostInfo*[] postInfos, bool narrow, string selectedID =
 
 	formatPosts(posts[null].children, 0, null, true);
 }
+
+// ***********************************************************************
+
+PostInfo*[] getThreadPosts(string threadID)
+{
+	PostInfo*[] posts;
+	enum ViewSQL = "SELECT `ROWID`, `ID`, `ParentID`, `Author`, `AuthorEmail`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` = ?";
+	foreach (int rowid, string id, string parent, string author, string authorEmail, string subject, long stdTime; query!ViewSQL.iterate(threadID))
+		posts ~= [PostInfo(rowid, id, null, parent, author, authorEmail, subject, SysTime(stdTime, UTC()))].ptr;
+	return posts;
+}
+
+void discussionThreadOverview(string threadID, string selectedID)
+{
+	enum PERF_SCOPE = "discussionThreadOverview"; mixin(MeasurePerformanceMixin);
+	html.put(
+		`<table id="thread-index" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(userSettings.groupViewMode), html.put(`">` ~
+		`<tr class="group-index-header"><th><div>Thread overview</div></th></tr>`,
+		`<tr><td class="group-threads-cell"><div class="group-threads"><table>`);
+	formatThreadedPosts(getThreadPosts(threadID), false, selectedID);
+	html.put(`</table></div></td></tr></table>`);
+}
+
