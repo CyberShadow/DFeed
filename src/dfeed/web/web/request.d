@@ -46,6 +46,7 @@ import dfeed.web.web.posting : discussionPostForm, discussionSend, discussionPos
 import dfeed.web.web.statics : optimizedPath, serveFile, makeBundle, staticPath, createBundles, createBundles;
 import dfeed.web.web.view.index : discussionIndex;
 import dfeed.web.web.view.group : discussionGroup, discussionGroupThreaded, discussionGroupSplit, discussionGroupVSplit, discussionGroupSplitFromPost, discussionGroupVSplitFromPost;
+import dfeed.web.web.view.moderation : discussionDeleteForm, deletePost, deletePostApi, discussionFlagPage, discussionApprovePage;
 import dfeed.web.web.view.widgets;
 import dfeed.web.web.view.post : discussionSplitPost, discussionVSplitPost, discussionSinglePost;
 import dfeed.web.web.view.thread : getPostAtThreadIndex, discussionThread, discussionFirstUnread;

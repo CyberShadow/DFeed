@@ -23,7 +23,7 @@ import std.format : format;
 import dfeed.bayes : BayesModel, splitWords, splitWords, train, checkMessage;
 import dfeed.web.posting : PostDraft;
 import dfeed.web.spam : bayes, getSpamicity;
-import dfeed.web.web : banCheck;
+import dfeed.web.web.moderation : banCheck;
 import dfeed.web.web.request : ip, currentRequest;
 
 /// Bayes model trained to detect recently moderated messages. RAM only.

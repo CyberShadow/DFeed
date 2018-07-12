@@ -19,7 +19,7 @@ module dfeed.web.web.server;
 
 import std.functional : toDelegate;
 
-import dfeed.web.web : loadBanList;
+import dfeed.web.moderation : loadBanList;
 import dfeed.web.web.config;
 import dfeed.web.web.perf;
 import dfeed.web.web.request : onRequest;

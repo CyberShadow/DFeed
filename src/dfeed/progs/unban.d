@@ -23,7 +23,7 @@ import std.format;
 import std.stdio;
 import std.string;
 
-import dfeed.web.web;
+import dfeed.web.moderation;
 
 void main(string[] args)
 {
