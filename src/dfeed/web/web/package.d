@@ -92,8 +92,7 @@ import dfeed.web.web.request : onRequest, currentRequest, ip;
 import dfeed.web.web.statics;
 import dfeed.web.web.view.thread : getPostThreadIndex, getPostAtThreadIndex;
 import dfeed.web.web.user : user, userSettings;
-
-StringBuffer html;
+import dfeed.web.web.page : NotFoundException;
 
 alias config = dfeed.web.web.config.config;
 
@@ -281,16 +280,3 @@ string setOptionLink(string name, string value)
 	return "/set?" ~ encodeUrlParameters(UrlParameters([name : value, "url" : "__URL__", "secret" : userSettings.secret]));
 }
 +/
-
-// ***********************************************************************
-
-class Redirect : Throwable
-{
-	string url;
-	this(string url) { this.url = url; super("Uncaught redirect"); }
-}
-
-class NotFoundException : Exception
-{
-	this(string str = "The specified resource cannot be found on this server.") { super(str); }
-}

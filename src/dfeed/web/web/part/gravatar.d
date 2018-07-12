@@ -24,7 +24,7 @@ import std.uni : toLower;
 
 import ae.utils.xmllite : putEncodedEntities;
 
-import dfeed.web.web : html;
+import dfeed.web.web.page : html;
 
 string gravatar(string authorEmail, int size)
 {

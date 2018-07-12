@@ -23,7 +23,8 @@ import ae.utils.xmllite : putEncodedEntities;
 
 import dfeed.database : query, selectValue;
 import dfeed.sinks.subscriptions;
-import dfeed.web.web : html, getPost;
+import dfeed.web.web : getPost;
+import dfeed.web.web.page : html;
 import dfeed.web.web.part.pager : POSTS_PER_PAGE, pager, getPageCount;
 import dfeed.web.web.part.post : formatPost;
 import dfeed.web.web.user;

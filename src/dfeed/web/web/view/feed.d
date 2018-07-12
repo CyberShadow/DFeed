@@ -34,7 +34,8 @@ import dfeed.message : Rfc850Post;
 import dfeed.sinks.cache : CachedSet;
 import dfeed.sinks.subscriptions : getSubscription;
 import dfeed.site : site;
-import dfeed.web.web : html, getPost;
+import dfeed.web.web : getPost;
+import dfeed.web.web.page : html;
 import dfeed.web.web.part.postbody : formatBody;
 import dfeed.web.web.perf;
 

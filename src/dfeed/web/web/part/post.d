@@ -27,7 +27,8 @@ import ae.utils.xmllite : putEncodedEntities;
 
 import dfeed.message : idToUrl, Rfc850Post, idToFragment;
 import dfeed.web.user : User;
-import dfeed.web.web : PostInfo, getPostInfo, html, idToThreadUrl, formatShortTime, summarizeTime;
+import dfeed.web.web : PostInfo, getPostInfo, idToThreadUrl, formatShortTime, summarizeTime;
+import dfeed.web.web.page : html;
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
 import dfeed.web.web.part.postbody : formatBody;
 import dfeed.web.web.statics : staticPath;

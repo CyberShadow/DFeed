@@ -26,8 +26,8 @@ import std.exception;
 import ae.utils.text.html : encodeHtmlEntities;
 
 import dfeed.groups : GroupInfo;
-import dfeed.web.web : html;
 import dfeed.web.web.cache;
+import dfeed.web.web.page : html;
 
 /// pageCount==int.max indicates unknown number of pages
 void pager(string base, int page, int pageCount, int maxWidth = 50)

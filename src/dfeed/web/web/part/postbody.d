@@ -29,7 +29,7 @@ import ae.utils.text : contains, segmentByWhitespace;
 import ae.utils.text.html : encodeHtmlEntities;
 import ae.utils.xmllite : putEncodedEntities;
 
-import dfeed.web.web : html;
+import dfeed.web.web.page : html;
 
 static Regex!char reUrl;
 static this() { reUrl = regex(`\w+://[^<>\s]+[\w/\-=]`); }

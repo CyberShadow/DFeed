@@ -22,7 +22,8 @@ import std.algorithm.searching;
 import std.exception;
 
 import dfeed.sinks.subscriptions;
-import dfeed.web.web.request : Redirect, currentRequest, html;
+import dfeed.web.web.page : html, Redirect;
+import dfeed.web.web.request : currentRequest;
 import dfeed.web.web.user;
 
 import ae.net.ietf.url;

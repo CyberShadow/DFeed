@@ -40,6 +40,7 @@ import dfeed.web.posting : postProcesses;
 import dfeed.web.user : User, getUser;
 import dfeed.web.web;
 import dfeed.web.web.draft : getDraft, draftToPost, newPostDraft, newReplyDraft, autoSaveDraft;
+import dfeed.web.web.page : html, NotFoundException, Redirect;
 import dfeed.web.web.part.gravatar;
 import dfeed.web.web.part.pager : getPageOffset, POSTS_PER_PAGE;
 import dfeed.web.web.posting : discussionPostForm, discussionSend, discussionPostStatus;

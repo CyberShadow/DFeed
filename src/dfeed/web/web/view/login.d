@@ -23,7 +23,7 @@ import ae.net.ietf.url : UrlParameters, encodeUrlParameter;
 import ae.utils.aa : aaGet;
 import ae.utils.xmllite : putEncodedEntities;
 
-import dfeed.web.web : html;
+import dfeed.web.web.page : html;
 import dfeed.web.web.user : user;
 
 void discussionLoginForm(UrlParameters parameters, string errorMessage = null)
