@@ -23,10 +23,10 @@ import ae.utils.xmllite : putEncodedEntities;
 
 import dfeed.message : idToUrl, Rfc850Post, idToFragment;
 import dfeed.web.user : User;
-import dfeed.web.web : PostInfo, getPostInfo, html, userSettings;
+import dfeed.web.web : PostInfo, getPostInfo, html;
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
-import dfeed.web.web.request : user;
 import dfeed.web.web.statics : staticPath;
+import dfeed.web.web.user : user, userSettings;
 
 string postLink(int rowid, string id, string author)
 {

@@ -30,7 +30,7 @@ import dfeed.message : idToUrl, Rfc850Post, getGroup;
 import dfeed.web.web : PostInfo, getPostInfo, NotFoundException, html;
 import dfeed.web.web.part.pager : pager, getPageCount, POSTS_PER_PAGE;
 import dfeed.web.web.part.thread;
-import dfeed.web.web.request : user;
+import dfeed.web.web.user : user;
 import dfeed.web.web.view.post : formatPost;
 
 // ***********************************************************************

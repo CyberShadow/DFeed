@@ -40,9 +40,10 @@ import dfeed.web.user : User;
 import dfeed.web.web.draft : getDraft, draftToPost, saveDraft;
 import dfeed.web.web.posting : postDraft;
 import dfeed.web.web.postmod : learnModeratedMessage;
-import dfeed.web.web.request : user, html, userSettings, Redirect;
+import dfeed.web.web.request : html, Redirect;
 import dfeed.web.web.moderation : findPostingLog, deletePostImpl;
 import dfeed.web.web.view.post : formatPost;
+import dfeed.web.web.user : user, userSettings;
 
 void deletePost(UrlParameters vars)
 {

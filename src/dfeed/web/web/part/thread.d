@@ -27,9 +27,9 @@ import ae.utils.xmllite : putEncodedEntities;
 
 import dfeed.database : query;
 import dfeed.message : idToUrl;
-import dfeed.web.web : PostInfo, getPost, userSettings, html, summarizeTime, truncateString;
+import dfeed.web.web : PostInfo, getPost, html, summarizeTime, truncateString;
 import dfeed.web.web.perf;
-import dfeed.web.web.request : user;
+import dfeed.web.web.user : user, userSettings;
 
 string[][string] referenceCache; // invariant
 

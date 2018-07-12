@@ -26,10 +26,10 @@ import dfeed.sinks.cache;
 import dfeed.web.web : PostInfo, getPostInfo, html, summarizeTime;
 import dfeed.web.web.perf;
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
-import dfeed.web.web.request : user;
 import dfeed.web.web.statics;
 import dfeed.database;
 import dfeed.message;
+import dfeed.web.web.user : user;
 
 Cached!(ActiveDiscussion[]) activeDiscussionsCache;
 Cached!(string[]) latestAnnouncementsCache;

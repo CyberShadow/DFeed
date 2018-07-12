@@ -38,7 +38,8 @@ import dfeed.sinks.cache : dbVersion;
 import dfeed.site : site;
 import dfeed.web.moderation : banned, saveBanList;
 import dfeed.web.posting : PostProcess;
-import dfeed.web.web : getPost, userSettings;
+import dfeed.web.web : getPost;
+import dfeed.web.web.user : userSettings;
 
 string findPostingLog(string id)
 {

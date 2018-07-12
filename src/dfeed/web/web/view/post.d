@@ -33,7 +33,7 @@ import dfeed.web.web : PostInfo, getPost, idToThreadUrl, formatShortTime, html, 
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
 import dfeed.web.web.part.post : getParentLink, miniPostInfo, getPostActions, postActions, postLink;
 import dfeed.web.web.part.thread : discussionThreadOverview;
-import dfeed.web.web.request : user;
+import dfeed.web.web.user : user;
 
 string[] formatPostParts(Rfc850Post post)
 {
