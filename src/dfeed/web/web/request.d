@@ -51,6 +51,8 @@ import dfeed.web.web.view.group : discussionGroup, discussionGroupThreaded, disc
 import dfeed.web.web.view.moderation : discussionDeleteForm, deletePost, deletePostApi, discussionFlagPage, discussionApprovePage;
 import dfeed.web.web.view.widgets;
 import dfeed.web.web.view.post : discussionSplitPost, discussionVSplitPost, discussionSinglePost;
+import dfeed.web.web.view.settings : discussionSettings, discussionSubscriptionEdit;
+import dfeed.web.web.view.subscription : discussionSubscriptionPosts, discussionSubscriptionUnsubscribe;
 import dfeed.web.web.view.thread : getPostAtThreadIndex, discussionThread, discussionFirstUnread;
 
 import ae.net.http.common : HttpRequest, HttpResponse, HttpStatusCode;
