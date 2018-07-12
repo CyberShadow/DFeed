@@ -45,6 +45,7 @@ import dfeed.web.web.statics : optimizedPath, serveFile, makeBundle, staticPath,
 import dfeed.web.web.view.index : discussionIndex;
 import dfeed.web.web.view.group : discussionGroup, discussionGroupThreaded, discussionGroupSplit, discussionGroupVSplit, discussionGroupSplitFromPost, discussionGroupVSplitFromPost;
 import dfeed.web.web.view.widgets;
+import dfeed.web.web.view.post : discussionSplitPost, discussionVSplitPost;
 
 import ae.net.http.common : HttpRequest, HttpResponse, HttpStatusCode;
 import ae.net.http.responseex : HttpResponseEx;
