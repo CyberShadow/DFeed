@@ -83,6 +83,7 @@ import dfeed.web.web.draft : getDraft, saveDraft, draftToPost;
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
 import dfeed.web.web.part.pager;
 import dfeed.web.web.part.post : postLink, miniPostInfo;
+import dfeed.web.web.part.postbody : formatBody;
 import dfeed.web.web.part.thread : formatThreadedPosts;
 import dfeed.web.web.perf;
 import dfeed.web.web.posting : postDraft;
@@ -161,132 +162,6 @@ PostInfo* retrievePostInfo(string id)
 }
 
 // ***********************************************************************
-
-static Regex!char reUrl;
-static this() { reUrl = regex(`\w+://[^<>\s]+[\w/\-=]`); }
-
-void formatBody(Rfc850Message post)
-{
-	auto paragraphs = unwrapText(post.content, post.wrapFormat);
-	bool inSignature = false;
-	int quoteLevel = 0;
-	foreach (paragraph; paragraphs)
-	{
-		int paragraphQuoteLevel;
-		foreach (c; paragraph.quotePrefix)
-			if (c == '>')
-				paragraphQuoteLevel++;
-
-		for (; quoteLevel > paragraphQuoteLevel; quoteLevel--)
-			html ~= `</span>`;
-		for (; quoteLevel < paragraphQuoteLevel; quoteLevel++)
-			html ~= `<span class="forum-quote">`;
-
-		if (!quoteLevel && (paragraph.text == "-- " || paragraph.text == "_______________________________________________"))
-		{
-			html ~= `<span class="forum-signature">`;
-			inSignature = true;
-		}
-
-		enum forceWrapThreshold = 30;
-		enum forceWrapMinChunkSize =  5;
-		enum forceWrapMaxChunkSize = 15;
-		static assert(forceWrapMaxChunkSize > forceWrapMinChunkSize * 2);
-
-		import std.utf;
-		bool needsWrap = paragraph.text.byChar.splitter(' ').map!(s => s.length).I!(r => reduce!max(size_t.init, r)) > forceWrapThreshold;
-
-		auto hasURL = paragraph.text.contains("://");
-
-		void processText(string s)
-		{
-			html.put(encodeHtmlEntities(s));
-		}
-
-		void processWrap(string s)
-		{
-			alias processText next;
-
-			if (!needsWrap)
-				return next(s);
-
-			auto segments = s.segmentByWhitespace();
-			foreach (ref segment; segments)
-			{
-				if (segment.length > forceWrapThreshold)
-				{
-					void chunkify(string s, string delimiters)
-					{
-						if (s.length < forceWrapMaxChunkSize)
-						{
-							html.put(`<span class="forcewrap">`);
-							next(s);
-							html.put(`</span>`);
-						}
-						else
-						if (!delimiters.length)
-						{
-							// Don't cut UTF-8 sequences in half
-							static bool canCutAt(char c) { return (c & 0x80) == 0 || (c & 0x40) != 0; }
-							foreach (i; s.length.iota.radial)
-								if (canCutAt(s[i]))
-								{
-									chunkify(s[0..i], null);
-									chunkify(s[i..$], null);
-									return;
-								}
-							chunkify(s[0..$/2], null);
-							chunkify(s[$/2..$], null);
-						}
-						else
-						{
-							foreach (i; iota(forceWrapMinChunkSize, s.length-forceWrapMinChunkSize).radial)
-								if (s[i] == delimiters[0])
-								{
-									chunkify(s[0..i+1], delimiters);
-									chunkify(s[i+1..$], delimiters);
-									return;
-								}
-							chunkify(s, delimiters[1..$]);
-						}
-					}
-
-					chunkify(segment, "/&=.-+,;:_\\|`'\"~!@#$%^*()[]{}");
-				}
-				else
-					next(segment);
-			}
-		}
-
-		void processURLs(string s)
-		{
-			alias processWrap next;
-
-			if (!hasURL)
-				return next(s);
-
-			size_t pos = 0;
-			foreach (m; matchAll(s, reUrl))
-			{
-				next(s[pos..m.pre().length]);
-				html.put(`<a rel="nofollow" href="`, m.hit(), `">`);
-				next(m.hit());
-				html.put(`</a>`);
-				pos = m.pre().length + m.hit().length;
-			}
-			next(s[pos..$]);
-		}
-
-		if (paragraph.quotePrefix.length)
-			html.put(`<span class="forum-quote-prefix">`), html.putEncodedEntities(paragraph.quotePrefix), html.put(`</span>`);
-		processURLs(paragraph.text);
-		html.put('\n');
-	}
-	for (; quoteLevel; quoteLevel--)
-		html ~= `</span>`;
-	if (inSignature)
-		html ~= `</span>`;
-}
 
 string summarizeTime(SysTime time, bool colorize = false)
 {
