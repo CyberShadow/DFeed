@@ -31,43 +31,9 @@ import dfeed.groups : GroupInfo;
 import dfeed.message : Rfc850Post, idToUrl, idToFragment, getGroup;
 import dfeed.web.web : PostInfo, getPost, idToThreadUrl, formatShortTime, html, summarizeTime, formatBody, formatLongTime, getPostInfo;
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
-import dfeed.web.web.part.post : getParentLink, miniPostInfo, getPostActions, postActions, postLink;
+import dfeed.web.web.part.post : getParentLink, miniPostInfo, getPostActions, postActions, postLink, formatPost, formatPostParts;
 import dfeed.web.web.part.thread : discussionThreadOverview;
 import dfeed.web.web.user : user;
-
-string[] formatPostParts(Rfc850Post post)
-{
-	string[] partList;
-	void visitParts(Rfc850Message[] parts, int[] path)
-	{
-		foreach (int i, part; parts)
-		{
-			if (part.parts.length)
-				visitParts(part.parts, path~i);
-			else
-			if (part.content !is post.content)
-			{
-				string partUrl = ([idToUrl(post.id, "raw")] ~ array(map!text(path~i))).join("/");
-				with (part)
-					partList ~=
-						(name || fileName) ?
-							`<a href="` ~ encodeHtmlEntities(partUrl) ~ `" title="` ~ encodeHtmlEntities(mimeType) ~ `">` ~
-							encodeHtmlEntities(name) ~
-							(name && fileName ? " - " : "") ~
-							encodeHtmlEntities(fileName) ~
-							`</a>` ~
-							(description ? ` (` ~ encodeHtmlEntities(description) ~ `)` : "")
-						:
-							`<a href="` ~ encodeHtmlEntities(partUrl) ~ `">` ~
-							encodeHtmlEntities(mimeType) ~
-							`</a> part` ~
-							(description ? ` (` ~ encodeHtmlEntities(description) ~ `)` : "");
-			}
-		}
-	}
-	visitParts(post.parts, null);
-	return partList;
-}
 
 // ***********************************************************************
 
@@ -80,92 +46,6 @@ void discussionVSplitPost(string id)
 }
 
 // ***********************************************************************
-
-void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts, bool markAsRead = true)
-{
-	string gravatarHash = getGravatarHash(post.authorEmail);
-
-	string[] infoBits;
-
-	auto parentLink = getParentLink(post, knownPosts);
-	if (parentLink)
-		infoBits ~= `Posted in reply to ` ~ parentLink;
-
-	auto partList = formatPostParts(post);
-	if (partList.length)
-		infoBits ~=
-			`Attachments:<ul class="post-info-parts"><li>` ~ partList.join(`</li><li>`) ~ `</li></ul>`;
-
-	if (knownPosts is null && post.cachedThreadID)
-		infoBits ~=
-			`<a href="` ~ encodeHtmlEntities(idToThreadUrl(post.id, post.cachedThreadID)) ~ `">View in thread</a>`;
-
-	string repliesTitle = `Replies to `~encodeHtmlEntities(post.author)~`'s post from `~encodeHtmlEntities(formatShortTime(post.time, false));
-
-	with (post.msg)
-	{
-		html.put(
-			`<div class="post-wrapper">` ~
-			`<table class="post forum-table`, (post.children ? ` with-children` : ``), `" id="`), html.putEncodedEntities(idToFragment(id)), html.put(`">` ~
-			`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(2), `</tr>` ~ // Fixed layout dummies
-			`<tr class="post-header"><th colspan="2">` ~
-				`<div class="post-time">`, summarizeTime(time), `</div>` ~
-				`<a title="Permanent link to this post" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" class="permalink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread"), `">`,
-					encodeHtmlEntities(rawSubject),
-				`</a>` ~
-			`</th></tr>` ~
-			`<tr class="mini-post-info-cell">` ~
-				`<td colspan="2">`
-		); miniPostInfo(post, knownPosts); html.put(
-				`</td>` ~
-			`</tr>` ~
-			`<tr>` ~
-				`<td class="post-info">` ~
-					`<div class="post-author">`), html.putEncodedEntities(author), html.put(`</div>`);
-		putGravatar(gravatarHash, "http://www.gravatar.com/" ~ gravatarHash, `title="` ~ encodeHtmlEntities(author) ~ `'s Gravatar profile"`, 80);
-		if (infoBits.length)
-		{
-			html.put(`<hr>`);
-			foreach (b; infoBits)
-				html.put(`<div class="post-info-bit">`, b, `</div>`);
-		}
-		else
-			html.put(`<br>`);
-		auto actions = getPostActions(post.msg);
-		foreach (n; 0..actions.length)
-			html.put(`<br>`); // guarantee space for the "toolbar"
-
-		html.put(
-					`<div class="post-actions">`), postActions(actions), html.put(`</div>` ~
-				`</td>` ~
-				`<td class="post-body">` ~
-//		); miniPostInfo(post, knownPosts); html.put(
-					`<pre class="post-text">`), formatBody(post), html.put(`</pre>`,
-					(error ? `<span class="post-error">` ~ encodeHtmlEntities(error) ~ `</span>` : ``),
-				`</td>` ~
-			`</tr>` ~
-			`</table>` ~
-			`</div>`);
-
-		if (post.children)
-		{
-			html.put(
-				`<table class="post-nester"><tr>` ~
-				`<td class="post-nester-bar" title="`, /* for IE */ repliesTitle, `">` ~
-					`<a href="#`), html.putEncodedEntities(idToFragment(id)), html.put(`" ` ~
-						`title="`, repliesTitle, `"></a>` ~
-				`</td>` ~
-				`<td>`);
-			foreach (child; post.children)
-				formatPost(child, knownPosts);
-			html.put(`</td>` ~
-				`</tr></table>`);
-		}
-	}
-
-	if (post.rowid && markAsRead)
-		user.setRead(post.rowid, true);
-}
 
 struct InfoRow { string name, value; }
 

@@ -89,7 +89,6 @@ import dfeed.web.web.posting : postDraft;
 import dfeed.web.web.postmod : learnModeratedMessage;
 import dfeed.web.web.request : onRequest, currentRequest, ip;
 import dfeed.web.web.statics;
-import dfeed.web.web.view.post : formatPost, formatSplitPost;
 import dfeed.web.web.view.thread : getPostThreadIndex, getPostAtThreadIndex;
 import dfeed.web.web.user : user, userSettings;
 

@@ -49,10 +49,9 @@ import dfeed.web.lint : getLintRule, lintRules;
 import dfeed.web.posting : PostDraft, PostProcess, PostError, SmtpConfig, PostingStatus;
 import dfeed.web.web : html, formatShortTime, getPostInfo, formatDuration, getPost;
 import dfeed.web.web.draft : getDraft, saveDraft, draftToPost;
-import dfeed.web.web.part.post;
+import dfeed.web.web.part.post : formatPost, postLink;
 import dfeed.web.web.postmod : shouldModerate, learnModeratedMessage;
 import dfeed.web.web.request : ip;
-import dfeed.web.web.view.post : formatPost;
 import dfeed.web.web.user : user, userSettings;
 
 void draftNotices(string except = null)
