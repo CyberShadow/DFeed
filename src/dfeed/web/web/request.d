@@ -45,6 +45,7 @@ import dfeed.web.web.part.pager : getPageOffset, POSTS_PER_PAGE;
 import dfeed.web.web.posting : discussionPostForm, discussionSend, discussionPostStatus;
 import dfeed.web.web.statics : optimizedPath, serveFile, makeBundle, staticPath, createBundles, createBundles;
 import dfeed.web.web.user : user, userSettings;
+import dfeed.web.web.view.feed : getFeed, getSubscriptionFeed, FEED_HOURS_DEFAULT, FEED_HOURS_MAX;
 import dfeed.web.web.view.index : discussionIndex;
 import dfeed.web.web.view.login : discussionLoginForm, discussionRegisterForm, discussionLogin, discussionRegister;
 import dfeed.web.web.view.group : discussionGroup, discussionGroupThreaded, discussionGroupSplit, discussionGroupVSplit, discussionGroupSplitFromPost, discussionGroupVSplitFromPost;
