@@ -38,11 +38,11 @@ import dfeed.sources.github;
 import dfeed.web.list;
 import dfeed.web.posting : postProcesses;
 import dfeed.web.user : User, getUser;
-import dfeed.web.web;
 import dfeed.web.web.draft : getDraft, draftToPost, newPostDraft, newReplyDraft, autoSaveDraft;
 import dfeed.web.web.page : html, NotFoundException, Redirect;
 import dfeed.web.web.part.gravatar;
 import dfeed.web.web.part.pager : getPageOffset, POSTS_PER_PAGE;
+import dfeed.web.web.postinfo;
 import dfeed.web.web.posting : discussionPostForm, discussionSend, discussionPostStatus;
 import dfeed.web.web.statics : optimizedPath, serveFile, makeBundle, staticPath, createBundles, createBundles;
 import dfeed.web.web.user : user, userSettings;
@@ -71,6 +71,8 @@ import ae.utils.meta : I;
 import ae.utils.regex : re;
 import ae.utils.text : indexOf;
 import ae.utils.text.html : encodeHtmlEntities;
+
+alias config = dfeed.web.web.config.config;
 
 HttpRequest currentRequest;
 string ip;

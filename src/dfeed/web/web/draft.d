@@ -29,7 +29,7 @@ import dfeed.database : query;
 import dfeed.groups : GroupInfo;
 import dfeed.message : Rfc850Post;
 import dfeed.web.posting : PostDraft, PostProcess;
-import dfeed.web.web : getPost;
+import dfeed.web.web.postinfo : getPost;
 import dfeed.web.web.user : user, userSettings;
 
 void createDraft(PostDraft draft)

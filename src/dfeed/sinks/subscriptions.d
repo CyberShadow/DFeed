@@ -47,7 +47,7 @@ import dfeed.site;
 import dfeed.sinks.irc;
 import dfeed.sinks.messagedb : threadID;
 import dfeed.web.user;
-import dfeed.web.web : getPost;
+import dfeed.web.web.postinfo : getPost;
 
 void log(string s)
 {

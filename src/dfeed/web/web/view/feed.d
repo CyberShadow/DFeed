@@ -34,10 +34,10 @@ import dfeed.message : Rfc850Post;
 import dfeed.sinks.cache : CachedSet;
 import dfeed.sinks.subscriptions : getSubscription;
 import dfeed.site : site;
-import dfeed.web.web : getPost;
 import dfeed.web.web.page : html;
 import dfeed.web.web.part.postbody : formatBody;
 import dfeed.web.web.perf;
+import dfeed.web.web.postinfo : getPost;
 
 enum FEED_HOURS_DEFAULT = 24;
 enum FEED_HOURS_MAX = 72;

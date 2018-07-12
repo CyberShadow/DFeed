@@ -27,8 +27,8 @@ import std.string;
 
 import dfeed.message;
 import dfeed.web.posting;
-import dfeed.web.web : getPost;
 import dfeed.web.web.part.postbody : reUrl;
+import dfeed.web.web.postinfo : getPost;
 
 class LintRule
 {

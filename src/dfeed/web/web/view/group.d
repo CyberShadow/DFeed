@@ -36,12 +36,13 @@ import dfeed.database : query;
 import dfeed.groups;
 import dfeed.message;
 import dfeed.sinks.cache;
-import dfeed.web.web : PostInfo, getPostInfo, summarizeTime, formatNumber, getPost, truncateString;
 import dfeed.web.web.cache : postCountCache, getPostCounts;
 import dfeed.web.web.page : html;
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
 import dfeed.web.web.part.pager : THREADS_PER_PAGE, getPageOffset, threadPager, indexToPage, getPageCount, getPageCount, pager;
+import dfeed.web.web.part.strings : summarizeTime, formatNumber, truncateString;
 import dfeed.web.web.part.thread : formatThreadedPosts;
+import dfeed.web.web.postinfo : PostInfo, getPostInfo, getPost;
 import dfeed.web.web.statics : staticPath;
 import dfeed.web.web.user : user, userSettings;
 

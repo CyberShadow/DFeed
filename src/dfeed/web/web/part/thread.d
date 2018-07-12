@@ -27,10 +27,11 @@ import ae.utils.xmllite : putEncodedEntities;
 
 import dfeed.database : query;
 import dfeed.message : idToUrl;
-import dfeed.web.web : PostInfo, getPost, summarizeTime, truncateString;
 import dfeed.web.web.page : html;
 import dfeed.web.web.perf;
+import dfeed.web.web.postinfo : PostInfo, getPost;
 import dfeed.web.web.user : user, userSettings;
+import dfeed.web.web.part.strings : summarizeTime, truncateString;
 
 string[][string] referenceCache; // invariant
 

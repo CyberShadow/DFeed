@@ -29,12 +29,13 @@ import ae.utils.xmllite : putEncodedEntities;
 import dfeed.database : query;
 import dfeed.groups : GroupInfo;
 import dfeed.message : Rfc850Post, idToUrl, idToFragment, getGroup;
-import dfeed.web.web : PostInfo, getPost, idToThreadUrl, formatShortTime, summarizeTime, formatLongTime, getPostInfo;
 import dfeed.web.web.page : html;
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
 import dfeed.web.web.part.post : getParentLink, miniPostInfo, getPostActions, postActions, postLink, formatPost, formatPostParts;
 import dfeed.web.web.part.postbody : formatBody;
+import dfeed.web.web.part.strings : formatShortTime, summarizeTime, formatLongTime;
 import dfeed.web.web.part.thread : discussionThreadOverview;
+import dfeed.web.web.postinfo : PostInfo, getPost, idToThreadUrl, getPostInfo;
 import dfeed.web.web.user : user;
 
 // ***********************************************************************

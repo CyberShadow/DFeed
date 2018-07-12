@@ -42,11 +42,12 @@ import dfeed.database : query;
 import dfeed.groups : getGroupInfoByPublicName;
 import dfeed.message : Rfc850Post, idToFragment, idToUrl;
 import dfeed.sinks.messagedb : searchTerm;
-import dfeed.web.web : getPost, summarizeTime;
 import dfeed.web.web.page : html, Redirect;
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
 import dfeed.web.web.part.pager;
 import dfeed.web.web.part.post : miniPostInfo;
+import dfeed.web.web.part.strings : summarizeTime;
+import dfeed.web.web.postinfo : getPost;
 import dfeed.web.web.user : user;
 
 /// Delimiters for formatSearchSnippet.

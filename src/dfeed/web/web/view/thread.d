@@ -27,11 +27,11 @@ import ae.utils.xmllite : putEncodedEntities;
 import dfeed.database : query;
 import dfeed.groups : GroupInfo;
 import dfeed.message : idToUrl, Rfc850Post, getGroup;
-import dfeed.web.web : PostInfo, getPostInfo;
 import dfeed.web.web.page : html, NotFoundException;
 import dfeed.web.web.part.pager : pager, getPageCount, POSTS_PER_PAGE;
 import dfeed.web.web.part.post : formatPost;
 import dfeed.web.web.part.thread;
+import dfeed.web.web.postinfo : PostInfo, getPostInfo;
 import dfeed.web.web.user : user;
 
 // ***********************************************************************
