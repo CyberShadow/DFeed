@@ -116,15 +116,18 @@ void discussionModeration(Rfc850Post post, UrlParameters postVars)
 		bool ban           = postVars.get("ban"      , "No") == "Yes";
 		bool delSource     = postVars.get("delsource", "No") == "Yes";
 
-		moderatePost(
-			messageID,
-			reason,
-			userName,
-			deleteLocally ? Yes.deleteLocally : No.deleteLocally,
-			ban           ? Yes.ban           : No.ban          ,
-			delSource     ? Yes.deleteSource  : No.deleteSource ,
-			(string s) { html.put(encodeHtmlEntities(s) ~ "<br>"); },
-		);
+		if (deleteLocally || ban || delSource)
+			moderatePost(
+				messageID,
+				reason,
+				userName,
+				deleteLocally ? Yes.deleteLocally : No.deleteLocally,
+				ban           ? Yes.ban           : No.ban          ,
+				delSource     ? Yes.deleteSource  : No.deleteSource ,
+				(string s) { html.put(encodeHtmlEntities(s) ~ "<br>"); },
+			);
+		else
+			html.put("No actions specified!");
 	}
 }
 
