@@ -76,7 +76,7 @@ void moderatePost(
 	Flag!"deleteLocally" deleteLocally,
 	Flag!"ban" ban,
 	Flag!"deleteSource" deleteSource,
-	void delegate(string) feedback,
+	void delegate(string) feedbackCallback,
 )
 {
 	auto post = getPost(messageID);
@@ -85,6 +85,13 @@ void moderatePost(
 	auto moderationLog = fileLogger("Deleted");
 	scope(exit) moderationLog.close();
 	scope(failure) moderationLog("An error occurred");
+
+	void feedback(string message)
+	{
+		moderationLog(message);
+		feedbackCallback(message);
+	}
+
 	moderationLog("User %s is %s post %s (%s)".format(
 			userName, deleteLocally ? "deleting" : "moderating", post.id, reason));
 	foreach (line; post.message.splitAsciiLines())
@@ -98,7 +105,6 @@ void moderatePost(
 	if (ban)
 	{
 		banPoster(userName, post.id, reason);
-		moderationLog("User was banned for this post.");
 		feedback("User banned.");
 	}
 
