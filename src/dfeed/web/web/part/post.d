@@ -83,10 +83,10 @@ PostAction[] getPostActions(Rfc850Message msg)
 		actions ~= PostAction("sourcelink", "Source",
 			"View this message's source code",
 			idToUrl(id, "source"), "source");
-	if (user.getLevel() >= User.Level.canDeletePosts)
-		actions ~= PostAction("deletelink", "Delete",
-			"Delete this message from DFeed's database",
-			idToUrl(id, "delete"), "delete");
+	if (user.getLevel() >= User.Level.canModerate)
+		actions ~= PostAction("modlink", "Moderate",
+			"Perform moderation actions on this post",
+			idToUrl(id, "moderate"), "delete");
 	return actions;
 }
 

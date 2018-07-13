@@ -59,7 +59,7 @@ abstract class User
 		hasRawLink       =   1, /// Get a clickable "raw post" link.
 		canFlag          =   2, /// Can flag posts
 		canApproveDrafts =  90, /// Can approve moderated drafts
-		canDeletePosts   = 100, /// Can delete posts locally
+		canModerate      = 100, /// Can delete posts locally/remotely and ban users
 	}
 
 	string getName() { return null; }

@@ -24,6 +24,7 @@ import std.format : format;
 import std.regex : match;
 import std.stdio : File;
 import std.string : splitLines, indexOf;
+import std.typecons : Flag;
 
 import ae.net.http.common : HttpRequest;
 import ae.net.ietf.url : UrlParameters;
@@ -61,35 +62,44 @@ string findPostingLog(string id)
 	return null;
 }
 
-void deletePostImpl(string messageID, string reason, string userName, bool ban, void delegate(string) feedback)
+void moderatePost(
+	string messageID, string reason, string userName,
+	Flag!"deleteLocally" deleteLocally,
+	Flag!"ban" ban,
+	void delegate(string) feedback,
+)
 {
 	auto post = getPost(messageID);
 	enforce(post, "Post not found");
 
-	auto deletionLog = fileLogger("Deleted");
-	scope(exit) deletionLog.close();
-	scope(failure) deletionLog("An error occurred");
-	deletionLog("User %s is deleting post %s (%s)".format(userName, post.id, reason));
+	auto moderationLog = fileLogger("Deleted");
+	scope(exit) moderationLog.close();
+	scope(failure) moderationLog("An error occurred");
+	moderationLog("User %s is %s post %s (%s)".format(
+			userName, deleteLocally ? "deleting" : "moderating", post.id, reason));
 	foreach (line; post.message.splitAsciiLines())
-		deletionLog("> " ~ line);
+		moderationLog("> " ~ line);
 
 	foreach (string[string] values; query!"SELECT * FROM `Posts` WHERE `ID` = ?".iterate(post.id))
-		deletionLog("[Posts] row: " ~ values.toJson());
+		moderationLog("[Posts] row: " ~ values.toJson());
 	foreach (string[string] values; query!"SELECT * FROM `Threads` WHERE `ID` = ?".iterate(post.id))
-		deletionLog("[Threads] row: " ~ values.toJson());
+		moderationLog("[Threads] row: " ~ values.toJson());
 
 	if (ban)
 	{
 		banPoster(userName, post.id, reason);
-		deletionLog("User was banned for this post.");
-		feedback("User banned.<br>");
+		moderationLog("User was banned for this post.");
+		feedback("User banned.");
 	}
 
-	query!"DELETE FROM `Posts` WHERE `ID` = ?".exec(post.id);
-	query!"DELETE FROM `Threads` WHERE `ID` = ?".exec(post.id);
+	if (deleteLocally)
+	{
+		query!"DELETE FROM `Posts` WHERE `ID` = ?".exec(post.id);
+		query!"DELETE FROM `Threads` WHERE `ID` = ?".exec(post.id);
 
-	dbVersion++;
-	feedback("Post deleted.");
+		dbVersion++;
+		feedback("Post deleted.");
+	}
 }
 
 // Create logger on demand, to avoid creating empty log files

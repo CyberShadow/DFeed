@@ -24,6 +24,7 @@ import std.datetime.systime : Clock;
 import std.exception : enforce;
 import std.format : format;
 import std.string : capitalize, strip;
+import std.typecons : Yes, No;
 
 import ae.net.ietf.headers : Headers;
 import ae.net.ietf.url : UrlParameters;
@@ -42,20 +43,49 @@ import dfeed.web.web.page : html, Redirect;
 import dfeed.web.web.part.post : formatPost;
 import dfeed.web.web.posting : postDraft;
 import dfeed.web.web.postmod : learnModeratedMessage;
-import dfeed.web.web.moderation : findPostingLog, deletePostImpl;
+import dfeed.web.web.moderation : findPostingLog, moderatePost;
 import dfeed.web.web.user : user, userSettings;
 
-void deletePost(UrlParameters vars)
+void discussionModeration(Rfc850Post post, UrlParameters postVars)
 {
-	if (vars.get("secret", "") != userSettings.secret)
-		throw new Exception("XSRF secret verification failed. Are your cookies enabled?");
+	if (postVars == UrlParameters.init)
+	{
+		html.put(
+			`<form method="post" class="forum-form delete-form" id="deleteform">` ~
+			`<input type="hidden" name="id" value="`), html.putEncodedEntities(post.id), html.put(`">` ~
+			`<div id="deleteform-info">` ~
+				`Perform which moderation actions on this post?` ~
+			`</div>` ~
+			`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
+			`<textarea id="deleteform-message" readonly="readonly" rows="25" cols="80">`), html.putEncodedEntities(post.message), html.put(`</textarea><br>` ~
+			`<input type="checkbox" name="delete" value="Yes" checked id="deleteform-delete"></input><label for="deleteform-delete">Delete local cached copy of this post from DFeed's database</label><br>`,
+			 findPostingLog(post.id)
+				? `<input type="checkbox" name="ban" value="Yes" id="deleteform-ban"></input><label for="deleteform-ban">Ban poster (place future posts in moderation queue)</label><br>`
+				: ``,
+			`Reason: <input name="reason" value="spam"></input><br>` ~
+			`<input type="submit" value="Delete"></input>` ~
+		`</form>`);
+	}
+	else
+	{
+		if (postVars.get("secret", "") != userSettings.secret)
+			throw new Exception("XSRF secret verification failed. Are your cookies enabled?");
 
-	string messageID = vars.get("id", "");
-	string userName = user.getName();
-	string reason = vars.get("reason", "");
-	bool ban = vars.get("ban", "No") == "Yes";
+		string messageID = postVars.get("id", "");
+		string userName = user.getName();
+		string reason = postVars.get("reason", "");
+		bool deleteLocally = postVars.get("delete", "No") == "Yes";
+		bool ban = postVars.get("ban", "No") == "Yes";
 
-	deletePostImpl(messageID, reason, userName, ban, (string s) { html.put(s ~ "<br>"); });
+		moderatePost(
+			messageID,
+			reason,
+			userName,
+			deleteLocally ? Yes.deleteLocally : No.deleteLocally,
+			ban           ? Yes.ban           : No.ban          ,
+			(string s) { html.put(s ~ "<br>"); },
+		);
+	}
 }
 
 void deletePostApi(string group, int artNum)
@@ -67,27 +97,15 @@ void deletePostApi(string group, int artNum)
 
 	string reason = "API call";
 	string userName = "API";
-	bool ban = false;
 
-	deletePostImpl(messageID, reason, userName, ban, (string s) { html.put(s ~ "\n"); });
-}
-
-void discussionDeleteForm(Rfc850Post post)
-{
-	html.put(
-		`<form action="/dodelete" method="post" class="forum-form delete-form" id="deleteform">` ~
-		`<input type="hidden" name="id" value="`), html.putEncodedEntities(post.id), html.put(`">` ~
-		`<div id="deleteform-info">` ~
-			`Are you sure you want to delete this post from DFeed's database?` ~
-		`</div>` ~
-		`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
-		`<textarea id="deleteform-message" readonly="readonly" rows="25" cols="80">`), html.putEncodedEntities(post.message), html.put(`</textarea><br>` ~
-		`Reason: <input name="reason" value="spam"></input><br>`,
-		 findPostingLog(post.id)
-			? `<input type="checkbox" name="ban" value="Yes" id="deleteform-ban"></input><label for="deleteform-ban">Also ban the poster from accessing the forum</label><br>`
-			: ``,
-		`<input type="submit" value="Delete"></input>` ~
-	`</form>`);
+	moderatePost(
+		messageID,
+		reason,
+		userName,
+		Yes.deleteLocally,
+		No.ban,
+		(string s) { html.put(s ~ "\n"); },
+	);
 }
 
 void discussionFlagPage(Rfc850Post post, bool flag, UrlParameters postParams)

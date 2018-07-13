@@ -50,7 +50,7 @@ import dfeed.web.web.view.feed : getFeed, getSubscriptionFeed, FEED_HOURS_DEFAUL
 import dfeed.web.web.view.index : discussionIndex;
 import dfeed.web.web.view.login : discussionLoginForm, discussionRegisterForm, discussionLogin, discussionRegister;
 import dfeed.web.web.view.group : discussionGroup, discussionGroupThreaded, discussionGroupSplit, discussionGroupVSplit, discussionGroupSplitFromPost, discussionGroupVSplitFromPost;
-import dfeed.web.web.view.moderation : discussionDeleteForm, deletePost, deletePostApi, discussionFlagPage, discussionApprovePage;
+import dfeed.web.web.view.moderation : discussionModeration, deletePostApi, discussionFlagPage, discussionApprovePage;
 import dfeed.web.web.view.widgets;
 import dfeed.web.web.view.post : discussionSplitPost, discussionVSplitPost, discussionSinglePost;
 import dfeed.web.web.view.search : discussionSearch;
@@ -512,24 +512,19 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				break;
 			}
 			case "delete":
+			case "dodelete":
+				return response.redirect("/moderate/" ~ path[1..$].join("/"));
+			case "moderate":
 			{
-				enforce(user.getLevel() >= User.Level.canDeletePosts, "You can't delete posts");
+				enforce(user.getLevel() >= User.Level.canModerate, "You are not a moderator");
 				enforce(path.length > 1, "No post specified");
 				auto post = getPost('<' ~ urlDecode(pathX) ~ '>');
 				enforce(post, "Post not found");
-				title = `Delete "` ~ post.subject ~ `"?`; // "
+				title = `Moderating post "` ~ post.subject ~ `"`; // "
 				breadcrumbs ~= `<a href="` ~ encodeHtmlEntities(idToUrl(post.id)) ~ `">` ~ encodeHtmlEntities(post.subject) ~ `</a>`;
-				breadcrumbs ~= `<a href="/delete/`~pathX~`">Delete post</a>`;
-				discussionDeleteForm(post);
+				breadcrumbs ~= `<a href="/moderate/`~pathX~`">Moderate post</a>`;
+				discussionModeration(post, request.decodePostData());
 				bodyClass ~= " formdoc";
-				break;
-			}
-			case "dodelete":
-			{
-				enforce(user.getLevel() >= User.Level.canDeletePosts, "You can't delete posts");
-				auto postVars = request.decodePostData();
-				title = "Deleting post";
-				deletePost(postVars);
 				break;
 			}
 			case "api-delete":
