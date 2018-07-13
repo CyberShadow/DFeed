@@ -17,10 +17,15 @@
 /// Moderation tools.
 module dfeed.web.web.moderation;
 
-import std.array;
+import std.algorithm.iteration : map, filter, uniq;
+import std.algorithm.sorting : sort;
+import std.array : array, split;
 import std.exception : enforce;
 import std.file : exists, read, rename;
 import std.format : format;
+import std.process : execute;
+import std.range : chain, only;
+import std.range.primitives : empty;
 import std.regex : match;
 import std.stdio : File;
 import std.string : splitLines, indexOf;
@@ -30,13 +35,17 @@ import ae.net.http.common : HttpRequest;
 import ae.net.ietf.url : UrlParameters;
 import ae.sys.log : Logger, fileLogger;
 import ae.utils.json : toJson;
+import ae.utils.meta : identity;
 import ae.utils.regex : escapeRE;
-import ae.utils.text : splitAsciiLines;
+import ae.utils.sini : loadIni;
+import ae.utils.text : splitAsciiLines, asciiStrip;
 
 import dfeed.database : query;
+import dfeed.groups : getGroupInfo;
 import dfeed.message : Rfc850Post;
 import dfeed.sinks.cache : dbVersion;
 import dfeed.site : site;
+import dfeed.sources.newsgroups : NntpConfig;
 import dfeed.web.moderation : banned, saveBanList;
 import dfeed.web.posting : PostProcess;
 import dfeed.web.web.postinfo : getPost;
@@ -66,6 +75,7 @@ void moderatePost(
 	string messageID, string reason, string userName,
 	Flag!"deleteLocally" deleteLocally,
 	Flag!"ban" ban,
+	Flag!"deleteSource" deleteSource,
 	void delegate(string) feedback,
 )
 {
@@ -90,6 +100,28 @@ void moderatePost(
 		banPoster(userName, post.id, reason);
 		moderationLog("User was banned for this post.");
 		feedback("User banned.");
+	}
+
+	if (deleteSource)
+	{
+		auto deleteCommands = post.xref
+			.map!(x => x.group.getGroupInfo())
+			.filter!(g => g.sinkType == "nntp")
+			.map!(g => loadIni!NntpConfig("config/sources/nntp/" ~ g.sinkName ~ ".ini").deleteCommand)
+			.filter!identity
+			.array.sort.uniq
+		;
+		auto args = chain(messageID.only, post.xref.map!(xref => "%s:%d".format(xref.group, xref.num))).array;
+		foreach (deleteCommand; deleteCommands)
+		{
+			auto result = execute([deleteCommand] ~ args);
+			feedback("Deletion from source %s with %s".format(
+				result.status == 0 ? "was successful" : "failed with status %d".format(result.status),
+				result.output.empty ? "no output." : "the following output:",
+			));
+			foreach (line; result.output.asciiStrip.splitAsciiLines)
+				feedback("> " ~ line);
+		}
 	}
 
 	if (deleteLocally)

@@ -17,8 +17,10 @@
 /// Moderation views.
 module dfeed.web.web.view.moderation;
 
-import std.algorithm.iteration : map;
+import std.algorithm.iteration : map, filter, uniq;
 import std.algorithm.searching : canFind, findSplit;
+import std.algorithm.sorting : sort;
+import std.array : array, join;
 import std.conv : text;
 import std.datetime.systime : Clock;
 import std.exception : enforce;
@@ -29,13 +31,18 @@ import std.typecons : Yes, No;
 import ae.net.ietf.headers : Headers;
 import ae.net.ietf.url : UrlParameters;
 import ae.utils.json : jsonParse;
+import ae.utils.meta : identity;
+import ae.utils.sini : loadIni;
 import ae.utils.text : splitAsciiLines;
+import ae.utils.text.html : encodeHtmlEntities;
 import ae.utils.xmllite : putEncodedEntities;
 
 import dfeed.database : query, selectValue;
+import dfeed.groups : getGroupInfo;
 import dfeed.mail : sendMail;
 import dfeed.message : Rfc850Post, idToUrl;
 import dfeed.site : site;
+import dfeed.sources.newsgroups : NntpConfig;
 import dfeed.web.posting : PostDraft, PostProcess;
 import dfeed.web.user : User;
 import dfeed.web.web.draft : getDraft, draftToPost, saveDraft;
@@ -50,21 +57,52 @@ void discussionModeration(Rfc850Post post, UrlParameters postVars)
 {
 	if (postVars == UrlParameters.init)
 	{
+		auto sinkNames = post.xref
+			.map!(x => x.group.getGroupInfo())
+			.filter!(g => g.sinkType == "nntp")
+			.map!(g => g.sinkName[])
+			.array.sort.uniq
+		;
+		auto deleteCommands = sinkNames
+			.map!(sinkName => loadIni!NntpConfig("config/sources/nntp/" ~ sinkName ~ ".ini").deleteCommand)
+			.filter!identity
+		;
 		html.put(
 			`<form method="post" class="forum-form delete-form" id="deleteform">` ~
-			`<input type="hidden" name="id" value="`), html.putEncodedEntities(post.id), html.put(`">` ~
-			`<div id="deleteform-info">` ~
-				`Perform which moderation actions on this post?` ~
-			`</div>` ~
-			`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
-			`<textarea id="deleteform-message" readonly="readonly" rows="25" cols="80">`), html.putEncodedEntities(post.message), html.put(`</textarea><br>` ~
-			`<input type="checkbox" name="delete" value="Yes" checked id="deleteform-delete"></input><label for="deleteform-delete">Delete local cached copy of this post from DFeed's database</label><br>`,
-			 findPostingLog(post.id)
-				? `<input type="checkbox" name="ban" value="Yes" id="deleteform-ban"></input><label for="deleteform-ban">Ban poster (place future posts in moderation queue)</label><br>`
+				`<input type="hidden" name="id" value="`), html.putEncodedEntities(post.id), html.put(`">` ~
+				`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
+
+				`<div id="deleteform-info">` ~
+					`Perform which moderation actions on this post?` ~
+				`</div>` ~
+
+				`<textarea id="deleteform-message" readonly="readonly" rows="25" cols="80">`
+					), html.putEncodedEntities(post.message), html.put(
+				`</textarea><br>` ~
+
+				`<input type="checkbox" name="delete" value="Yes" checked id="deleteform-delete"></input>` ~
+				`<label for="deleteform-delete">` ~
+					`Delete local cached copy of this post from DFeed's database` ~
+				`</label><br>`,
+
+				findPostingLog(post.id)
+				?	`<input type="checkbox" name="ban" value="Yes" id="deleteform-ban"></input>` ~
+					`<label for="deleteform-ban">` ~
+						`Ban poster (place future posts in moderation queue)` ~
+					`</label><br>`
 				: ``,
-			`Reason: <input name="reason" value="spam"></input><br>` ~
-			`<input type="submit" value="Delete"></input>` ~
-		`</form>`);
+
+				!deleteCommands.empty
+				?	`<input type="checkbox" name="delsource" value="Yes" id="deleteform-delsource"></input>` ~
+					`<label for="deleteform-delsource">` ~
+						`Delete source copy from ` ~ sinkNames.map!encodeHtmlEntities.join("/") ~
+					`</label><br>`
+				: ``,
+
+				`Reason: <input name="reason" value="spam"></input><br>` ~
+				`<input type="submit" value="Delete"></input>` ~
+			`</form>`
+		);
 	}
 	else
 	{
@@ -74,8 +112,9 @@ void discussionModeration(Rfc850Post post, UrlParameters postVars)
 		string messageID = postVars.get("id", "");
 		string userName = user.getName();
 		string reason = postVars.get("reason", "");
-		bool deleteLocally = postVars.get("delete", "No") == "Yes";
-		bool ban = postVars.get("ban", "No") == "Yes";
+		bool deleteLocally = postVars.get("delete "  , "No") == "Yes";
+		bool ban           = postVars.get("ban"      , "No") == "Yes";
+		bool delSource     = postVars.get("delsource", "No") == "Yes";
 
 		moderatePost(
 			messageID,
@@ -83,7 +122,8 @@ void discussionModeration(Rfc850Post post, UrlParameters postVars)
 			userName,
 			deleteLocally ? Yes.deleteLocally : No.deleteLocally,
 			ban           ? Yes.ban           : No.ban          ,
-			(string s) { html.put(s ~ "<br>"); },
+			delSource     ? Yes.deleteSource  : No.deleteSource ,
+			(string s) { html.put(encodeHtmlEntities(s) ~ "<br>"); },
 		);
 	}
 }
@@ -104,6 +144,7 @@ void deletePostApi(string group, int artNum)
 		userName,
 		Yes.deleteLocally,
 		No.ban,
+		No.deleteSource,
 		(string s) { html.put(s ~ "\n"); },
 	);
 }

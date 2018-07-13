@@ -35,6 +35,7 @@ struct NntpConfig
 {
 	string host;
 	bool postingAllowed = true;
+	string deleteCommand;
 }
 
 /// Poll the server periodically for new messages

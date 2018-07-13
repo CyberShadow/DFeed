@@ -7,3 +7,11 @@ host = news.example.com
 # i.e. the user will be notified only as they attempt to send the
 # message.
 postingAllowed = true
+
+# Command to delete messages from the source NNTP server.
+# If specified, an option will appear to delete messages from the
+# source in the post moderation UI.
+# The command is invoked with the first argument being the message ID,
+# and the following arguments being the group:article-number tuples
+# (as they appear in the Xref header).
+#deleteCommand = /path/to/script.sh
