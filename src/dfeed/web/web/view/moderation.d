@@ -112,7 +112,7 @@ void discussionModeration(Rfc850Post post, UrlParameters postVars)
 		string messageID = postVars.get("id", "");
 		string userName = user.getName();
 		string reason = postVars.get("reason", "");
-		bool deleteLocally = postVars.get("delete "  , "No") == "Yes";
+		bool deleteLocally = postVars.get("delete"   , "No") == "Yes";
 		bool ban           = postVars.get("ban"      , "No") == "Yes";
 		bool delSource     = postVars.get("delsource", "No") == "Yes";
 
