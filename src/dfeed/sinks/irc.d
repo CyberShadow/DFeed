@@ -67,6 +67,7 @@ final class IrcSink : NewsSink
 		irc.log = createLogger("IRC-"~config.network);
 		irc.handleConnect = &onConnect;
 		irc.handleDisconnect = &onDisconnect;
+		irc.handleInvite = &onInvite;
 		connect();
 
 		addShutdownHandler({ stopping = true; if (connecting || connected) irc.disconnect("DFeed shutting down"); });
@@ -144,5 +145,11 @@ private:
 		return config.channel2.length
 			&& config.channel2 in irc.channels
 			&& irc.channels[config.channel2].users.length > 1;
+	}
+
+	void onInvite(string invitee, string channel)
+	{
+		if (channel == config.channel || channel == config.channel2)
+			irc.join(channel);
 	}
 }
