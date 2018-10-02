@@ -68,7 +68,7 @@ string[] getLatestAnnouncements()
 	enum PERF_SCOPE = "getLatestAnnouncements"; mixin(MeasurePerformanceMixin);
 	enum group = "digitalmars.D.announce"; // TODO: config
 	string[] result;
-	foreach (string firstPostID; query!"SELECT [Threads].[ID] FROM [Threads] JOIN [Posts] ON [Threads].[ID]=[Posts].[ID] WHERE [Threads].[Group] = ? ORDER BY [Posts].[Time] DESC LIMIT ?".iterate(group, framePostsLimit))
+	foreach (string firstPostID; query!"SELECT [ID] FROM [Threads] WHERE [Group] = ? ORDER BY [RowID] DESC LIMIT ?".iterate(group, framePostsLimit))
 		result ~= firstPostID;
 	return result;
 }
