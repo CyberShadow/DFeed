@@ -52,7 +52,7 @@ class Backup
 	}
 
 	enum backupDir = "data/backup/";
-	enum dataFile = "data/dfeed.s3db";
+	enum dataFile = "data/db/dfeed.s3db";
 	enum lastFile = dataFile ~ ".last";
 	enum thisFile = dataFile ~ ".this";
 	enum baseFile = backupDir ~ "base.s3db";

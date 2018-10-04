@@ -17,7 +17,9 @@
 module dfeed.database;
 
 import std.exception;
+import std.file : rename, exists;
 
+import ae.sys.file : ensurePathExists;
 import ae.sys.sqlite3 : SQLite;
 public import ae.sys.sqlite3 : SQLiteException;
 
@@ -32,11 +34,21 @@ alias selectValue = ae.sys.database.selectValue;
 
 private Database database;
 
+enum databasePath = "data/db/dfeed.s3db";
+
 static this()
 {
-	import std.file : readText;
+	import std.file;
 
-	database = Database("data/dfeed.s3db", [
+	enum oldDatabasePath = "data/dfeed.s3db";
+	if (!databasePath.exists && oldDatabasePath.exists)
+	{
+		ensurePathExists(databasePath);
+		rename(oldDatabasePath, databasePath);
+		version(Posix) symlink("db/dfeed.s3db", oldDatabasePath);
+	}
+
+	database = Database(databasePath, [
 		// Initial version
 		readText("schema_v1.sql"),
 
