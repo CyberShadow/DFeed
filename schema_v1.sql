@@ -1,3 +1,6 @@
+-- Initial version of the database schema.
+-- See src/dfeed/database.d for updates since this initial revision.
+
 -- Table `Groups`
 CREATE TABLE [Groups] (
 [Group] VARCHAR(50)  NULL,

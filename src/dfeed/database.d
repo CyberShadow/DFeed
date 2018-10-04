@@ -18,59 +18,28 @@ module dfeed.database;
 
 import std.exception;
 
-import ae.sys.sqlite3;
+import ae.sys.sqlite3 : SQLite;
 public import ae.sys.sqlite3 : SQLiteException;
 
-SQLite.PreparedStatement query(string sql)()
-{
-	debug(DATABASE) std.stdio.writeln(sql);
-	static SQLite.PreparedStatement statement = null;
-	if (!statement)
-		statement = db.prepare(sql).enforce("Statement compilation failed: " ~ sql);
-	return statement;
-}
+import ae.sys.database;
 
-SQLite.PreparedStatement query(string sql)
-{
-	debug(DATABASE) std.stdio.writeln(sql);
-	static SQLite.PreparedStatement[const(void)*] cache;
-	auto pstatement = sql.ptr in cache;
-	if (pstatement)
-		return *pstatement;
-
-	auto statement = db.prepare(sql);
-	enforce(statement, "Statement compilation failed: " ~ sql);
-	return cache[sql.ptr] = statement;
-}
-
-T selectValue(T, Iter)(Iter iter)
-{
-	foreach (T val; iter)
-		return val;
-	throw new Exception("No results for query");
-}
-
-@property SQLite db()
-{
-	static SQLite instance;
-	if (instance)
-		return instance;
-
-	auto dbFileName = "data/dfeed.s3db";
-	if (!dbFileName.exists)
-		atomic!createDatabase(schemaFileName, dbFileName);
-
-	instance = new SQLite(dbFileName);
-	dumpSchema();
-
-	// Protect against locked database due to queries from command
-	// line or cron
-	instance.exec("PRAGMA busy_timeout = 100;");
-
-	return instance;
-}
+SQLite.PreparedStatement query(string sql)() { return database.stmt!sql(); }
+SQLite.PreparedStatement query(string sql)   { return database.stmt(sql);  }
+alias selectValue = ae.sys.database.selectValue;
+@property SQLite db() { return database.db; }
 
 // ***************************************************************************
+
+private Database database;
+
+static this()
+{
+	import std.file : readText;
+
+	database = Database("data/dfeed.s3db", [
+		readText("schema_v1.sql"),
+	]);
+}
 
 int transactionDepth;
 
@@ -94,39 +63,4 @@ bool flushTransactionEvery(int count)
 	}
 	else
 		return false;
-}
-
-// ***************************************************************************
-
-private:
-
-import std.file, std.string, std.array;
-
-enum schemaFileName = "schema.sql";
-
-void dumpSchema()
-{
-	string schema;
-	foreach (string type, string name, string tbl_name, string sql; query!"SELECT `type`, `name`, `tbl_name`, `sql` FROM `sqlite_master`".iterate())
-		if (!name.startsWith("sqlite_") && !name.startsWith("PostSearch_")) // skip internal / FTS helper tables
-		{
-			if (name == tbl_name)
-				schema ~= format("-- %s `%s`\n", capitalize(type), name);
-			else
-				schema ~= format("-- %s `%s` on table `%s`\n", capitalize(type), name, tbl_name);
-			schema ~= sql.replace("\r\n", "\n") ~ ";\n\n";
-		}
-	write(schemaFileName, schema);
-}
-
-import ae.sys.file;
-import std.process;
-
-public // template alias parameter
-void createDatabase(string schema, string target)
-{
-	static import std.stdio;
-	std.stdio.stderr.writeln("Creating new database from schema");
-	ensurePathExists(target);
-	enforce(spawnProcess(["sqlite3", target], std.stdio.File(schema, "rb")).wait() == 0, "sqlite3 failed");
 }
