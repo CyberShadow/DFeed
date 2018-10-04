@@ -143,9 +143,9 @@ void discussionIndexHeader()
 
 	bits[2] ~= "<li>There are %s posts, %s threads, and %s registered users on this forum.</li>"
 		.format(
-			formatNumber(totalPostCountCache  (query!"SELECT COUNT(*) FROM [Posts]"  .iterate().selectValue!int)),
-			formatNumber(totalThreadCountCache(query!"SELECT COUNT(*) FROM [Threads]".iterate().selectValue!int)),
-			formatNumber(                      query!"SELECT COUNT(*) FROM [Users]"  .iterate().selectValue!int ),
+			formatNumber(totalPostCountCache  (query!"SELECT Max([RowID]) FROM [Posts]"  .iterate().selectValue!int)),
+			formatNumber(totalThreadCountCache(query!"SELECT Max([RowID]) FROM [Threads]".iterate().selectValue!int)),
+			formatNumber(                      query!"SELECT Max([RowID]) FROM [Users]"  .iterate().selectValue!int ),
 		);
 
 	auto numRead = user.countRead();
