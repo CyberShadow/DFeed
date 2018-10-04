@@ -37,7 +37,13 @@ static this()
 	import std.file : readText;
 
 	database = Database("data/dfeed.s3db", [
+		// Initial version
 		readText("schema_v1.sql"),
+
+		// Add missing index
+		q"SQL
+CREATE INDEX [SubscriptionUser] ON [Subscriptions] ([Username]);
+SQL",
 	]);
 }
 
