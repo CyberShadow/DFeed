@@ -1,0 +1,8 @@
+# Incremental daily backups using xdelta3
+# Copy this file to backup.ini to enable.
+
+# Time of day to run the backup.
+# Hour (0-23):
+hour = 7
+# Minute (0-59):
+minute = 0
