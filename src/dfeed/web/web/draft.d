@@ -61,10 +61,26 @@ PostDraft getDraft(string draftID)
 	throw new Exception("Can't find this message draft");
 }
 
+void checkSave(PostDraft draft)
+{
+	final switch (draft.status)
+	{
+		case PostDraft.status.reserved:
+		case PostDraft.status.edited:
+		case PostDraft.status.discarded:
+			return;
+		case PostDraft.status.sent:
+			throw new Exception("Can't edit this message. It has already been sent.");
+		case PostDraft.status.moderation:
+			throw new Exception("Can't edit this message. It has already been submitted for moderation.");
+	}
+}
+
 void saveDraft(PostDraft draft)
 {
 	auto draftID = draft.clientVars.get("did", null);
 	auto postID = draft.serverVars.get("pid", null);
+	checkSave(draft);
 	query!"UPDATE [Drafts] SET [PostID]=?, [ClientVars]=?, [ServerVars]=?, [Time]=?, [Status]=? WHERE [ID] == ?"
 		.exec(postID, draft.clientVars.toJson, draft.serverVars.toJson, Clock.currTime.stdTime, int(draft.status), draftID);
 }
@@ -72,6 +88,7 @@ void saveDraft(PostDraft draft)
 void autoSaveDraft(UrlParameters clientVars)
 {
 	auto draftID = clientVars.get("did", null);
+	checkSave(getDraft(draftID));
 	query!"UPDATE [Drafts] SET [ClientVars]=?, [Time]=?, [Status]=? WHERE [ID] == ?"
 		.exec(clientVars.toJson, Clock.currTime.stdTime, PostDraft.Status.edited, draftID);
 }
