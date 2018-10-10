@@ -298,7 +298,7 @@ void discussionApprovePage(string draftID, UrlParameters postParams)
 			draft.serverVars["preapproved"] = null;
 			auto headers = Headers(draft.serverVars.get("headers", "null").jsonParse!(string[][string]));
 			auto pid = postDraft(draft, headers);
-			saveDraft(draft);
+			saveDraft(draft, Yes.force);
 
 			learnModeratedMessage(draft, false, 10);
 

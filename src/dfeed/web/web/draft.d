@@ -19,6 +19,7 @@ module dfeed.web.web.draft;
 
 import std.conv : to;
 import std.datetime.systime : Clock;
+import std.typecons : Flag, No;
 
 import ae.net.ietf.headers : Headers;
 import ae.net.ietf.url : UrlParameters;
@@ -61,7 +62,7 @@ PostDraft getDraft(string draftID)
 	throw new Exception("Can't find this message draft");
 }
 
-void checkSave(PostDraft draft)
+void ensureDraftWritable(PostDraft draft)
 {
 	final switch (draft.status)
 	{
@@ -76,11 +77,12 @@ void checkSave(PostDraft draft)
 	}
 }
 
-void saveDraft(PostDraft draft)
+void saveDraft(PostDraft draft, Flag!"force" force = No.force)
 {
 	auto draftID = draft.clientVars.get("did", null);
 	auto postID = draft.serverVars.get("pid", null);
-	checkSave(draft);
+	if (!force)
+		ensureDraftWritable(draft);
 	query!"UPDATE [Drafts] SET [PostID]=?, [ClientVars]=?, [ServerVars]=?, [Time]=?, [Status]=? WHERE [ID] == ?"
 		.exec(postID, draft.clientVars.toJson, draft.serverVars.toJson, Clock.currTime.stdTime, int(draft.status), draftID);
 }
@@ -88,7 +90,7 @@ void saveDraft(PostDraft draft)
 void autoSaveDraft(UrlParameters clientVars)
 {
 	auto draftID = clientVars.get("did", null);
-	checkSave(getDraft(draftID));
+	ensureDraftWritable(getDraft(draftID));
 	query!"UPDATE [Drafts] SET [ClientVars]=?, [Time]=?, [Status]=? WHERE [ID] == ?"
 		.exec(clientVars.toJson, Clock.currTime.stdTime, PostDraft.Status.edited, draftID);
 }
