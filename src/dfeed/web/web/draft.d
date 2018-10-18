@@ -62,9 +62,16 @@ PostDraft getDraft(string draftID)
 	throw new Exception("Can't find this message draft");
 }
 
-void ensureDraftWritable(PostDraft draft)
+PostDraft.Status getDraftStatus(string draftID)
 {
-	final switch (draft.status)
+	foreach (int status; query!"SELECT [Status] FROM [Drafts] WHERE [ID] == ?".iterate(draftID))
+		return status.to!(PostDraft.Status);
+	return PostDraft.Status.reserved;
+}
+
+void ensureDraftWritable(string draftID)
+{
+	final switch (getDraftStatus(draftID))
 	{
 		case PostDraft.status.reserved:
 		case PostDraft.status.edited:
@@ -82,7 +89,7 @@ void saveDraft(PostDraft draft, Flag!"force" force = No.force)
 	auto draftID = draft.clientVars.get("did", null);
 	auto postID = draft.serverVars.get("pid", null);
 	if (!force)
-		ensureDraftWritable(draft);
+		ensureDraftWritable(draftID);
 	query!"UPDATE [Drafts] SET [PostID]=?, [ClientVars]=?, [ServerVars]=?, [Time]=?, [Status]=? WHERE [ID] == ?"
 		.exec(postID, draft.clientVars.toJson, draft.serverVars.toJson, Clock.currTime.stdTime, int(draft.status), draftID);
 }
@@ -90,7 +97,7 @@ void saveDraft(PostDraft draft, Flag!"force" force = No.force)
 void autoSaveDraft(UrlParameters clientVars)
 {
 	auto draftID = clientVars.get("did", null);
-	ensureDraftWritable(getDraft(draftID));
+	ensureDraftWritable(draftID);
 	query!"UPDATE [Drafts] SET [ClientVars]=?, [Time]=?, [Status]=? WHERE [ID] == ?"
 		.exec(clientVars.toJson, Clock.currTime.stdTime, PostDraft.Status.edited, draftID);
 }
