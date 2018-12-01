@@ -49,7 +49,7 @@ import dfeed.site : site;
 import dfeed.sources.newsgroups : NntpConfig;
 import dfeed.web.moderation : banned, saveBanList;
 import dfeed.web.posting : PostProcess, PostDraft;
-import dfeed.web.web.draft : saveDraft;
+import dfeed.web.web.draft : getDraft, saveDraft;
 import dfeed.web.web.postinfo : getPost;
 import dfeed.web.web.posting : postDraft;
 import dfeed.web.web.postmod : learnModeratedMessage;
@@ -144,12 +144,20 @@ void moderatePost(
 	}
 }
 
-string approvePost(ref PostDraft draft)
+string approvePost(string draftID, string who)
 {
+	auto draft = getDraft(draftID);
 	draft.serverVars["preapproved"] = null;
 	auto headers = Headers(draft.serverVars.get("headers", "null").jsonParse!(string[][string]));
 	auto pid = postDraft(draft, headers);
 	saveDraft(draft, Yes.force);
+
+	needBanLog();
+	banLog("User %s is approving draft %s (post %s) titled %(%s%) by %(%s%)".format(
+		who, draftID, pid,
+		[draft.clientVars.get("subject", "")],
+		[draft.clientVars.get("name", "")],
+	));
 
 	learnModeratedMessage(draft, false, 10);
 

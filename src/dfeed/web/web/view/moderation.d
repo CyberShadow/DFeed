@@ -292,7 +292,7 @@ void discussionApprovePage(string draftID, UrlParameters postParams)
 
 		if ("approve" in postParams)
 		{
-			auto pid = approvePost(draft);
+			auto pid = approvePost(draftID, user.getName());
 
 			html.put(`Post approved! <a href="/posting/` ~ pid ~ `">View posting</a>`);
 		}
