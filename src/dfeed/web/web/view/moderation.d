@@ -100,7 +100,7 @@ void discussionModeration(Rfc850Post post, UrlParameters postVars)
 				: ``,
 
 				`Reason: <input name="reason" value="spam"></input><br>` ~
-				`<input type="submit" value="Delete"></input>` ~
+				`<input type="submit" value="Moderate"></input>` ~
 			`</form>`
 		);
 	}
