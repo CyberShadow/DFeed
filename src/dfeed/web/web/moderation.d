@@ -29,12 +29,13 @@ import std.range.primitives : empty;
 import std.regex : match;
 import std.stdio : File;
 import std.string : splitLines, indexOf;
-import std.typecons : Flag;
+import std.typecons : Flag, Yes;
 
 import ae.net.http.common : HttpRequest;
+import ae.net.ietf.headers : Headers;
 import ae.net.ietf.url : UrlParameters;
 import ae.sys.log : Logger, fileLogger;
-import ae.utils.json : toJson;
+import ae.utils.json : toJson, jsonParse;
 import ae.utils.meta : identity;
 import ae.utils.regex : escapeRE;
 import ae.utils.sini : loadIni;
@@ -47,8 +48,11 @@ import dfeed.sinks.cache : dbVersion;
 import dfeed.site : site;
 import dfeed.sources.newsgroups : NntpConfig;
 import dfeed.web.moderation : banned, saveBanList;
-import dfeed.web.posting : PostProcess;
+import dfeed.web.posting : PostProcess, PostDraft;
+import dfeed.web.web.draft : saveDraft;
 import dfeed.web.web.postinfo : getPost;
+import dfeed.web.web.posting : postDraft;
+import dfeed.web.web.postmod : learnModeratedMessage;
 import dfeed.web.web.user : userSettings;
 
 string findPostingLog(string id)
@@ -138,6 +142,18 @@ void moderatePost(
 		dbVersion++;
 		feedback("Post deleted.");
 	}
+}
+
+string approvePost(ref PostDraft draft)
+{
+	draft.serverVars["preapproved"] = null;
+	auto headers = Headers(draft.serverVars.get("headers", "null").jsonParse!(string[][string]));
+	auto pid = postDraft(draft, headers);
+	saveDraft(draft, Yes.force);
+
+	learnModeratedMessage(draft, false, 10);
+
+	return pid;
 }
 
 // Create logger on demand, to avoid creating empty log files

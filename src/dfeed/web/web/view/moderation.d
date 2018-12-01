@@ -28,9 +28,7 @@ import std.format : format;
 import std.string : capitalize, strip;
 import std.typecons : Yes, No;
 
-import ae.net.ietf.headers : Headers;
 import ae.net.ietf.url : UrlParameters;
-import ae.utils.json : jsonParse;
 import ae.utils.meta : identity;
 import ae.utils.sini : loadIni;
 import ae.utils.text : splitAsciiLines;
@@ -45,12 +43,11 @@ import dfeed.site : site;
 import dfeed.sources.newsgroups : NntpConfig;
 import dfeed.web.posting : PostDraft, PostProcess;
 import dfeed.web.user : User;
-import dfeed.web.web.draft : getDraft, draftToPost, saveDraft;
+import dfeed.web.web.draft : getDraft, draftToPost;
 import dfeed.web.web.page : html, Redirect;
 import dfeed.web.web.part.post : formatPost;
 import dfeed.web.web.posting : postDraft;
-import dfeed.web.web.postmod : learnModeratedMessage;
-import dfeed.web.web.moderation : findPostingLog, moderatePost;
+import dfeed.web.web.moderation : findPostingLog, moderatePost, approvePost;
 import dfeed.web.web.user : user, userSettings;
 
 void discussionModeration(Rfc850Post post, UrlParameters postVars)
@@ -295,12 +292,7 @@ void discussionApprovePage(string draftID, UrlParameters postParams)
 
 		if ("approve" in postParams)
 		{
-			draft.serverVars["preapproved"] = null;
-			auto headers = Headers(draft.serverVars.get("headers", "null").jsonParse!(string[][string]));
-			auto pid = postDraft(draft, headers);
-			saveDraft(draft, Yes.force);
-
-			learnModeratedMessage(draft, false, 10);
+			auto pid = approvePost(draft);
 
 			html.put(`Post approved! <a href="/posting/` ~ pid ~ `">View posting</a>`);
 		}
