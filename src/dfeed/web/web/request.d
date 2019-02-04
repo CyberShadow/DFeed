@@ -114,9 +114,15 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	if (host != site.host && host != "localhost" && site.host != "localhost" && ip != "127.0.0.1" && !request.resource.startsWith("/.well-known/acme-challenge/"))
 		return response.redirect(site.proto ~ "://" ~ site.host ~ request.resource, HttpStatusCode.MovedPermanently);
 
-	// Redirect to HTTPS
-	if (site.proto == "https" && request.headers.get("X-Scheme", "") == "http")
-		return response.redirect("https://" ~ site.host ~ request.resource, HttpStatusCode.MovedPermanently);
+	// Opt-in HTTPS redirect
+	if (site.proto == "https"
+		&& request.headers.get("X-Scheme", "") == "http"
+		&& request.headers.get("Upgrade-Insecure-Requests", "0") == "1")
+	{
+		response.redirect("https://" ~ site.host ~ request.resource);
+		response.headers.add("Vary", "Upgrade-Insecure-Requests");
+		return response;
+	}
 
 	auto canonicalHeader =
 		`<link rel="canonical" href="`~site.proto~`://`~site.host~request.resource~`"/>`;
