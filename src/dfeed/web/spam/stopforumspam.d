@@ -43,7 +43,7 @@ class StopForumSpam : SpamChecker
 			return handler(true, "Not an IPv4 address");
 		}
 
-		httpGet("http://www.stopforumspam.com/api?ip=" ~ ip, (string result) {
+		httpGet("http://api.stopforumspam.org/api?ip=" ~ ip, (string result) {
 			import std.datetime;
 			import ae.utils.xml;
 			import ae.utils.time : parseTime;
