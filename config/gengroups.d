@@ -51,14 +51,14 @@ void main()
 	DGroupSet[] groupHierarchy =
 	[
 		//                  internalName                publicName                  urlName                     archiveName                 mlName                      description                                                         mlOnly bugzilla
-		makeDGroupSet("D Programming Language - New users", [
+		makeDGroupSet("New users", [
 			makeDGroupInfo("digitalmars.D.learn"     , "Learn"                   , "learn"                   , "digitalmars/D/learn"     , "Digitalmars-d-learn"     , "Questions about learning and using D"                             , false, false),
 		]),
-		makeDGroupSet("D Programming Language - Community", [
+		makeDGroupSet("Community", [
 			makeDGroupInfo("digitalmars.D"           , "General"                 , "general"                 , "digitalmars/D"           , "Digitalmars-d"           , "Discussion of the D programming language"                         , false, false),
 			makeDGroupInfo("digitalmars.D.announce"  , "Announce"                , "announce"                , "digitalmars/D/announce"  , "Digitalmars-d-announce"  , "News and announcements for anything D related"                    , false, false),
 		]),
-		makeDGroupSet("D Programming Language - Ecosystem", [
+		makeDGroupSet("Ecosystem", [
 			makeDGroupInfo("D.gnu"                   , "GDC"                     , "gdc"                     , "D/gnu"                   , "D.gnu"                   , "GCC-based D Compiler"                                             , false, false),
 			makeDGroupInfo("digitalmars.D.ldc"       , "LDC"                     , "ldc"                     , null                      , "digitalmars-d-ldc"       , "LLVM-based D Compiler"                                            , false, false),
 
@@ -67,7 +67,7 @@ void main()
 
 			makeDGroupInfo("digitalmars.D.dwt"       , "DWT"                     , "dwt"                     , "digitalmars/D/dwt"       , "Digitalmars-d-dwt"       , "Discussion of the D Widget Toolkit"                               , false, false),
 		]),
-		makeDGroupSet("D Programming Language - Development", [
+		makeDGroupSet("Development", [
 			makeDGroupInfo("digitalmars.D.internals" , "Internals"               , "internals"               , null                      , null                      , "Discussion of language development and internals"                 , false, false),
 			makeDGroupInfo("digitalmars.D.bugs"      , "Issues"                  , "issues"                  , "digitalmars/D/bugs"      , "Digitalmars-d-bugs"      , "Bug reports for D compiler and library"                           , false, true ),
 			makeDGroupInfo("dmd-beta"                , "Beta"                    , "beta"                    , null                      , "dmd-beta"                , "Notifications and discussion of D beta versions"                  , true , false),
