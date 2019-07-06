@@ -165,14 +165,14 @@ string[] formatPostParts(Rfc850Post post)
 	string[] partList;
 	void visitParts(Rfc850Message[] parts, int[] path)
 	{
-		foreach (int i, part; parts)
+		foreach (i, part; parts)
 		{
 			if (part.parts.length)
-				visitParts(part.parts, path~i);
+				visitParts(part.parts, path~cast(int)i);
 			else
 			if (part.content !is post.content)
 			{
-				string partUrl = ([idToUrl(post.id, "raw")] ~ array(map!text(path~i))).join("/");
+				string partUrl = ([idToUrl(post.id, "raw")] ~ array(map!text(path~cast(int)i))).join("/");
 				with (part)
 					partList ~=
 						(name || fileName) ?
