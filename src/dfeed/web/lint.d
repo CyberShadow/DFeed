@@ -16,14 +16,17 @@
 
 module dfeed.web.lint;
 
-import ae.sys.persistence;
-import ae.utils.regex;
+import core.time;
 
 import std.algorithm;
+import std.datetime.systime;
 import std.exception;
 import std.range;
 import std.regex;
 import std.string;
+
+import ae.sys.persistence;
+import ae.utils.regex;
 
 import dfeed.message;
 import dfeed.web.posting;
@@ -42,6 +45,7 @@ class LintRule
 	abstract @property string longDescription();
 
 	/// Check if the lint rule is triggered.
+	/// Return true if there is a problem with the post according to this rule.
 	abstract bool check(in ref PostDraft);
 
 	/// Should the "Fix it for me" option be presented to the user?
@@ -477,6 +481,40 @@ class LinkInSubjectRule : LintRule
 	}
 }
 
+class NecropostingRule : LintRule
+{
+	override @property string id() { return "necroposting"; }
+	override @property string shortDescription() { return "Avoid replying to very old threads."; }
+	override @property string longDescription() { return
+		"<p>The thread / post you are replying to is very old.</p>" ~
+		"<p>Consider creating a new thread instead of replying to an existing one.</p>";
+	}
+
+	enum warnThreshold = (4 * 3).weeks;
+
+	override bool check(in ref PostDraft draft)
+	{
+		if (!hasParent(draft))
+			return false;
+		auto parent = getParent(draft);
+		return (Clock.currTime - parent.time) > warnThreshold;
+	}
+
+	override bool canFix(in ref PostDraft draft) { return true; }
+
+	override void fix(ref PostDraft draft)
+	{
+		auto parent = getParent(draft);
+		draft.clientVars["text"] = parent.url ~ "\n\n" ~ draft.clientVars.get("text", null);
+
+		auto subject = draft.clientVars.get("subject", null);
+		if (subject.skipOver("Re: "))
+			draft.clientVars["subject"] = subject;
+
+		draft.serverVars.remove("parent");
+	}
+}
+
 @property LintRule[] lintRules()
 {
 	static LintRule[] result;
@@ -490,6 +528,7 @@ class LinkInSubjectRule : LintRule
 			new OverquotingRule,
 			new ShortLinkRule,
 			new LinkInSubjectRule,
+			new NecropostingRule,
 		];
 	return result;
 }
