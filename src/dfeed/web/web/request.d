@@ -329,7 +329,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			case "raw":
 			{
 				enforce(path.length > 1, "Invalid URL");
-				auto post = getPost('<' ~ urlDecode(path[1]) ~ '>', array(map!(to!uint)(path[2..$])));
+				auto post = getPostPart('<' ~ urlDecode(path[1]) ~ '>', array(map!(to!uint)(path[2..$])));
 				enforce(post, "Post not found");
 				if (!post.data && post.error)
 					throw new Exception(post.error);

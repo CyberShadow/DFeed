@@ -44,11 +44,18 @@ string idToThreadUrl(string id, string threadID)
 	return idToUrl(threadID, "thread", indexToPage(getPostThreadIndex(id), POSTS_PER_PAGE)) ~ "#" ~ idToFragment(id);
 }
 
-static Rfc850Post getPost(string id, uint[] partPath = null)
+static Rfc850Post getPost(string id)
 {
 	foreach (int rowid, string message, string threadID; query!"SELECT `ROWID`, `Message`, `ThreadID` FROM `Posts` WHERE `ID` = ?".iterate(id))
+		return new Rfc850Post(message, id, rowid, threadID);
+	return null;
+}
+
+static Rfc850Message getPostPart(string id, uint[] partPath = null)
+{
+	foreach (string message; query!"SELECT `Message` FROM `Posts` WHERE `ID` = ?".iterate(id))
 	{
-		auto post = new Rfc850Post(message, id, rowid, threadID);
+		auto post = new Rfc850Message(message);
 		while (partPath.length)
 		{
 			enforce(partPath[0] < post.parts.length, "Invalid attachment");
