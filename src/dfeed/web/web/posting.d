@@ -31,7 +31,7 @@ import std.string : strip;
 import ae.net.ietf.headers : Headers;
 import ae.net.ietf.url : UrlParameters;
 import ae.utils.aa : aaGet;
-import ae.utils.json : toJson;
+import ae.utils.json : toJson, jsonParse;
 import ae.utils.meta : I, isDebug;
 import ae.utils.sini : loadIni;
 import ae.utils.text : splitAsciiLines;
@@ -218,6 +218,7 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 
 		auto action = clientVars.byKey.filter!(key => key.startsWith("action-")).chain("action-none".only).front[7..$];
 
+		static struct UndoInfo { UrlParameters clientVars; string[string] serverVars; }
 		bool lintDetails;
 		if (action.startsWith("lint-ignore-"))
 		{
@@ -230,7 +231,7 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 			auto ruleID = action[9..$];
 			try
 			{
-				draft.serverVars["lint-undo"] = draft.clientVars.get("text", null);
+				draft.serverVars["lint-undo"] = UndoInfo(draft.clientVars, draft.serverVars).toJson;
 				getLintRule(ruleID).fix(draft);
 				draft.clientVars["html-top"] = `<div class="forum-notice">Automatic fix applied. ` ~
 					`<input name="action-lint-undo" type="submit" value="Undo"></div>`;
@@ -248,8 +249,9 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 		if (action == "lint-undo")
 		{
 			enforce("lint-undo" in draft.serverVars, "No undo information..?");
-			draft.clientVars["text"] = draft.serverVars["lint-undo"];
-			draft.serverVars.remove("lint-undo");
+			auto undoInfo = draft.serverVars["lint-undo"].jsonParse!UndoInfo;
+			draft.clientVars = undoInfo.clientVars;
+			draft.serverVars = undoInfo.serverVars;
 			html.put(`<div class="forum-notice">Automatic fix undone.</div>`);
 			discussionPostForm(draft);
 			return null;
