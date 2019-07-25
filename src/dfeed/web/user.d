@@ -287,8 +287,8 @@ class GuestUser : User
 	override void register(string username, string password, bool remember)
 	{
 		enforce(username.length, "Please enter a username");
-		enforce(username.length < 32, "Username too long");
-		enforce(password.length < 64, "Password too long");
+		enforce(username.length <= 32, "Username too long");
+		enforce(password.length <= 64, "Password too long");
 
 		// Create user
 		auto session = randomString();
