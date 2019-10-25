@@ -54,7 +54,7 @@ import dfeed.web.web.view.moderation : discussionModeration, deletePostApi, disc
 import dfeed.web.web.view.widgets;
 import dfeed.web.web.view.post : discussionSplitPost, discussionVSplitPost, discussionSinglePost;
 import dfeed.web.web.view.search : discussionSearch;
-import dfeed.web.web.view.settings : discussionSettings, discussionSubscriptionEdit;
+import dfeed.web.web.view.settings;
 import dfeed.web.web.view.subscription : discussionSubscriptionPosts, discussionSubscriptionUnsubscribe;
 import dfeed.web.web.view.thread : getPostAtThreadIndex, discussionThread, discussionFirstUnread;
 
@@ -628,6 +628,29 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			case "settings":
 				breadcrumbs ~= title = "Settings";
 				discussionSettings(parameters, request.method == "POST" ? request.decodePostData() : UrlParameters.init);
+				break;
+			case "change-password":
+				breadcrumbs ~= "Settings";
+				breadcrumbs ~= "Account";
+				breadcrumbs ~= title = "Change Password";
+				discussionChangePassword(request.method == "POST" ? request.decodePostData() : UrlParameters.init);
+				break;
+			case "export-account":
+				breadcrumbs ~= "Settings";
+				breadcrumbs ~= "Account";
+				breadcrumbs ~= title = "Export Data";
+				if (auto result = discussionExportAccount(request.method == "POST" ? request.decodePostData() : UrlParameters.init))
+				{
+					response.headers["Content-Disposition"] = "attachment; filename=%(%s%)"
+						.format([user.getName ~ ".json"]);
+					return response.serveJson(result);
+				}
+				break;
+			case "delete-account":
+				breadcrumbs ~= "Settings";
+				breadcrumbs ~= "Account";
+				breadcrumbs ~= title = "Delete Account";
+				discussionDeleteAccount(request.method == "POST" ? request.decodePostData() : UrlParameters.init);
 				break;
 			case "help":
 				breadcrumbs ~= title = "Help";

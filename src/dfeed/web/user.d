@@ -40,6 +40,14 @@ enum SettingType
 	session,     /// Always stored in cookies, and expires at the end of the session
 }
 
+struct AccountData // for export
+{
+	string username;
+	int level;
+	StdTime creationDate;
+	string[string] settings;
+}
+
 abstract class User
 {
 	abstract string get(string name, string defaultValue, SettingType settingType);
@@ -48,8 +56,12 @@ abstract class User
 	abstract string[] save();
 
 	abstract void logIn(string username, string password, bool remember);
+	abstract bool checkPassword(string password);
+	abstract void changePassword(string password);
 	abstract void logOut();
 	abstract void register(string username, string password, bool remember);
+	abstract AccountData exportData();
+	abstract void deleteAccount();
 	abstract bool isLoggedIn();
 	abstract SysTime createdAt();
 
@@ -284,11 +296,13 @@ class GuestUser : User
 		throw new Exception("No such username/password combination");
 	}
 
+	enum maxPasswordLength = 64;
+
 	override void register(string username, string password, bool remember)
 	{
 		enforce(username.length, "Please enter a username");
 		enforce(username.length <= 32, "Username too long");
-		enforce(password.length <= 64, "Password too long");
+		enforce(password.length <= maxPasswordLength, "Password too long");
 
 		// Create user
 		auto session = randomString();
@@ -305,7 +319,11 @@ class GuestUser : User
 		this.set("session", session, remember ? SettingType.client : SettingType.session);
 	}
 
+	override bool checkPassword(string password) { throw new Exception("Not logged in"); }
+	override void changePassword(string password) { throw new Exception("Not logged in"); }
 	override void logOut() { throw new Exception("Not logged in"); }
+	override AccountData exportData() { throw new Exception("Not logged in"); } // just check your cookies
+	override void deleteAccount() { throw new Exception("Not logged in"); } // just clear your cookies
 	override bool isLoggedIn() { return false; }
 	override SysTime createdAt() { return Clock.currTime(); }
 }
@@ -400,10 +418,50 @@ final class RegisteredUser : GuestUser
 	override Level getLevel() { return level; }
 	override SysTime createdAt() { return SysTime(creationTime); }
 
+	override bool checkPassword(string password)
+	{
+		return query!"SELECT COUNT(*) FROM `Users` WHERE `Username` = ? AND `Password` = ?"
+			.iterate(username, encryptPassword(password))
+			.selectValue!int != 0;
+	}
+
+	override void changePassword(string password)
+	{
+		enforce(password.length <= maxPasswordLength, "Password too long");
+		query!"UPDATE `Users` SET `Password` = ? WHERE `Username` = ?"
+			.exec(encryptPassword(password), username);
+	}
+
 	override void logOut()
 	{
 		query!"UPDATE `Users` SET `Session` = ? WHERE `Username` = ?".exec(randomString(), username);
 		super.remove("session", SettingType.client);
+	}
+
+	override AccountData exportData()
+	{
+		AccountData result;
+		result.username = username;
+		// Omit password hash here for security reasons
+		// Omit session; it is already in a cookie
+		result.level = level;
+		result.creationDate = query!"SELECT `Created` FROM `Users` WHERE `Username` = ?"
+			.iterate(username).selectValue!StdTime;
+		foreach (string name, string value; query!"SELECT `Name`, `Value` FROM `UserSettings` WHERE `User` = ?".iterate(username))
+			result.settings[name] = value;
+		return result;
+	}
+
+	override void deleteAccount()
+	{
+		// Delete all preferences
+		foreach (string name; query!"SELECT `Name` FROM `UserSettings` WHERE `User` = ?".iterate(username))
+			this.remove(name, SettingType.server);
+		save();
+
+		// Delete user
+		query!"DELETE FROM `Users` WHERE `Username` = ?".exec(username);
+		query!"DELETE FROM `UserSettings` WHERE `User` = ?".exec(username);
 	}
 
 	// ***************************************************************************

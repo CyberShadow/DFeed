@@ -22,11 +22,14 @@ import std.algorithm.searching;
 import std.exception;
 
 import dfeed.sinks.subscriptions;
+import dfeed.site : site;
 import dfeed.web.web.page : html, Redirect;
 import dfeed.web.web.request : currentRequest;
 import dfeed.web.web.user;
 
 import ae.net.ietf.url;
+import ae.utils.aa : aaGet;
+import ae.utils.json;
 import ae.utils.xmllite;
 
 string settingsReferrer;
@@ -166,7 +169,7 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 		if (subscriptions.length)
 		{
 			html.put(`<table id="subscriptions">`);
-			html.put(`<tr><th>Subscription</th><th colspan="2">Actions</th></tr>`);
+			html.put(`<tr><th>Subscription</th><th colspan="4">Actions</th></tr>`);
 			foreach (subscription; subscriptions)
 			{
 				html.put(
@@ -190,7 +193,7 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 		);
 	}
 	else
-		html.put(`<p>Please <a href="/loginform">log in</a> to manage your subscriptions.</p>`);
+		html.put(`<p>Please <a href="/loginform">log in</a> to manage your subscriptions and account settings.</p>`);
 
 	html.put(
 		`</form>` ~
@@ -200,6 +203,21 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 		`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
 		`</form>`
 	);
+
+	if (user.isLoggedIn())
+	{
+		html.put(
+			`<p><input type="submit" form="subscriptions-form" name="action-subscription-create-content" value="Create new content alert subscription"></p>` ~
+
+			`<hr>` ~
+			`<h2>Account settings</h2>` ~
+			`<table id="account-settings">` ~
+			`<tr><td>Change the password used to log in to this account.` ~       `</td><td><form action="/change-password" method="post"><input type="submit" value="Change password"></form></td></tr>` ~
+			`<tr><td>Download a file containing all data tied to this account.` ~ `</td><td><form action="/export-account"  method="post"><input type="submit" value="Export data"    ></form></td></tr>` ~
+			`<tr><td>Permanently delete this account.` ~                          `</td><td><form action="/delete-account"  method="post"><input type="submit" value="Delete account" ></form></td></tr>` ~
+			`</table>`
+		);
+	}
 }
 
 void discussionSubscriptionEdit(Subscription subscription)
@@ -230,4 +248,95 @@ void discussionSubscriptionEdit(Subscription subscription)
 		`</p>` ~
 		`</form>`
 	);
+}
+
+void discussionChangePassword(UrlParameters postVars)
+{
+	enforce(user.isLoggedIn(), "This action is only meaningful for logged-in users.");
+	html.put(`<h1>Change password</h1>`);
+	if ("old-password" !in postVars)
+	{
+		html.put(
+			`<p>Here you can change the password used to log in to this `), html.putEncodedEntities(site.name), html.put(` account.</p>` ~
+			`<p>Please pick your new password carefully, as there are no password recovery options.</p>` ~
+			`<form method="post">` ~
+			`<table>` ~
+			`<tr><td>Current password:      </td><td><input name="old-password"   type="password"></td></tr>` ~
+			`<tr><td>New password:          </td><td><input name="new-password"   type="password"></td></tr>` ~
+			`<tr><td>New password (confirm):</td><td><input name="new-password-2" type="password"></td></tr>` ~
+			`</table>` ~
+			`<input type="submit" value="Change password">` ~
+			`<input type="hidden" name="secret" value="`); html.putEncodedEntities(userSettings.secret); html.put(`">` ~
+			`</form>`
+		);
+	}
+	else
+	{
+		if (postVars.get("secret", "") != userSettings.secret)
+			throw new Exception("XSRF secret verification failed");
+		user.checkPassword(postVars.aaGet("old-password")).enforce("The current password you entered is incorrect");
+		enforce(postVars.aaGet("new-password") == postVars.aaGet("new-password-2"), "New passwords do not match");
+		user.changePassword(postVars.aaGet("new-password"));
+		html.put(
+			`<p>Password successfully changed.</p>`
+		);
+	}
+}
+
+JSONFragment discussionExportAccount(UrlParameters postVars)
+{
+	enforce(user.isLoggedIn(), "This action is only meaningful for logged-in users.");
+	html.put(`<h1>Export account data</h1>`);
+	if ("do-export" !in postVars)
+	{
+		html.put(
+			`<p>Here you can export the information regarding your account from the `), html.putEncodedEntities(site.name), html.put(` database.</p>` ~
+			`<form method="post">` ~
+			`<input type="submit" name="do-export" value="Export">` ~
+			`<input type="hidden" name="secret" value="`); html.putEncodedEntities(userSettings.secret); html.put(`">` ~
+			`</form>`
+		);
+		return JSONFragment.init;
+	}
+	else
+	{
+		if (postVars.get("secret", "") != userSettings.secret)
+			throw new Exception("XSRF secret verification failed");
+		auto data = user.exportData;
+		return data.toJson.JSONFragment;
+	}
+}
+
+void discussionDeleteAccount(UrlParameters postVars)
+{
+	enforce(user.isLoggedIn(), "This action is only meaningful for logged-in users.");
+	html.put(`<h1>Delete account</h1>`);
+	if ("username" !in postVars)
+	{
+		html.put(
+			`<p>Here you can permanently delete your `), html.putEncodedEntities(site.name), html.put(` account and associated data from the database.</p>` ~
+			`<p>After deletion, the account username will become available for registration again.</p>` ~
+			`<p>To confirm deletion, please enter your account username and password.</p>` ~
+			`<form method="post">` ~
+			`<table>` ~
+			`<tr><td>Account username:</td><td><input name="username"></td></tr>` ~
+			`<tr><td>Account password:</td><td><input name="password" type="password"></td></tr>` ~
+			`</table>` ~
+			`<input type="submit" value="Delete this account">` ~
+			`<input type="hidden" name="secret" value="`); html.putEncodedEntities(userSettings.secret); html.put(`">` ~
+			`</form>`
+		);
+	}
+	else
+	{
+		if (postVars.get("secret", "") != userSettings.secret)
+			throw new Exception("XSRF secret verification failed");
+		enforce(postVars.aaGet("username") == user.getName(), "The username you entered does not match the current logged-in account");
+		user.checkPassword(postVars.aaGet("password")).enforce("The password you entered is incorrect");
+
+		user.deleteAccount();
+		html.put(
+			`<p>Account successfully deleted!</p>`
+		);
+	}
 }
