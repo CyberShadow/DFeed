@@ -75,6 +75,11 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 	if (draft.status == PostDraft.Status.moderation)
 		throw new Exception("This message is awaiting moderation.");
 
+	// Only happens if visiting a posting page when it's not in
+	// postProcesses, i.e., from a previous DFeed process instance.
+	if (draft.status == PostDraft.Status.sent)
+		throw new Exception("This message has already been posted.");
+
 	// Immediately resurrect discarded posts when user clicks "Undo" or "Back"
 	if (draft.status == PostDraft.Status.discarded)
 		query!"UPDATE [Drafts] SET [Status]=? WHERE [ID]=?".exec(PostDraft.Status.edited, draftID);
