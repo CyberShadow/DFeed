@@ -115,6 +115,8 @@ class Rfc850Post : Post
 		if (id.length)
 		{
 			url = format("%s://%s%s", site.proto, site.host, idToUrl(id));
+			if (!doArchive)
+				url = null;
 		}
 
 		super.time = msg.time;
@@ -175,6 +177,11 @@ class Rfc850Post : Post
 			return Importance.normal;
 
 		return !reply || author.isIn(VIPs) ? Importance.normal : Importance.low;
+	}
+
+	@property final bool doArchive()
+	{
+		return msg.headers.get("X-No-Archive", "").icmp("yes") != 0;
 	}
 
 	@property string[] publicGroupNames()

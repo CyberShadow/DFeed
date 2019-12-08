@@ -50,14 +50,20 @@ protected:
 		if (!message)
 			return;
 
+		log(format("Saving message %s (%s)", message.id, message.where));
+
+		if (!message.doArchive)
+		{
+			log("Archiving disabled, not saving.");
+			return;
+		}
+
 		scope(success)
 		{
 			if (transactionDepth == 1) // This is a batch operation
 				if (flushTransactionEvery(50))
 					log("Transaction flushed");
 		}
-
-		log(format("Saving message %s (%s)", message.id, message.where));
 		mixin(DB_TRANSACTION);
 
 		if (!message.rowid)
