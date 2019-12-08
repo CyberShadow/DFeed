@@ -157,6 +157,9 @@ class Rfc850Post : Post
 
 	override Importance getImportance()
 	{
+		if (msg.headers.get("X-List-Administrivia", "").icmp("yes") == 0)
+			return Importance.none;
+
 		auto group = getGroup(this);
 		if (!reply && group && group.announce)
 			return Importance.high;
