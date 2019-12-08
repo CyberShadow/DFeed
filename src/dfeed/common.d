@@ -33,6 +33,9 @@ abstract class Post
 
 	enum Importance
 	{
+		/// Never announce.
+		none,
+
 		/// Replies to threads, general activity.
 		/// Should only be shown in "all activity" feeds.
 		low,

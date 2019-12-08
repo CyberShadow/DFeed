@@ -90,7 +90,11 @@ protected:
 		if (post.time < Clock.currTime() - dur!"days"(1))
 			return; // ignore posts older than a day old (e.g. StackOverflow question activity bumps the questions)
 
-		bool important = post.getImportance() >= Post.Importance.normal;
+		auto importance = post.getImportance();
+		if (!importance)
+			return;
+
+		bool important = importance >= Post.Importance.normal;
 		if (important || haveUnimportantListeners())
 		{
 			post.formatForIRC((string summary) {

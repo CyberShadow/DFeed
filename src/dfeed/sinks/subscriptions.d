@@ -697,6 +697,9 @@ protected:
 		if (!fresh)
 			return;
 
+		if (!post.getImportance())
+			return;
+
 		auto message = cast(Rfc850Post)post;
 		if (!message)
 			return;
