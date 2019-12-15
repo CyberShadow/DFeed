@@ -30,7 +30,7 @@ import ae.utils.regex;
 
 import dfeed.message;
 import dfeed.web.posting;
-import dfeed.web.web.part.postbody : reUrl;
+import dfeed.web.web.part.postbody : reURL;
 import dfeed.web.web.postinfo : getPost;
 
 class LintRule
@@ -465,7 +465,7 @@ class LinkInSubjectRule : LintRule
 		if (subject.startsWith("Re: ") || !subject.canFind("://"))
 			return false;
 		auto text = draft.clientVars.get("text", null);
-		foreach (url; subject.match(reUrl))
+		foreach (url; subject.match(re!reURL))
 			if (!text.canFind(url.captures[0]))
 				return true;
 		return false; // all URLs are also in the body

@@ -20,19 +20,19 @@ module dfeed.web.web.part.postbody;
 import std.algorithm.comparison : max;
 import std.algorithm.iteration : splitter, map, reduce;
 import std.range : iota, radial;
-import std.regex : Regex, regex, matchAll;
+import std.regex : matchAll;
 
 import ae.net.ietf.message : Rfc850Message;
 import ae.net.ietf.wrap : unwrapText;
 import ae.utils.meta : I;
+import ae.utils.regex : re;
 import ae.utils.text : contains, segmentByWhitespace;
 import ae.utils.text.html : encodeHtmlEntities;
 import ae.utils.xmllite : putEncodedEntities;
 
 import dfeed.web.web.page : html;
 
-static Regex!char reUrl;
-static this() { reUrl = regex(`\w+://[^<>\s]+[\w/\-=]`); }
+enum reURL = `\w+://[^<>\s]+[\w/\-=]`;
 
 void formatBody(Rfc850Message post)
 {
@@ -135,7 +135,7 @@ void formatBody(Rfc850Message post)
 				return next(s);
 
 			size_t pos = 0;
-			foreach (m; matchAll(s, reUrl))
+			foreach (m; matchAll(s, re!reURL))
 			{
 				next(s[pos..m.pre().length]);
 				html.put(`<a rel="nofollow" href="`, m.hit(), `">`);
