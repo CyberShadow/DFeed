@@ -66,6 +66,7 @@ void formatBody(Rfc850Message post)
 		bool needsWrap = paragraph.text.byChar.splitter(' ').map!(s => s.length).I!(r => reduce!max(size_t.init, r)) > forceWrapThreshold;
 
 		auto hasURL = paragraph.text.contains("://");
+		auto hasHashTags = paragraph.text.contains('#');
 
 		void processText(string s)
 		{
@@ -146,9 +147,31 @@ void formatBody(Rfc850Message post)
 			next(s[pos..$]);
 		}
 
+		void processHashTags(string s)
+		{
+			alias next = processURLs;
+
+			if (!hasHashTags)
+				return next(s);
+
+			size_t pos = 0;
+			enum reHashTag = `(^| )(#([a-zA-Z][a-zA-Z0-9_-]+))`;
+			foreach (m; matchAll(s, re!reHashTag))
+			{
+				next(s[pos .. m.pre().length + m[1].length]);
+				html.put(`<a href="/search?q=`, m[3], `">`);
+				next(m[2]);
+				html.put(`</a>`);
+				pos = m.pre().length + m.hit().length;
+			}
+			next(s[pos..$]);
+		}
+
+		alias first = processHashTags;
+
 		if (paragraph.quotePrefix.length)
 			html.put(`<span class="forum-quote-prefix">`), html.putEncodedEntities(paragraph.quotePrefix), html.put(`</span>`);
-		processURLs(paragraph.text);
+		first(paragraph.text);
 		html.put('\n');
 	}
 	for (; quoteLevel; quoteLevel--)
