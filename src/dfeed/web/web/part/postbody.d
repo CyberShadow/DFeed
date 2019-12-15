@@ -62,7 +62,7 @@ void formatBody(Rfc850Message post)
 		enum forceWrapMaxChunkSize = 15;
 		static assert(forceWrapMaxChunkSize > forceWrapMinChunkSize * 2);
 
-		import std.utf;
+		import std.utf : byChar;
 		bool needsWrap = paragraph.text.byChar.splitter(' ').map!(s => s.length).I!(r => reduce!max(size_t.init, r)) > forceWrapThreshold;
 
 		auto hasURL = paragraph.text.contains("://");
@@ -74,7 +74,7 @@ void formatBody(Rfc850Message post)
 
 		void processWrap(string s)
 		{
-			alias processText next;
+			alias next = processText;
 
 			if (!needsWrap)
 				return next(s);
@@ -129,7 +129,7 @@ void formatBody(Rfc850Message post)
 
 		void processURLs(string s)
 		{
-			alias processWrap next;
+			alias next = processWrap;
 
 			if (!hasURL)
 				return next(s);
