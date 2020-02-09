@@ -47,6 +47,7 @@ import dfeed.site;
 import dfeed.sinks.irc;
 import dfeed.sinks.messagedb : threadID;
 import dfeed.web.user;
+import dfeed.web.web.page : NotFoundException;
 import dfeed.web.web.postinfo : getPost;
 
 void log(string s)
@@ -165,7 +166,7 @@ body
 {
 	foreach (string userName, string data; query!`SELECT [Username], [Data] FROM [Subscriptions] WHERE [ID] = ?`.iterate(subscriptionID))
 		return Subscription(userName, data.jsonParse!SubscriptionData.data);
-	throw new Exception("No such subscription");
+	throw new NotFoundException("No such subscription");
 }
 
 Subscription getUserSubscription(string userName, string subscriptionID)
@@ -175,7 +176,7 @@ body
 	enforce(userName.length, "Not logged in");
 	foreach (string data; query!`SELECT [Data] FROM [Subscriptions] WHERE [Username] = ? AND [ID] = ?`.iterate(userName, subscriptionID))
 		return Subscription(userName, data.jsonParse!SubscriptionData.data);
-	throw new Exception("No such user subscription");
+	throw new NotFoundException("No such user subscription");
 }
 
 Subscription[] getUserSubscriptions(string userName)
