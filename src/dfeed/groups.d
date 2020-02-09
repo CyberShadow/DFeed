@@ -85,6 +85,6 @@ GroupInfo getGroupInfoByField(string field, CaseSensitive cs=CaseSensitive.yes)(
 	return null;
 }
 
-alias getGroupInfo             = getGroupInfoByField!q{internalName};
+alias getGroupInfo             = getGroupInfoByField!(q{internalName}, CaseSensitive.no);
 alias getGroupInfoByUrl        = getGroupInfoByField!q{urlName};
 alias getGroupInfoByPublicName = getGroupInfoByField!q{publicName};
