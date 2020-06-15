@@ -193,6 +193,9 @@ class GitHubPost : Post
 			{
 				case "pull_request":
 					return data["action"].str.isOneOf("opened", "closed", "reopened") ? Importance.normal : Importance.low;
+				case "check_run":
+				case "check_suite":
+					return Importance.none;				
 				default:
 					return Importance.low;
 			}
