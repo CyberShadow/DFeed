@@ -32,7 +32,7 @@ class SimpleChecker : SpamChecker
 		auto ua = process.headers.get("User-Agent", "");
 
 		if (ua.startsWith("WWW-Mechanize"))
-			handler(false, "You seem to be posting using an unusual user-agent");
+			return handler(false, "You seem to be posting using an unusual user-agent");
 
 		auto subject = process.draft.clientVars.get("subject", "").toLower();
 		foreach (keyword; ["kitchen", "spamtest"])
