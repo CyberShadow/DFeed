@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -53,6 +53,8 @@ void discussionSubscriptionPosts(string subscriptionID, int page, out string tit
 		auto post = getPost(messageID);
 		if (post)
 			formatPost(post, null);
+		else
+			query!"DELETE FROM [SubscriptionPosts] WHERE [SubscriptionID] = ? AND [MessageID] = ?".exec(subscriptionID, messageID);
 	}
 
 	if (page != 1 || postCount > postsPerPage)
