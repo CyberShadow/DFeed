@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -32,7 +32,7 @@ import ae.utils.xmllite : putEncodedEntities;
 
 import dfeed.web.web.page : html;
 
-enum reURL = `\w+://[^<>\s]+[\w/\-=]`;
+enum reURL = `\w+://[^<>\s]+[\w/\-+=]`;
 
 void formatBody(Rfc850Message post)
 {
@@ -178,4 +178,18 @@ void formatBody(Rfc850Message post)
 		html ~= `</span>`;
 	if (inSignature)
 		html ~= `</span>`;
+}
+
+// https://github.com/CyberShadow/DFeed/issues/121
+unittest
+{
+	import std.string : strip;
+	auto msg = new Rfc850Message(q"EOF
+Subject: test
+
+http://a/b+
+EOF");
+	scope(exit) html.clear();
+	formatBody(msg);
+	assert(html.get.strip == `<a rel="nofollow" href="http://a/b+">http://a/b+</a>`);
 }
