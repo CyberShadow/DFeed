@@ -5,7 +5,6 @@ cd "$(dirname "$0")"
 
 git pull
 
-git submodule foreach git fetch --all
 git submodule update
 
 ./rebuild
