@@ -76,6 +76,10 @@ void main()
 			makeDGroupInfo("D-runtime"                     , "Druntime"                , "druntime"                , null                      , "D-runtime"               , "Runtime library design and implementation"                        , true , false),
 			makeDGroupInfo("Dlang-study"                   , "Study"                   , "study"                   , null                      , "Dlang-study"             , "Study groups for D programming language design"                   , true , false),
 		]),
+		makeDGroupSet("Turkish", [
+			makeDGroupInfo("digitalmars.D.turkish.genel"   , "Genel"                   , "turkish.genel"           , null                      , null                      , "D programlama dili ile ilgili konular"                            , false, false),
+			makeDGroupInfo("digitalmars.D.turkish.duyuru"  , "Duyuru"                  , "turkish.duyuru"          , null                      , null                      , "D programlama dili ile ilgili duyurular ve haberler"              , false, false),
+		]),
 		makeDGroupSet("Unused", [
 			makeDGroupInfo("dmd-concurrency"               , "Concurrency"             , "concurrency"             , null                      , "dmd-concurrency"         , "Design of concurrency features in D and standard library"         , true , false),
 
