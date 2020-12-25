@@ -17,7 +17,7 @@ flags=(
 #	-version=LIBEV
 )
 
-if [[ -f /usr/lib/libssl.so.1.0.0 ]]
+if false # [[ -f /usr/lib/libssl.so.1.0.0 ]]
 then
 	flags+=(
 		-L/usr/lib/libssl.so.1.0.0
