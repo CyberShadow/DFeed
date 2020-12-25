@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -41,7 +41,7 @@ class Backup
 		this.config = config;
 		log = createLogger("Backup");
 		auto backupTask = setInterval(&checkBackup, 1.minutes);
-		addShutdownHandler({ backupTask.cancel(); });
+		addShutdownHandler((reason) { backupTask.cancel(); });
 	}
 
 	void checkBackup()

@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -43,5 +43,5 @@ void startWebUI()
 	server.handleRequest = toDelegate(&onRequest);
 	server.listen(config.listen.port, config.listen.addr);
 
-	addShutdownHandler({ server.close(); });
+	addShutdownHandler((reason){ server.close(); });
 }

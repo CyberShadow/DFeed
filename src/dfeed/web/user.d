@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -482,7 +482,7 @@ final class RegisteredUser : GuestUser
 		this()
 		{
 			auto flushTimer = setInterval(&flushReadPostCache, 5.minutes);
-			addShutdownHandler({ flushTimer.cancel(); flushReadPostCache(); });
+			addShutdownHandler((reason){ flushTimer.cancel(); flushReadPostCache(); });
 			log = createLogger("ReadPostsCache");
 		}
 

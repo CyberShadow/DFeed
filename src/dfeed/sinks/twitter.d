@@ -1,5 +1,5 @@
 /*  Copyright (C) 2018  Sebastian Wilzbach
- *  Copyright (C) 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+ *  Copyright (C) 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -77,7 +77,7 @@ protected:
 		parameters["status"] = message;
 		auto request = new HttpRequest;
 		//auto queryString = encodeUrlParameters(parameters);
-		auto queryString = parameters.pairs.map!(p => session.encode(p.key) ~ "=" ~ session.encode(p.value)).join("&");
+		auto queryString = parameters.byPair.map!(p => session.encode(p.key) ~ "=" ~ session.encode(p.value)).join("&");
 		auto baseURL = config.postStatusURL;
 		auto fullURL = baseURL ~ "?" ~ queryString;
 		request.resource = fullURL;

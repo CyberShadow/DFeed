@@ -151,8 +151,8 @@ struct Subscription
 struct SubscriptionData
 {
 	string[][string] items;
-	this(UrlParameters parameters) { items = parameters.items; }
-	@property UrlParameters data() { UrlParameters result; result.items = items; return result; }
+	this(UrlParameters parameters) { items = parameters.toAA; }
+	@property UrlParameters data() { return UrlParameters(items); }
 }
 
 bool subscriptionExists(string subscriptionID)
@@ -412,7 +412,7 @@ final class ContentTrigger : Trigger
 		super(userName, data);
 		this.onlyNewThreads = data.get("trigger-content-message-type", null) == "threads";
 		this.onlyInGroups = !!("trigger-content-only-in-groups" in data);
-		this.groups = data.getAll("trigger-content-groups");
+		this.groups = data.valuesOf("trigger-content-groups");
 
 		void readStringFilter(string id, out StringFilter filter)
 		{

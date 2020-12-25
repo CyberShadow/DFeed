@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014, 2015, 2016, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015, 2016, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -70,7 +70,7 @@ final class IrcSink : NewsSink
 		irc.handleInvite = &onInvite;
 		connect();
 
-		addShutdownHandler({ stopping = true; if (connecting || connected) irc.disconnect("DFeed shutting down"); });
+		addShutdownHandler((reason) { stopping = true; if (connecting || connected) irc.disconnect("DFeed shutting down: " ~ cast(string)reason); });
 	}
 
 	@property string network() { return config.network; }

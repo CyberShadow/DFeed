@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014, 2015, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -20,6 +20,7 @@ import ae.sys.timing;
 import ae.utils.aa;
 
 import std.algorithm;
+import std.array;
 import std.random;
 import std.string;
 
@@ -91,7 +92,7 @@ protected:
 		if (newPosts.length > LIMIT)
 			return handleError("Too many posts, aborting!");
 
-		auto newPostList = newPosts.pairs();
+		auto newPostList = newPosts.byPair.array();
 		newPostList.sort!`a.value.time < b.value.time`();
 		foreach (pair; newPostList)
 		{
