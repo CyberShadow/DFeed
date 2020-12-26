@@ -43,5 +43,5 @@ void startWebUI()
 	server.handleRequest = toDelegate(&onRequest);
 	server.listen(config.listen.port, config.listen.addr);
 
-	addShutdownHandler((reason){ server.close(); });
+	addShutdownHandler((scope const(char)[] reason){ server.close(); });
 }

@@ -41,7 +41,7 @@ class Backup
 		this.config = config;
 		log = createLogger("Backup");
 		auto backupTask = setInterval(&checkBackup, 1.minutes);
-		addShutdownHandler((reason) { backupTask.cancel(); });
+		addShutdownHandler((scope const(char)[] reason) { backupTask.cancel(); });
 	}
 
 	void checkBackup()

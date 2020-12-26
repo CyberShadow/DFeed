@@ -96,7 +96,7 @@ void startNewsSources()
 	foreach (source; newsSources)
 		source.start();
 
-	addShutdownHandler((reason){
+	addShutdownHandler((scope const(char)[] reason){
 		foreach (source; newsSources)
 			source.stop();
 	});

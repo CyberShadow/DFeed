@@ -482,7 +482,7 @@ final class RegisteredUser : GuestUser
 		this()
 		{
 			auto flushTimer = setInterval(&flushReadPostCache, 5.minutes);
-			addShutdownHandler((reason){ flushTimer.cancel(); flushReadPostCache(); });
+			addShutdownHandler((scope const(char)[] reason){ flushTimer.cancel(); flushReadPostCache(); });
 			log = createLogger("ReadPostsCache");
 		}
 

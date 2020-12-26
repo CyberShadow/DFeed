@@ -70,7 +70,7 @@ final class IrcSink : NewsSink
 		irc.handleInvite = &onInvite;
 		connect();
 
-		addShutdownHandler((reason) { stopping = true; if (connecting || connected) irc.disconnect("DFeed shutting down: " ~ cast(string)reason); });
+		addShutdownHandler((scope const(char)[] reason) { stopping = true; if (connecting || connected) irc.disconnect("DFeed shutting down: " ~ cast(string)reason); });
 	}
 
 	@property string network() { return config.network; }
