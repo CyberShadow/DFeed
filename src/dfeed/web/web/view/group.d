@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -332,8 +332,7 @@ void discussionGroupVSplitFromPost(string id, out GroupInfo groupInfo, out int p
 void groupPostPager(GroupInfo groupInfo, int page)
 {
 	auto postCounts = postCountCache(getPostCounts());
-	enforce(groupInfo.internalName in postCounts, "Empty group: " ~ groupInfo.publicName);
-	auto postCount = postCounts[groupInfo.internalName];
+	auto postCount = postCounts.get(groupInfo.internalName, 0);
 	auto pageCount = getPageCount(postCount, POSTS_PER_GROUP_PAGE);
 
 	pager(`/group/` ~ groupInfo.urlName, page, pageCount, 50);

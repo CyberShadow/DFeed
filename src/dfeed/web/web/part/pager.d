@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -32,6 +32,9 @@ import dfeed.web.web.page : html;
 /// pageCount==int.max indicates unknown number of pages
 void pager(string base, int page, int pageCount, int maxWidth = 50)
 {
+	if (!pageCount)
+		return html.put(`<tr class="pager"><th colspan="3">-</th></tr>`);
+
 	string linkOrNot(string text, int page, bool cond)
 	{
 		if (cond)
@@ -100,14 +103,13 @@ enum THREADS_PER_PAGE = 15;
 enum POSTS_PER_PAGE = 10;
 
 static int indexToPage(int index, int perPage)  { return index / perPage + 1; } // Return value is 1-based, index is 0-based
-static int getPageCount(int count, int perPage) { return indexToPage(count-1, perPage); }
+static int getPageCount(int count, int perPage) { return count ? indexToPage(count-1, perPage) : 0; }
 static int getPageOffset(int page, int perPage) { return (page-1) * perPage; }
 
 void threadPager(GroupInfo groupInfo, int page, int maxWidth = 40)
 {
 	auto threadCounts = threadCountCache(getThreadCounts());
-	enforce(groupInfo.internalName in threadCounts, "Empty group: " ~ groupInfo.publicName);
-	auto threadCount = threadCounts[groupInfo.internalName];
+	auto threadCount = threadCounts.get(groupInfo.internalName, 0);
 	auto pageCount = getPageCount(threadCount, THREADS_PER_PAGE);
 
 	pager(`/group/` ~ groupInfo.urlName, page, pageCount, maxWidth);
