@@ -3,7 +3,7 @@ set -eu
 
 cd "$(dirname "$0")"
 
-d_ver=2.094.2
+d_ver=2.078.3
 
 test -f ~/dlang/install.sh || curl -fsS https://dlang.org/install.sh | bash -s update
 test -f ~/dlang/dmd-$d_ver/activate || ~/dlang/install.sh dmd-$d_ver
