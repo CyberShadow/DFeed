@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -eux
+cd "$(dirname "$0")"
+
+git fetch
+git stash save
+git reset --hard origin/next
+
+git submodule update
+
+./rebuild
+
+./restart
