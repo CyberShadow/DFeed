@@ -3,6 +3,8 @@ set -eu
 
 cd "$(dirname "$0")"
 
+source ~/dlang/dmd-2.094.2/activate
+
 test -f build.local && source build.local
 
 flags=(
