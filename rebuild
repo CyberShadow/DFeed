@@ -10,8 +10,6 @@ test -f ~/dlang/dmd-$d_ver/activate || ~/dlang/install.sh dmd-$d_ver
 # shellcheck disable=SC1090
 source ~/dlang/dmd-$d_ver/activate
 
-test -f build.local && source build.local
-
 flags=(
 	-m64
 	-g
@@ -23,6 +21,8 @@ flags=(
 #	-debug=ASOCKETS
 #	-version=LIBEV
 )
+
+test -f build.local && source build.local
 
 if false # [[ -f /usr/lib/libssl.so.1.0.0 ]]
 then
