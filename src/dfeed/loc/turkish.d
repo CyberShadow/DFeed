@@ -51,17 +51,17 @@ string translate(string s)
 		case `Welcome,`:
 			return `Hoşgeldiniz,`;
 		case `You have %d %s to %syour posts%s.`:
-			return `%s için %d %s gönderiniz var %s.`;
+			return `için %d %s %sgönderiniz var%s.`;
 		case `No new %sreplies%s to your posts.`:
-			return `Gönderilerinize yeni %s yanıt yok %s.`;
+			return `Gönderilerinize yeni %syanıt yok%s.`;
 		case `You have %d %s matching your %s%s subscription%s (%s).`:
-			return `%s %s aboneliğinizle eşleşen %d %s var %s (%s).`;
+			return `%3$s%4$s aboneliğinizle eşleşen %1$d %2$s var %5$s (%6$s).`;
 		case `No new posts matching your %s%s%s.`:
-			return `%s %s %s ile eşleşen yeni gönderi yok.`;
+			return `%s%s%s ile eşleşen yeni gönderi yok.`;
 		case `If you %screate an account%s, you can track replies to %syour posts%s.`:
 			return `%s hesabına %s bakarsanız, %s gönderilerinize %s verilen yanıtları izleyebilirsiniz.`;
 		case `You can read and post on this forum without %screating an account%s, but doing so offers %sa few benefits%s.`:
-			return `Bu forumu %s hesap açmadan okuyabilir ve yayınlayabilirsiniz, ancak bunu yapmak %sa birkaç avantaj %s sağlar.`;
+			return `Bu forumu %s hesap açmadan okuyabilir ve yayınlayabilirsiniz%s, ancak bunu yapmak %sa birkaç avantaj %s sağlar.`;
 		case `%d %s %-(%s and %)`:
 			return `%d %s%-(%s ve%)`;
 		case `No new forum activity`:
@@ -150,6 +150,8 @@ string translate(string s)
 			return `Ayarlar`;
 		case `User Interface`:
 			return `Kullanıcı arayüzü`;
+		case `Language:`:
+			return `Dil:`;
 		case `View mode:`:
 			return `Görünüm modu:`;
 		case `Enable keyboard shortcuts`:

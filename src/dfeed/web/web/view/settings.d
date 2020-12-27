@@ -19,6 +19,7 @@ module dfeed.web.web.view.settings;
 
 import std.algorithm.iteration;
 import std.algorithm.searching;
+import std.conv;
 import std.exception;
 import std.format;
 
@@ -56,7 +57,7 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 		if (action == "save")
 		{
 			// Inputs
-			foreach (setting; ["groupviewmode"])
+			foreach (setting; ["groupviewmode", "language"])
 				if (setting in postVars)
 					userSettings.set(setting, postVars[setting]);
 			// Checkboxes
@@ -140,6 +141,15 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 		`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
 
 		`<h2>`, _!`User Interface`, `</h2>`,
+
+		_!`Language:`, ` <select name="language">`
+	);
+	foreach (Language language, languageName; languageNames)
+	{
+		html.put(`<option value="`, text(language), `"`, language == currentLanguage ? ` selected` : null, `>`); html.putEncodedEntities(languageName); html.put(`</option>`);
+	}
+	html.put(
+		`</select><br>` ~
 
 		_!`View mode:`, ` <select name="groupviewmode">`
 	);

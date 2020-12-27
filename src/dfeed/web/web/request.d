@@ -109,6 +109,16 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	auto status = HttpStatusCode.OK;
 	GroupInfo currentGroup; string currentThread; // for search
 
+	Language userLanguage;
+	try
+		userLanguage = userSettings.language.to!Language;
+	catch (Exception e)
+	{
+		userLanguage = detectLanguage(request.headers.get("Accept-Language", null));
+		userSettings.language = userLanguage.to!string;
+	}
+	auto oldLanguage = withLanguage(userLanguage);
+
 	// Redirect to canonical domain name
 	auto host = request.headers.get("Host", "");
 	host = request.headers.get("X-Forwarded-Host", host);

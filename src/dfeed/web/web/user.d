@@ -79,6 +79,9 @@ struct UserSettings
 	/// Visible in URLs.
 	alias secret = randomUserString!("secret", SettingType.server);
 
+	/// UI language.
+	alias language = userSetting!("language", null, SettingType.server);
+
 	void set(string name, string value)
 	{
 		user.set(name, value, settingTypes.aaGet(name));

@@ -16,6 +16,10 @@
 
 module dfeed.loc;
 
+import std.algorithm.iteration;
+import std.algorithm.searching;
+import std.string;
+
 import ae.utils.meta;
 
 static import dfeed.loc.english;
@@ -23,10 +27,22 @@ static import dfeed.loc.turkish;
 
 enum Language
 {
+	// English should be first
 	english,
+	// Sort rest alphabetically
 	turkish,
 }
 Language currentLanguage;
+
+immutable string[enumLength!Language] languageNames = [
+	"English",
+	"Türk",
+];
+
+immutable string[enumLength!Language] languageCodes = [
+	"en",
+	"tr",
+];
 
 string _(string s)()
 {
@@ -48,4 +64,29 @@ string plural(string unit)(long amount)
 		case Language.turkish:
 			return dfeed.loc.turkish.plural!unit(amount);
 	}
+}
+
+auto withLanguage(Language language)
+{
+	struct WithLanguage
+	{
+		Language oldLanguage;
+		@disable this(this);
+		~this() { currentLanguage = oldLanguage; }
+	}
+	auto oldLanguage = currentLanguage;
+	currentLanguage = language;
+	return WithLanguage(oldLanguage);
+}
+
+Language detectLanguage(string acceptLanguage)
+{
+	foreach (pref; acceptLanguage.splitter(","))
+	{
+		auto code = pref.findSplit(";")[0].findSplit("-")[0].strip;
+		auto i = languageCodes[].countUntil(code);
+		if (i >= 0)
+			return cast(Language)i;
+	}
+	return Language.init;
 }
