@@ -1,0 +1,146 @@
+<!-- HTML -->
+<h2 id="view-modes">Görünüm modları</h2>
+
+<p>
+  Birkaç görünüm modundan birini kullanarak foruma göz atabilirsiniz:
+  <ul>
+    <li><b>Temel</b> - Sayfalanmış doğrusal iş parçacıklarına sahip forum benzeri bir görünüm.</li>
+    <li><b>Zincirlenmiş</b> - Posta listesi arşivlerine benzer şekilde, tek gönderi görünümüyle zincir halinde gruba genel bakış.</li>
+    <li><b>Yatay bölme</b> - bir usenet istemcisine benzer, bölünmüş bir görünüme sahip JavaScript destekli arayüz.</li>
+    <li><b>Dikey bölme</b> - Üstte bir liste bölmesi ve altta bir ileti bölmesi bulunan, bir masaüstü posta istemcisini andıran bir görünüm.</li>
+  </ul>
+
+  Görünüm modu <a href="/settings">ayarlar sayfasından</a>değiştirilebilir.
+</p>
+
+<h2 id="keynav">Klavye gezintisi</h2>
+
+<p>
+  Tüm görünüm modları için klavye kısayolları mevcuttur (ileti dizisi ve gönderi listesi sayfalarının yanı sıra forum dizininde).
+  JavaScript etkinse, <kbd>?</kbd> kısayolların listesini görüntülemek için basın .
+</p>
+
+<p>
+  Dilerseniz <a href="/settings">ayarlar sayfasından</a>klavye kısayollarını devre dışı bırakabilirsiniz .
+</p>
+
+<h2 id="read-post-history">Gönderi geçmişini okuyun</h2>
+
+<p>
+  Görüntülediğiniz gönderiler sıkıştırılmış bir tanımlama bilgisine veya oturum açmışsanız sunucuya kaydedilir.
+  Bir ileti dizisini temel görünümde görüntülemek, görüntülenen tüm gönderileri "okundu" olarak işaretler.
+  Yayınlar, <kbd>u</kbd> klavye kısayolu kullanılarak "okunmamış" olarak işaretlenebilir .
+</p>
+<p>
+  Okuma gönderi geçmişini kaybetmemek için, çerez sınırlamalarını / süresinin dolmasını / yanlışlıkla silmeyi önlemek için bir hesap kaydetmeyi düşünün.
+</p>
+
+<h2 id="accounts">Hesaplar</h2>
+
+<p>
+  Bu foruma göz atmak veya mesaj göndermek için bir hesaba ihtiyacınız yok.
+  Tercihler ve okuma gönderi geçmişi, kayıtsız kullanıcılar için tarayıcı çerezlerinde saklanır.
+</p>
+
+<p>
+  Bunun yerine, onları sunucuda tutmak için bir hesap kaydedebilirsiniz.
+  Bir hesabın kaydedilmesi, tüm değişkenleri çerezlerden sunucu veritabanına aktaracaktır.
+</p>
+
+<p>
+  Bir hesap oluşturmak ayrıca abonelikler oluşturmanıza ve IRC veya gönderilerinize veya diğer etkinliklere verilen yanıtlar için e-posta ile bilgilendirilmenize olanak tanır.
+</p>
+
+<h2 id="email">E</h2>
+
+<p>
+  Gönderirken bir e-posta adresi belirtmeniz gerekir.
+  Geçerli olması gerekmez; bu yazılım belirtilen adrese hiçbir şey göndermeyecektir.
+  E-posta adresi, gönderi yayınladığınız haber sunucusunun / posta listesinin diğer kullanıcılarına açıklanacaktır.
+  Bu nedenle, lütfen kötü niyetli robotların adresinizi toplayabileceğini ve ona spam gönderebileceğini unutmayın.
+</p>
+
+<p>
+  E-posta adresi ayrıca bir avatar görüntülemek için kullanılır (aşağıya bakın).
+</p>
+
+<h2 id="avatars">Avatarlar</h2>
+
+<p>
+  Forum, kullanıcıların e-posta adresleriyle ilişkili avatarları gösterecektir.
+  E-posta adresi <a href="http://en.gravatar.com/">Gravatar'da</a>kayıtlıysa , ilgili avatar gösterilir.
+  Aksi takdirde, e-posta adresinin bir karmasından oluşturulan bir <a href="https://en.wikipedia.org/wiki/Identicon">Identicon</a> , yedek olarak görüntülenir.
+</p>
+
+<p>
+  Bu forumda özel bir avatar kullanmak için
+    <a href="http://en.gravatar.com/site/signup/">, Gravatar'da bir hesap açın,</a>
+    bir e-posta adresini bir resimle ilişkilendirin
+    ve bu foruma mesaj gönderirken bu e-posta adresini kullanın.
+  Ek olarak, avatarınıza tıklayarak erişilebilecek bir Gravatar profili oluşturabilirsiniz.
+</p>
+
+<h2 id="profiles">Kullanıcı profilleri ve imzaları</h2>
+
+<p>
+  Mesajlar çeşitli kaynaklardan gelebildiğinden, bu forumda özelleştirilebilir kullanıcı profilleri yoktur.
+  Bunun yerine, yukarıdaki <a href="http://en.gravatar.com/">Avatarlar</a> bölümünde açıklandığı gibi bir <a href="#avatars">Gravatar</a> profili oluşturabilirsiniz .
+  Bir kullanıcı oluşturduğunu varsayarak, Gravatar profil sayfasına gitmek için bir kullanıcının avatarına tıklayın.
+</p>
+
+<p id="signatures">
+  Benzer nedenlerden dolayı, bu forum bir imzanın yapılandırılmasına izin vermez.
+  İmzalar günümüzde web'deki mesajlarda o kadar kullanışlı değildir ve genellikle düşük bir sinyal-gürültü oranına dönüşür.
+  Bunun yerine, ilgili bilgileri Gravatar profilinize veya web sitenize koyabilirsiniz (ve Gravatar profilinizden ona bağlantı verebilirsiniz).
+</p>
+
+<h2 id="canonical">Kanonik bağlantılar</h2>
+
+<p>
+  Varsayılan (temel) görünümü kullanıyorsanız ve belirli bir gönderiye bağlantı almak istiyorsanız, lütfen sol kenar çubuğunda bulunan "Kalıcı Bağlantı" öğesini kullanın
+  (sağ tıklayıp "Bağlantı konumunu kopyala" seçeneğini veya tarayıcınızın eşdeğer).
+  Tarayıcınızın adres çubuğunun içeriğini kopyalarsanız, ortaya çıkan bağlantı aşırı uzun olabilir ve farklı bir görünüm modu seçen kullanıcılar için iyi çalışmayabilir.
+  Kanonik bir bağlantı <tt>https://<i>etkialanı</i>/post/<i>ileti-kimliği@buraya-gider</i></tt>biçimindedir ve <tt>/thread/</tt> veya bir URL parçası (<tt>#</tt> veya onu izleyen herhangi bir metin) içermez.
+</p>
+
+<p>
+  Bir ileti dizisine kanonik bağlantı almak için, ilk gönderinin standart bağlantısını kullanmanız yeterlidir.
+  "Dizi" veya "yatay bölme" görünüm modunu kullanıyorsanız, URL'yi adres çubuğunuzdan kopyalamanız yeterlidir.
+  Her gönderinin başlığı aynı zamanda herhangi bir görünüm modunda söz konusu gönderinin kanonik bir bağlantısıdır.
+</p>
+
+<h2 id="drafts">Taslaklar</h2>
+
+<p>
+  "Kaydet ve önizle" yi tıkladığınızda, mesajınızın bir taslağı sunucuya kaydedilir.
+  JavaScript etkinse, siz mesajı yazarken bu da periyodik olarak gerçekleşecektir.
+</p>
+
+<p>
+  Tarayıcı sekmesini yanlışlıkla mesajla kapatırsanız, bir gönderme formu açarak
+  ("Konu oluştur" u tıklayarak veya bir gönderiyi yanıtlayarak) geri yükleyebilirsiniz.
+  Gönderilmemiş taslaklar varsa, formun önünde bir uyarı görünecektir.
+  Bir taslağı silmek için, kayıt formunun altındaki "Taslağı sil" düğmesini tıklayın.
+</p>
+
+<h2 id="about">hakkında</h2>
+
+<p>
+  This website is powered by DFeed, an NNTP / mailing list web frontend / forum software, news aggregator and IRC bot.
+  DFeed was written mostly by <a href="https://thecybershadow.net/">Vladimir Panteleev</a>.
+  The source code is available under the <a href="http://www.gnu.org/licenses/agpl-3.0.html">GNU Affero General Public License</a>
+    on GitHub: <a href="https://github.com/CyberShadow/DFeed">https://github.com/CyberShadow/DFeed</a>
+</p>
+
+<?about?>
+
+<h2 id="contributing">Contributing</h2>
+
+<p>
+  Bu forum yazılımı açık kaynaklıdır ve D programlama dilinde yazılmıştır.
+  Katkılara açığız. Hataları, geri bildirimleri bildirerek ve çekme istekleri göndererek bu yazılımın geliştirilmesine yardımcı olabilirsiniz.
+  Düzeltmeler, iyileştirmeler, dokümantasyon, birim testleri, yeniden düzenleme vb. İçin yamaların tümü kabul edilir.
+</p>
+<p>
+  DFeed üzerinde çalışmaya başlamak <a href="https://github.com/CyberShadow/DFeed">için GitHub projesini</a>klonlayın ve başlamak için <a href="https://github.com/CyberShadow/DFeed/blob/master/README.md">README.md'deki</a> talimatları kontrol edin.
+</p>
