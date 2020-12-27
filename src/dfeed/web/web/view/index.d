@@ -85,7 +85,7 @@ void discussionIndexHeader()
 						) ~ `</b></li>`;
 				else
 					bits[2] ~= `<li>` ~
-						_!`No new %sreplies%s to your posts.`
+						_!`No new %sreplies%s to %syour posts%s.`
 						.format(
 							`<a href="/subscription-posts/%s">`.format(encodeHtmlEntities(subscription.id)),
 							`</a>`,

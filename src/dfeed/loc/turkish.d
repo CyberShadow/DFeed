@@ -52,8 +52,8 @@ string translate(string s)
 			return `Hoşgeldiniz,`;
 		case `You have %d %s to %syour posts%s.`:
 			return `için %d %s %sgönderiniz var%s.`;
-		case `No new %sreplies%s to your posts.`:
-			return `Gönderilerinize yeni %syanıt yok%s.`;
+		case `No new %sreplies%s to %syour posts%s.`:
+			return `%sGönderilerinize%s yeni %syanıt yok%s.`;
 		case `You have %d %s matching your %s%s subscription%s (%s).`:
 			return `%3$s%4$s aboneliğinizle eşleşen %1$d %2$s var %5$s (%6$s).`;
 		case `No new posts matching your %s%s%s.`:
