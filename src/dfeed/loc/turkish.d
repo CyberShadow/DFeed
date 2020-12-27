@@ -16,6 +16,10 @@
 
 module dfeed.loc.turkish;
 
+enum languageName = "Türk";
+enum languageCode = "tr";
+enum digitGroupingSeparator = '.';
+
 string translate(string s)
 {
 	switch (s)

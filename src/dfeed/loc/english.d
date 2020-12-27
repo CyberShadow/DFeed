@@ -16,6 +16,10 @@
 
 module dfeed.loc.english;
 
+enum languageName = "English";
+enum languageCode = "en";
+enum digitGroupingSeparator = ',';
+
 private string pluralOf(string unit)
 {
 	switch (unit)

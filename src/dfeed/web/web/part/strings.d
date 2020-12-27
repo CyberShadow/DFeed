@@ -128,7 +128,7 @@ string formatNumber(long n)
 {
 	string s = text(n);
 	int digits = 0;
-	auto separator = digitGroupingSeparator[currentLanguage];
+	auto separator = digitGroupingSeparators[currentLanguage];
 	foreach_reverse(p; 1..s.length)
 		if (++digits % 3 == 0)
 			s = s[0..p] ~ separator ~ s[p..$];

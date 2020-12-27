@@ -39,18 +39,33 @@ enum Language
 Language currentLanguage;
 
 immutable string[enumLength!Language] languageNames = [
-	"English",
-	"Türk",
+	dfeed.loc.english.languageName,
+	dfeed.loc.turkish.languageName,
 ];
 
 immutable string[enumLength!Language] languageCodes = [
-	"en",
-	"tr",
+	dfeed.loc.english.languageCode,
+	dfeed.loc.turkish.languageCode,
 ];
 
-immutable char[enumLength!Language] digitGroupingSeparator = [
-	',',
-	'.',
+immutable char[enumLength!Language] digitGroupingSeparators = [
+	dfeed.loc.english.digitGroupingSeparator,
+	dfeed.loc.turkish.digitGroupingSeparator,
+];
+
+static immutable string[][4][enumLength!Language] timeStrings = [
+	[
+		ae.utils.time.common.WeekdayLongNames,
+		ae.utils.time.common.MonthLongNames,
+		ae.utils.time.common.WeekdayShortNames,
+		ae.utils.time.common.MonthShortNames,
+	],
+	[
+		dfeed.loc.turkish.WeekdayLongNames,
+		dfeed.loc.turkish.MonthLongNames,
+		dfeed.loc.turkish.WeekdayShortNames,
+		dfeed.loc.turkish.MonthShortNames,
+	],
 ];
 
 string _(string s)()
@@ -99,21 +114,6 @@ Language detectLanguage(string acceptLanguage)
 	}
 	return Language.init;
 }
-
-static immutable string[][4][enumLength!Language] timeStrings = [
-	[
-		ae.utils.time.common.WeekdayLongNames,
-		ae.utils.time.common.MonthLongNames,
-		ae.utils.time.common.WeekdayShortNames,
-		ae.utils.time.common.MonthShortNames,
-	],
-	[
-		dfeed.loc.turkish.WeekdayLongNames,
-		dfeed.loc.turkish.MonthLongNames,
-		dfeed.loc.turkish.WeekdayShortNames,
-		dfeed.loc.turkish.MonthShortNames,
-	],
-];
 
 string formatTimeLoc(string timeFormat)(SysTime time)
 {
