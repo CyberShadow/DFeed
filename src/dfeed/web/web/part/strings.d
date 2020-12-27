@@ -26,7 +26,6 @@ import std.datetime.timezone : UTC;
 import std.format : format;
 
 import ae.utils.text.html : encodeHtmlEntities;
-import ae.utils.time.format : formatTime;
 
 import dfeed.loc;
 
@@ -68,14 +67,14 @@ string formatShortTime(SysTime time, bool shorter)
 	else
 	if (duration < dur!"days"(300))
 		if (shorter)
-			return time.formatTime!"M d"();
+			return time.formatTimeLoc!"M d"();
 		else
-			return time.formatTime!"F d"();
+			return time.formatTimeLoc!"F d"();
 	else
 		if (shorter)
-			return time.formatTime!"M d, Y"();
+			return time.formatTimeLoc!"M d, Y"();
 		else
-			return time.formatTime!"F d, Y"();
+			return time.formatTimeLoc!"F d, Y"();
 }
 
 string formatDuration(Duration duration)
@@ -105,7 +104,7 @@ string formatDuration(Duration duration)
 		return "yesterday";
 	else
 	if (duration < dur!"days"(6))
-		return formatTime("l", time);
+		return formatTimeLoc!"l"(time);
 	else*/
 	if (duration < 7.days)
 		return ago!"day"(duration.total!"days");
@@ -121,7 +120,7 @@ string formatDuration(Duration duration)
 
 string formatLongTime(SysTime time)
 {
-	return time.formatTime!"l, d F Y, H:i:s e"();
+	return time.formatTimeLoc!"l, d F Y, H:i:s e"();
 }
 
 /// Add thousand-separators

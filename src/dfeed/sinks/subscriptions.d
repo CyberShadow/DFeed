@@ -292,7 +292,7 @@ final class ReplyTrigger : Trigger
 	{
 		return _!"%s has just replied to your %s post in the thread titled \"%s\" in the %s group of %s.".format(
 			post.author,
-			post.time.formatTime!`F j`,
+			post.time.formatTimeLoc!`F j`,
 			post.subject,
 			post.xref[0].group,
 			site.host,

@@ -18,9 +18,13 @@ module dfeed.loc;
 
 import std.algorithm.iteration;
 import std.algorithm.searching;
+import std.datetime;
 import std.string;
 
+import ae.utils.array;
 import ae.utils.meta;
+import ae.utils.time.common;
+import ae.utils.time.format;
 
 static import dfeed.loc.english;
 static import dfeed.loc.turkish;
@@ -94,4 +98,68 @@ Language detectLanguage(string acceptLanguage)
 			return cast(Language)i;
 	}
 	return Language.init;
+}
+
+static immutable string[][4][enumLength!Language] timeStrings = [
+	[
+		ae.utils.time.common.WeekdayLongNames,
+		ae.utils.time.common.MonthLongNames,
+		ae.utils.time.common.WeekdayShortNames,
+		ae.utils.time.common.MonthShortNames,
+	],
+	[
+		dfeed.loc.turkish.WeekdayLongNames,
+		dfeed.loc.turkish.MonthLongNames,
+		dfeed.loc.turkish.WeekdayShortNames,
+		dfeed.loc.turkish.MonthShortNames,
+	],
+];
+
+string formatTimeLoc(string timeFormat)(SysTime time)
+{
+	string s = time.formatTime!timeFormat();
+	if (!currentLanguage)
+		return s;
+
+	bool[4] needStrings;
+	foreach (c; timeFormat)
+		switch (c)
+		{
+			case TimeFormatElement.dayOfWeekName:
+				needStrings[0] = true;
+				break;
+			case TimeFormatElement.monthName:
+				needStrings[1] = true;
+				break;
+			case TimeFormatElement.dayOfWeekNameShort:
+				needStrings[2] = true;
+				break;
+			case TimeFormatElement.monthNameShort:
+				needStrings[3] = true;
+				break;
+			default:
+				break;
+		}
+
+	string[] sourceStrings, targetStrings;
+	foreach (i, b; needStrings)
+		if (b)
+		{
+			sourceStrings ~= timeStrings[Language.init  ][i];
+			targetStrings ~= timeStrings[currentLanguage][i];
+		}
+
+	string result;
+mainLoop:
+	while (s.length)
+	{
+		foreach (i, sourceString; sourceStrings)
+			if (s.skipOver(sourceString))
+			{
+				result ~= targetStrings[i];
+				continue mainLoop;
+			}
+		result ~= s.shift;
+	}
+	return result;
 }

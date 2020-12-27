@@ -978,3 +978,8 @@ string plural(string unit)(long amount)
 	static immutable unitPlural = pluralOf(unit);
 	return amount == 1 ? unit : unitPlural;
 }
+
+const WeekdayShortNames = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
+const WeekdayLongNames = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
+const MonthShortNames = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
+const MonthLongNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
