@@ -16,7 +16,7 @@
 
 module dfeed.loc.turkish;
 
-enum languageName = "Türk";
+enum languageName = "Türkçe";
 enum languageCode = "tr";
 enum digitGroupingSeparator = '.';
 
