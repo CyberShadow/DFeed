@@ -655,7 +655,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				break;
 			case "help":
 				breadcrumbs ~= title = _!"Help";
-				html.put(readText(optimizedPath(null, "web/help.htt"))
+				html.put(readText(optimizedPath(null, "web/help-%s.htt".format(currentLanguage)))
 					.parseTemplate(
 						(string name)
 						{

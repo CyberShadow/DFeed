@@ -14,7 +14,7 @@ DLANG=web/static/dlang.org
 
 TARGETS : \
 	web/skel.min.htt \
-	web/help.min.htt \
+	web/help-english.min.htt \
 	web/static/css/dfeed.min.css \
 	web/static/js/dfeed.min.js \
 	$(patsubst %.css,%.min.css,$(filter-out $(wildcard $(DLANG)/css/*.min.css), $(wildcard $(DLANG)/css/*.css))) \
