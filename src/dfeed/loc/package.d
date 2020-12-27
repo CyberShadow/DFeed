@@ -44,6 +44,11 @@ immutable string[enumLength!Language] languageCodes = [
 	"tr",
 ];
 
+immutable char[enumLength!Language] digitGroupingSeparator = [
+	',',
+	'.',
+];
+
 string _(string s)()
 {
 	static string[enumLength!Language] translations = [
