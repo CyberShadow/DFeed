@@ -18,31 +18,23 @@ module dfeed.loc;
 
 import ae.utils.meta;
 
-import dfeed.loc.english;
+static import dfeed.loc.english;
+static import dfeed.loc.turkish;
 
 enum Language
 {
 	english,
+	turkish,
 }
 Language currentLanguage;
 
 string _(string s)()
 {
-	if (!currentLanguage)
-		return s;
-
-	static string[enumLength!Language] translations;
-	auto translation = translations[currentLanguage];
-	if (!translation)
-	{
-		final switch (currentLanguage)
-		{
-			case Language.english:
-				assert(false);
-		}
-		translations[currentLanguage] = translation;
-	}
-	return translation;
+	static string[enumLength!Language] translations = [
+		s,
+		dfeed.loc.turkish.translate(s),
+	];
+	return translations[currentLanguage];
 }
 
 enum pluralMany = 99;
@@ -53,5 +45,7 @@ string plural(string unit)(long amount)
 	{
 		case Language.english:
 			return dfeed.loc.english.plural!unit(amount);
+		case Language.turkish:
+			return dfeed.loc.turkish.plural!unit(amount);
 	}
 }
