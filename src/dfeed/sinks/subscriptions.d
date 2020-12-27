@@ -18,6 +18,7 @@ module dfeed.sinks.subscriptions;
 
 import std.algorithm;
 import std.ascii;
+import std.conv;
 import std.exception;
 import std.format;
 import std.process;
@@ -848,6 +849,14 @@ final class EmailAction : Action
 		return name;
 	}
 
+	Language getUserLanguage(string userName)
+	{
+		try
+			return getUserSetting(userName, "language").to!Language;
+		catch (Exception e)
+			return Language.init;
+	}
+
 	override void run(ref Subscription subscription, Rfc850Post post)
 	{
 		if (!enabled)
@@ -891,6 +900,7 @@ final class EmailAction : Action
 	{
 		auto realName = getUserRealName(userName);
 		enforce(!(address~realName).canFind("\n"), "Shenanigans detected");
+		auto oldLanguage = withLanguage(getUserLanguage(userName));
 
 		return [
 			`From: %10$s <no-reply@%7$s>`,
