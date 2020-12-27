@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -17,9 +17,6 @@
 /// Various string formatting.
 module dfeed.web.web.part.strings;
 
-import ae.utils.text.html : encodeHtmlEntities;
-import ae.utils.time.format : formatTime;
-
 import core.time;
 
 import std.algorithm.comparison : min, max;
@@ -27,6 +24,11 @@ import std.conv : text;
 import std.datetime.systime : SysTime, Clock;
 import std.datetime.timezone : UTC;
 import std.format : format;
+
+import ae.utils.text.html : encodeHtmlEntities;
+import ae.utils.time.format : formatTime;
+
+import dfeed.loc;
 
 string summarizeTime(SysTime time, bool colorize = false)
 {
@@ -78,26 +80,26 @@ string formatShortTime(SysTime time, bool shorter)
 
 string formatDuration(Duration duration)
 {
-	string ago(long amount, string units)
+	string ago(string unit)(long amount)
 	{
 		assert(amount > 0);
-		return format("%s %s%s ago", amount, units, amount==1 ? "" : "s");
+		return _!"%d %s ago".format(amount, plural!unit(amount));
 	}
 
 	if (duration < 0.seconds)
-		return "from the future";
+		return _!"from the future";
 	else
 	if (duration < 1.seconds)
-		return "just now";
+		return _!"just now";
 	else
 	if (duration < 1.minutes)
-		return ago(duration.total!"seconds", "second");
+		return ago!"second"(duration.total!"seconds");
 	else
 	if (duration < 1.hours)
-		return ago(duration.total!"minutes", "minute");
+		return ago!"minute"(duration.total!"minutes");
 	else
 	if (duration < 1.days)
-		return ago(duration.total!"hours", "hour");
+		return ago!"hour"(duration.total!"hours");
 	else
 	/*if (duration < dur!"days"(2))
 		return "yesterday";
@@ -106,15 +108,15 @@ string formatDuration(Duration duration)
 		return formatTime("l", time);
 	else*/
 	if (duration < 7.days)
-		return ago(duration.total!"days", "day");
+		return ago!"day"(duration.total!"days");
 	else
 	if (duration < 31.days)
-		return ago(duration.total!"weeks", "week");
+		return ago!"week"(duration.total!"weeks");
 	else
 	if (duration < 365.days)
-		return ago(duration.total!"days" / 30, "month");
+		return ago!"month"(duration.total!"days" / 30);
 	else
-		return ago(duration.total!"days" / 365, "year");
+		return ago!"year"(duration.total!"days" / 365);
 }
 
 string formatLongTime(SysTime time)

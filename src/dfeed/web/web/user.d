@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -20,6 +20,7 @@ module dfeed.web.web.user;
 import ae.utils.aa : aaGet;
 import ae.utils.text : randomString;
 
+import dfeed.loc;
 import dfeed.web.user : User, SettingType;
 
 User user;
@@ -84,3 +85,16 @@ struct UserSettings
 	}
 }
 UserSettings userSettings;
+
+static immutable allViewModes = ["basic", "threaded", "horizontal-split", "vertical-split"];
+string viewModeName(string viewMode)
+{
+	switch (viewMode)
+	{
+		case "basic"           : return _!"basic"           ;
+		case "threaded"        : return _!"threaded"        ;
+		case "horizontal-split": return _!"horizontal-split";
+		case "vertical-split"  : return _!"vertical-split"  ;
+		default: throw new Exception(_!"Unknown view mode");
+	}
+}

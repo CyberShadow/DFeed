@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -27,6 +27,7 @@ import std.format : format;
 import std.functional : not;
 import std.uni : icmp, toLower;
 
+import dfeed.loc;
 import dfeed.common;
 import dfeed.database : query;
 import dfeed.groups : GroupInfo, groupHierarchy, getGroupInfoByUrl, getGroupInfo;
@@ -45,7 +46,7 @@ import dfeed.web.web.part.pager : getPageOffset, POSTS_PER_PAGE;
 import dfeed.web.web.postinfo;
 import dfeed.web.web.posting : discussionPostForm, discussionSend, discussionPostStatus;
 import dfeed.web.web.statics : optimizedPath, serveFile, makeBundle, staticPath, createBundles, createBundles;
-import dfeed.web.web.user : user, userSettings;
+import dfeed.web.web.user;
 import dfeed.web.web.view.feed : getFeed, getSubscriptionFeed, FEED_HOURS_DEFAULT, FEED_HOURS_MAX;
 import dfeed.web.web.view.index : discussionIndex;
 import dfeed.web.web.view.login : discussionLoginForm, discussionRegisterForm, discussionLogin, discussionRegister;
@@ -156,7 +157,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	try
 	{
 		auto pathStr = request.resource;
-		enforce(pathStr.startsWith('/'), "Invalid path");
+		enforce(pathStr.startsWith('/'), _!"Invalid path");
 		UrlParameters parameters;
 		if (pathStr.indexOf('?') >= 0)
 		{
@@ -180,7 +181,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				// Abort on redirect from URLs with unsupported features.
 				// Only search engines would be likely to hit these.
 				if ("path" in parameters || "mid" in parameters)
-					throw new NotFoundException("Legacy redirect - unsupported feature");
+					throw new NotFoundException(_!"Legacy redirect - unsupported feature");
 
 				// Redirect to our URL scheme
 				string redirectGroup, redirectNum;
@@ -196,7 +197,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				{
 					foreach (string id; query!"SELECT `ID` FROM `Groups` WHERE `Group`=? AND `ArtNum`=?".iterate(redirectGroup, redirectNum))
 						return response.redirect(idToUrl(id), HttpStatusCode.MovedPermanently);
-					throw new NotFoundException("Legacy redirect - article not found");
+					throw new NotFoundException(_!"Legacy redirect - article not found");
 				}
 				else
 				if (redirectNum)
@@ -208,9 +209,9 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 						return response.redirect(idToUrl(ids[0]), HttpStatusCode.MovedPermanently);
 					else
 					if (ids.length > 1)
-						throw new NotFoundException("Legacy redirect - ambiguous artnum (group parameter missing)");
+						throw new NotFoundException(_!"Legacy redirect - ambiguous artnum (group parameter missing)");
 					else
-						throw new NotFoundException("Legacy redirect - article not found");
+						throw new NotFoundException(_!"Legacy redirect - article not found");
 				}
 				else
 				if (redirectGroup)
@@ -221,14 +222,14 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 
 				title = "Index";
 				//breadcrumbs ~= `<a href="/">Forum Index</a>`;
-				foreach (what; ["posts", "threads"])
-					extraHeaders ~= `<link rel="alternate" type="application/atom+xml" title="New `~what~`" href="/feed/`~what~`" />`;
+				extraHeaders ~= `<link rel="alternate" type="application/atom+xml" title="` ~ _!`New posts` ~ `" href="/feed/posts" />`;
+				extraHeaders ~= `<link rel="alternate" type="application/atom+xml" title="` ~ _!`New threads` ~ `" href="/feed/threads" />`;
 				addMetadata(null, "/", null);
 				discussionIndex();
 				break;
 			case "group":
 			{
-				enforce(path.length > 1, "No group specified");
+				enforce(path.length > 1, _!"No group specified");
 				string groupUrlName = path[1];
 
 				foreach (groupInfo; groupHierarchy.map!(set => set.groups).join)
@@ -239,10 +240,10 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 						throw new Redirect("/group/" ~ groupInfo.urlName);
 
 				int page = to!int(parameters.get("page", "1"));
-				string pageStr = page==1 ? "" : format(" (page %d)", page);
+				string pageStr = page==1 ? "" : " " ~ _!"(page %d)".format(page);
 				auto groupInfo = currentGroup = getGroupInfoByUrl(groupUrlName);
-				enforce(groupInfo, "Unknown group");
-				title = groupInfo.publicName ~ " group index" ~ pageStr;
+				enforce(groupInfo, _!"Unknown group");
+				title = _!"%s group index".format(groupInfo.publicName) ~ pageStr;
 				breadcrumbs ~= `<a href="/group/`~encodeHtmlEntities(groupUrlName)~`">` ~ encodeHtmlEntities(groupInfo.publicName) ~ `</a>` ~ pageStr;
 				auto viewMode = userSettings.groupViewMode;
 				if (viewMode == "basic")
@@ -258,28 +259,28 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				}
 				else
 					discussionGroupVSplit(groupInfo, page);
-				foreach (what; ["posts", "threads"])
-					extraHeaders ~= `<link rel="alternate" type="application/atom+xml" title="New `~what~` on `~encodeHtmlEntities(groupInfo.publicName)~`" href="/feed/`~what~`/`~encodeHtmlEntities(groupInfo.urlName)~`" />`;
+				extraHeaders ~= `<link rel="alternate" type="application/atom+xml" title="` ~ _!`New posts on` ~ ` `~encodeHtmlEntities(groupInfo.publicName)~`" href="/feed/posts/`~encodeHtmlEntities(groupInfo.urlName)~`" />`;
+				extraHeaders ~= `<link rel="alternate" type="application/atom+xml" title="` ~ _!`New threads on` ~ ` `~encodeHtmlEntities(groupInfo.publicName)~`" href="/feed/threads/`~encodeHtmlEntities(groupInfo.urlName)~`" />`;
 				addMetadata(groupInfo.description, "/group/" ~ groupInfo.urlName, null);
 				break;
 			}
 			case "thread":
 			{
-				enforce(path.length > 1, "No thread specified");
+				enforce(path.length > 1, _!"No thread specified");
 				int page = to!int(parameters.get("page", "1"));
 				string threadID = '<' ~ urlDecode(pathX) ~ '>';
 
 				auto firstPostUrl = idToUrl(getPostAtThreadIndex(threadID, getPageOffset(page, POSTS_PER_PAGE)));
 				auto viewMode = userSettings.groupViewMode;
 				if (viewMode != "basic")
-					html.put(`<div class="forum-notice">Viewing thread in basic view mode &ndash; click a post's title to open it in `, encodeHtmlEntities(viewMode), ` view mode</div>`);
+					html.put(`<div class="forum-notice">` ~ _!"Viewing thread in basic view mode \&ndash; click a post's title to open it in %s view mode".format(viewModeName(viewMode)).encodeHtmlEntities() ~ `</div>`);
 				returnPage = firstPostUrl;
 
-				string pageStr = page==1 ? "" : format(" (page %d)", page);
+				string pageStr = page==1 ? "" : " " ~ format(_!"(page %d)", page);
 				GroupInfo groupInfo;
 				string subject, authorEmail;
 				discussionThread(threadID, page, groupInfo, subject, authorEmail, viewMode == "basic");
-				enforce(groupInfo, "Unknown group");
+				enforce(groupInfo, _!"Unknown group");
 				title = subject ~ pageStr;
 				currentGroup = groupInfo;
 				currentThread = threadID;
@@ -290,7 +291,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				break;
 			}
 			case "post":
-				enforce(path.length > 1, "No post specified");
+				enforce(path.length > 1, _!"No post specified");
 				string id = '<' ~ urlDecode(pathX) ~ '>';
 
 				// Normalize URL encoding to allow JS to find message by URL
@@ -307,7 +308,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 					discussionSinglePost(id, currentGroup, subject, authorEmail, currentThread);
 					title = subject;
 					breadcrumbs ~= `<a href="/group/` ~encodeHtmlEntities(currentGroup.urlName)~`">` ~ encodeHtmlEntities(currentGroup.publicName) ~ `</a>`;
-					breadcrumbs ~= `<a href="/post/`~encodeHtmlEntities(pathX)~`">` ~ encodeHtmlEntities(subject) ~ `</a> (view single post)`;
+					breadcrumbs ~= `<a href="/post/`~encodeHtmlEntities(pathX)~`">` ~ encodeHtmlEntities(subject) ~ `</a> ` ~ _!`(view single post)`;
 					addMetadata(null, idToUrl(id), gravatar(authorEmail, gravatarMetaSize));
 					break;
 				}
@@ -319,8 +320,8 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 					else
 						discussionGroupVSplitFromPost(id, currentGroup, page, currentThread);
 
-					string pageStr = page==1 ? "" : format(" (page %d)", page);
-					title = currentGroup.publicName ~ " group index" ~ pageStr;
+					string pageStr = page==1 ? "" : " " ~ format(_!"(page %d)", page);
+					title = _!"%s group index".format(currentGroup.publicName) ~ pageStr;
 					breadcrumbs ~= `<a href="/group/`~encodeHtmlEntities(currentGroup.urlName)~`">` ~ encodeHtmlEntities(currentGroup.publicName) ~ `</a>` ~ pageStr;
 					extraHeaders ~= horizontalSplitHeaders;
 					addMetadata(null, idToUrl(id), null);
@@ -328,9 +329,9 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				}
 			case "raw":
 			{
-				enforce(path.length > 1, "Invalid URL");
+				enforce(path.length > 1, _!"Invalid URL");
 				auto post = getPostPart('<' ~ urlDecode(path[1]) ~ '>', array(map!(to!uint)(path[2..$])));
-				enforce(post, "Post not found");
+				enforce(post, _!"Post not found");
 				if (!post.data && post.error)
 					throw new Exception(post.error);
 				if (post.fileName)
@@ -343,7 +344,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			}
 			case "source":
 			{
-				enforce(path.length > 1, "Invalid URL");
+				enforce(path.length > 1, _!"Invalid URL");
 				auto message = getPostSource('<' ~ urlDecode(path[1]) ~ '>');
 				if (message is null)
 				{
@@ -357,15 +358,15 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 						message = post.message;
 					}
 				}
-				enforce(message !is null, "Post not found");
+				enforce(message !is null, _!"Post not found");
 				return response.serveData(Data(message), "text/plain");
 			}
 			case "split-post":
-				enforce(path.length > 1, "No post specified");
+				enforce(path.length > 1, _!"No post specified");
 				discussionSplitPost('<' ~ urlDecode(pathX) ~ '>');
 				return response.serveData(cast(string)html.get());
 			case "vsplit-post":
-				enforce(path.length > 1, "No post specified");
+				enforce(path.length > 1, _!"No post specified");
 				discussionVSplitPost('<' ~ urlDecode(pathX) ~ '>');
 				return response.serveData(cast(string)html.get());
 		/+
@@ -386,40 +387,40 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		+/
 			case "mark-unread":
 			{
-				enforce(path.length > 1, "No post specified");
+				enforce(path.length > 1, _!"No post specified");
 				auto post = getPostInfo('<' ~ urlDecode(pathX) ~ '>');
-				enforce(post, "Post not found");
+				enforce(post, _!"Post not found");
 				user.setRead(post.rowid, false);
 				return response.serveText("OK");
 			}
 			case "first-unread":
 			{
-				enforce(path.length > 1, "No thread specified");
+				enforce(path.length > 1, _!"No thread specified");
 				return response.redirect(discussionFirstUnread('<' ~ urlDecode(pathX) ~ '>'));
 			}
 			case "newpost":
 			{
-				enforce(path.length > 1, "No group specified");
+				enforce(path.length > 1, _!"No group specified");
 				string groupUrlName = path[1];
-				currentGroup = getGroupInfoByUrl(groupUrlName).enforce("No such group");
-				title = "Posting to " ~ currentGroup.publicName;
+				currentGroup = getGroupInfoByUrl(groupUrlName).enforce(_!"No such group");
+				title = _!"Posting to %s".format(currentGroup.publicName);
 				breadcrumbs ~= `<a href="/group/`~encodeHtmlEntities(currentGroup.urlName)~`">` ~ encodeHtmlEntities(currentGroup.publicName) ~ `</a>`;
-				breadcrumbs ~= `<a href="/newpost/`~encodeHtmlEntities(currentGroup.urlName)~`">New thread</a>`;
+				breadcrumbs ~= `<a href="/newpost/`~encodeHtmlEntities(currentGroup.urlName)~`">` ~ _!`New thread` ~ `</a>`;
 				if (discussionPostForm(newPostDraft(currentGroup, parameters)))
 					bodyClass ~= " formdoc";
 				break;
 			}
 			case "reply":
 			{
-				enforce(path.length > 1, "No post specified");
+				enforce(path.length > 1, _!"No post specified");
 				auto post = getPost('<' ~ urlDecode(pathX) ~ '>');
-				enforce(post, "Post not found");
-				title = `Replying to "` ~ post.subject ~ `"`; // "
+				enforce(post, _!"Post not found");
+				title = _!`Replying to "%s"`.format(post.subject); // "
 				currentGroup = post.getGroup();
 				currentThread = post.threadID;
 				breadcrumbs ~= `<a href="/group/`~encodeHtmlEntities(currentGroup.urlName)~`">` ~ encodeHtmlEntities(currentGroup.publicName) ~ `</a>`;
 				breadcrumbs ~= `<a href="` ~ encodeHtmlEntities(idToUrl(post.id)) ~ `">` ~ encodeHtmlEntities(post.subject) ~ `</a>`;
-				breadcrumbs ~= `<a href="/reply/`~pathX~`">Post reply</a>`;
+				breadcrumbs ~= `<a href="/reply/`~pathX~`">` ~ _!`Post reply` ~ `</a>`;
 				if (discussionPostForm(newReplyDraft(post)))
 					bodyClass = "formdoc";
 				break;
@@ -431,13 +432,13 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				if (redirectTo)
 					return response.redirect(redirectTo);
 
-				breadcrumbs ~= title = `Posting`;
+				breadcrumbs ~= title = _!`Posting`;
 				bodyClass ~= " formdoc";
 				break;
 			}
 			case "posting":
 			{
-				enforce(path.length > 1, "No post ID specified");
+				enforce(path.length > 1, _!"No post ID specified");
 				auto pid = pathX;
 				if (pid in postProcesses)
 				{
@@ -448,11 +449,11 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 						response.setRefresh(1, redirectTo);
 					if (form)
 					{
-						breadcrumbs ~= title = `Posting`;
+						breadcrumbs ~= title = _!`Posting`;
 						bodyClass ~= " formdoc";
 					}
 					else
-						breadcrumbs ~= title = `Posting status`;
+						breadcrumbs ~= title = _!`Posting status`;
 				}
 				else
 				{
@@ -460,7 +461,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 					foreach (string id; query!"SELECT [ID] FROM [Drafts] WHERE [PostID]=?".iterate(pid))
 						draftID = id;
 					discussionPostForm(getDraft(draftID));
-					title = "Composing message";
+					title = _!"Composing message";
 				}
 				break;
 			}
@@ -468,14 +469,14 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			{
 				auto postVars = request.decodePostData();
 				if (postVars.get("secret", "") != userSettings.secret)
-					throw new Exception("XSRF secret verification failed");
+					throw new Exception(_!"XSRF secret verification failed");
 				autoSaveDraft(postVars);
 				return response.serveText("OK");
 			}
 			case "subscribe":
 			{
-				enforce(path.length > 1, "No post specified");
-				enforce(user.isLoggedIn(), "Please log in to do that");
+				enforce(path.length > 1, _!"No post specified");
+				enforce(user.isLoggedIn(), _!"Please log in to do that");
 				auto id = '<' ~ urlDecode(pathX) ~ '>';
 				Subscription threadSubscription;
 				foreach (subscription; getUserSubscriptions(user.getName()))
@@ -487,33 +488,33 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 						}
 				if (!threadSubscription.trigger)
 					threadSubscription = createSubscription(user.getName(), "thread", ["trigger-thread-id" : id]);
-				title = "Subscribe to thread";
+				title = _!"Subscribe to thread";
 				discussionSubscriptionEdit(threadSubscription);
 				break;
 			}
 			case "subscription-posts":
 			{
-				enforce(path.length > 1, "No subscription specified");
+				enforce(path.length > 1, _!"No subscription specified");
 				int page = to!int(parameters.get("page", "1"));
-				breadcrumbs ~= "View subscription";
+				breadcrumbs ~= _!"View subscription";
 				discussionSubscriptionPosts(urlDecode(pathX), page, title);
 				break;
 			}
 			case "subscription-feed":
 			{
-				enforce(path.length > 1, "No subscription specified");
+				enforce(path.length > 1, _!"No subscription specified");
 				return getSubscriptionFeed(urlDecode(pathX)).getResponse(request);
 			}
 			case "subscription-unsubscribe":
 			{
-				enforce(path.length > 1, "No subscription specified");
-				title = "Unsubscribe";
+				enforce(path.length > 1, _!"No subscription specified");
+				title = _!"Unsubscribe";
 				discussionSubscriptionUnsubscribe(urlDecode(pathX));
 				break;
 			}
 			case "search":
 			{
-				breadcrumbs ~= title = "Search";
+				breadcrumbs ~= title = _!"Search";
 				discussionSearch(parameters);
 				break;
 			}
@@ -522,13 +523,13 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				return response.redirect("/moderate/" ~ path[1..$].join("/"));
 			case "moderate":
 			{
-				enforce(user.getLevel() >= User.Level.canModerate, "You are not a moderator");
-				enforce(path.length > 1, "No post specified");
+				enforce(user.getLevel() >= User.Level.canModerate, _!"You are not a moderator");
+				enforce(path.length > 1, _!"No post specified");
 				auto post = getPost('<' ~ urlDecode(pathX) ~ '>');
-				enforce(post, "Post not found");
-				title = `Moderating post "` ~ post.subject ~ `"`; // "
+				enforce(post, _!"Post not found");
+				title = _!`Moderating post "%s"`.format(post.subject); // "
 				breadcrumbs ~= `<a href="` ~ encodeHtmlEntities(idToUrl(post.id)) ~ `">` ~ encodeHtmlEntities(post.subject) ~ `</a>`;
-				breadcrumbs ~= `<a href="/moderate/`~pathX~`">Moderate post</a>`;
+				breadcrumbs ~= `<a href="/moderate/`~pathX~`">` ~ _!`Moderate post` ~ `</a>`;
 				discussionModeration(post, request.method == "POST" ? request.decodePostData() : UrlParameters.init);
 				bodyClass ~= " formdoc";
 				break;
@@ -546,22 +547,22 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			case "flag":
 			case "unflag":
 			{
-				enforce(user.getLevel() >= User.Level.canFlag, "You can't flag posts");
-				enforce(path.length > 1, "No post specified");
+				enforce(user.getLevel() >= User.Level.canFlag, _!"You can't flag posts");
+				enforce(path.length > 1, _!"No post specified");
 				auto post = getPost('<' ~ urlDecode(pathX) ~ '>');
-				enforce(post, "Post not found");
-				title = `Flag "` ~ post.subject ~ `" by ` ~ post.author; // "
+				enforce(post, _!"Post not found");
+				title = _!`Flag "%s" by %s`.format(post.subject, post.author); // "
 				breadcrumbs ~= `<a href="` ~ encodeHtmlEntities(idToUrl(post.id)) ~ `">` ~ encodeHtmlEntities(post.subject) ~ `</a>`;
-				breadcrumbs ~= `<a href="/`~path[0]~`/`~pathX~`">Flag post</a>`;
+				breadcrumbs ~= `<a href="/`~path[0]~`/`~pathX~`">` ~ _!`Flag post` ~ `</a>`;
 				discussionFlagPage(post, path[0] == "flag", request.method == "POST" ? request.decodePostData() : UrlParameters.init);
 				bodyClass ~= " formdoc";
 				break;
 			}
 			case "approve-moderated-draft":
 			{
-				enforce(user.getLevel() >= User.Level.canApproveDrafts, "You can't approve moderated drafts");
-				title = "Approving moderated draft";
-				enforce(path.length == 2 || path.length == 3, "Wrong URL format"); // Backwards compatibility with old one-click URLs
+				enforce(user.getLevel() >= User.Level.canApproveDrafts, _!"You can't approve moderated drafts");
+				title = _!"Approving moderated draft";
+				enforce(path.length == 2 || path.length == 3, _!"Invalid URL"); // Backwards compatibility with old one-click URLs
 				auto draftID = path[1];
 				discussionApprovePage(draftID, request.method == "POST" ? request.decodePostData() : UrlParameters.init);
 				break;
@@ -569,16 +570,16 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			case "loginform":
 			{
 				discussionLoginForm(parameters);
-				breadcrumbs ~= title = `Log in`;
-				tools ~= `<a href="/registerform?url=__URL__">Register</a>`;
+				breadcrumbs ~= title = _!`Log in`;
+				tools ~= `<a href="/registerform?url=__URL__">` ~ _!`Register` ~ `</a>`;
 				returnPage = "/";
 				break;
 			}
 			case "registerform":
 			{
 				discussionRegisterForm(parameters);
-				breadcrumbs ~= title = `Registration`;
-				tools ~= `<a href="/registerform?url=__URL__">Register</a>`;
+				breadcrumbs ~= title = _!`Registration`;
+				tools ~= `<a href="/registerform?url=__URL__">` ~ _!`Register` ~ `</a>`;
 				returnPage = "/";
 				break;
 			}
@@ -593,8 +594,8 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				catch (Exception e)
 				{
 					discussionLoginForm(parameters, e.msg);
-					breadcrumbs ~= title = `Login error`;
-					tools ~= `<a href="/registerform?url=__URL__">Register</a>`;
+					breadcrumbs ~= title = _!`Login error`;
+					tools ~= `<a href="/registerform?url=__URL__">` ~ _!`Register` ~ `</a>`;
 					returnPage = "/";
 					break;
 				}
@@ -610,15 +611,15 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				catch (Exception e)
 				{
 					discussionRegisterForm(parameters, e.msg);
-					breadcrumbs ~= title = `Registration error`;
-					tools ~= `<a href="/registerform?url=__URL__">Register</a>`;
+					breadcrumbs ~= title = _!`Registration error`;
+					tools ~= `<a href="/registerform?url=__URL__">` ~ _!`Register` ~ `</a>`;
 					returnPage = "/";
 					break;
 				}
 			}
 			case "logout":
 			{
-				enforce(user.isLoggedIn(), "Not logged in");
+				enforce(user.isLoggedIn(), _!"Not logged in");
 				user.logOut();
 				if ("url" in parameters)
 					return response.redirect(parameters["url"]);
@@ -626,19 +627,19 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 					return response.serveText("OK");
 			}
 			case "settings":
-				breadcrumbs ~= title = "Settings";
+				breadcrumbs ~= title = _!"Settings";
 				discussionSettings(parameters, request.method == "POST" ? request.decodePostData() : UrlParameters.init);
 				break;
 			case "change-password":
-				breadcrumbs ~= "Settings";
-				breadcrumbs ~= "Account";
-				breadcrumbs ~= title = "Change Password";
+				breadcrumbs ~= _!"Settings";
+				breadcrumbs ~= _!"Account";
+				breadcrumbs ~= title = _!"Change Password";
 				discussionChangePassword(request.method == "POST" ? request.decodePostData() : UrlParameters.init);
 				break;
 			case "export-account":
-				breadcrumbs ~= "Settings";
-				breadcrumbs ~= "Account";
-				breadcrumbs ~= title = "Export Data";
+				breadcrumbs ~= _!"Settings";
+				breadcrumbs ~= _!"Account";
+				breadcrumbs ~= title = _!"Export Data";
 				if (auto result = discussionExportAccount(request.method == "POST" ? request.decodePostData() : UrlParameters.init))
 				{
 					response.headers["Content-Disposition"] = "attachment; filename=%(%s%)"
@@ -647,13 +648,13 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				}
 				break;
 			case "delete-account":
-				breadcrumbs ~= "Settings";
-				breadcrumbs ~= "Account";
-				breadcrumbs ~= title = "Delete Account";
+				breadcrumbs ~= _!"Settings";
+				breadcrumbs ~= _!"Account";
+				breadcrumbs ~= title = _!"Delete Account";
 				discussionDeleteAccount(request.method == "POST" ? request.decodePostData() : UrlParameters.init);
 				break;
 			case "help":
-				breadcrumbs ~= title = "Help";
+				breadcrumbs ~= title = _!"Help";
 				html.put(readText(optimizedPath(null, "web/help.htt"))
 					.parseTemplate(
 						(string name)
@@ -670,30 +671,30 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			// dlang.org front page iframes
 			case "frame-discussions":
 				bodyClass = "frame";
-				breadcrumbs ~= title = "Forum activity summary";
+				breadcrumbs ~= title = _!"Forum activity summary";
 				discussionFrameDiscussions();
 				break;
 			case "frame-announcements":
 				bodyClass = "frame";
-				breadcrumbs ~= title = "Forum activity summary";
+				breadcrumbs ~= title = _!"Forum activity summary";
 				discussionFrameAnnouncements();
 				break;
 
 			case "feed":
 			{
-				enforce(path.length > 1, "Feed type not specified");
-				enforce(path[1]=="posts" || path[1]=="threads", "Unknown feed type");
+				enforce(path.length > 1, _!"Feed type not specified");
+				enforce(path[1]=="posts" || path[1]=="threads", _!"Unknown feed type");
 				bool threadsOnly = path[1] == "threads";
 				string groupUrlName;
 				if (path.length > 2)
 					groupUrlName = path[2];
 				auto hours = to!int(parameters.get("hours", text(FEED_HOURS_DEFAULT)));
-				enforce(hours <= FEED_HOURS_MAX, "hours parameter exceeds limit");
+				enforce(hours <= FEED_HOURS_MAX, _!"hours parameter exceeds limit");
 				auto groupInfo = getGroupInfoByUrl(groupUrlName);
 				if (groupUrlName && !groupInfo)
 					groupInfo = getGroupInfo(groupUrlName);
 				if (groupUrlName && !groupInfo)
-					throw new NotFoundException("No such group");
+					throw new NotFoundException(_!"No such group");
 				return getFeed(groupInfo, threadsOnly, hours).getResponse(request);
 			}
 			case "github-webhook":
@@ -734,12 +735,12 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		//return response.writeError(HttpStatusCode.InternalServerError, "Unprocessed exception: " ~ e.msg);
 		if (cast(NotFoundException) e)
 		{
-			breadcrumbs ~= title = "Not Found";
+			breadcrumbs ~= title = _!"Not Found";
 			status = HttpStatusCode.NotFound;
 		}
 		else
 		{
-			breadcrumbs ~= title = "Error";
+			breadcrumbs ~= title = _!"Error";
 			status = HttpStatusCode.InternalServerError;
 		}
 		auto text = encodeHtmlEntities(e.msg).replace("\n", "<br>");
@@ -754,14 +755,14 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 
 	assert(title, "No title");
 	assert(html.length, "No HTML");
-	if (breadcrumbs.length) breadcrumbs = [`<a href="/">Index</a>`] ~ breadcrumbs;
+	if (breadcrumbs.length) breadcrumbs = [`<a href="/">` ~ _!`Index` ~ `</a>`] ~ breadcrumbs;
 
 	if (user.isLoggedIn())
-		tools ~= `<a href="/logout?url=__URL__">Log out ` ~ encodeHtmlEntities(user.getName()) ~ `</a>`;
+		tools ~= `<a href="/logout?url=__URL__">` ~ _!`Log out` ~ ` ` ~ encodeHtmlEntities(user.getName()) ~ `</a>`;
 	else
-		tools ~= `<a href="/loginform?url=__URL__">Log in</a>`;
-	tools ~= `<a href="/settings">Settings</a>`;
-	tools ~= `<a href="/help">Help</a>`;
+		tools ~= `<a href="/loginform?url=__URL__">` ~ _!`Log in` ~ `</a>`;
+	tools ~= `<a href="/settings">` ~ _!`Settings` ~ `</a>`;
+	tools ~= `<a href="/help">` ~ _!`Help` ~ `</a>`;
 
 	string toolStr = tools
 		.map!(t => `<div class="tip">` ~ t ~ `</div>`)
@@ -788,12 +789,12 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			{
 				auto draftID = parts[2];
 				htmlStr =
-					`<div class="forum-notice">Draft discarded. <a href="/posting/` ~ encodeHtmlEntities(draftID) ~ `">Undo</a></div>` ~ htmlStr;
+					`<div class="forum-notice">` ~ _!`Draft discarded.` ~ ` <a href="/posting/` ~ encodeHtmlEntities(draftID) ~ `">` ~ _!`Undo` ~ `</a></div>` ~ htmlStr;
 				break;
 			}
 			case "settings-saved":
 				htmlStr =
-					`<div class="forum-notice">Settings saved.</div>` ~ htmlStr;
+					`<div class="forum-notice">` ~ _!`Settings saved.` ~ `</div>` ~ htmlStr;
 				break;
 			default:
 				throw new Exception("Unknown kind of pending notice: " ~ kind);
@@ -812,8 +813,11 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		if (cookie.length > 4096 * 15/16)
 		{
 			htmlStr =
-				`<div class="forum-notice">Warning: cookie size approaching RFC 2109 limit.` ~
-				`Please consider <a href="/registerform">creating an account</a> to avoid losing your read post history.</div>` ~ htmlStr;
+				`<div class="forum-notice">` ~ _!`Warning: cookie size approaching RFC 2109 limit.` ~
+				_!`Please consider %screating an account%s to avoid losing your read post history.`.format(
+					`<a href="/registerform">`,
+					`</a>`
+				) ~ `</div>` ~ htmlStr;
 			break;
 		}
 
@@ -822,11 +826,11 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		struct SearchOption { string name, value; }
 		SearchOption[] searchOptions;
 
-		searchOptions ~= SearchOption("Forums", "forum");
+		searchOptions ~= SearchOption(_!"Forums", "forum");
 		if (currentGroup)
-			searchOptions ~= SearchOption(currentGroup.publicName ~ " group", "group:" ~ currentGroup.internalName.searchTerm);
+			searchOptions ~= SearchOption(_!"%s group".format(currentGroup.publicName), "group:" ~ currentGroup.internalName.searchTerm);
 		if (currentThread)
-			searchOptions ~= SearchOption("This thread", "threadmd5:" ~ currentThread.getDigestString!MD5().toLower());
+			searchOptions ~= SearchOption(_!"This thread", "threadmd5:" ~ currentThread.getDigestString!MD5().toLower());
 
 		foreach (i, option; searchOptions)
 			searchOptionStr ~=

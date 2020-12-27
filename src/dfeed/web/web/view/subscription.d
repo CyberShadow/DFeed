@@ -18,9 +18,11 @@
 module dfeed.web.web.view.subscription;
 
 import std.conv : text;
+import std.format;
 
 import ae.utils.xmllite : putEncodedEntities;
 
+import dfeed.loc;
 import dfeed.database : query, selectValue;
 import dfeed.sinks.subscriptions;
 import dfeed.web.web.page : html;
@@ -32,19 +34,19 @@ import dfeed.web.web.user;
 void discussionSubscriptionPosts(string subscriptionID, int page, out string title)
 {
 	auto subscription = getUserSubscription(user.getName(), subscriptionID);
-	title = "View subscription: " ~ subscription.trigger.getTextDescription();
+	title = _!"View subscription:" ~ " " ~ subscription.trigger.getTextDescription();
 
 	enum postsPerPage = POSTS_PER_PAGE;
 	html.put(`<h1>`); html.putEncodedEntities(title);
 	if (page != 1)
-		html.put(" (page ", text(page), ")");
+		html.put(" ", _!"(page %d)".format(page));
 	html.put("</h1>");
 
 	auto postCount = query!"SELECT COUNT(*) FROM [SubscriptionPosts] WHERE [SubscriptionID] = ?".iterate(subscriptionID).selectValue!int;
 
 	if (postCount == 0)
 	{
-		html.put(`<p>It looks like there's nothing here! No posts matched this subscription so far.</p>`);
+		html.put(`<p>`, _!`It looks like there's nothing here! No posts matched this subscription so far.`, `</p>`);
 	}
 
 	foreach (string messageID; query!"SELECT [MessageID] FROM [SubscriptionPosts] WHERE [SubscriptionID] = ? ORDER BY [Time] DESC LIMIT ? OFFSET ?"
@@ -67,7 +69,7 @@ void discussionSubscriptionPosts(string subscriptionID, int page, out string tit
 	html.put(
 		`<form style="display:block;float:right;margin-top:0.5em" action="/settings" method="post">` ~
 			`<input type="hidden" name="secret" value="`), html.putEncodedEntities(userSettings.secret), html.put(`">` ~
-			`<input type="submit" name="action-subscription-edit-`), html.putEncodedEntities(subscriptionID), html.put(`" value="Edit subscription">` ~
+			`<input type="submit" name="action-subscription-edit-`), html.putEncodedEntities(subscriptionID), html.put(`" value="`, _!`Edit subscription`, `">` ~
 		`</form>` ~
 		`<div style="clear:right"></div>`
 	);
@@ -78,8 +80,8 @@ void discussionSubscriptionUnsubscribe(string subscriptionID)
 	auto subscription = getSubscription(subscriptionID);
 	subscription.unsubscribe();
 	html.put(
-		`<h1>Unsubscribe</h1>` ~
-		`<p>This subscription has been deactivated.</p>` ~
-		`<p>If you did not intend to do this, you can reactivate the subscription's actions on your <a href="/settings">settings page</a>.</p>`
+		`<h1>`, _!`Unsubscribe`, `</h1>` ~
+		`<p>`, _!`This subscription has been deactivated.`, `</p>` ~
+		`<p>`, _!`If you did not intend to do this, you can reactivate the subscription's actions on your %ssettings page%s.`.format(`<a href="/settings">`, `</a>`), `</p>`
 	);
 }

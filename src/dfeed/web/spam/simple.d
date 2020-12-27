@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014, 2015, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -21,6 +21,7 @@ import std.string;
 
 import ae.utils.text;
 
+import dfeed.loc;
 import dfeed.site;
 import dfeed.web.posting;
 import dfeed.web.spam;
@@ -32,20 +33,20 @@ class SimpleChecker : SpamChecker
 		auto ua = process.headers.get("User-Agent", "");
 
 		if (ua.startsWith("WWW-Mechanize"))
-			return handler(false, "You seem to be posting using an unusual user-agent");
+			return handler(false, _!"You seem to be posting using an unusual user-agent");
 
 		auto subject = process.draft.clientVars.get("subject", "").toLower();
 		foreach (keyword; ["kitchen", "spamtest"])
 			if (subject.contains(keyword))
-				return handler(false, "Your subject contains a suspicious keyword or character sequence");
+				return handler(false, _!"Your subject contains a suspicious keyword or character sequence");
 
 		auto text = process.draft.clientVars.get("text", "").toLower();
 		foreach (keyword; ["<a href=", "[url=", "[url]http"])
 			if (text.contains(keyword))
-				return handler(false, "Your post contains a suspicious keyword or character sequence");
+				return handler(false, _!"Your post contains a suspicious keyword or character sequence");
 
 		if (subject.length + text.length < 30 && "parent" !in process.draft.serverVars)
-			return handler(false, "Your top-level post is suspiciously short");
+			return handler(false, _!"Your top-level post is suspiciously short");
 
 		handler(true, null);
 	}

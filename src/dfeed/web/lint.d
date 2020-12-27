@@ -28,6 +28,7 @@ import std.string;
 import ae.sys.persistence;
 import ae.utils.regex;
 
+import dfeed.loc;
 import dfeed.message;
 import dfeed.web.posting;
 import dfeed.web.web.part.postbody : reURL;
@@ -58,12 +59,12 @@ class LintRule
 class NotQuotingRule : LintRule
 {
 	override @property string id() { return "notquoting"; }
-	override @property string shortDescription() { return "Parent post is not quoted."; }
+	override @property string shortDescription() { return _!"Parent post is not quoted."; }
 	override @property string longDescription() { return
-		"<p>When replying to someone's post, you should provide some context for your replies by quoting the revelant parts of their post.</p>" ~
-		"<p>Depending on the software (or its configuration) used to read your message, it may not be obvious which post you're replying to.</p>" ~
-		"<p>Thus, when writing a reply, don't delete all quoted text: instead, leave just enough to provide context for your reply. " ~
-		   "You can also insert your replies inline (interleaved with quoted text) to address specific parts of the parent post.</p>";
+		"<p>" ~ _!"When replying to someone's post, you should provide some context for your replies by quoting the revelant parts of their post." ~ "</p>" ~
+		"<p>" ~ _!"Depending on the software (or its configuration) used to read your message, it may not be obvious which post you're replying to." ~ "</p>" ~
+		"<p>" ~ _!"Thus, when writing a reply, don't delete all quoted text: instead, leave just enough to provide context for your reply." ~ " " ~
+			_!"You can also insert your replies inline (interleaved with quoted text) to address specific parts of the parent post." ~ "</p>";
 	}
 
 	override bool check(in ref PostDraft draft)
@@ -117,12 +118,12 @@ string[] getQuotedParentLines(in ref PostDraft draft)
 class WrongParentRule : LintRule
 {
 	override @property string id() { return "wrongparent"; }
-	override @property string shortDescription() { return "You are quoting a post other than the parent."; }
+	override @property string shortDescription() { return _!"You are quoting a post other than the parent."; }
 	override @property string longDescription() { return
-		"<p>When replying a message, the message you are replying to is referenced in the post's headers.</p>" ~
-		"<p>Depending on the software (or its configuration) used to read your message, your message may be displayed below its parent post. " ~
-		   "If your message contains a reply to a different post, following the conversation may become somewhat confusing.</p>" ~
-		"<p>Thus, make sure to click the \"Reply\" link on the actual post you're replying to, and quote the parent post for context.</p>";
+		"<p>" ~ _!"When replying a message, the message you are replying to is referenced in the post's headers." ~ "</p>" ~
+		"<p>" ~ _!"Depending on the software (or its configuration) used to read your message, your message may be displayed below its parent post." ~ " " ~
+			_!"If your message contains a reply to a different post, following the conversation may become somewhat confusing." ~ "</p>" ~
+		"<p>" ~ _!"Thus, make sure to click the \"Reply\" link on the actual post you're replying to, and quote the parent post for context." ~ "</p>";
 	}
 
 	override bool check(in ref PostDraft draft)
@@ -145,11 +146,11 @@ class WrongParentRule : LintRule
 class NoParentRule : LintRule
 {
 	override @property string id() { return "noparent"; }
-	override @property string shortDescription() { return "Parent post is not indicated."; }
+	override @property string shortDescription() { return _!"Parent post is not indicated."; }
 	override @property string longDescription() { return
-		"<p>When quoting someone's post, you should leave the \"On (date), (author) wrote:\" line.</p>" ~
-		"<p>Depending on the software (or its configuration) used to read your message, it may not be obvious which post you're replying to.</p>" ~
-		"<p>Thus, this line provides important context for your replies regarding the structure of the conversation.</p>";
+		"<p>" ~ _!"When quoting someone's post, you should leave the \"On (date), (author) wrote:\" line." ~ "</p>" ~
+		"<p>" ~ _!"Depending on the software (or its configuration) used to read your message, it may not be obvious which post you're replying to." ~ "</p>" ~
+		"<p>" ~ _!"Thus, this line provides important context for your replies regarding the structure of the conversation." ~ "</p>";
 	}
 
 	override bool check(in ref PostDraft draft)
@@ -185,13 +186,13 @@ class NoParentRule : LintRule
 class MultiParentRule : LintRule
 {
 	override @property string id() { return "multiparent"; }
-	override @property string shortDescription() { return "You are quoting multiple posts."; }
+	override @property string shortDescription() { return _!"You are quoting multiple posts."; }
 	override @property string longDescription() { return
-		"<p>When replying a message, the message you are replying to is referenced in the post's headers.</p>" ~
-		"<p>Depending on the software (or its configuration) used to read your message, your message may be displayed below its parent post. " ~
+		"<p>" ~ _!"When replying a message, the message you are replying to is referenced in the post's headers." ~ "</p>" ~
+		"<p>" ~ _!"Depending on the software (or its configuration) used to read your message, your message may be displayed below its parent post." ~ " " ~
 		   "If your message contains a reply to a different post, following the conversation may become somewhat confusing.</p>" ~
-		"<p>Thus, you should avoid replying to multiple posts in one reply. " ~
-		   "If applicable, you should split your message into several, each as a reply to its corresponding parent post.</p>";
+		"<p>" ~ _!"Thus, you should avoid replying to multiple posts in one reply." ~ " " ~
+		   _!"If applicable, you should split your message into several, each as a reply to its corresponding parent post." ~ "</p>";
 	}
 
 	override bool check(in ref PostDraft draft)
@@ -209,12 +210,12 @@ class MultiParentRule : LintRule
 class TopPostingRule : LintRule
 {
 	override @property string id() { return "topposting"; }
-	override @property string shortDescription() { return "You are top-posting."; }
+	override @property string shortDescription() { return _!"You are top-posting."; }
 	override @property string longDescription() { return
-		"<p>When replying a message, it is generally preferred to add your reply under the quoted parent text.</p>" ~
-		"<p>Depending on the software (or its configuration) used to read your message, your message may not be displayed below its parent post. " ~
-		   "In such cases, the quoted text provides context for your reply, and readers would need to first read the quoted text below your reply for context.</p>" ~
-		"<p>Thus, you should add your reply below the quoted text (or reply to individual paragraphs inline), rather than above it.</p>";
+		"<p>" ~ _!"When replying a message, it is generally preferred to add your reply under the quoted parent text." ~ "</p>" ~
+		"<p>" ~ _!"Depending on the software (or its configuration) used to read your message, your message may not be displayed below its parent post." ~ " " ~
+		   _!"In such cases, the quoted text provides context for your reply, and readers would need to first read the quoted text below your reply for context." ~ "</p>" ~
+		"<p>" ~ _!"Thus, you should add your reply below the quoted text (or reply to individual paragraphs inline), rather than above it." ~ "</p>";
 	}
 
 	override bool check(in ref PostDraft draft)
@@ -261,10 +262,10 @@ class OverquotingRule : LintRule
 	override @property string id() { return "overquoting"; }
 	override @property string shortDescription() { return "You are overquoting."; }
 	override @property string longDescription() { return
-		"<p>The ratio between quoted and added text is vastly disproportional.</p>" ~
-		"<p>Quoting should be limited to the amount necessary to provide context for your replies. " ~
-		   "Quoting posts in their entirety is thus rarely necessary, and is a waste of vertical space.</p>" ~
-		"<p>Please trim the quoted text to just the relevant parts you're addressing in your reply, or add more content to your post.</p>";
+		"<p>" ~ _!"The ratio between quoted and added text is vastly disproportional." ~ "</p>" ~
+		"<p>" ~ _!"Quoting should be limited to the amount necessary to provide context for your replies." ~ " " ~
+		   _!"Quoting posts in their entirety is thus rarely necessary, and is a waste of vertical space." ~ "</p>" ~
+		"<p>" ~ _!"Please trim the quoted text to just the relevant parts you're addressing in your reply, or add more content to your post." ~ "</p>";
 	}
 
 	bool checkLines(string[] lines)
@@ -384,14 +385,14 @@ class OverquotingRule : LintRule
 class ShortLinkRule : LintRule
 {
 	override @property string id() { return "shortlink"; }
-	override @property string shortDescription() { return "Don't use URL shorteners."; }
+	override @property string shortDescription() { return _!"Don't use URL shorteners."; }
 	override @property string longDescription() { return
-		"<p>URL shortening services, such as TinyURL, are useful in cases where space is at a premium, e.g. in IRC or Twitter messages. " ~
-		   "In other circumstances, however, they provide little benefit, and have the significant disadvantage of being opaque: " ~
-		   "readers can only guess where the link will lead to before they click it.</p>" ~
-		"<p>Additionally, URL shortening services come and go - your link may work today, but might not in a year or two.</p>" ~
-		"<p>Thus, do not use URL shorteners when posting messages online - post the full link instead, even if it seems exceedingly long. " ~
-		   "If it is too long to be inserted inline, add it as a footnote instead.</p>";
+		"<p>" ~ _!"URL shortening services, such as TinyURL, are useful in cases where space is at a premium, e.g. in IRC or Twitter messages." ~ " " ~
+		   _!"In other circumstances, however, they provide little benefit, and have the significant disadvantage of being opaque:" ~ " " ~
+		   _!"readers can only guess where the link will lead to before they click it." ~ "</p>" ~
+		"<p>" ~ _!"Additionally, URL shortening services come and go - your link may work today, but might not in a year or two." ~ "</p>" ~
+		"<p>" ~ _!"Thus, do not use URL shorteners when posting messages online - post the full link instead, even if it seems exceedingly long." ~ " " ~
+		   _!"If it is too long to be inserted inline, add it as a footnote instead." ~ "</p>";
 	}
 
 	// http://longurl.org/services
@@ -423,7 +424,7 @@ class ShortLinkRule : LintRule
 			};
 		http.perform();
 
-		enforce(result, "Could not expand URL: " ~ url);
+		enforce(result, _!"Could not expand URL:" ~ " " ~ url);
 		return result;
 	}
 
@@ -453,10 +454,10 @@ class ShortLinkRule : LintRule
 class LinkInSubjectRule : LintRule
 {
 	override @property string id() { return "linkinsubject"; }
-	override @property string shortDescription() { return "Don't put links in the subject."; }
+	override @property string shortDescription() { return _!"Don't put links in the subject."; }
 	override @property string longDescription() { return
-		"<p>Links in message subjects are usually not clickable.</p>" ~
-		"<p>Please move the link in the message body instead.</p>";
+		"<p>" ~ _!"Links in message subjects are usually not clickable." ~ "</p>" ~
+		"<p>" ~ _!"Please move the link in the message body instead." ~ "</p>";
 	}
 
 	override bool check(in ref PostDraft draft)
@@ -484,10 +485,10 @@ class LinkInSubjectRule : LintRule
 class NecropostingRule : LintRule
 {
 	override @property string id() { return "necroposting"; }
-	override @property string shortDescription() { return "Avoid replying to very old threads."; }
+	override @property string shortDescription() { return _!"Avoid replying to very old threads."; }
 	override @property string longDescription() { return
-		"<p>The thread / post you are replying to is very old.</p>" ~
-		"<p>Consider creating a new thread instead of replying to an existing one.</p>";
+		"<p>" ~ _!"The thread / post you are replying to is very old." ~ "</p>" ~
+		"<p>" ~ _!"Consider creating a new thread instead of replying to an existing one." ~ "</p>";
 	}
 
 	enum warnThreshold = (4 * 3).weeks;

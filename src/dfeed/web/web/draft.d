@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -26,6 +26,7 @@ import ae.net.ietf.url : UrlParameters;
 import ae.utils.json : toJson, jsonParse;
 import ae.utils.text : randomString;
 
+import dfeed.loc;
 import dfeed.database : query;
 import dfeed.groups : GroupInfo;
 import dfeed.message : Rfc850Post;
@@ -78,9 +79,9 @@ void ensureDraftWritable(string draftID)
 		case PostDraft.status.discarded:
 			return;
 		case PostDraft.status.sent:
-			throw new Exception("Can't edit this message. It has already been sent.");
+			throw new Exception(_!"Can't edit this message. It has already been sent.");
 		case PostDraft.status.moderation:
-			throw new Exception("Can't edit this message. It has already been submitted for moderation.");
+			throw new Exception(_!"Can't edit this message. It has already been submitted for moderation.");
 	}
 }
 

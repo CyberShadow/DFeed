@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -20,11 +20,13 @@ module dfeed.web.web.part.post;
 import std.algorithm.iteration : map;
 import std.array : array, join, replicate;
 import std.conv : text;
+import std.format;
 
 import ae.net.ietf.message : Rfc850Message;
 import ae.utils.text.html : encodeHtmlEntities;
 import ae.utils.xmllite : putEncodedEntities;
 
+import dfeed.loc;
 import dfeed.message : idToUrl, Rfc850Post, idToFragment;
 import dfeed.web.user : User;
 import dfeed.web.web.page : html;
@@ -58,34 +60,34 @@ PostAction[] getPostActions(Rfc850Message msg)
 	PostAction[] actions;
 	auto id = msg.id;
 	if (userSettings.groupViewMode == "basic")
-		actions ~= PostAction("permalink", "Permalink",
-			"Canonical link to this post. See \"Canonical links\" on the Help page for more information.",
+		actions ~= PostAction("permalink", _!"Permalink",
+			_!"Canonical link to this post. See \"Canonical links\" on the Help page for more information.",
 			idToUrl(id), "link");
 	if (true)
-		actions ~= PostAction("replylink", "Reply",
-			"Reply to this post",
+		actions ~= PostAction("replylink", _!"Reply",
+			_!"Reply to this post",
 			idToUrl(id, "reply"), "reply");
 /*
 	if (mailHide)
-		actions ~= PostAction("emaillink", "Email",
-			"Solve a CAPTCHA to obtain this poster's email address.",
+		actions ~= PostAction("emaillink", _!"Email",
+			_!"Solve a CAPTCHA to obtain this poster's email address.",
 			mailHide.getUrl(msg.authorEmail), "email");
 */
 	if (user.isLoggedIn() && msg.references.length == 0)
-		actions ~= PostAction("subscribelink", "Subscribe",
-			"Subscribe to this thread",
+		actions ~= PostAction("subscribelink", _!"Subscribe",
+			_!"Subscribe to this thread",
 			idToUrl(id, "subscribe"), "star");
 	if (user.getLevel() >= User.Level.canFlag && user.createdAt() < msg.time)
-		actions ~= PostAction("flaglink", "Flag",
-			"Flag this post for moderator intervention",
+		actions ~= PostAction("flaglink", _!"Flag",
+			_!"Flag this post for moderator intervention",
 			idToUrl(id, "flag"), "flag");
 	if (user.getLevel() >= User.Level.hasRawLink)
-		actions ~= PostAction("sourcelink", "Source",
-			"View this message's source code",
+		actions ~= PostAction("sourcelink", _!"Source",
+			_!"View this message's source code",
 			idToUrl(id, "source"), "source");
 	if (user.getLevel() >= User.Level.canModerate)
-		actions ~= PostAction("modlink", "Moderate",
-			"Perform moderation actions on this post",
+		actions ~= PostAction("modlink", _!"Moderate",
+			_!"Perform moderation actions on this post",
 			idToUrl(id, "moderate"), "delete");
 	return actions;
 }
@@ -140,12 +142,12 @@ void miniPostInfo(Rfc850Post post, Rfc850Post[string] knownPosts, bool showActio
 		html.put(
 			`<table class="mini-post-info"><tr>` ~
 				`<td class="mini-post-info-avatar">`);
-		putGravatar(gravatarHash, "http://www.gravatar.com/" ~ gravatarHash, `title="` ~ encodeHtmlEntities(author) ~ `'s Gravatar profile"`, 32);
+		putGravatar(gravatarHash, "http://www.gravatar.com/" ~ gravatarHash, `title="` ~ encodeHtmlEntities(_!`%s's Gravatar profile`.format(author)) ~ `"`, 32);
 		html.put(
 				`</td>` ~
 				`<td>` ~
-					`Posted by <b>`), html.putEncodedEntities(author), html.put(`</b>`,
-					parentLink ? `<br>in reply to ` ~ parentLink : null,
+					_!`Posted by %s`.format(`<b>` ~ encodeHtmlEntities(author) ~ `</b>`),
+					parentLink ? `<br>` ~ _!`in reply to` ~ ` ` ~ parentLink : null,
 				`</td>`
 		);
 		if (showActions)
@@ -185,7 +187,7 @@ string[] formatPostParts(Rfc850Post post)
 						:
 							`<a href="` ~ encodeHtmlEntities(partUrl) ~ `">` ~
 							encodeHtmlEntities(mimeType) ~
-							`</a> part` ~
+							`</a> ` ~ _!`part` ~
 							(description ? ` (` ~ encodeHtmlEntities(description) ~ `)` : "");
 			}
 		}
@@ -202,18 +204,18 @@ void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts, bool markAsRead 
 
 	auto parentLink = getParentLink(post, knownPosts);
 	if (parentLink)
-		infoBits ~= `Posted in reply to ` ~ parentLink;
+		infoBits ~= _!`Posted in reply to` ~ ` ` ~ parentLink;
 
 	auto partList = formatPostParts(post);
 	if (partList.length)
 		infoBits ~=
-			`Attachments:<ul class="post-info-parts"><li>` ~ partList.join(`</li><li>`) ~ `</li></ul>`;
+			_!`Attachments:` ~ `<ul class="post-info-parts"><li>` ~ partList.join(`</li><li>`) ~ `</li></ul>`;
 
 	if (knownPosts is null && post.cachedThreadID)
 		infoBits ~=
-			`<a href="` ~ encodeHtmlEntities(idToThreadUrl(post.id, post.cachedThreadID)) ~ `">View in thread</a>`;
+			`<a href="` ~ encodeHtmlEntities(idToThreadUrl(post.id, post.cachedThreadID)) ~ `">` ~ _!`View in thread` ~ `</a>`;
 
-	string repliesTitle = `Replies to `~encodeHtmlEntities(post.author)~`'s post from `~encodeHtmlEntities(formatShortTime(post.time, false));
+	string repliesTitle = encodeHtmlEntities(_!`Replies to %s's post from %s`.format(post.author, formatShortTime(post.time, false)));
 
 	with (post.msg)
 	{
@@ -223,7 +225,7 @@ void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts, bool markAsRead 
 			`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(2), `</tr>` ~ // Fixed layout dummies
 			`<tr class="post-header"><th colspan="2">` ~
 				`<div class="post-time">`, summarizeTime(time), `</div>` ~
-				`<a title="Permanent link to this post" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" class="permalink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread"), `">`,
+				`<a title="`, _!`Permanent link to this post`, `" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" class="permalink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread"), `">`,
 					encodeHtmlEntities(rawSubject),
 				`</a>` ~
 			`</th></tr>` ~
@@ -235,7 +237,7 @@ void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts, bool markAsRead 
 			`<tr>` ~
 				`<td class="post-info">` ~
 					`<div class="post-author">`), html.putEncodedEntities(author), html.put(`</div>`);
-		putGravatar(gravatarHash, "http://www.gravatar.com/" ~ gravatarHash, `title="` ~ encodeHtmlEntities(author) ~ `'s Gravatar profile"`, 80);
+		putGravatar(gravatarHash, "http://www.gravatar.com/" ~ gravatarHash, `title="` ~ encodeHtmlEntities(_!`%s's Gravatar profile"`.format(author)), 80);
 		if (infoBits.length)
 		{
 			html.put(`<hr>`);

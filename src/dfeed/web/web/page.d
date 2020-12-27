@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -19,6 +19,8 @@ module dfeed.web.web.page;
 
 import ae.utils.textout : StringBuffer;
 
+import dfeed.loc;
+
 StringBuffer html;
 
 // ***********************************************************************
@@ -31,5 +33,5 @@ class Redirect : Throwable
 
 class NotFoundException : Exception
 {
-	this(string str = "The specified resource cannot be found on this server.") { super(str); }
+	this(string str = null) { super(str ? str : _!"The specified resource cannot be found on this server."); }
 }

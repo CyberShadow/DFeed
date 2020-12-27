@@ -25,6 +25,7 @@ import std.exception;
 
 import ae.utils.text.html : encodeHtmlEntities;
 
+import dfeed.loc;
 import dfeed.groups : GroupInfo;
 import dfeed.web.web.cache;
 import dfeed.web.web.page : html;
@@ -86,14 +87,14 @@ void pager(string base, int page, int pageCount, int maxWidth = 50)
 	html.put(
 		`<tr class="pager"><th colspan="3">` ~
 			`<div class="pager-left">`,
-				linkOrNot("&laquo; First", 1, page!=1),
+				linkOrNot("&laquo; " ~ _!"First", 1, page!=1),
 				`&nbsp;&nbsp;&nbsp;`,
-				linkOrNot("&lsaquo; Prev", page-1, page>1),
+				linkOrNot("&lsaquo; " ~ _!"Prev", page-1, page>1),
 			`</div>` ~
 			`<div class="pager-right">`,
-				linkOrNot("Next &rsaquo;", page+1, page<pageCount),
+				linkOrNot(_!"Next" ~ " &rsaquo;", page+1, page<pageCount),
 				`&nbsp;&nbsp;&nbsp;`,
-				linkOrNot("Last &raquo; ", pageCount, page!=pageCount && pageCount!=int.max),
+				linkOrNot(_!"Last" ~ " &raquo; ", pageCount, page!=pageCount && pageCount!=int.max),
 			`</div>` ~
 			`<div class="pager-numbers">`, pager.join(` `), `</div>` ~
 		`</th></tr>`);

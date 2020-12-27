@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -20,7 +20,9 @@ module dfeed.web.web.view.settings;
 import std.algorithm.iteration;
 import std.algorithm.searching;
 import std.exception;
+import std.format;
 
+import dfeed.loc;
 import dfeed.sinks.subscriptions;
 import dfeed.site : site;
 import dfeed.web.web.page : html, Redirect;
@@ -30,6 +32,7 @@ import dfeed.web.web.user;
 import ae.net.ietf.url;
 import ae.utils.aa : aaGet;
 import ae.utils.json;
+import ae.utils.text.html : encodeHtmlEntities;
 import ae.utils.xmllite;
 
 string settingsReferrer;
@@ -41,10 +44,10 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 	if (postVars)
 	{
 		if (postVars.get("secret", "") != userSettings.secret)
-			throw new Exception("XSRF secret verification failed. Are your cookies enabled?");
+			throw new Exception(_!"XSRF secret verification failed. Are your cookies enabled?");
 
 		auto actions = postVars.keys.filter!(name => name.startsWith("action-"));
-		enforce(!actions.empty, "No action specified");
+		enforce(!actions.empty, _!"No action specified");
 		auto action = actions.front[7..$];
 
 		if (action == "cancel")
@@ -83,12 +86,12 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 		{
 			string message;
 			if (action == "subscription-undelete")
-				message = "Subscription undeleted.";
+				message = _!"Subscription undeleted.";
 			else
 			if (subscriptionExists(postVars.get("id", null)))
-				message = "Subscription saved.";
+				message = _!"Subscription saved.";
 			else
-				message = "Subscription created.";
+				message = _!"Subscription created.";
 
 			auto subscription = Subscription(user.getName(), postVars);
 			try
@@ -106,10 +109,10 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 		if (action.skipOver("subscription-delete-"))
 		{
 			auto subscriptionID = action;
-			enforce(subscriptionExists(subscriptionID), "This subscription doesn't exist.");
+			enforce(subscriptionExists(subscriptionID), _!"This subscription doesn't exist.");
 
 			html.put(
-				`<div class="forum-notice">Subscription deleted. ` ~
+				`<div class="forum-notice">`, _!`Subscription deleted.`, ` ` ~
 				`<input type="submit" name="action-subscription-undelete" value="Undo" form="subscription-form">` ~
 				`</div>` ~
 				`<div style="display:none">`
@@ -127,41 +130,41 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 		if (action == "subscription-create-content")
 			return discussionSubscriptionEdit(createSubscription(user.getName(), "content"));
 		else
-			throw new Exception("Unknown action: " ~ action);
+			throw new Exception(_!"Unknown action:" ~ " " ~ action);
 	}
 
 	html.put(
 		`<form method="post" id="settings-form">` ~
-		`<h1>Settings</h1>` ~
+		`<h1>`, _!`Settings`, `</h1>` ~
 		`<input type="hidden" name="referrer" value="`), html.putEncodedEntities(settingsReferrer), html.put(`">` ~
 		`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
 
-		`<h2>User Interface</h2>` ~
+		`<h2>`, _!`User Interface`, `</h2>`,
 
-		`View mode: <select name="groupviewmode">`
+		_!`View mode:`, ` <select name="groupviewmode">`
 	);
 	auto currentMode = userSettings.groupViewMode;
-	foreach (mode; ["basic", "threaded", "horizontal-split", "vertical-split"])
-		html.put(`<option value="`, mode, `"`, mode == currentMode ? ` selected` : null, `>`, mode, `</option>`);
+	foreach (mode; allViewModes)
+		html.put(`<option value="`, mode, `"`, mode == currentMode ? ` selected` : null, `>`, viewModeName(mode), `</option>`);
 	html.put(
 		`</select><br>` ~
 
 		`<input type="checkbox" name="enable-keynav" id="enable-keynav"`, userSettings.enableKeyNav == "true" ? ` checked` : null, `>` ~
-		`<label for="enable-keynav">Enable keyboard shortcuts</label> (<a href="/help#keynav">?</a>)<br>` ~
+		`<label for="enable-keynav">`, _!`Enable keyboard shortcuts`, `</label> (<a href="/help#keynav">?</a>)<br>` ~
 
-		`<span title="Automatically open messages after selecting them.&#13;&#10;Applicable to threaded, horizontal-split and vertical-split view modes.">` ~
+		`<span title="`, _!`Automatically open messages after selecting them.`, `&#13;&#10;`, _!`Applicable to threaded, horizontal-split and vertical-split view modes.`, `">` ~
 			`<input type="checkbox" name="auto-open" id="auto-open"`, userSettings.autoOpen == "true" ? ` checked` : null, `>` ~
-			`<label for="auto-open">Focus follows message</label>` ~
+			`<label for="auto-open">`, _!`Focus follows message`, `</label>` ~
 		`</span><br>` ~
 
 		`<p>` ~
-			`<input type="submit" name="action-save" value="Save">` ~
-			`<input type="submit" name="action-cancel" value="Cancel">` ~
+			`<input type="submit" name="action-save" value="`, _!`Save`, `">` ~
+			`<input type="submit" name="action-cancel" value="`, _!`Cancel`, `">` ~
 		`</p>` ~
 
 		`<hr>` ~
 
-		`<h2>Subscriptions</h2>`
+		`<h2>`, _!`Subscriptions`, `</h2>`
 	);
 	if (user.isLoggedIn())
 	{
@@ -169,16 +172,16 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 		if (subscriptions.length)
 		{
 			html.put(`<table id="subscriptions">`);
-			html.put(`<tr><th>Subscription</th><th colspan="4">Actions</th></tr>`);
+			html.put(`<tr><th>`, _!`Subscription`, `</th><th colspan="4">`, _!`Actions`, `</th></tr>`);
 			foreach (subscription; subscriptions)
 			{
 				html.put(
 					`<tr>` ~
 						`<td>`), subscription.trigger.putDescription(html), html.put(`</td>` ~
-						`<td><input type="submit" form="subscriptions-form" name="action-subscription-view-`  , subscription.id, `" value="View posts"></td>` ~
-						`<td><input type="submit" form="subscriptions-form" name="action-subscription-feed-`  , subscription.id, `" value="Get ATOM feed"></td>` ~
-						`<td><input type="submit" form="subscriptions-form" name="action-subscription-edit-`  , subscription.id, `" value="Edit"></td>` ~
-						`<td><input type="submit" form="subscriptions-form" name="action-subscription-delete-`, subscription.id, `" value="Delete"></td>` ~
+						`<td><input type="submit" form="subscriptions-form" name="action-subscription-view-`  , subscription.id, `" value="`, _!`View posts`, `"></td>` ~
+						`<td><input type="submit" form="subscriptions-form" name="action-subscription-feed-`  , subscription.id, `" value="`, _!`Get ATOM feed`, `"></td>` ~
+						`<td><input type="submit" form="subscriptions-form" name="action-subscription-edit-`  , subscription.id, `" value="`, _!`Edit`, `"></td>` ~
+						`<td><input type="submit" form="subscriptions-form" name="action-subscription-delete-`, subscription.id, `" value="`, _!`Delete`, `"></td>` ~
 					`</tr>`
 				);
 			}
@@ -187,13 +190,13 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 			);
 		}
 		else
-			html.put(`<p>You have no subscriptions.</p>`);
+			html.put(`<p>`, _!`You have no subscriptions.`, `</p>`);
 		html.put(
-			`<p><input type="submit" form="subscriptions-form" name="action-subscription-create-content" value="Create new content alert subscription"></p>`
+			`<p><input type="submit" form="subscriptions-form" name="action-subscription-create-content" value="`, _!`Create new content alert subscription`, `"></p>`
 		);
 	}
 	else
-		html.put(`<p>Please <a href="/loginform">log in</a> to manage your subscriptions and account settings.</p>`);
+		html.put(`<p>`, _!`Please %slog in%s to manage your subscriptions and account settings.`.format(`<a href="/loginform">`, `</a>`), `</p>`);
 
 	html.put(
 		`</form>` ~
@@ -207,14 +210,14 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 	if (user.isLoggedIn())
 	{
 		html.put(
-			`<p><input type="submit" form="subscriptions-form" name="action-subscription-create-content" value="Create new content alert subscription"></p>` ~
+			`<p><input type="submit" form="subscriptions-form" name="action-subscription-create-content" value="`, _!`Create new content alert subscription`, `"></p>` ~
 
 			`<hr>` ~
-			`<h2>Account settings</h2>` ~
+			`<h2>`, _!`Account settings`, `</h2>` ~
 			`<table id="account-settings">` ~
-			`<tr><td>Change the password used to log in to this account.` ~       `</td><td><form action="/change-password" method="post"><input type="submit" value="Change password"></form></td></tr>` ~
-			`<tr><td>Download a file containing all data tied to this account.` ~ `</td><td><form action="/export-account"  method="post"><input type="submit" value="Export data"    ></form></td></tr>` ~
-			`<tr><td>Permanently delete this account.` ~                          `</td><td><form action="/delete-account"  method="post"><input type="submit" value="Delete account" ></form></td></tr>` ~
+			`<tr><td>`, _!`Change the password used to log in to this account.`       , `</td><td><form action="/change-password" method="post"><input type="submit" value="`, _!`Change password`, `"></form></td></tr>` ~
+			`<tr><td>`, _!`Download a file containing all data tied to this account.` , `</td><td><form action="/export-account"  method="post"><input type="submit" value="`, _!`Export data`,     `"></form></td></tr>` ~
+			`<tr><td>`, _!`Permanently delete this account.`                          , `</td><td><form action="/delete-account"  method="post"><input type="submit" value="`, _!`Delete account`,  `"></form></td></tr>` ~
 			`</table>`
 		);
 	}
@@ -224,18 +227,18 @@ void discussionSubscriptionEdit(Subscription subscription)
 {
 	html.put(
 		`<form action="/settings" method="post" id="subscription-form">` ~
-		`<h1>Edit subscription</h1>` ~
+		`<h1>`, _!`Edit subscription`, `</h1>` ~
 		`<input type="hidden" name="referrer" value="`), html.putEncodedEntities(settingsReferrer), html.put(`">` ~
 		`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
 		`<input type="hidden" name="id" value="`, subscription.id, `">` ~
 
-		`<h2>Condition</h2>` ~
+		`<h2>`, _!`Condition`, `</h2>` ~
 		`<input type="hidden" name="trigger-type" value="`, subscription.trigger.type, `">`
 	);
 	subscription.trigger.putEditHTML(html);
 
 	html.put(
-		`<h2>Actions</h2>`
+		`<h2>`, _!`Actions`, `</h2>`
 	);
 
 	foreach (action; subscription.actions)
@@ -243,8 +246,8 @@ void discussionSubscriptionEdit(Subscription subscription)
 
 	html.put(
 		`<p>` ~
-			`<input type="submit" name="action-subscription-save" value="Save">` ~
-			`<input type="submit" name="action-subscription-cancel" value="Cancel">` ~
+			`<input type="submit" name="action-subscription-save" value="`, _!`Save`, `">` ~
+			`<input type="submit" name="action-subscription-cancel" value="`, _!`Cancel`, `">` ~
 		`</p>` ~
 		`</form>`
 	);
@@ -252,20 +255,20 @@ void discussionSubscriptionEdit(Subscription subscription)
 
 void discussionChangePassword(UrlParameters postVars)
 {
-	enforce(user.isLoggedIn(), "This action is only meaningful for logged-in users.");
-	html.put(`<h1>Change password</h1>`);
+	enforce(user.isLoggedIn(), _!"This action is only meaningful for logged-in users.");
+	html.put(`<h1>`, _!`Change password`, `</h1>`);
 	if ("old-password" !in postVars)
 	{
 		html.put(
-			`<p>Here you can change the password used to log in to this `), html.putEncodedEntities(site.name), html.put(` account.</p>` ~
-			`<p>Please pick your new password carefully, as there are no password recovery options.</p>` ~
+			`<p>`, _!`Here you can change the password used to log in to this %s account.`.format(encodeHtmlEntities(site.name)), `</p>` ~
+			`<p>`, _!`Please pick your new password carefully, as there are no password recovery options.`, `</p>` ~
 			`<form method="post">` ~
 			`<table>` ~
-			`<tr><td>Current password:      </td><td><input name="old-password"   type="password"></td></tr>` ~
-			`<tr><td>New password:          </td><td><input name="new-password"   type="password"></td></tr>` ~
-			`<tr><td>New password (confirm):</td><td><input name="new-password-2" type="password"></td></tr>` ~
+			`<tr><td>`, _!`Current password:`      , `</td><td><input name="old-password"   type="password"></td></tr>` ~
+			`<tr><td>`, _!`New password:`          , `</td><td><input name="new-password"   type="password"></td></tr>` ~
+			`<tr><td>`, _!`New password (confirm):`, `</td><td><input name="new-password-2" type="password"></td></tr>` ~
 			`</table>` ~
-			`<input type="submit" value="Change password">` ~
+			`<input type="submit" value="`, _!`Change password`, `">` ~
 			`<input type="hidden" name="secret" value="`); html.putEncodedEntities(userSettings.secret); html.put(`">` ~
 			`</form>`
 		);
@@ -273,26 +276,26 @@ void discussionChangePassword(UrlParameters postVars)
 	else
 	{
 		if (postVars.get("secret", "") != userSettings.secret)
-			throw new Exception("XSRF secret verification failed");
-		user.checkPassword(postVars.aaGet("old-password")).enforce("The current password you entered is incorrect");
-		enforce(postVars.aaGet("new-password") == postVars.aaGet("new-password-2"), "New passwords do not match");
+			throw new Exception(_!"XSRF secret verification failed");
+		user.checkPassword(postVars.aaGet("old-password")).enforce(_!"The current password you entered is incorrect");
+		enforce(postVars.aaGet("new-password") == postVars.aaGet("new-password-2"), _!"New passwords do not match");
 		user.changePassword(postVars.aaGet("new-password"));
 		html.put(
-			`<p>Password successfully changed.</p>`
+			`<p>`, _!`Password successfully changed.`, `</p>`
 		);
 	}
 }
 
 JSONFragment discussionExportAccount(UrlParameters postVars)
 {
-	enforce(user.isLoggedIn(), "This action is only meaningful for logged-in users.");
-	html.put(`<h1>Export account data</h1>`);
+	enforce(user.isLoggedIn(), _!"This action is only meaningful for logged-in users.");
+	html.put(`<h1>`, _!`Export account data`, `</h1>`);
 	if ("do-export" !in postVars)
 	{
 		html.put(
-			`<p>Here you can export the information regarding your account from the `), html.putEncodedEntities(site.name), html.put(` database.</p>` ~
+			`<p>`, _!`Here you can export the information regarding your account from the %s database.`.format(encodeHtmlEntities(site.name)), `</p>` ~
 			`<form method="post">` ~
-			`<input type="submit" name="do-export" value="Export">` ~
+			`<input type="submit" name="do-export" value="`, _!`Export`, `">` ~
 			`<input type="hidden" name="secret" value="`); html.putEncodedEntities(userSettings.secret); html.put(`">` ~
 			`</form>`
 		);
@@ -301,7 +304,7 @@ JSONFragment discussionExportAccount(UrlParameters postVars)
 	else
 	{
 		if (postVars.get("secret", "") != userSettings.secret)
-			throw new Exception("XSRF secret verification failed");
+			throw new Exception(_!"XSRF secret verification failed");
 		auto data = user.exportData;
 		return data.toJson.JSONFragment;
 	}
@@ -309,20 +312,20 @@ JSONFragment discussionExportAccount(UrlParameters postVars)
 
 void discussionDeleteAccount(UrlParameters postVars)
 {
-	enforce(user.isLoggedIn(), "This action is only meaningful for logged-in users.");
-	html.put(`<h1>Delete account</h1>`);
+	enforce(user.isLoggedIn(), _!"This action is only meaningful for logged-in users.");
+	html.put(`<h1>`, _!`Delete account`, `</h1>`);
 	if ("username" !in postVars)
 	{
 		html.put(
-			`<p>Here you can permanently delete your `), html.putEncodedEntities(site.name), html.put(` account and associated data from the database.</p>` ~
-			`<p>After deletion, the account username will become available for registration again.</p>` ~
-			`<p>To confirm deletion, please enter your account username and password.</p>` ~
+			`<p>`, _!`Here you can permanently delete your %s account and associated data from the database.`.format(encodeHtmlEntities(site.name)), `</p>` ~
+			`<p>`, _!`After deletion, the account username will become available for registration again.`, `</p>` ~
+			`<p>`, _!`To confirm deletion, please enter your account username and password.`, `</p>` ~
 			`<form method="post">` ~
 			`<table>` ~
-			`<tr><td>Account username:</td><td><input name="username"></td></tr>` ~
-			`<tr><td>Account password:</td><td><input name="password" type="password"></td></tr>` ~
+			`<tr><td>`, _!`Account username:`, `</td><td><input name="username"></td></tr>` ~
+			`<tr><td>`, _!`Account password:`, `</td><td><input name="password" type="password"></td></tr>` ~
 			`</table>` ~
-			`<input type="submit" value="Delete this account">` ~
+			`<input type="submit" value="`, _!`Delete this account`, `">` ~
 			`<input type="hidden" name="secret" value="`); html.putEncodedEntities(userSettings.secret); html.put(`">` ~
 			`</form>`
 		);
@@ -330,13 +333,13 @@ void discussionDeleteAccount(UrlParameters postVars)
 	else
 	{
 		if (postVars.get("secret", "") != userSettings.secret)
-			throw new Exception("XSRF secret verification failed");
-		enforce(postVars.aaGet("username") == user.getName(), "The username you entered does not match the current logged-in account");
-		user.checkPassword(postVars.aaGet("password")).enforce("The password you entered is incorrect");
+			throw new Exception(_!"XSRF secret verification failed");
+		enforce(postVars.aaGet("username") == user.getName(), _!"The username you entered does not match the current logged-in account");
+		user.checkPassword(postVars.aaGet("password")).enforce(_!"The password you entered is incorrect");
 
 		user.deleteAccount();
 		html.put(
-			`<p>Account successfully deleted!</p>`
+			`<p>`, _!`Account successfully deleted!`, `</p>`
 		);
 	}
 }

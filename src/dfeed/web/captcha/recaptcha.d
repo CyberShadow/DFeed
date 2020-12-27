@@ -1,4 +1,4 @@
-/*  Copyright (C) 2012, 2014, 2015, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2012, 2014, 2015, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -21,6 +21,7 @@ import std.string;
 import ae.net.http.client;
 import ae.utils.sini;
 
+import dfeed.loc;
 import dfeed.web.captcha;
 
 class Recaptcha : Captcha
@@ -79,9 +80,9 @@ class Recaptcha : Captcha
 		switch (code)
 		{
 			case "incorrect-captcha-sol":
-				return "The CAPTCHA solution was incorrect";
+				return _!"The CAPTCHA solution was incorrect";
 			case "captcha-timeout":
-				return "The solution was received after the CAPTCHA timed out";
+				return _!"The solution was received after the CAPTCHA timed out";
 			default:
 				return code;
 		}

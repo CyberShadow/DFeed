@@ -97,14 +97,14 @@ protected:
 			// Temporary hack to catch Phobos bug
 			ubyte[] zcode;
 
-			enum advice = "Try clearing your browser's cookies. Create an account to avoid repeated incidents.";
+			string advice = _!"Try clearing your browser's cookies. Create an account to avoid repeated incidents.";
 
 			try
 				zcode = Base64.decode(b64);
 			catch (Throwable /* Base64 throws AssertErrors on invalid data */)
 			{
 				import std.file; write("bad-base64.txt", b64);
-				throw new Exception("Malformed Base64 in read post history cookie. " ~ advice);
+				throw new Exception(_!"Malformed Base64 in read post history cookie." ~ " " ~ advice);
 			}
 
 			try
@@ -112,7 +112,7 @@ protected:
 			catch (ZlibException e)
 			{
 				import std.file; write("bad-zlib.z", zcode);
-				throw new Exception("Malformed deflated data in read post history cookie (" ~ e.msg ~ "). " ~ advice);
+				throw new Exception(_!"Malformed deflated data in read post history cookie" ~ " (" ~ e.msg ~ "). " ~ advice);
 			}
 		}
 		else
@@ -300,9 +300,9 @@ class GuestUser : User
 
 	override void register(string username, string password, bool remember)
 	{
-		enforce(username.length, "Please enter a username");
-		enforce(username.length <= 32, "Username too long");
-		enforce(password.length <= maxPasswordLength, "Password too long");
+		enforce(username.length, _!"Please enter a username");
+		enforce(username.length <= 32, _!"Username too long");
+		enforce(password.length <= maxPasswordLength, _!"Password too long");
 
 		// Create user
 		auto session = randomString();
@@ -319,17 +319,18 @@ class GuestUser : User
 		this.set("session", session, remember ? SettingType.client : SettingType.session);
 	}
 
-	override bool checkPassword(string password) { throw new Exception("Not logged in"); }
-	override void changePassword(string password) { throw new Exception("Not logged in"); }
-	override void logOut() { throw new Exception("Not logged in"); }
-	override AccountData exportData() { throw new Exception("Not logged in"); } // just check your cookies
-	override void deleteAccount() { throw new Exception("Not logged in"); } // just clear your cookies
+	override bool checkPassword(string password) { throw new Exception(_!"Not logged in"); }
+	override void changePassword(string password) { throw new Exception(_!"Not logged in"); }
+	override void logOut() { throw new Exception(_!"Not logged in"); }
+	override AccountData exportData() { throw new Exception(_!"Not logged in"); } // just check your cookies
+	override void deleteAccount() { throw new Exception(_!"Not logged in"); } // just clear your cookies
 	override bool isLoggedIn() { return false; }
 	override SysTime createdAt() { return Clock.currTime(); }
 }
 
 // ***************************************************************************
 
+import dfeed.loc;
 import dfeed.database;
 
 final class RegisteredUser : GuestUser
@@ -411,9 +412,9 @@ final class RegisteredUser : GuestUser
 		return super.save();
 	}
 
-	override void logIn(string username, string password, bool remember) { throw new Exception("Already logged in"); }
+	override void logIn(string username, string password, bool remember) { throw new Exception(_!"Already logged in"); }
 	override bool isLoggedIn() { return true; }
-	override void register(string username, string password, bool remember) { throw new Exception("Already registered"); }
+	override void register(string username, string password, bool remember) { throw new Exception(_!"Already registered"); }
 	override string getName() { return username; }
 	override Level getLevel() { return level; }
 	override SysTime createdAt() { return SysTime(creationTime); }
@@ -427,7 +428,7 @@ final class RegisteredUser : GuestUser
 
 	override void changePassword(string password)
 	{
-		enforce(password.length <= maxPasswordLength, "Password too long");
+		enforce(password.length <= maxPasswordLength, _!"Password too long");
 		query!"UPDATE `Users` SET `Password` = ? WHERE `Username` = ?"
 			.exec(encryptPassword(password), username);
 	}

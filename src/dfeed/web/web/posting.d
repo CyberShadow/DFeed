@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -38,6 +38,7 @@ import ae.utils.text : splitAsciiLines;
 import ae.utils.text.html : encodeHtmlEntities;
 import ae.utils.xmllite;
 
+import dfeed.loc;
 import dfeed.database : query;
 import dfeed.groups : getGroupInfo;
 import dfeed.mail : sendMail;
@@ -63,7 +64,11 @@ void draftNotices(string except = null)
 		if (id == except)
 			continue;
 		auto t = SysTime(time, UTC());
-		html.put(`<div class="forum-notice">You have an <a href="/posting/`, id, `">unsent draft message from `, formatShortTime(t, false), `</a>.</div>`);
+		html.put(`<div class="forum-notice">`,
+			_!`You have an %sunsent draft message from %s%s.`.format(
+				`<a href="/posting/` ~ id ~ `">`, formatShortTime(t, false), `</a>`
+			),
+			`</div>`);
 	}
 }
 
@@ -73,12 +78,12 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 	draftNotices(draftID);
 
 	if (draft.status == PostDraft.Status.moderation)
-		throw new Exception("This message is awaiting moderation.");
+		throw new Exception(_!"This message is awaiting moderation.");
 
 	// Only happens if visiting a posting page when it's not in
 	// postProcesses, i.e., from a previous DFeed process instance.
 	if (draft.status == PostDraft.Status.sent)
-		throw new Exception("This message has already been posted.");
+		throw new Exception(_!"This message has already been posted.");
 
 	// Immediately resurrect discarded posts when user clicks "Undo" or "Back"
 	if (draft.status == PostDraft.Status.discarded)
@@ -87,12 +92,12 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 	auto where = draft.serverVars.get("where", null);
 	auto info = getGroupInfo(where);
 	if (!info)
-		throw new Exception("Unknown group " ~ where);
+		throw new Exception(_!"Unknown group:" ~ " " ~ where);
 	if (info.postMessage)
 	{
 		html.put(
 			`<table class="forum-table forum-error">` ~
-				`<tr><th>Can't post to archive</th></tr>` ~
+				`<tr><th>`, _!`Can't post to archive`, `</th></tr>` ~
 				`<tr><td class="forum-table-message">`
 					, info.postMessage,
 				`</td></tr>` ~
@@ -102,17 +107,19 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 	if (info.sinkType == "smtp" && info.subscriptionRequired)
 	{
 		auto config = loadIni!SmtpConfig("config/sources/smtp/" ~ info.sinkName ~ ".ini");
-		html.put(`<div class="forum-notice">Note: you are posting to a mailing list.<br>` ~
-			`Your message will not go through unless you ` ~
-			`<a href="`), html.putEncodedEntities(config.listInfo), html.putEncodedEntities(info.internalName), html.put(`">subscribe to the mailing list</a> first.<br>` ~
-			`You must then use the same email address when posting here as the one you used to subscribe to the list.<br>` ~
-			`If you do not want to receive mailing list mail, you can disable mail delivery at the above link.</div>`);
+		html.put(`<div class="forum-notice">`, _!`Note: you are posting to a mailing list.`, `<br>`,
+			_!`Your message will not go through unless you %ssubscribe to the mailing list%s first.`.format(
+				`<a href="` ~ encodeHtmlEntities(config.listInfo ~ info.internalName) ~`">`,
+				`</a>`,
+			), `<br>`,
+			_!`You must then use the same email address when posting here as the one you used to subscribe to the list.`, `<br>`,
+			_!`If you do not want to receive mailing list mail, you can disable mail delivery at the above link.`, `</div>`);
 	}
 
 	auto parent = draft.serverVars.get("parent", null);
 	auto parentInfo	= parent ? getPostInfo(parent) : null;
 	if (parentInfo && Clock.currTime - parentInfo.time > 2.weeks)
-		html.put(`<div class="forum-notice">Warning: the post you are replying to is from `,
+		html.put(`<div class="forum-notice">`, _!`Warning: the post you are replying to is from`, ` `,
 			formatDuration(Clock.currTime - parentInfo.time), ` (`, formatShortTime(parentInfo.time, false), `).</div>`);
 
 	html.put(`<form action="/send" method="post" class="forum-form post-form" id="postform">`);
@@ -129,25 +136,25 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 	auto subject = draft.clientVars.get("subject", null);
 
 	html.put(
-		`<div id="postform-info">` ~
-			`Posting to <b>`), html.putEncodedEntities(info.publicName), html.put(`</b>`,
+		`<div id="postform-info">`,
+			_!`Posting to`, ` <b>`), html.putEncodedEntities(info.publicName), html.put(`</b>`,
 			(parent
 				? parentInfo
-					? ` in reply to ` ~ postLink(parentInfo)
-					: ` in reply to (unknown post)`
+					? ` ` ~ _!`in reply to` ~ ` ` ~ postLink(parentInfo)
+					: ` ` ~ _!`in reply to` ~ ` (` ~ _!`unknown post` ~ `)`
 				: info
 					? `:<br>(<b>` ~ encodeHtmlEntities(info.description) ~ `</b>)`
 					: ``),
 		`</div>` ~
 		`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
 		`<input type="hidden" name="did" value="`), html.putEncodedEntities(draftID), html.put(`">` ~
-		`<label for="postform-name">Your name:</label>` ~
+		`<label for="postform-name">`, _!`Your name:` ~ `</label>`,
 		`<input id="postform-name" name="name" size="40" value="`), html.putEncodedEntities(draft.clientVars.get("name", null)), html.put(`">` ~
-		`<label for="postform-email">Your email address (<a href="/help#email">?</a>):</label>` ~
+		`<label for="postform-email">`, _!`Your email address`, ` (<a href="/help#email">?</a>):</label>` ~
 		`<input id="postform-email" type="email" name="email" size="40" value="`), html.putEncodedEntities(draft.clientVars.get("email", null)), html.put(`">` ~
-		`<label for="postform-subject">Subject:</label>` ~
+		`<label for="postform-subject">`, _!`Subject:`, `</label>` ~
 		`<input id="postform-subject" name="subject" size="80"`, subject.length ? `` : ` autofocus`, ` value="`), html.putEncodedEntities(subject), html.put(`">` ~
-		`<label for="postform-text">Message:</label>` ~
+		`<label for="postform-text">`, _!`Message:`, `</label>` ~
 		`<textarea id="postform-text" name="text" rows="25" cols="80"`, subject.length ? ` autofocus` : ``, `>`), html.putEncodedEntities(draft.clientVars.get("text", null)), html.put(`</textarea>`);
 
 	if (showCaptcha)
@@ -156,11 +163,11 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 	html.put(
 		`<div>` ~
 			`<div class="postform-action-left">` ~
-				`<input name="action-save" type="submit" value="Save and preview">` ~
-				`<input name="action-send" type="submit" value="Send">` ~
+				`<input name="action-save" type="submit" value="`, _!`Save and preview`, `">` ~
+				`<input name="action-send" type="submit" value="`, _!`Send`, `">` ~
 			`</div>` ~
 			`<div class="postform-action-right">` ~
-				`<input name="action-discard" type="submit" value="Discard draft">` ~
+				`<input name="action-discard" type="submit" value="`, _!`Discard draft`, `">` ~
 			`</div>` ~
 			`<div style="clear:right"></div>` ~
 		`</div>` ~
@@ -208,14 +215,14 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 			if ("pid" in draft.serverVars)
 				return idToUrl(PostProcess.pidToMessageID(draft.serverVars["pid"]));
 			else
-				throw new Exception("This message has already been sent.");
+				throw new Exception(_!"This message has already been sent.");
 		}
 
 		if (clientVars.get("secret", "") != userSettings.secret)
-			throw new Exception("XSRF secret verification failed. Are your cookies enabled?");
+			throw new Exception(_!"XSRF secret verification failed. Are your cookies enabled?");
 
 		if (draft.status == PostDraft.Status.moderation)
-			throw new Exception("This message is awaiting moderation.");
+			throw new Exception(_!"This message is awaiting moderation.");
 		
 		draft.clientVars = clientVars;
 		draft.status = PostDraft.Status.edited;
@@ -238,13 +245,13 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 			{
 				draft.serverVars["lint-undo"] = UndoInfo(draft.clientVars, draft.serverVars).toJson;
 				getLintRule(ruleID).fix(draft);
-				draft.clientVars["html-top"] = `<div class="forum-notice">Automatic fix applied. ` ~
-					`<input name="action-lint-undo" type="submit" value="Undo"></div>`;
+				draft.clientVars["html-top"] = `<div class="forum-notice">` ~ _!`Automatic fix applied.` ~ ` ` ~
+					`<input name="action-lint-undo" type="submit" value="` ~ _!`Undo` ~ `"></div>`;
 			}
 			catch (Exception e)
 			{
 				draft.serverVars["lint-ignore-" ~ ruleID] = null;
-				html.put(`<div class="forum-notice">Sorry, a problem occurred while attempting to fix your post ` ~
+				html.put(`<div class="forum-notice">` ~ _!`Sorry, a problem occurred while attempting to fix your post` ~ ` ` ~
 					`(`), html.putEncodedEntities(e.msg), html.put(`).</div>`);
 			}
 			discussionPostForm(draft);
@@ -253,11 +260,11 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 		else
 		if (action == "lint-undo")
 		{
-			enforce("lint-undo" in draft.serverVars, "No undo information..?");
+			enforce("lint-undo" in draft.serverVars, _!"Undo information not found.");
 			auto undoInfo = draft.serverVars["lint-undo"].jsonParse!UndoInfo;
 			draft.clientVars = undoInfo.clientVars;
 			draft.serverVars = undoInfo.serverVars;
-			html.put(`<div class="forum-notice">Automatic fix undone.</div>`);
+			html.put(`<div class="forum-notice">` ~ _!`Automatic fix undone.` ~ `</div>`);
 			discussionPostForm(draft);
 			return null;
 		}
@@ -287,12 +294,12 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 					if ("lint-ignore-" ~ rule.id !in draft.serverVars && rule.check(draft))
 					{
 						PostError error;
-						error.message = "Warning: " ~ rule.shortDescription();
-						error.extraHTML ~= ` <input name="action-lint-ignore-` ~ rule.id ~ `" type="submit" value="Ignore">`;
+						error.message = _!"Warning:" ~ " " ~ rule.shortDescription();
+						error.extraHTML ~= ` <input name="action-lint-ignore-` ~ rule.id ~ `" type="submit" value="` ~ _!`Ignore` ~ `">`;
 						if (!lintDetails)
-							error.extraHTML ~= ` <input name="action-lint-explain" type="submit" value="Explain">`;
+							error.extraHTML ~= ` <input name="action-lint-explain" type="submit" value="` ~ _!`Explain` ~ `">`;
 						if (rule.canFix(draft))
-							error.extraHTML ~= ` <input name="action-lint-fix-` ~ rule.id ~ `" type="submit" value="Fix it for me">`;
+							error.extraHTML ~= ` <input name="action-lint-fix-` ~ rule.id ~ `" type="submit" value="` ~ _!`Fix it for me` ~ `">`;
 						if (lintDetails)
 							error.extraHTML ~= `<div class="lint-description">` ~ rule.longDescription() ~ `</div>`;
 						discussionPostForm(draft, false, error);
@@ -305,7 +312,7 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 				if (ipPostAttempts.length >= postThrottleRejectCount && now - ipPostAttempts[$-postThrottleRejectCount+1] < postThrottleRejectTime)
 				{
 					discussionPostForm(draft, false,
-						PostError("You've attempted to post %d times in the past %s. Please wait a little bit before trying again."
+						PostError(_!"You've attempted to post %d times in the past %s. Please wait a little bit before trying again."
 							.format(postThrottleRejectCount, postThrottleRejectTime)));
 					return null;
 				}
@@ -316,7 +323,7 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 					if (ipPostAttempts.length >= postThrottleCaptchaCount && now - ipPostAttempts[$-postThrottleCaptchaCount+1] < postThrottleCaptchaTime)
 					{
 						discussionPostForm(draft, true,
-							PostError("You've attempted to post %d times in the past %s. Please solve a CAPTCHA to continue."
+							PostError(_!"You've attempted to post %d times in the past %s. Please solve a CAPTCHA to continue."
 								.format(postThrottleCaptchaCount, postThrottleCaptchaTime)));
 						return null;
 					}
@@ -411,7 +418,7 @@ EOF"
 							/*13*/ context,
 						));
 
-					html.put(`<p>Your message has been saved, and will be posted after being approved by a moderator.</p>`);
+					html.put(`<p>`, _!`Your message has been saved, and will be posted after being approved by a moderator.`, `</p>`);
 					return null;
 				}
 
@@ -439,7 +446,7 @@ EOF"
 					return "/";
 			}
 			default:
-				throw new Exception("Unknown action");
+				throw new Exception(_!"Unknown action");
 		}
 	}
 	catch (Exception e)
@@ -466,7 +473,7 @@ void discussionPostStatusMessage(string messageHtml)
 {
 	html.put(
 		`<table class="forum-table">` ~
-			`<tr><th>Posting status</th></tr>` ~
+			`<tr><th>`, _!`Posting status`, `</th></tr>` ~
 			`<tr><td class="forum-table-message">`, messageHtml, `</th></tr>` ~
 		`</table>`);
 }
@@ -478,30 +485,30 @@ void discussionPostStatus(PostProcess process, out bool refresh, out string redi
 	switch (process.status)
 	{
 		case PostingStatus.spamCheck:
-			//discussionPostStatusMessage("Checking for spam...");
-			discussionPostStatusMessage("Validating...");
+			// discussionPostStatusMessage(_!"Checking for spam...");
+			discussionPostStatusMessage(_!"Validating...");
 			refresh = true;
 			return;
 		case PostingStatus.captcha:
-			discussionPostStatusMessage("Verifying reCAPTCHA...");
+			discussionPostStatusMessage(_!"Verifying reCAPTCHA...");
 			refresh = true;
 			return;
 		case PostingStatus.connecting:
-			discussionPostStatusMessage("Connecting to server...");
+			discussionPostStatusMessage(_!"Connecting to server...");
 			refresh = true;
 			return;
 		case PostingStatus.posting:
-			discussionPostStatusMessage("Sending message to server...");
+			discussionPostStatusMessage(_!"Sending message to server...");
 			refresh = true;
 			return;
 		case PostingStatus.waiting:
-			discussionPostStatusMessage("Message sent.<br>Waiting for message announcement...");
+			discussionPostStatusMessage(_!"Message sent." ~ "<br>" ~ _!"Waiting for message announcement...");
 			refresh = true;
 			return;
 
 		case PostingStatus.posted:
 			redirectTo = idToUrl(process.post.id);
-			discussionPostStatusMessage(`Message posted! Redirecting...`);
+			discussionPostStatusMessage(_!`Message posted! Redirecting...`);
 			refresh = true;
 			return;
 
@@ -510,7 +517,7 @@ void discussionPostStatus(PostProcess process, out bool refresh, out string redi
 			form = true;
 			return;
 		case PostingStatus.spamCheckFailed:
-			error.message = format("%s. Please solve a CAPTCHA to continue.", error.message);
+			error.message = format(_!"%s. Please solve a CAPTCHA to continue.", error.message);
 			discussionPostForm(process.draft, true, error);
 			form = true;
 			return;

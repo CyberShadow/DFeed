@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -24,6 +24,7 @@ import std.datetime.systime : SysTime;
 import std.datetime.timezone : UTC;
 import std.exception : enforce;
 
+import dfeed.loc;
 import dfeed.database : query, selectValue;
 import dfeed.message : Rfc850Post, idToUrl, idToFragment;
 import dfeed.sinks.cache : CachedSet;
@@ -36,7 +37,7 @@ string resolvePostUrl(string id)
 	foreach (string threadID; query!"SELECT `ThreadID` FROM `Posts` WHERE `ID` = ?".iterate(id))
 		return idToThreadUrl(id, threadID);
 
-	throw new NotFoundException("Post not found");
+	throw new NotFoundException(_!"Post not found");
 }
 
 string idToThreadUrl(string id, string threadID)
@@ -58,7 +59,7 @@ static Rfc850Message getPostPart(string id, uint[] partPath = null)
 		auto post = new Rfc850Message(message);
 		while (partPath.length)
 		{
-			enforce(partPath[0] < post.parts.length, "Invalid attachment");
+			enforce(partPath[0] < post.parts.length, _!"Invalid attachment");
 			post = post.parts[partPath[0]];
 			partPath = partPath[1..$];
 		}

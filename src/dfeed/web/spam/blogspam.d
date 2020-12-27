@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014, 2015, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -20,6 +20,7 @@ import ae.net.http.client;
 import ae.sys.data;
 import ae.utils.json;
 
+import dfeed.loc;
 import dfeed.site;
 import dfeed.web.posting;
 import dfeed.web.spam;
@@ -52,14 +53,14 @@ class BlogSpam : SpamChecker
 				handler(true, reason);
 			else
 			if (result == "SPAM")
-				handler(false, "BlogSpam.net thinks your post looks like spam: " ~ reason);
+				handler(false, _!"BlogSpam.net thinks your post looks like spam:" ~ " " ~ reason);
 			else
 			if (result == "ERROR")
-				handler(false, "BlogSpam.net error: " ~ reason);
+				handler(false, _!"BlogSpam.net error:" ~ " " ~ reason);
 			else
-				handler(false, "BlogSpam.net unexpected response: " ~ result);
+				handler(false, _!"BlogSpam.net unexpected response:" ~ " " ~ result);
 		}, (string error) {
-			handler(false, "BlogSpam.net error: " ~ error);
+			handler(false, _!"BlogSpam.net error:" ~ " " ~ error);
 		});
 	}
 
@@ -76,11 +77,11 @@ class BlogSpam : SpamChecker
 				handler(true, reason);
 			else
 			if (result == "ERROR")
-				handler(false, "BlogSpam.net error: " ~ reason);
+				handler(false, _!"BlogSpam.net error:" ~ " " ~ reason);
 			else
-				handler(false, "BlogSpam.net unexpected response: " ~ result);
+				handler(false, _!"BlogSpam.net unexpected response:" ~ " " ~ result);
 		}, (string error) {
-			handler(false, "BlogSpam.net error: " ~ error);
+			handler(false, _!"BlogSpam.net error:" ~ " " ~ error);
 		});
 	}
 }

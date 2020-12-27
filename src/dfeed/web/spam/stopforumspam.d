@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014, 2015, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -23,6 +23,7 @@ import std.string;
 
 import ae.net.http.client;
 
+import dfeed.loc;
 import dfeed.site;
 import dfeed.web.posting;
 import dfeed.web.spam;
@@ -56,7 +57,7 @@ class StopForumSpam : SpamChecker
 				auto errorNode = response.findChild("error");
 				if (errorNode)
 					error = errorNode.text;
-				enforce(false, "StopForumSpam API error: " ~ error);
+				enforce(false, _!"StopForumSpam API error:" ~ " " ~ error);
 			}
 
 			if (response["appears"].text == "no")
@@ -66,7 +67,7 @@ class StopForumSpam : SpamChecker
 				auto date = response["lastseen"].text.parseTime!"Y-m-d H:i:s"();
 				if (Clock.currTime() - date < dur!"days"(DAYS_THRESHOLD))
 					handler(false, format(
-						"StopForumSpam thinks you may be a spammer (%s last seen: %s, frequency: %s)",
+						_!"StopForumSpam thinks you may be a spammer (%s last seen: %s, frequency: %s)",
 						process.ip, response["lastseen"].text, response["frequency"].text));
 				else
 					handler(true, null);

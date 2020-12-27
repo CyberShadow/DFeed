@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014, 2015, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -18,6 +18,7 @@ module dfeed.web.spam.akismet;
 
 import ae.net.http.client;
 
+import dfeed.loc;
 import dfeed.site;
 import dfeed.web.posting;
 import dfeed.web.spam;
@@ -48,11 +49,11 @@ class Akismet : SpamChecker
 				handler(true, null);
 			else
 			if (result == "true")
-				handler(false, "Akismet thinks your post looks like spam");
+				handler(false, _!"Akismet thinks your post looks like spam");
 			else
-				handler(false, "Akismet error: " ~ result);
+				handler(false, _!"Akismet error:" ~ " " ~ result);
 		}, (string error) {
-			handler(false, "Akismet error: " ~ error);
+			handler(false, _!"Akismet error:" ~ " " ~ error);
 		});
 	}
 

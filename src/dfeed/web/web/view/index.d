@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -26,9 +26,11 @@ import std.format : format;
 import std.random : uniform;
 
 import ae.net.ietf.url : encodeUrlParameter;
+import ae.utils.meta;
 import ae.utils.text.html : encodeHtmlEntities;
 import ae.utils.xmllite : putEncodedEntities;
 
+import dfeed.loc;
 import dfeed.database;
 import dfeed.message;
 import dfeed.groups;
@@ -54,11 +56,11 @@ void discussionIndexHeader()
 	}
 	long previousSession = userSettings.previousSession.to!long;
 
-	string name = user.isLoggedIn() ? user.getName() : userSettings.name.length ? userSettings.name.split(' ')[0] : `Guest`;
+	string name = user.isLoggedIn() ? user.getName() : userSettings.name.length ? userSettings.name.split(' ')[0] : _!`Guest`;
 	html.put(
 		`<div id="forum-index-header">` ~
 		`<h1>`), html.putEncodedEntities(site.name), html.put(`</h1>` ~
-		`<p>Welcome`, previousSession ? ` back` : ``, `, `), html.putEncodedEntities(name), html.put(`.</p>` ~
+		`<p>`, previousSession ? _!`Welcome back,` : _!`Welcome,`, ` `), html.putEncodedEntities(name), html.put(`.</p>` ~
 
 		`<ul>`
 	);
@@ -74,25 +76,47 @@ void discussionIndexHeader()
 			auto c = subscription.getUnreadCount();
 			if (subscription.trigger.type == "reply")
 				if (c)
-					bits[0] ~= `<li><b>You have <a href="/subscription-posts/%s">%d new repl%s</a> to <a href="/search?q=authoremail:%s">your posts</a>.</b></li>`
-						.format(encodeHtmlEntities(subscription.id), c, c==1 ? "y" : "ies", encodeHtmlEntities(encodeUrlParameter(userSettings.email)));
+					bits[0] ~= `<li><b>` ~
+						_!`You have %d %s to %syour posts%s.`.format(
+							c,
+							`<a href="/subscription-posts/` ~ encodeHtmlEntities(subscription.id) ~ `">` ~ plural!`new reply`(c) ~ `</a>`,
+							`<a href="/search?q=authoremail:%s">`.format(encodeHtmlEntities(encodeUrlParameter(userSettings.email))),
+							`</a>`,
+						) ~ `</b></li>`;
 				else
-					bits[2] ~= `<li>No new <a href="/subscription-posts/%s">replies</a> to <a href="/search?q=authoremail:%s">your posts</a>.</li>`
-						.format(encodeHtmlEntities(subscription.id), encodeHtmlEntities(encodeUrlParameter(userSettings.email)));
+					bits[2] ~= `<li>` ~
+						_!`No new %sreplies%s to your posts.`
+						.format(
+							`<a href="/subscription-posts/%s">`.format(encodeHtmlEntities(subscription.id)),
+							`</a>`,
+							`<a href="/search?q=authoremail:%s">`.format(encodeHtmlEntities(encodeUrlParameter(userSettings.email))),
+							`</a>`,
+						) ~ `</li>`;
 			else
 			{
 				numSubscriptions++;
 				if (c)
 				{
 					numNewSubscriptions++;
-					bits[1] ~= `<li><b>You have <a href="/subscription-posts/%s">%d unread post%s</a> matching your <a href="/settings#subscriptions">%s subscription</a> (%s).</b></li>`
-						.format(encodeHtmlEntities(subscription.id), c, c==1 ? "" : "s", subscription.trigger.type, subscription.trigger.getDescription());
+					bits[1] ~= `<li><b>` ~
+						_!`You have %d %s matching your %s%s subscription%s (%s).`.format(
+							c,
+							`<a href="/subscription-posts/` ~ encodeHtmlEntities(subscription.id) ~ `">` ~ plural!`unread post`(c) ~ `</a>`,
+							`<a href="/settings#subscriptions">`,
+							subscription.trigger.typeName,
+							`</a>`,
+							subscription.trigger.getDescription(),
+						) ~ `</b></li>`;
 				}
 			}
 		}
 		if (numSubscriptions && !numNewSubscriptions)
-			bits[2] ~= `<li>No new posts matching your <a href="/settings#subscriptions">subscription%s</a>.</b></li>`
-				.format(numSubscriptions==1 ? "" : "s");
+			bits[2] ~= `<li>` ~
+				_!`No new posts matching your %s%s%s.`.format(
+					`<a href="/settings#subscriptions">`,
+					plural!"subscription"(numSubscriptions),
+					`</a>`,
+				) ~ `</li>`;
 	}
 	else
 	{
@@ -100,10 +124,23 @@ void discussionIndexHeader()
 		if (userSettings.email)
 			hasPosts = query!"SELECT EXISTS(SELECT 1 FROM [Posts] WHERE [AuthorEmail] = ? LIMIT 1)".iterate(userSettings.email).selectValue!int;
 		if (hasPosts)
-			bits[2] ~= `<li>If you <a href="/register">create an account</a>, you can track replies to <a href="/search?q=authoremail:%s">your posts</a>.</li>`
-				.format(encodeHtmlEntities(encodeUrlParameter(userSettings.email)));
+			bits[2] ~= `<li>` ~
+				_!`If you %screate an account%s, you can track replies to %syour posts%s.`
+				.format(
+					`<a href="/register">`,
+					`</a>`,
+					`<a href="/search?q=authoremail:%s">`.format(encodeHtmlEntities(encodeUrlParameter(userSettings.email))),
+					`</a>`,
+				) ~ `</li>`;
 		else
-			bits[0] ~= `<li>You can read and post on this forum without <a href="/register">creating an account</a>, but doing so offers <a href="/help#accounts">a few benefits</a>.</li>`;
+			bits[0] ~= `<li>` ~
+				_!`You can read and post on this forum without %screating an account%s, but doing so offers %sa few benefits%s.`
+				.format(
+					`<a href="/register">`,
+					`</a>`,
+					`<a href="/help#accounts">`,
+					`</a>`,
+				) ~ `</li>`;
 	}
 
 	SysTime cutOff = previousSession ? SysTime(previousSession) : now - 24.hours;
@@ -117,42 +154,50 @@ void discussionIndexHeader()
 		(
 			(numThreads || numPosts)
 			?
-				"%d user%s ha%s created %-(%s and %)"
+				_!"%d %s %-(%s and %)"
 				.format(
 					numUsers,
-					numUsers==1 ? "" : "s",
-					numThreads+numPosts==1 ? "s" : "ve",
-					(numThreads ? [`<a href="/search?q=time:%d..+newthread:y">%s thread%s</a>`.format(cutOff.stdTime, formatNumber(numThreads), numThreads==1 ? "" : "s")] : [])
+					plural!`user has created`(numUsers),
+					(numThreads ? [`<a href="/search?q=time:%d..+newthread:y">%s %s</a>`.format(cutOff.stdTime, formatNumber(numThreads), plural!"thread"(numThreads))] : [])
 					~
-					(numPosts   ? [`<a href="/search?q=time:%d..">%s post%s</a>`              .format(cutOff.stdTime, formatNumber(numPosts  ), numPosts  ==1 ? "" : "s")] : [])
+					(numPosts   ? [`<a href="/search?q=time:%d..">%s %s</a>`            .format(cutOff.stdTime, formatNumber(numPosts  ), plural!"post"  (numPosts  ))] : [])
 				)
 			:
-				"No new forum activity"
+				_!"No new forum activity"
 		)
-		~
+		~ " " ~
 		(
 			previousSession
 			?
-				" since your last visit (%s).".format(formatDuration(now - cutOff))
+				_!"since your last visit (%s).".format(formatDuration(now - cutOff))
 			:
-				" in the last 24 hours."
+				_!"in the last 24 hours."
 		)
 		~
 		"</li>"
 	;
 
-	bits[2] ~= "<li>There are %s posts, %s threads, and %s registered users on this forum.</li>"
+	auto totalPosts   = totalPostCountCache  (query!"SELECT Max([RowID]) FROM [Posts]"  .iterate().selectValue!int);
+	auto totalThreads = totalThreadCountCache(query!"SELECT Max([RowID]) FROM [Threads]".iterate().selectValue!int);
+	auto totalUsers   =                       query!"SELECT Max([RowID]) FROM [Users]"  .iterate().selectValue!int ;
+	bits[2] ~= "<li>" ~
+		_!`There are %s %s, %s %s, and %s %s on this forum.`
 		.format(
-			formatNumber(totalPostCountCache  (query!"SELECT Max([RowID]) FROM [Posts]"  .iterate().selectValue!int)),
-			formatNumber(totalThreadCountCache(query!"SELECT Max([RowID]) FROM [Threads]".iterate().selectValue!int)),
-			formatNumber(                      query!"SELECT Max([RowID]) FROM [Users]"  .iterate().selectValue!int ),
-		);
+			formatNumber(totalPosts)  , plural!"post"           (totalPosts  ),
+			formatNumber(totalThreads), plural!"thread"         (totalThreads),
+			formatNumber(totalUsers)  , plural!"registered user"(totalUsers  ),
+		)
+		~ "</li>";
 
 	auto numRead = user.countRead();
 	if (numRead)
-		bits[2] ~= "<li>You have read a total of %s forum post%s during your visit%s.</li>".format(formatNumber(numRead), numRead==1?"":"s", previousSession?"s":"");
+		bits[2] ~= "<li>" ~
+			_!`You have read a total of %s %s during your %s.`.format(
+				formatNumber(numRead), plural!"forum post"(numRead),
+				plural!"visit"(previousSession ? pluralMany : 1),
+			) ~ "</li>";
 
-	bits[2] ~= "<li>Random tip: " ~ tips[uniform(0, $)] ~ "</li>";
+	bits[2] ~= "<li>" ~ _!"Random tip:" ~ " " ~ randomTip() ~ "</li>";
 
 	foreach (bitGroup; bits[])
 		foreach (bit; bitGroup)
@@ -165,21 +210,31 @@ void discussionIndexHeader()
 	//html.put("<p>Random tip: " ~ tips[uniform(0, $)] ~ "</p>");
 }
 
-string[] tips =
-[
-	`This forum has several different <a href="/help#view-modes">view modes</a>. Try them to find one you like best. You can change the view mode in the <a href="/settings">settings</a>.`,
-	`This forum supports <a href="/help#keynav">keyboard shortcuts</a>. Press <kbd>?</kbd> to view them.`,
-	`You can focus a message with <kbd>j</kbd>/<kbd>k</kbd> and press <kbd>u</kbd> to mark it as unread, to remind you to read it later.`,
-	`The <a href="/help#avatars">avatars on this forum</a> are provided by Gravatar, which allows associating a global avatar with an email address.`,
-	`This forum remembers your read post history on a per-post basis. If you are logged in, the post history is saved on the server, and in a compressed cookie otherwise.`,
-	`Much of this forum's content is also available via classic mailing lists or NNTP - see the "Also via" column on the forum index.`,
-	`If you create a Gravatar profile with the email address you post with, it will be accessible when clicking your avatar.`,
-//	`You don't need to create an account to post on this forum, but doing so <a href="/help#accounts">offers a few benefits</a>.`,
-	`To subscribe to a thread, click the "Subscribe" link on that thread's first post. You need to be logged in to create subscriptions.`,
-	`To search the forum, use the search widget at the top, or you can visit <a href="/search">the search page</a> directly.`,
-	`This forum is open-source! Read or fork the code <a href="https://github.com/CyberShadow/DFeed">on GitHub</a>.`,
-	`If you encounter a bug or need a missing feature, you can <a href="https://github.com/CyberShadow/DFeed/issues">create an issue on GitHub</a>.`,
-];
+string randomTip()
+{
+	static immutable string[] tips =
+	[
+		`This forum has several different <a href="/help#view-modes">view modes</a>. Try them to find one you like best. You can change the view mode in the <a href="/settings">settings</a>.`,
+		`This forum supports <a href="/help#keynav">keyboard shortcuts</a>. Press <kbd>?</kbd> to view them.`,
+		`You can focus a message with <kbd>j</kbd>/<kbd>k</kbd> and press <kbd>u</kbd> to mark it as unread, to remind you to read it later.`,
+		`The <a href="/help#avatars">avatars on this forum</a> are provided by Gravatar, which allows associating a global avatar with an email address.`,
+		`This forum remembers your read post history on a per-post basis. If you are logged in, the post history is saved on the server, and in a compressed cookie otherwise.`,
+		`Much of this forum's content is also available via classic mailing lists or NNTP - see the "Also via" column on the forum index.`,
+		`If you create a Gravatar profile with the email address you post with, it will be accessible when clicking your avatar.`,
+	//	`You don't need to create an account to post on this forum, but doing so <a href="/help#accounts">offers a few benefits</a>.`,
+		`To subscribe to a thread, click the "Subscribe" link on that thread's first post. You need to be logged in to create subscriptions.`,
+		`To search the forum, use the search widget at the top, or you can visit <a href="/search">the search page</a> directly.`,
+		`This forum is open-source! Read or fork the code <a href="https://github.com/CyberShadow/DFeed">on GitHub</a>.`,
+		`If you encounter a bug or need a missing feature, you can <a href="https://github.com/CyberShadow/DFeed/issues">create an issue on GitHub</a>.`,
+	];
+	auto index = uniform(0, tips.length);
+	final switch (index)
+	{
+		foreach (n; RangeTuple!(tips.length))
+			case n:
+				return _!(tips[n]);
+	}
+}
 
 string[string] getLastPosts()
 {
@@ -225,7 +280,7 @@ void discussionIndex()
 
 		html.put(
 			`<tr><th colspan="5">`), html.putEncodedEntities(set.name), html.put(`</th></tr>` ~
-			`<tr class="subheader"><th>Group</th><th>Last Post</th><th>Threads</th><th>Posts</th><th>Also via</th></tr>`
+			`<tr class="subheader"><th>`, _!`Group`, `</th><th>`, _!`Last Post`, `</th><th>`, _!`Threads`, `</th><th>`, _!`Posts`, `</th><th>`, _!`Also via`, `</th></tr>`
 		);
 		foreach (group; set.groups)
 		{

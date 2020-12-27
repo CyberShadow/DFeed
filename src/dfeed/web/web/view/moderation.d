@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -37,6 +37,7 @@ import ae.utils.xmllite : putEncodedEntities;
 
 import dfeed.database : query, selectValue;
 import dfeed.groups : getGroupInfo;
+import dfeed.loc;
 import dfeed.mail : sendMail;
 import dfeed.message : Rfc850Post, idToUrl;
 import dfeed.site : site;
@@ -70,7 +71,7 @@ void discussionModeration(Rfc850Post post, UrlParameters postVars)
 				`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
 
 				`<div id="deleteform-info">` ~
-					`Perform which moderation actions on this post?` ~
+					_!`Perform which moderation actions on this post?` ~
 				`</div>` ~
 
 				`<textarea id="deleteform-message" readonly="readonly" rows="25" cols="80">`
@@ -79,32 +80,32 @@ void discussionModeration(Rfc850Post post, UrlParameters postVars)
 
 				`<input type="checkbox" name="delete" value="Yes" checked id="deleteform-delete"></input>` ~
 				`<label for="deleteform-delete">` ~
-					`Delete local cached copy of this post from DFeed's database` ~
+					_!`Delete local cached copy of this post from DFeed's database` ~
 				`</label><br>`,
 
 				findPostingLog(post.id)
 				?	`<input type="checkbox" name="ban" value="Yes" id="deleteform-ban"></input>` ~
 					`<label for="deleteform-ban">` ~
-						`Ban poster (place future posts in moderation queue)` ~
+						_!`Ban poster (place future posts in moderation queue)` ~
 					`</label><br>`
 				: ``,
 
 				!deleteCommands.empty
 				?	`<input type="checkbox" name="delsource" value="Yes" id="deleteform-delsource"></input>` ~
 					`<label for="deleteform-delsource">` ~
-						`Delete source copy from ` ~ sinkNames.map!encodeHtmlEntities.join("/") ~
+						_!`Delete source copy from %-(%s/%)`.format(sinkNames.map!encodeHtmlEntities) ~
 					`</label><br>`
 				: ``,
 
-				`Reason: <input name="reason" value="spam"></input><br>` ~
-				`<input type="submit" value="Moderate"></input>` ~
+				_!`Reason:`, ` <input name="reason" value="spam"></input><br>` ~
+				`<input type="submit" value="`, _!`Moderate`, `"></input>` ~
 			`</form>`
 		);
 	}
 	else
 	{
 		if (postVars.get("secret", "") != userSettings.secret)
-			throw new Exception("XSRF secret verification failed. Are your cookies enabled?");
+			throw new Exception(_!"XSRF secret verification failed. Are your cookies enabled?");
 
 		string messageID = postVars.get("id", "");
 		string userName = user.getName();
@@ -149,7 +150,7 @@ void deletePostApi(string group, int artNum)
 	);
 }
 
-void discussionFlagPage(Rfc850Post post, bool flag, UrlParameters postParams)
+private void discussionFlagPageImpl(bool flag)(Rfc850Post post, UrlParameters postParams)
 {
 	static immutable string[2] actions = ["unflag", "flag"];
 	bool isFlagged = query!`SELECT COUNT(*) FROM [Flags] WHERE [Username]=? AND [PostID]=?`.iterate(user.getName(), post.id).selectValue!int > 0;
@@ -159,34 +160,37 @@ void discussionFlagPage(Rfc850Post post, bool flag, UrlParameters postParams)
 		{
 		html.put(
 			`<div id="flagform-info" class="forum-notice">` ~
-				`It looks like you've already ` ~ actions[flag] ~ `ged this post. ` ~
-				`Would you like to <a href="`), html.putEncodedEntities(idToUrl(post.id, actions[!flag])), html.put(`">` ~ actions[!flag] ~ ` it</a>?` ~
+				_!(`It looks like you've already ` ~ actions[flag] ~ `ged this post.`), ` `,
+				_!(`Would you like to %s` ~ actions[!flag] ~ ` it%s?`).format(
+					`<a href="` ~ encodeHtmlEntities(idToUrl(post.id, actions[!flag])) ~ `">`,
+					`</a>`,
+				),
 			`</div>`);
 		}
 		else
 		{
 			html.put(
-				`<div id="flagform-info" class="forum-notice">` ~
-					`Are you sure you want to ` ~ actions[flag] ~ ` this post?` ~
+				`<div id="flagform-info" class="forum-notice">`,
+					_!(`Are you sure you want to ` ~ actions[flag] ~ ` this post?`),
 				`</div>`);
 			formatPost(post, null, false);
 			html.put(
 				`<form action="" method="post" class="forum-form flag-form" id="flagform">` ~
 					`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
-					`<input type="submit" name="flag" value="` ~ actions[flag].capitalize ~ `"></input>` ~
-					`<input type="submit" name="cancel" value="Cancel"></input>` ~
+					`<input type="submit" name="flag" value="`, _!(actions[flag].capitalize), `"></input>` ~
+					`<input type="submit" name="cancel" value="`, _!`Cancel`, `"></input>` ~
 				`</form>`);
 		}
 	}
 	else
 	{
-		enforce(postParams.get("secret", "") == userSettings.secret, "XSRF secret verification failed. Are your cookies enabled?");
-		enforce(user.getLevel() >= User.Level.canFlag, "You can't flag posts!");
-		enforce(user.createdAt() < post.time, "You can't flag this post!");
+		enforce(postParams.get("secret", "") == userSettings.secret, _!"XSRF secret verification failed. Are your cookies enabled?");
+		enforce(user.getLevel() >= User.Level.canFlag, _!"You can't flag posts!");
+		enforce(user.createdAt() < post.time, _!"You can't flag this post!");
 
 		if ("flag" in postParams)
 		{
-			enforce(flag != isFlagged, "You've already " ~ actions[flag] ~ "ged this post.");
+			enforce(flag != isFlagged, _!("You've already " ~ actions[flag] ~ "ged this post."));
 
 			if (flag)
 				query!`INSERT INTO [Flags] ([PostID], [Username], [Date]) VALUES (?, ?, ?)`.exec(post.id, user.getName(), Clock.currTime.stdTime);
@@ -194,15 +198,15 @@ void discussionFlagPage(Rfc850Post post, bool flag, UrlParameters postParams)
 				query!`DELETE FROM [Flags] WHERE [PostID]=? AND [Username]=?`.exec(post.id, user.getName());
 
 			html.put(
-				`<div id="flagform-info" class="forum-notice">` ~
-					`Post ` ~ actions[flag] ~ `ged.` ~
+				`<div id="flagform-info" class="forum-notice">`,
+					_!(`Post ` ~ actions[flag] ~ `ged.`),
 				`</div>` ~
 				`<form action="" method="post" class="forum-form flag-form" id="flagform">` ~
 					`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
-					`<input type="submit" name="cancel" value="Return to post"></input>` ~
+					`<input type="submit" name="cancel" value="`, _!`Return to post`, `"></input>` ~
 				`</form>`);
 
-			if (flag)
+			static if (flag)
 			{
 				auto subject = "%s flagged %s's post in the thread \"%s\"".format(
 					user.getName(),
@@ -259,42 +263,50 @@ EOF"
 	}
 }
 
+void discussionFlagPage(Rfc850Post post, bool flag, UrlParameters postParams)
+{
+	if (flag)
+		discussionFlagPageImpl!true (post, postParams);
+	else
+		discussionFlagPageImpl!false(post, postParams);
+}
+
 void discussionApprovePage(string draftID, UrlParameters postParams)
 {
 	auto draft = getDraft(draftID);
 	if (draft.status == PostDraft.Status.sent && "pid" in draft.serverVars)
 	{
-		html.put(`This message has already been posted. ` ~
-			`<a href="`), html.putEncodedEntities(idToUrl(PostProcess.pidToMessageID(draft.serverVars["pid"]))), html.put(`">You can view it here.</a>`);
+		html.put(_!`This message has already been posted.`, ` ` ~
+			`<a href="`), html.putEncodedEntities(idToUrl(PostProcess.pidToMessageID(draft.serverVars["pid"]))), html.put(`">`, _!`You can view it here.`, `</a>`);
 		return;
 	}
 	enforce(draft.status == PostDraft.Status.moderation,
-		"This is not a post in need of moderation. Its status is currently: " ~ text(draft.status));
+		_!"This is not a post in need of moderation. Its status is currently:" ~ " " ~ text(draft.status));
 
 	if (postParams == UrlParameters.init)
 	{
 		html.put(
-			`<div id="approveform-info" class="forum-notice">` ~
-				`Are you sure you want to approve this post?` ~
+			`<div id="approveform-info" class="forum-notice">`,
+				_!`Are you sure you want to approve this post?`,
 			`</div>`);
 		auto post = draftToPost(draft);
 		formatPost(post, null, false);
 		html.put(
 			`<form action="" method="post" class="forum-form approve-form" id="approveform">` ~
 				`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
-				`<input type="submit" name="approve" value="Approve"></input>` ~
-				`<input type="submit" name="cancel" value="Cancel"></input>` ~
+				`<input type="submit" name="approve" value="`, _!`Approve`, `"></input>` ~
+				`<input type="submit" name="cancel" value="`, _!`Cancel`, `"></input>` ~
 			`</form>`);
 	}
 	else
 	{
-		enforce(postParams.get("secret", "") == userSettings.secret, "XSRF secret verification failed. Are your cookies enabled?");
+		enforce(postParams.get("secret", "") == userSettings.secret, _!"XSRF secret verification failed. Are your cookies enabled?");
 
 		if ("approve" in postParams)
 		{
 			auto pid = approvePost(draftID, user.getName());
 
-			html.put(`Post approved! <a href="/posting/` ~ pid ~ `">View posting</a>`);
+			html.put(_!`Post approved!`, ` <a href="/posting/` ~ pid ~ `">`, _!`View posting`, `</a>`);
 		}
 		else
 			throw new Redirect("/");

@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014, 2015, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -21,6 +21,7 @@ import std.array;
 import std.exception;
 import std.string;
 
+import dfeed.loc;
 import dfeed.site;
 import dfeed.web.posting;
 import dfeed.web.spam;
@@ -66,7 +67,7 @@ class ProjectHoneyPot : SpamChecker
 		with (result)
 			if (present && daysLastSeen <= DAYS_THRESHOLD && threatScore >= SCORE_THRESHOLD)
 				handler(false, format(
-					"ProjectHoneyPot thinks you may be a spammer (%s last seen: %d days ago, threat score: %d/255, type: %s)",
+					_!"ProjectHoneyPot thinks you may be a spammer (%s last seen: %d days ago, threat score: %d/255, type: %s)",
 					process.ip,
 					daysLastSeen,
 					threatScore,

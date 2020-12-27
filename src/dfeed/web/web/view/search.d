@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -38,6 +38,7 @@ import ae.utils.text.html : encodeHtmlEntities;
 import ae.utils.time.parse : parseTime;
 import ae.utils.xmllite : putEncodedEntities;
 
+import dfeed.loc;
 import dfeed.database : query;
 import dfeed.groups : getGroupInfoByPublicName;
 import dfeed.message : Rfc850Post, idToFragment, idToUrl;
@@ -102,22 +103,22 @@ void discussionSearch(UrlParameters parameters)
 	{
 		html.put(
 			`<form method="get" id="advanced-search-form">` ~
-			`<h1>Advanced Search</h1>` ~
-			`<p>Find posts with...</p>` ~
+			`<h1>`, _!`Advanced Search`, `</h1>` ~
+			`<p>`, _!`Find posts with...`, `</p>` ~
 			`<table>` ~
-				`<tr><td>all these words:`     ~ ` </td><td><input size="50" name="q" value="`), html.putEncodedEntities(searchString), html.put(`"`, autoFocus, `></td></tr>` ~
-				`<tr><td>this exact phrase:`   ~ ` </td><td><input size="50" name="exact"></td></tr>` ~
-				`<tr><td>none of these words:` ~ ` </td><td><input size="50" name="not"></td></tr>` ~
-				`<tr><td>posted in the group:` ~ ` </td><td><input size="50" name="group"></td></tr>` ~
-				`<tr><td>posted by:`           ~ ` </td><td><input size="50" name="author"></td></tr>` ~
-				`<tr><td>posted by (email):`   ~ ` </td><td><input size="50" name="authoremail"></td></tr>` ~
-				`<tr><td>in threads titled:`   ~ ` </td><td><input size="50" name="subject"></td></tr>` ~
-				`<tr><td>containing:`          ~ ` </td><td><input size="50" name="content"></td></tr>` ~
-				`<tr><td>posted between:`      ~ ` </td><td><input type="date" placeholder="yyyy-mm-dd" name="startdate"> and <input type="date" placeholder="yyyy-mm-dd" name="enddate"></td></tr>` ~
-				`<tr><td>posted as new thread:`~ ` </td><td><input type="checkbox" name="newthread" value="y"><input size="1" tabindex="-1" style="visibility:hidden"></td></tr>` ~
+				`<tr><td>`, _!`all these words:`     , ` </td><td><input size="50" name="q" value="`), html.putEncodedEntities(searchString), html.put(`"`, autoFocus, `></td></tr>` ~
+				`<tr><td>`, _!`this exact phrase:`   , ` </td><td><input size="50" name="exact"></td></tr>` ~
+				`<tr><td>`, _!`none of these words:` , ` </td><td><input size="50" name="not"></td></tr>` ~
+				`<tr><td>`, _!`posted in the group:` , ` </td><td><input size="50" name="group"></td></tr>` ~
+				`<tr><td>`, _!`posted by:`           , ` </td><td><input size="50" name="author"></td></tr>` ~
+				`<tr><td>`, _!`posted by (email):`   , ` </td><td><input size="50" name="authoremail"></td></tr>` ~
+				`<tr><td>`, _!`in threads titled:`   , ` </td><td><input size="50" name="subject"></td></tr>` ~
+				`<tr><td>`, _!`containing:`          , ` </td><td><input size="50" name="content"></td></tr>` ~
+				`<tr><td>`, _!`posted between:`      , ` </td><td><input type="date" placeholder="`, _!`yyyy-mm-dd`, `" name="startdate"> `, _!`and`, ` <input type="date" placeholder="`, _!`yyyy-mm-dd`, `" name="enddate"></td></tr>` ~
+				`<tr><td>`, _!`posted as new thread:`, ` </td><td><input type="checkbox" name="newthread" value="y"><input size="1" tabindex="-1" style="visibility:hidden"></td></tr>` ~
 			`</table>` ~
 			`<br>` ~
-			`<input name="search" type="submit" value="Advanced search">` ~
+			`<input name="search" type="submit" value="`, _!`Advanced search`, `">` ~
 			`</table>` ~
 			`</form>`
 		);
@@ -127,10 +128,10 @@ void discussionSearch(UrlParameters parameters)
 	{
 		html.put(
 			`<form method="get" id="search-form">` ~
-			`<h1>Search</h1>` ~
+			`<h1>`, _!`Search`, `</h1>` ~
 			`<input name="q" size="50" value="`), html.putEncodedEntities(searchString), html.put(`"`, autoFocus, `>` ~
-			`<input name="search" type="submit" value="Search">` ~
-			`<input name="advsearch" type="submit" value="Advanced search">` ~
+			`<input name="search" type="submit" value="`, _!`Search`, `">` ~
+			`<input name="advsearch" type="submit" value="`, _!`Advanced search`, `">` ~
 			`</form>`
 		);
 	}
@@ -154,7 +155,7 @@ void discussionSearch(UrlParameters parameters)
 							try
 								return (date.parseTime!`Y-m-d` + offset).stdTime;
 							catch (Exception e)
-								throw new Exception("Invalid date: %s (%s)".format(date, e.msg));
+								throw new Exception(_!"Invalid date: %s (%s)".format(date, e.msg));
 					}
 
 					auto dates = term.findSplit(":")[2].findSplit("..");
@@ -176,11 +177,11 @@ void discussionSearch(UrlParameters parameters)
 				else
 					queryTerms ~= term;
 
-			enforce(startDate < endDate, "Start date must be before end date");
+			enforce(startDate < endDate, _!"Start date must be before end date");
 			auto queryString = queryTerms.join(' ');
 
 			int page = parameters.get("page", "1").to!int;
-			enforce(page >= 1, "Invalid page number");
+			enforce(page >= 1, _!"Invalid page number");
 
 			enum postsPerPage = 10;
 
@@ -231,7 +232,7 @@ void discussionSearch(UrlParameters parameters)
 			}
 
 			if (n == 0)
-				html.put(`<p>Your search - <b>`), html.putEncodedEntities(searchString), html.put(`</b> - did not match any forum posts.</p>`);
+				html.put(`<p>`, _!`Your search -`, ` <b>`), html.putEncodedEntities(searchString), html.put(`</b> `, _!`- did not match any forum posts.`, `</p>`);
 
 			if (page != 1 || n > postsPerPage)
 			{
@@ -241,7 +242,7 @@ void discussionSearch(UrlParameters parameters)
 			}
 		}
 		catch (CaughtException e)
-			html.put(`<div class="form-error">Error: `), html.putEncodedEntities(e.msg), html.put(`</div>`);
+			html.put(`<div class="form-error">`, _!`Error:`, ` `), html.putEncodedEntities(e.msg), html.put(`</div>`);
 }
 
 void formatSearchSnippet(string s)
@@ -278,7 +279,7 @@ void formatSearchResult(Rfc850Post post, string snippet)
 			`<tr class="post-header"><th colspan="2">` ~
 				`<div class="post-time">`, summarizeTime(time), `</div>`,
 				encodeHtmlEntities(post.publicGroupNames().join(", ")), ` &raquo; ` ~
-				`<a title="View this post" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" class="permalink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread"), `">`,
+				`<a title="`, _!`View this post`, `" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`" class="permalink `, (user.isRead(post.rowid) ? "forum-read" : "forum-unread"), `">`,
 					encodeHtmlEntities(rawSubject),
 				`</a>` ~
 			`</th></tr>` ~
@@ -290,7 +291,7 @@ void formatSearchResult(Rfc850Post post, string snippet)
 			`<tr>` ~
 				`<td class="post-info">` ~
 					`<div class="post-author">`), html.putEncodedEntities(author), html.put(`</div>`);
-		putGravatar(gravatarHash, "http://www.gravatar.com/" ~ gravatarHash, `title="` ~ encodeHtmlEntities(author) ~ `'s Gravatar profile"`, 80);
+		putGravatar(gravatarHash, "http://www.gravatar.com/" ~ gravatarHash, `title="` ~ _!`%s's Gravatar profile`.format(encodeHtmlEntities(author)) ~ `"`, 80);
 
 		html.put(
 				`</td>` ~

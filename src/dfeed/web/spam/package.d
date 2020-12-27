@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014, 2015, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -27,6 +27,7 @@ import ae.utils.array;
 import ae.utils.json;
 import ae.utils.text;
 
+import dfeed.loc;
 import dfeed.site;
 import dfeed.web.posting;
 import dfeed.web.spam.akismet;
@@ -73,7 +74,7 @@ void spamCheck(PostProcess process, SpamResultHandler handler, void delegate(str
 			if (log) log("Error with spam checker %s: %s".format(
 				checker.classinfo.name, e.msg));
 			foundSpam = true;
-			handler(false, "Spam check error: " ~ e.msg);
+			handler(false, _!"Spam check error:" ~ " " ~ e.msg);
 		}
 
 		// Avoid starting slow checks if the first engines instantly return a positive

@@ -1,4 +1,4 @@
-/*  Copyright (C) 2012, 2014, 2015, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2012, 2014, 2015, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -17,13 +17,14 @@
 module dfeed.web.captcha.dcaptcha;
 
 import std.algorithm : any;
-import std.string : strip, icmp;
+import std.string : strip, icmp, replace, format;
 
 import ae.utils.text;
 import ae.utils.xmllite : encodeEntities;
 
 import dcaptcha.dcaptcha;
 
+import dfeed.loc;
 import dfeed.web.captcha;
 
 final class Dcaptcha : Captcha
@@ -49,9 +50,11 @@ final class Dcaptcha : Captcha
 			`<input type="hidden" name="dcaptcha_challenge_field" value="` ~ key ~ `">` ~
 			`<input type="hidden" "dcaptcha_response_field"></input>` ~
 			`<input name="dcaptcha_response_field"></input>` ~
-			`<p><b>Hint</b>: ` ~ challenge.hint ~ `</p>` ~
-			`<p>Is the CAPTCHA too hard?<br>Refresh the page to get a different question,<br>or ask in the ` ~
-				`<a href="http://webchat.freenode.net?randomnick=1&channels=%23d">#d IRC channel on Freenode</a>.</p>`
+			`<p><b>` ~ _!`Hint` ~ `</b>: ` ~ challenge.hint ~ `</p>` ~
+			`<p>` ~ _!"Is the CAPTCHA too hard?\nRefresh the page to get a different question,\nor ask in the %s#d IRC channel on Freenode%s."
+				.replace("\n", `<br>`)
+				.format(`<a href="http://webchat.freenode.net?randomnick=1&channels=%23d">`, `</a>`) ~
+			`</p>`
 		;
 	}
 
@@ -68,7 +71,7 @@ final class Dcaptcha : Captcha
 
 		auto pchallenge = key in challenges;
 		if (!pchallenge)
-			return handler(false, "Unknown or expired CAPTCHA challenge", null);
+			return handler(false, _!"Unknown or expired CAPTCHA challenge", null);
 		auto challenge = *pchallenge;
 		challenges.remove(key);
 
@@ -76,7 +79,7 @@ final class Dcaptcha : Captcha
 
 		bool correct = challenge.answers.any!(answer => icmp(answer, response) == 0);
 
-		return handler(correct, correct ? null : "The answer is incorrect", null);
+		return handler(correct, correct ? null : _!"The answer is incorrect", null);
 	}
 }
 

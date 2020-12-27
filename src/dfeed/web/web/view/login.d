@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -23,6 +23,7 @@ import ae.net.ietf.url : UrlParameters, encodeUrlParameter;
 import ae.utils.aa : aaGet;
 import ae.utils.xmllite : putEncodedEntities;
 
+import dfeed.loc;
 import dfeed.web.web.page : html;
 import dfeed.web.web.user : user;
 
@@ -31,20 +32,20 @@ void discussionLoginForm(UrlParameters parameters, string errorMessage = null)
 
 	html.put(`<form action="/login" method="post" id="loginform" class="forum-form loginform">` ~
 		`<table class="forum-table">` ~
-			`<tr><th>Log in</th></tr>` ~
+			`<tr><th>`, _!`Log in`, `</th></tr>` ~
 			`<tr><td class="loginform-cell">`);
 
 	if ("url" in parameters)
 		html.put(`<input type="hidden" name="url" value="`), html.putEncodedEntities(parameters["url"]), html.put(`">`);
 
 	html.put(
-			`<label for="loginform-username">Username:</label>` ~
+			`<label for="loginform-username">`, _!`Username:`, `</label>` ~
 			`<input id="loginform-username" name="username" value="`), html.putEncodedEntities(parameters.get("username", "")), html.put(`" autofocus>` ~
-			`<label for="loginform-password">Password:</label>` ~
+			`<label for="loginform-password">`, _!`Password:`, `</label>` ~
 			`<input id="loginform-password" type="password" name="password" value="`), html.putEncodedEntities(parameters.get("password", "")), html.put(`">` ~
 			`<input id="loginform-remember" type="checkbox" name="remember" `, "username" !in  parameters || "remember" in parameters ? ` checked` : ``, `>` ~
-			`<label for="loginform-remember"> Remember me</label>` ~
-			`<input type="submit" value="Log in">` ~
+			`<label for="loginform-remember"> `, _!`Remember me`, `</label>` ~
+			`<input type="submit" value="`, _!`Log in`, `">` ~
 		`</td></tr>`);
 	if (errorMessage)
 		html.put(`<tr><td class="loginform-info"><div class="form-error loginform-error">`), html.putEncodedEntities(errorMessage), html.put(`</div></td></tr>`);
@@ -53,7 +54,7 @@ void discussionLoginForm(UrlParameters parameters, string errorMessage = null)
 			`<tr><td class="loginform-info">` ~
 				`<a href="/registerform`,
 					("url" in parameters ? `?url=` ~ encodeUrlParameter(parameters["url"]) : ``),
-					`">Register</a> to keep your preferences<br>and read post history on the server.` ~
+					`">`, _!`Register`, `</a> `, _!`to keep your preferences<br>and read post history on the server.` ~
 			`</td></tr>`);
 	html.put(`</table></form>`);
 }
@@ -67,35 +68,35 @@ void discussionRegisterForm(UrlParameters parameters, string errorMessage = null
 {
 	html.put(`<form action="/register" method="post" id="registerform" class="forum-form loginform">` ~
 		`<table class="forum-table">` ~
-			`<tr><th>Register</th></tr>` ~
+			`<tr><th>`, _!`Register`, `</th></tr>` ~
 			`<tr><td class="loginform-cell">`);
 
 	if ("url" in parameters)
 		html.put(`<input type="hidden" name="url" value="`), html.putEncodedEntities(parameters["url"]), html.put(`">`);
 
 	html.put(
-		`<label for="loginform-username">Username:</label>` ~
+		`<label for="loginform-username">`, _!`Username:`, `</label>` ~
 		`<input id="loginform-username" name="username" value="`), html.putEncodedEntities(parameters.get("username", "")), html.put(`" autofocus>` ~
-		`<label for="loginform-password">Password:</label>` ~
+		`<label for="loginform-password">`, _!`Password:`, `</label>` ~
 		`<input id="loginform-password" type="password" name="password" value="`), html.putEncodedEntities(parameters.get("password", "")), html.put(`">` ~
-		`<label for="loginform-password2">Confirm:</label>` ~
+		`<label for="loginform-password2">`, _!`Confirm:`, `</label>` ~
 		`<input id="loginform-password2" type="password" name="password2" value="`), html.putEncodedEntities(parameters.get("password2", "")), html.put(`">` ~
 		`<input id="loginform-remember" type="checkbox" name="remember" `, "username" !in  parameters || "remember" in parameters ? ` checked` : ``, `>` ~
-		`<label for="loginform-remember"> Remember me</label>` ~
-		`<input type="submit" value="Register">` ~
+		`<label for="loginform-remember"> `, _!`Remember me`, `</label>` ~
+		`<input type="submit" value="`, _!`Register`, `">` ~
 		`</td></tr>`);
 	if (errorMessage)
 		html.put(`<tr><td class="loginform-info"><div class="form-error loginform-error">`), html.putEncodedEntities(errorMessage), html.put(`</div></td></tr>`);
 	else
 		html.put(
 			`<tr><td class="loginform-info">` ~
-				`Please pick your password carefully.<br>There are no password recovery options.` ~
+				_!`Please pick your password carefully.` ~ `<br>` ~ _!`There are no password recovery options.` ~
 			`</td></tr>`);
 	html.put(`</table></form>`);
 }
 
 void discussionRegister(UrlParameters parameters)
 {
-	enforce(aaGet(parameters, "password") == aaGet(parameters, "password2"), "Passwords do not match");
+	enforce(aaGet(parameters, "password") == aaGet(parameters, "password2"), _!"Passwords do not match");
 	user.register(aaGet(parameters, "username"), aaGet(parameters, "password"), !!("remember" in parameters));
 }

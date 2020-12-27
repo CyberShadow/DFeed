@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -28,6 +28,7 @@ import ae.net.http.caching : CachedResource;
 import ae.sys.data : Data;
 import ae.utils.feed : AtomFeedWriter;
 
+import dfeed.loc;
 import dfeed.database : query;
 import dfeed.groups : GroupInfo;
 import dfeed.message : Rfc850Post;
@@ -53,7 +54,14 @@ CachedResource getFeed(GroupInfo groupInfo, bool threadsOnly, int hours)
 
 	CachedResource getFeed()
 	{
-		auto title = "Latest " ~ (threadsOnly ? "threads" : "posts") ~ (groupInfo ? " on " ~ groupInfo.publicName : "");
+		auto title = groupInfo
+			? threadsOnly
+				? _!"Latest threads on %s".format(groupInfo.publicName)
+				: _!"Latest posts on %s"  .format(groupInfo.publicName)
+			: threadsOnly
+				? _!"Latest threads"
+				: _!"Latest posts"
+			;
 		auto posts = getFeedPosts(groupInfo, threadsOnly, hours);
 		auto feed = makeFeed(posts, feedUrl, title, groupInfo is null);
 		return feed;
@@ -115,7 +123,7 @@ CachedResource getSubscriptionFeed(string subscriptionID)
 	CachedResource getFeed()
 	{
 		auto subscription = getSubscription(subscriptionID);
-		auto title = "%s subscription (%s)".format(site.host, subscription.trigger.getTextDescription());
+		auto title = _!"%s subscription (%s)".format(site.host, subscription.trigger.getTextDescription());
 		Rfc850Post[] posts;
 		foreach (string messageID; query!"SELECT [MessageID] FROM [SubscriptionPosts] WHERE [SubscriptionID] = ? ORDER BY [Time] DESC LIMIT 50"
 							.iterate(subscriptionID))

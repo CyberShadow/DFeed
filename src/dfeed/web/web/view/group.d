@@ -32,6 +32,7 @@ import std.format;
 import ae.utils.text.html : encodeHtmlEntities;
 import ae.utils.xmllite : putEncodedEntities;
 
+import dfeed.loc;
 import dfeed.database : query;
 import dfeed.groups;
 import dfeed.message;
@@ -61,15 +62,15 @@ void newPostButton(GroupInfo groupInfo)
 	html.put(
 		`<form name="new-post-form" method="get" action="/newpost/`), html.putEncodedEntities(groupInfo.urlName), html.put(`">` ~
 			`<div class="header-tools">` ~
-				`<input class="btn" type="submit" value="Create thread">` ~
-				`<input class="img" type="image" src="`, staticPath("/images/newthread.png"), `" alt="Create thread">` ~
+				`<input class="btn" type="submit" value="`, _!`Create thread`, `">` ~
+				`<input class="img" type="image" src="`, staticPath("/images/newthread.png"), `" alt="`, _!`Create thread`, `">` ~
 			`</div>` ~
 		`</form>`);
 }
 
 void discussionGroup(GroupInfo groupInfo, int page)
 {
-	enforce(page >= 1, "Invalid page");
+	enforce(page >= 1, _!"Invalid page");
 
 	struct Thread
 	{
@@ -108,7 +109,7 @@ void discussionGroup(GroupInfo groupInfo, int page)
 				html.put(
 				//	`<!-- Thread ID: ` ~ encodeHtmlEntities(threadID) ~ ` | First Post ID: ` ~ encodeHtmlEntities(id) ~ `-->` ~
 					`<div class="truncated"><a class="forum-postsummary-subject `, (isRead ? "forum-read" : "forum-unread"), `" href="`), html.putEncodedEntities(idToUrl(tid, "thread")), html.put(`" title="`), html.putEncodedEntities(subject), html.put(`">`), html.putEncodedEntities(subject), html.put(`</a></div>` ~
-					`<div class="truncated">by <span class="forum-postsummary-author" title="`), html.putEncodedEntities(author), html.put(`">`), html.putEncodedEntities(author), html.put(`</span></div>`);
+					`<div class="truncated">`, _!`by`, ` <span class="forum-postsummary-author" title="`), html.putEncodedEntities(author), html.put(`">`), html.putEncodedEntities(author), html.put(`</span></div>`);
 				return;
 			}
 
@@ -122,7 +123,7 @@ void discussionGroup(GroupInfo groupInfo, int page)
 			{
 				html.put(
 					`<a class="forum-postsummary-time `, user.isRead(rowid) ? "forum-read" : "forum-unread", `" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`">`, summarizeTime(time), `</a>` ~
-					`<div class="truncated">by <span class="forum-postsummary-author" title="`), html.putEncodedEntities(author), html.put(`">`), html.putEncodedEntities(author), html.put(`</span></div>`);
+					`<div class="truncated">`, _!`by`, ` <span class="forum-postsummary-author" title="`), html.putEncodedEntities(author), html.put(`">`), html.putEncodedEntities(author), html.put(`</span></div>`);
 				return;
 			}
 		html.put(`<div class="forum-no-data">-</div>`);
@@ -146,7 +147,7 @@ void discussionGroup(GroupInfo groupInfo, int page)
 		`<table id="group-index" class="forum-table">` ~
 		`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(3), `</tr>` ~ // Fixed layout dummies
 		`<tr class="group-index-header"><th colspan="3"><div class="header-with-tools">`), newPostButton(groupInfo), html.putEncodedEntities(groupInfo.publicName), html.put(`</div></th></tr>` ~
-		`<tr class="subheader"><th>Thread / Thread Starter</th><th>Last Post</th><th>Replies</th>`);
+		`<tr class="subheader"><th>`, _!`Thread / Thread Starter`, `</th><th>`, _!`Last Post`, `</th><th>`, _!`Replies`, `</th>`);
 	foreach (thread; threads)
 		html.put(
 			`<tr class="thread-row">` ~
@@ -164,7 +165,7 @@ void discussionGroup(GroupInfo groupInfo, int page)
 
 void discussionGroupThreaded(GroupInfo groupInfo, int page, bool narrow = false)
 {
-	enforce(page >= 1, "Invalid page");
+	enforce(page >= 1, _!"Invalid page");
 
 	//foreach (string threadID; query!"SELECT `ID` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?".iterate(group, THREADS_PER_PAGE, (page-1)*THREADS_PER_PAGE))
 	//	foreach (string id, string parent, string author, string subject, long stdTime; query!"SELECT `ID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` = ?".iterate(threadID))
@@ -192,9 +193,9 @@ void discussionGroupSplit(GroupInfo groupInfo, int page)
 	discussionGroupThreaded(groupInfo, page, true);
 	html.put(
 		`</div></td>` ~
-		`<td id="group-split-message" class="group-split-message-none"><span>` ~
-			`Loading...` ~
-			`<div class="nojs">Sorry, this view requires JavaScript.</div>` ~
+		`<td id="group-split-message" class="group-split-message-none"><span>`,
+			_!`Loading...`,
+			`<div class="nojs">`, _!`Sorry, this view requires JavaScript.`, `</div>` ~
 		`</span></td>` ~
 		`</tr></table>`);
 }
@@ -202,10 +203,10 @@ void discussionGroupSplit(GroupInfo groupInfo, int page)
 void discussionGroupSplitFromPost(string id, out GroupInfo groupInfo, out int page, out string threadID)
 {
 	auto post = getPost(id);
-	enforce(post, "Post not found");
+	enforce(post, _!"Post not found");
 
 	groupInfo = post.getGroup();
-	enforce(groupInfo, "Unknown group: " ~ post.where);
+	enforce(groupInfo, _!"Unknown group:" ~ " " ~ post.where);
 	threadID = post.cachedThreadID;
 	page = getThreadPage(groupInfo, threadID);
 
@@ -220,7 +221,7 @@ int getThreadPage(GroupInfo groupInfo, string thread)
 		foreach (int threadIndex; query!"SELECT COUNT(*) FROM `Threads` WHERE `Group` = ? AND `LastUpdated` > ? ORDER BY `LastUpdated` DESC".iterate(groupInfo.internalName, time))
 			page = indexToPage(threadIndex, THREADS_PER_PAGE);
 
-	enforce(page > 0, "Can't find thread's page");
+	enforce(page > 0, _!"Can't find thread's page");
 	return page;
 }
 
@@ -263,7 +264,7 @@ enum POSTS_PER_GROUP_PAGE = 100;
 void discussionGroupVSplitList(GroupInfo groupInfo, int page)
 {
 	enum postsPerPage = POSTS_PER_GROUP_PAGE;
-	enforce(page >= 1, "Invalid page");
+	enforce(page >= 1, _!"Invalid page");
 
 	//foreach (string threadID; query!"SELECT `ID` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?".iterate(group, THREADS_PER_PAGE, (page-1)*THREADS_PER_PAGE))
 	//	foreach (string id, string parent, string author, string subject, long stdTime; query!"SELECT `ID`, `ParentID`, `Author`, `Subject`, `Time` FROM `Posts` WHERE `ThreadID` = ?".iterate(threadID))
@@ -298,9 +299,9 @@ void discussionGroupVSplit(GroupInfo groupInfo, int page)
 	discussionGroupVSplitList(groupInfo, page);
 	html.put(
 		`</div></td></tr>` ~
-		`<tr><td id="group-split-message" class="group-split-message-none">` ~
-			`Loading...` ~
-			`<div class="nojs">Sorry, this view requires JavaScript.</div>` ~
+		`<tr><td id="group-split-message" class="group-split-message-none">`,
+			_!`Loading...`,
+			`<div class="nojs">`, _!`Sorry, this view requires JavaScript.`, `</div>` ~
 		`</td>` ~
 		`</tr></table>`);
 }
@@ -313,14 +314,14 @@ int getVSplitPostPage(GroupInfo groupInfo, string id)
 		foreach (int threadIndex; query!"SELECT COUNT(*) FROM [Groups] WHERE [Group] = ? AND [Time] > ? ORDER BY [Time] DESC".iterate(groupInfo.internalName, time))
 			page = indexToPage(threadIndex, POSTS_PER_GROUP_PAGE);
 
-	enforce(page > 0, "Can't find post's page");
+	enforce(page > 0, _!"Can't find post's page");
 	return page;
 }
 
 void discussionGroupVSplitFromPost(string id, out GroupInfo groupInfo, out int page, out string threadID)
 {
 	auto post = getPost(id);
-	enforce(post, "Post not found");
+	enforce(post, _!"Post not found");
 
 	groupInfo = post.getGroup();
 	threadID = post.cachedThreadID;

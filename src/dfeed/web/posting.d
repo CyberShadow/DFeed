@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -33,6 +33,7 @@ import ae.utils.array;
 import ae.utils.sini;
 import ae.utils.text;
 
+import dfeed.loc;
 import dfeed.common;
 import dfeed.database;
 import dfeed.groups;
@@ -118,10 +119,10 @@ final class PostProcess
 
 		this.post = createPost(draft, headers, ip, parent);
 
-		enforce(draft.clientVars.get("name", "").length, "Please enter a name");
-		enforce(draft.clientVars.get("email", "").length, "Please enter an email address");
-		enforce(draft.clientVars.get("subject", "").length, "Please enter a message subject");
-		enforce(draft.clientVars.get("text", "").length, "Please enter a message");
+		enforce(draft.clientVars.get("name", "").length, _!"Please enter a name");
+		enforce(draft.clientVars.get("email", "").length, _!"Please enter an email address");
+		enforce(draft.clientVars.get("subject", "").length, _!"Please enter a message subject");
+		enforce(draft.clientVars.get("text", "").length, _!"Please enter a message");
 
 		this.pid = randomString();
 		postProcesses[pid] = this;
@@ -337,7 +338,7 @@ private:
 		if (!ok)
 		{
 			this.status = PostingStatus.captchaFailed;
-			this.error = PostError("CAPTCHA error: " ~ errorMessage, errorData);
+			this.error = PostError(_!"CAPTCHA error:" ~ " " ~ errorMessage, errorData);
 			log("CAPTCHA failed: " ~ errorMessage);
 			if (errorData) log("CAPTCHA error data: " ~ errorData.toString());
 			log.close();
@@ -383,7 +384,7 @@ private:
 		switch (group.sinkType)
 		{
 			case null:
-				throw new Exception("You can't post to this group.");
+				throw new Exception(_!"You can't post to this group.");
 			case "nntp":
 				nntpSend(group.sinkName);
 				break;
@@ -402,7 +403,7 @@ private:
 		void onDisconnect(string reason, DisconnectType type)
 		{
 			this.status = PostingStatus.serverError;
-			this.error = PostError("NNTP connection error: " ~ reason);
+			this.error = PostError(_!"NNTP connection error:" ~ " " ~ reason);
 			log("NNTP connection error: " ~ reason);
 			log.close();
 		}
@@ -410,7 +411,7 @@ private:
 		void onError(string error)
 		{
 			this.status = PostingStatus.serverError;
-			this.error = PostError("NNTP error: " ~ error);
+			this.error = PostError(_!"NNTP error:" ~ " " ~ error);
 			nntp.handleDisconnect = null;
 			if (nntp.connected)
 				nntp.disconnect();
@@ -438,7 +439,7 @@ private:
 
 		auto config = loadIni!NntpConfig("config/sources/nntp/" ~ name ~ ".ini");
 		if (!config.postingAllowed)
-			throw new Exception("Posting is disabled");
+			throw new Exception(_!"Posting is disabled");
 
 		nntp = new NntpClient(log);
 		nntp.handleDisconnect = &onDisconnect;
@@ -452,7 +453,7 @@ private:
 		void onError(string error)
 		{
 			this.status = PostingStatus.serverError;
-			this.error = PostError("SMTP error: " ~ error);
+			this.error = PostError(_!"SMTP error:" ~ " " ~ error);
 			log("SMTP error: " ~ error);
 			log.close();
 		}

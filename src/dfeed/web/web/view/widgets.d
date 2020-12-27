@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -22,6 +22,7 @@ import std.format : format;
 
 import ae.utils.xmllite : putEncodedEntities;
 
+import dfeed.loc;
 import dfeed.sinks.cache;
 import dfeed.web.web.page : html;
 import dfeed.web.web.perf;
@@ -81,8 +82,8 @@ void summarizeFrameThread(PostInfo* info, string infoText)
 			putGravatar(getGravatarHash(info.authorEmail), idToUrl(id), `target="_top" class="forum-postsummary-gravatar" `);
 			html.put(
 				`<a target="_top" class="forum-postsummary-subject `, (user.isRead(rowid) ? "forum-read" : "forum-unread"), `" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`">`), html.putEncodedEntities(subject), html.put(`</a><br>` ~
-				`<div class="forum-postsummary-info">`, infoText, `</div>` ~
-				`by <span class="forum-postsummary-author">`), html.putEncodedEntities(author), html.put(`</span>`
+				`<div class="forum-postsummary-info">`, infoText, `</div>`,
+				_!`by`, ` <span class="forum-postsummary-author">`), html.putEncodedEntities(author), html.put(`</span>`
 			);
 			return;
 		}
@@ -95,8 +96,8 @@ void discussionFrameAnnouncements()
 	auto latestAnnouncements = latestAnnouncementsCache(getLatestAnnouncements());
 
 	html.put(`<table class="forum-table"><thead><tr><th>` ~
-		`<a target="_top" class="feed-icon" title="Subscribe" href="/feed/threads/digitalmars.D.announce"><img src="`, staticPath("/images/rss.png"),`"></img></a>` ~
-		`<a target="_top" href="/group/digitalmars.D.announce">Latest announcements</a>` ~
+		`<a target="_top" class="feed-icon" title="`, _!`Subscribe`, `" href="/feed/threads/digitalmars.D.announce"><img src="`, staticPath("/images/rss.png"),`"></img></a>` ~
+		`<a target="_top" href="/group/digitalmars.D.announce">`, _!`Latest announcements`, `</a>` ~
 		`</th></tr></thead><tbody>`);
 	foreach (row; latestAnnouncements)
 	{
@@ -110,7 +111,7 @@ void discussionFrameDiscussions()
 {
 	auto activeDiscussions = activeDiscussionsCache(getActiveDiscussions());
 
-	html.put(`<table class="forum-table"><thead><tr><th><a target="_top" href="/">Active discussions</a></th></tr></thead><tbody>`);
+	html.put(`<table class="forum-table"><thead><tr><th><a target="_top" href="/">`, _!`Active discussions`, `</a></th></tr></thead><tbody>`);
 	foreach (row; activeDiscussions)
 		html.put(`<tr><td>`), summarizeFrameThread(getPostInfo(row.id), "%d posts".format(row.postCount)), html.put(`</td></tr>`);
 	html.put(`</tbody></table>`);

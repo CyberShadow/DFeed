@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -25,6 +25,7 @@ import std.format : format;
 
 import ae.utils.xmllite : putEncodedEntities;
 
+import dfeed.loc;
 import dfeed.database : query;
 import dfeed.message : idToUrl;
 import dfeed.web.web.page : html;
@@ -233,7 +234,7 @@ void discussionThreadOverview(string threadID, string selectedID)
 	enum PERF_SCOPE = "discussionThreadOverview"; mixin(MeasurePerformanceMixin);
 	html.put(
 		`<table id="thread-index" class="forum-table group-wrapper viewmode-`), html.putEncodedEntities(userSettings.groupViewMode), html.put(`">` ~
-		`<tr class="group-index-header"><th><div>Thread overview</div></th></tr>`,
+		`<tr class="group-index-header"><th><div>` ~ _!`Thread overview` ~ `</div></th></tr>`,
 		`<tr><td class="group-threads-cell"><div class="group-threads"><table>`);
 	formatThreadedPosts(getThreadPosts(threadID), false, selectedID);
 	html.put(`</table></div></td></tr></table>`);

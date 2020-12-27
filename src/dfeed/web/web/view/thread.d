@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -24,6 +24,7 @@ import std.format;
 
 import ae.utils.xmllite : putEncodedEntities;
 
+import dfeed.loc;
 import dfeed.database : query;
 import dfeed.groups : GroupInfo;
 import dfeed.message : idToUrl, Rfc850Post, getGroup;
@@ -58,7 +59,7 @@ int getPostThreadIndex(string threadID, SysTime postTime)
 int getPostThreadIndex(string postID)
 {
 	auto post = getPostInfo(postID);
-	enforce(post, "No such post: " ~ postID);
+	enforce(post, _!"No such post:" ~ " " ~ postID);
 	return getPostThreadIndex(post.threadID, post.time);
 }
 
@@ -66,12 +67,12 @@ string getPostAtThreadIndex(string threadID, int index)
 {
 	foreach (string id; query!"SELECT `ID` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC LIMIT 1 OFFSET ?".iterate(threadID, index))
 		return id;
-	throw new NotFoundException(format("Post #%d of thread %s not found", index, threadID));
+	throw new NotFoundException(format(_!"Post #%d of thread %s not found", index, threadID));
 }
 
 void discussionThread(string id, int page, out GroupInfo groupInfo, out string title, out string authorEmail, bool markAsRead)
 {
-	enforce(page >= 1, "Invalid page");
+	enforce(page >= 1, _!"Invalid page");
 
 	auto postCount = getPostCount(id);
 
@@ -87,8 +88,8 @@ void discussionThread(string id, int page, out GroupInfo groupInfo, out string t
 		if (pageCount > 1)
 		{
 			html.put(
-				`<div class="thread-overview-pager forum-expand-container">` ~
-				`Jump to page: <b>1</b> `
+				`<div class="thread-overview-pager forum-expand-container">`,
+				_!`Jump to page:`, ` <b>1</b> `
 			);
 
 			auto threadUrl = idToUrl(id, "thread");
@@ -114,7 +115,7 @@ void discussionThread(string id, int page, out GroupInfo groupInfo, out string t
 					`<a class="thread-overview-pager forum-expand-toggle">&nbsp;</a>` ~
 					`<div class="thread-overview-pager-expanded forum-expand-content">` ~
 					`<form action="`); html.putEncodedEntities(threadUrl); html.put(`">` ~
-					`Page <input name="page" class="thread-overview-pager-pageno"> <input type="submit" value="Go">` ~
+					_!`Page`, ` <input name="page" class="thread-overview-pager-pageno"> <input type="submit" value="`, _!`Go`, `">` ~
 					`</form>` ~
 					`</div>`
 				);
@@ -126,7 +127,7 @@ void discussionThread(string id, int page, out GroupInfo groupInfo, out string t
 		}
 
 		html.put(
-			`<a class="forum-expand-toggle">Thread overview</a>` ~
+			`<a class="forum-expand-toggle">`, _!`Thread overview`, `</a>` ~
 			`</th></tr>`,
 			`<tr class="forum-expand-content"><td class="group-threads-cell"><div class="group-threads"><table>`);
 		formatThreadedPosts(getThreadPosts(id), false);
@@ -144,7 +145,7 @@ void discussionThread(string id, int page, out GroupInfo groupInfo, out string t
 	foreach (post; posts)
 		knownPosts[post.id] = post;
 
-	enforce(posts.length, "Thread not found");
+	enforce(posts.length, _!"Thread not found");
 
 	groupInfo   = posts[0].getGroup();
 	title       = posts[0].subject;

@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -41,6 +41,7 @@ import ae.utils.xmllite : putEncodedEntities;
 import dfeed.common;
 import dfeed.database;
 import dfeed.groups;
+import dfeed.loc;
 import dfeed.mail;
 import dfeed.message;
 import dfeed.site;
@@ -166,17 +167,17 @@ body
 {
 	foreach (string userName, string data; query!`SELECT [Username], [Data] FROM [Subscriptions] WHERE [ID] = ?`.iterate(subscriptionID))
 		return Subscription(userName, data.jsonParse!SubscriptionData.data);
-	throw new NotFoundException("No such subscription");
+	throw new NotFoundException(_!"No such subscription");
 }
 
 Subscription getUserSubscription(string userName, string subscriptionID)
 out(result) { assert(result.id == subscriptionID && result.userName == userName); }
 body
 {
-	enforce(userName.length, "Not logged in");
+	enforce(userName.length, _!"Not logged in");
 	foreach (string data; query!`SELECT [Data] FROM [Subscriptions] WHERE [Username] = ? AND [ID] = ?`.iterate(userName, subscriptionID))
 		return Subscription(userName, data.jsonParse!SubscriptionData.data);
-	throw new NotFoundException("No such user subscription");
+	throw new NotFoundException(_!"No such user subscription");
 }
 
 Subscription[] getUserSubscriptions(string userName)
@@ -248,6 +249,7 @@ class Trigger : FormSection
 
 	/// TriggerType
 	abstract @property string type() const;
+	abstract @property string typeName() const; /// Localized name
 
 	/// HTML description shown in the subscription list.
 	abstract void putDescription(ref StringBuffer html);
@@ -274,19 +276,20 @@ final class ReplyTrigger : Trigger
 	mixin GenerateConstructorProxies;
 
 	override @property string type() const { return "reply"; }
+	override @property string typeName() const { return _!"reply"; }
 
 	override void putDescription(ref StringBuffer html) { html.put(getTextDescription()); }
 
-	override string getTextDescription() { return "Replies to your posts"; }
+	override string getTextDescription() { return _!"Replies to your posts"; }
 
 	override string getShortPostDescription(Rfc850Post post)
 	{
-		return "%s replied to your post in the thread \"%s\"".format(post.author, post.subject);
+		return _!"%s replied to your post in the thread \"%s\"".format(post.author, post.subject);
 	}
 
 	override string getLongPostDescription(Rfc850Post post)
 	{
-		return "%s has just replied to your %s post in the thread titled \"%s\" in the %s group of %s.".format(
+		return _!"%s has just replied to your %s post in the thread titled \"%s\" in the %s group of %s.".format(
 			post.author,
 			post.time.formatTime!`F j`,
 			post.subject,
@@ -297,7 +300,7 @@ final class ReplyTrigger : Trigger
 
 	override void putEditHTML(ref StringBuffer html)
 	{
-		html.put("When someone replies to your posts:");
+		html.put(_!"When someone replies to your posts:");
 	}
 
 	override void serialize(ref UrlParameters data) {}
@@ -328,6 +331,7 @@ final class ThreadTrigger : Trigger
 	}
 
 	override @property string type() const { return "thread"; }
+	override @property string typeName() const { return _!"thread"; }
 
 	final void putThreadName(ref StringBuffer html)
 	{
@@ -339,23 +343,23 @@ final class ThreadTrigger : Trigger
 
 	override void putDescription(ref StringBuffer html)
 	{
-		html.put(`Replies to the thread `), putThreadName(html);
+		html.put(_!`Replies to the thread`, ` `), putThreadName(html);
 	}
 
 	override string getTextDescription()
 	{
 		auto post = getPost(threadID);
-		return "Replies to the thread " ~ (post ? `"` ~ post.subject ~ `"` : threadID);
+		return _!"Replies to the thread" ~ " " ~ (post ? `"` ~ post.subject ~ `"` : threadID);
 	}
 
 	override string getShortPostDescription(Rfc850Post post)
 	{
-		return "%s replied to the thread \"%s\"".format(post.author, post.subject);
+		return _!"%s replied to the thread \"%s\"".format(post.author, post.subject);
 	}
 
 	override string getLongPostDescription(Rfc850Post post)
 	{
-		return "%s has just replied to a thread you have subscribed to titled \"%s\" in the %s group of %s.".format(
+		return _!"%s has just replied to a thread you have subscribed to titled \"%s\" in the %s group of %s.".format(
 			post.author,
 			post.subject,
 			post.xref[0].group,
@@ -367,8 +371,8 @@ final class ThreadTrigger : Trigger
 	{
 		auto post = getPost(threadID);
 		html.put(
-			`<input type="hidden" name="trigger-thread-id" value="`), html.putEncodedEntities(threadID), html.put(`">` ~
-			`When someone posts a reply to the thread `), putThreadName(html), html.put(`:`
+			`<input type="hidden" name="trigger-thread-id" value="`), html.putEncodedEntities(threadID), html.put(`">`,
+			_!`When someone posts a reply to the thread`, ` `), putThreadName(html), html.put(`:`
 		);
 	}
 
@@ -379,7 +383,7 @@ final class ThreadTrigger : Trigger
 
 	override void validate()
 	{
-		enforce(getPost(threadID), "No such post");
+		enforce(getPost(threadID), _!"No such post");
 	}
 
 	override void save()
@@ -430,13 +434,14 @@ final class ContentTrigger : Trigger
 	}
 
 	override @property string type() const { return "content"; }
+	override @property string typeName() const { return _!"content"; }
 
 	override void putDescription(ref StringBuffer html)
 	{
-		html.put(onlyNewThreads ? `New threads` : `New posts`);
+		html.put(onlyNewThreads ? _!`New threads` : _!`New posts`);
 		if (onlyInGroups)
 		{
-			html.put(` in `);
+			html.put(` `, _!`in`, ` `);
 			void putGroup(string group)
 			{
 				auto gi = getGroupInfo(group);
@@ -448,12 +453,12 @@ final class ContentTrigger : Trigger
 				{}
 			else
 			if (groups.length==2)
-				html.put(` and `), putGroup(groups[1]);
+				html.put(` ` ~ _!`and` ~ ` `), putGroup(groups[1]);
 			else
 			if (groups.length==3)
-				html.put(`, `), putGroup(groups[1]), html.put(` and `), putGroup(groups[2]);
+				html.put(`, `), putGroup(groups[1]), html.put(` `, _!`and`, ` `), putGroup(groups[2]);
 			else
-				html.put(`, `), putGroup(groups[1]), html.put(`, (<b>%d</b> more)`.format(groups.length-2));
+				html.put(`, `), putGroup(groups[1]), html.put(`, (<b>%d</b> `, _!`more`, `)`.format(groups.length-2));
 		}
 
 		void putStringFilter(string preface, ref StringFilter filter)
@@ -468,19 +473,19 @@ final class ContentTrigger : Trigger
 				);
 		}
 
-		putStringFilter("from", authorNameFilter);
-		putStringFilter("from email", authorEmailFilter);
-		putStringFilter("titled", subjectFilter);
-		putStringFilter("containing", messageFilter);
+		putStringFilter(_!"from", authorNameFilter);
+		putStringFilter(_!"from email", authorEmailFilter);
+		putStringFilter(_!"titled", subjectFilter);
+		putStringFilter(_!"containing", messageFilter);
 	}
 
 	override string getTextDescription() { return getDescription().replace(`<b>`, "\&ldquo;").replace(`</b>`, "\&rdquo;"); }
 
 	override string getShortPostDescription(Rfc850Post post)
 	{
-		auto s = "%s %s thread \"%s\" in %s".format(
+		auto s = _!"%s %s the thread \"%s\" in %s".format(
 			post.author,
-			post.references.length ? "replied to the" : "created",
+			post.references.length ? _!"replied to" : _!"created",
 			post.subject,
 			post.xref[0].group,
 		);
@@ -491,19 +496,19 @@ final class ContentTrigger : Trigger
 			messageFilter    .enabled && messageFilter    .str ? messageFilter    .str :
 			null;
 		if (matchStr)
-			s = "%s matching %s".format(s, matchStr);
+			s = _!"%s matching %s".format(s, matchStr);
 		return s;
 	}
 
 	override string getLongPostDescription(Rfc850Post post)
 	{
-		return "%s has just %s a thread titled \"%s\" in the %s group of %s.\n\nThis %s matches a content alert subscription you have created (%s).".format(
+		return _!"%s has just %s a thread titled \"%s\" in the %s group of %s.\n\n%s matches a content alert subscription you have created (%s).".format(
 			post.author,
-			post.references.length ? "replied to" : "created",
+			post.references.length ? _!"replied to" : _!"created",
 			post.subject,
 			post.xref[0].group,
 			site.host,
-			post.references.length ? "post" : "thread",
+			post.references.length ? _!"This post" : _!"This thread",
 			getTextDescription(),
 		);
 	}
@@ -511,15 +516,15 @@ final class ContentTrigger : Trigger
 	override void putEditHTML(ref StringBuffer html)
 	{
 		html.put(
-			`<div id="trigger-content">` ~
-			`When someone ` ~
+			`<div id="trigger-content">`,
+			_!`When someone`, ` ` ~
 			`<select name="trigger-content-message-type">` ~
-				`<option value="posts"`  , onlyNewThreads ? `` : ` selected`, `>posts or replies to a thread</option>` ~
-				`<option value="threads"`, onlyNewThreads ? ` selected` : ``, `>posts a new thread</option>` ~
+				`<option value="posts"`  , onlyNewThreads ? `` : ` selected`, `>`, _!`posts or replies to a thread`, `</option>` ~
+				`<option value="threads"`, onlyNewThreads ? ` selected` : ``, `>`, _!`posts a new thread`, `</option>` ~
 			`</select>` ~
 			`<table>` ~
 			`<tr><td>` ~
-				`<input type="checkbox" name="trigger-content-only-in-groups"`, onlyInGroups ? ` checked` : ``, `> only in the groups:` ~
+				`<input type="checkbox" name="trigger-content-only-in-groups"`, onlyInGroups ? ` checked` : ``, `> `, _!`only in the groups:` ~
 			`</td><td>` ~
 				`<select name="trigger-content-groups" multiple size="10">`
 		);
@@ -547,24 +552,24 @@ final class ContentTrigger : Trigger
 			html.put(
 				`<tr><td>` ~
 					`<input type="checkbox" name="trigger-content-`, id, `-enabled"`, filter.enabled ? ` checked` : ``, `> ` ~
-					`and when the `, name, ` ` ~
+					_!`and when the`, ` `, name, ` ` ~
 				`</td><td>` ~
 					`<select name="trigger-content-`, id, `-match-type">` ~
-						`<option value="substring"`, filter.isRegex ? `` : ` selected`, `>contains the string</option>` ~
-						`<option value="regex"`    , filter.isRegex ? ` selected` : ``, `>matches the regular expression</option>` ~
+						`<option value="substring"`, filter.isRegex ? `` : ` selected`, `>`, _!`contains the string`, `</option>` ~
+						`<option value="regex"`    , filter.isRegex ? ` selected` : ``, `>`, _!`matches the regular expression`, `</option>` ~
 					`</select> ` ~
 					`<input name="trigger-content-`, id, `-str" value="`), html.putEncodedEntities(filter.str), html.put(`"> ` ~
 					`(` ~
 					`<input type="checkbox" name="trigger-content-`, id, `-case-sensitive"`, filter.caseSensitive ? ` checked` : ``, `>` ~
-					` case sensitive )` ~
+					` `, _!`case sensitive`, ` )` ~
 				`</td></tr>`
 			);
 		}
 
-		putStringFilter("author name", "author-name", authorNameFilter);
-		putStringFilter("author email", "author-email", authorEmailFilter);
-		putStringFilter("subject", "subject", subjectFilter);
-		putStringFilter("message", "message", messageFilter);
+		putStringFilter(_!"author name", "author-name", authorNameFilter);
+		putStringFilter(_!"author email", "author-email", authorEmailFilter);
+		putStringFilter(_!"subject", "subject", subjectFilter);
+		putStringFilter(_!"message", "message", messageFilter);
 		html.put(`</table></div>`);
 	}
 
@@ -596,21 +601,21 @@ final class ContentTrigger : Trigger
 		{
 			if (filter.enabled)
 			{
-				enforce(filter.str.length, "No %s search term specified".format(name));
+				enforce(filter.str.length, _!"No %s search term specified".format(name));
 				try
 					auto re = regex(filter.str);
 				catch (Exception e)
-					throw new Exception("Invalid %s regex `%s`: %s".format(name, filter.str, e.msg));
+					throw new Exception(_!"Invalid %s regex `%s`: %s".format(name, filter.str, e.msg));
 			}
 		}
 
-		validateFilter("author name", authorNameFilter);
-		validateFilter("author email", authorEmailFilter);
-		validateFilter("subject", subjectFilter);
-		validateFilter("message", messageFilter);
+		validateFilter(_!"author name", authorNameFilter);
+		validateFilter(_!"author email", authorEmailFilter);
+		validateFilter(_!"subject", subjectFilter);
+		validateFilter(_!"message", messageFilter);
 
 		if (onlyInGroups)
-			enforce(groups.length, "No groups selected");
+			enforce(groups.length, _!"No groups selected");
 	}
 
 	override void save()
@@ -663,7 +668,7 @@ body
 		case "content":
 			return new ContentTrigger(userName, data);
 		default:
-			throw new Exception("Unknown subscription trigger type: " ~ triggerType);
+			throw new Exception(_!"Unknown subscription trigger type:" ~ " " ~ triggerType);
 	}
 }
 
@@ -745,8 +750,8 @@ final class IrcAction : Action
 	{
 		html.put(
 			`<p>` ~
-				`<input type="checkbox" name="saction-irc-enabled"`, enabled ? ` checked` : ``, `> ` ~
-				`Send a private message to <input name="saction-irc-nick" value="`), html.putEncodedEntities(nick), html.put(`"> on the ` ~
+				`<input type="checkbox" name="saction-irc-enabled"`, enabled ? ` checked` : ``, `> `,
+				_!`Send a private message to`, ` <input name="saction-irc-nick" value="`), html.putEncodedEntities(nick), html.put(`"> `, _!`on the`, ` ` ~
 				`<select name="saction-irc-network">`);
 		foreach (irc; services!IrcSink)
 		{
@@ -756,7 +761,7 @@ final class IrcAction : Action
 					html.put(`</option>`);
 		}
 		html.put(
-				`</select> IRC network` ~
+				`</select> `, _!`IRC network`,
 			`</p>`
 		);
 	}
@@ -793,10 +798,10 @@ final class IrcAction : Action
 	{
 		if (!enabled)
 			return;
-		enforce(nick.length, "No nickname indicated");
+		enforce(nick.length, _!"No nickname indicated");
 		foreach (c; nick)
 			if (!(isAlphaNum(c) || c.isOneOf(r"-_|\[]{}`")))
-				throw new Exception("Invalid character in nickname.");
+				throw new Exception(_!"Invalid character in nickname.");
 	}
 
 	override void save() {}
@@ -822,8 +827,8 @@ final class EmailAction : Action
 	{
 		html.put(
 			`<p>` ~
-				`<input type="checkbox" name="saction-email-enabled"`, enabled ? ` checked` : ``, `> ` ~
-				`Send an email to <input type="email" size="30" name="saction-email-address" value="`), html.putEncodedEntities(address), html.put(`">` ~
+				`<input type="checkbox" name="saction-email-enabled"`, enabled ? ` checked` : ``, `> `,
+				_!`Send an email to`, ` <input type="email" size="30" name="saction-email-address" value="`), html.putEncodedEntities(address), html.put(`">` ~
 			`</p>`
 		);
 	}
@@ -877,7 +882,7 @@ final class EmailAction : Action
 					try
 						sendMail(message);
 					catch (Exception e)
-						log("Error: " ~ e.msg);
+						log(_!"Error:" ~ " " ~ e.msg);
 				}
 			}, 1.msecs);
 	}
@@ -887,51 +892,52 @@ final class EmailAction : Action
 		auto realName = getUserRealName(userName);
 		enforce(!(address~realName).canFind("\n"), "Shenanigans detected");
 
-		return q"EOF
-From: %10$s <no-reply@%7$s>
-To: %13$s <%11$s>
-Subject: %12$s
-Precedence: bulk
-Content-Type: text/plain; charset=utf-8
-List-Unsubscribe-Post: List-Unsubscribe=One-Click
-List-Unsubscribe: <%6$s://%7$s/subscription-unsubscribe/%9$s>
-
-Howdy %1$s,
-
-%2$s
-
-This %3$s is located at:
-%4$s
-
-Here is the message that has just been posted:
-----------------------------------------------
-%5$-(%s
-%)
-----------------------------------------------
-
-To reply to this message, please visit this page:
-%6$s://%7$s%8$s
-
-There may also be other messages matching your subscription, but you will not receive any more notifications for this subscription until you've read all messages matching this subscription:
-%6$s://%7$s/subscription-posts/%9$s
-
-All the best,
-%10$s
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Unsubscription information:
-
-To stop receiving emails for this subscription, please visit this page:
-%6$s://%7$s/subscription-unsubscribe/%9$s
-
-Or, visit your settings page to edit your subscriptions:
-%6$s://%7$s/settings
-.
-EOF"
+		return [
+			`From: %10$s <no-reply@%7$s>`,
+			`To: %13$s <%11$s>`,
+			`Subject: %12$s`,
+			`Precedence: bulk`,
+			`Content-Type: text/plain; charset=utf-8`,
+			`List-Unsubscribe-Post: List-Unsubscribe=One-Click`,
+			`List-Unsubscribe: <%6$s://%7$s/subscription-unsubscribe/%9$s>`,
+			``,
+			_!`Howdy %1$s,`,
+			``,
+			`%2$s`,
+			``,
+			_!`This %3$s is located at:`,
+			`%4$s`,
+			``,
+			_!`Here is the message that has just been posted:`,
+			`----------------------------------------------`,
+			`%5$-(%s`,
+			`%)`,
+			`----------------------------------------------`,
+			``,
+			_!`To reply to this message, please visit this page:`,
+			`%6$s://%7$s%8$s`,
+			``,
+			_!`There may also be other messages matching your subscription, but you will not receive any more notifications for this subscription until you've read all messages matching this subscription:`,
+			`%6$s://%7$s/subscription-posts/%9$s`,
+			``,
+			_!`All the best,`,
+			`%10$s`,
+			``,
+			`~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`,
+			_!`Unsubscription information:`,
+			``,
+			_!`To stop receiving emails for this subscription, please visit this page:`,
+			`%6$s://%7$s/subscription-unsubscribe/%9$s`,
+			``,
+			_!`Or, visit your settings page to edit your subscriptions:`,
+			`%6$s://%7$s/settings`,
+			`.`,
+		]
+		.join("\n")
 		.format(
 			/* 1*/ realName.split(" ")[0],
 			/* 2*/ subscription.trigger.getLongPostDescription(post),
-			/* 3*/ post.references.length ? "post" : "thread",
+			/* 3*/ post.references.length ? _!"post" : _!"thread",
 			/* 4*/ post.url,
 			/* 5*/ post.content.strip.splitAsciiLines.map!(line => line.length ? "> " ~ line : ">"),
 			/* 6*/ site.proto,
@@ -949,7 +955,7 @@ EOF"
 	{
 		if (!enabled)
 			return;
-		enforce(address.match(re!(`^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$`, "i")), "Invalid email address");
+		enforce(address.match(re!(`^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$`, "i")), _!"Invalid email address");
 	}
 
 	override void save() {}
@@ -966,8 +972,14 @@ final class DatabaseAction : Action
 	override void putEditHTML(ref StringBuffer html)
 	{
 		html.put(
-			`<p>Additionally, you can <a href="/subscription-feed/`, subscriptionID, `">subscribe to an ATOM feed of matched posts</a>, ` ~
-			`or <a href="/subscription-posts/`, subscriptionID, `">read them online</a>.</p>`
+			`<p>`,
+			`Additionally, you can %ssubscribe to an ATOM feed of matched posts%s, or %sread them online%s.`.format(
+				`<a href="/subscription-feed/` ~ subscriptionID ~ `">`,
+				`</a>`,
+				`<a href="/subscription-posts/` ~ subscriptionID ~ `">`,
+				`</a>`,
+			),
+			`</p>`
 		);
 	}
 
