@@ -529,7 +529,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				title = `Moderating post "` ~ post.subject ~ `"`; // "
 				breadcrumbs ~= `<a href="` ~ encodeHtmlEntities(idToUrl(post.id)) ~ `">` ~ encodeHtmlEntities(post.subject) ~ `</a>`;
 				breadcrumbs ~= `<a href="/moderate/`~pathX~`">Moderate post</a>`;
-				discussionModeration(post, request.decodePostData());
+				discussionModeration(post, request.method == "POST" ? request.decodePostData() : UrlParameters.init);
 				bodyClass ~= " formdoc";
 				break;
 			}
