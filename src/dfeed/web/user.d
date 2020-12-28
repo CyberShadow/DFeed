@@ -67,11 +67,12 @@ abstract class User
 
 	enum Level : int
 	{
-		guest            =   0, /// Default user level
-		hasRawLink       =   1, /// Get a clickable "raw post" link.
-		canFlag          =   2, /// Can flag posts
-		canApproveDrafts =  90, /// Can approve moderated drafts
-		canModerate      = 100, /// Can delete posts locally/remotely and ban users
+		guest            =    0, /// Default user level
+		hasRawLink       =    1, /// Get a clickable "raw post" link.
+		canFlag          =    2, /// Can flag posts
+		canApproveDrafts =   90, /// Can approve moderated drafts
+		canModerate      =  100, /// Can delete posts locally/remotely and ban users
+		sysadmin         = 1000, /// Can edit the database (presumably)
 	}
 
 	string getName() { return null; }
