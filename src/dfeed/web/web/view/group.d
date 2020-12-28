@@ -37,6 +37,7 @@ import dfeed.database : query;
 import dfeed.groups;
 import dfeed.message;
 import dfeed.sinks.cache;
+import dfeed.web.user : User;
 import dfeed.web.web.cache : postCountCache, getPostCounts;
 import dfeed.web.web.page : html;
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
@@ -98,7 +99,14 @@ void discussionGroup(GroupInfo groupInfo, int page)
 
 	foreach (string firstPostID, string lastPostID; query!"SELECT `ID`, `LastPost` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?".iterate(groupInfo.internalName, THREADS_PER_PAGE, getPageOffset(page, THREADS_PER_PAGE)))
 		foreach (int count; query!"SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ?".iterate(firstPostID))
+		{
+			if (count == 0 && user.getLevel() < User.Level.sysadmin)
+			{
+				// 0-count threads can occur after deleting the last post in a thread, and that post's message ID did not match the thread's.
+				continue;
+			}
 			threads ~= Thread(firstPostID, getPostInfo(firstPostID), getPostInfo(lastPostID), count, getUnreadPostCount(firstPostID));
+		}
 
 	void summarizeThread(string tid, PostInfo* info, bool isRead)
 	{
