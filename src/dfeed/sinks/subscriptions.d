@@ -459,7 +459,7 @@ final class ContentTrigger : Trigger
 			if (groups.length==3)
 				html.put(`, `), putGroup(groups[1]), html.put(` `, _!`and`, ` `), putGroup(groups[2]);
 			else
-				html.put(`, `), putGroup(groups[1]), html.put(`, (<b>%d</b> `, _!`more`, `)`.format(groups.length-2));
+				html.put(`, `), putGroup(groups[1]), html.put(`, (<b>%d</b> `.format(groups.length-2), _!`more`, `)`);
 		}
 
 		void putStringFilter(string preface, ref StringFilter filter)
