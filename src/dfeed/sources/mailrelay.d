@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014, 2015, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -72,7 +72,8 @@ private:
 				log("> " ~ line);
 			log("* Disconnected");
 
-			announcePost(new Rfc850Post(text), Fresh.yes);
+			auto post = new Rfc850Post(text);
+			announcePost(post, post.fresh);
 		};
 	}
 }

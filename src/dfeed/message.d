@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -56,6 +56,9 @@ class Rfc850Post : Post
 
 	/// Result of threadify()
 	Rfc850Post[] children;
+
+	/// If no, don't announce this message and don't trigger subscriptions
+	Fresh fresh = Fresh.yes;
 
 	this(string _message, string _id=null, int rowid=0, string threadID=null)
 	{
@@ -120,6 +123,9 @@ class Rfc850Post : Post
 		}
 
 		super.time = msg.time;
+
+		if ("X-Original-Date" in headers)
+			fresh = Fresh.no;
 	}
 
 	private this(Rfc850Message msg) { this.msg = msg; }
@@ -159,6 +165,9 @@ class Rfc850Post : Post
 
 	override Importance getImportance()
 	{
+		if (!fresh)
+			return Importance.none;
+
 		if (msg.headers.get("X-List-Administrivia", "").icmp("yes") == 0)
 			return Importance.none;
 

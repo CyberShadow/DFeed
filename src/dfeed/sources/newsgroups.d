@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014, 2015, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -80,7 +80,8 @@ private:
 
 	void onMessage(string[] lines, string num, string id)
 	{
-		announcePost(new Rfc850Post(lines.join("\n"), id), Fresh.yes);
+		auto post = new Rfc850Post(lines.join("\n"), id);
+		announcePost(post, post.fresh);
 	}
 }
 
