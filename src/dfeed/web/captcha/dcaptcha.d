@@ -52,7 +52,7 @@ final class Dcaptcha : Captcha
 			`<input name="dcaptcha_response_field"></input>` ~
 			`<p><b>` ~ _!`Hint` ~ `</b>: ` ~ challenge.hint ~ `</p>` ~
 			`<p>` ~ _!"Is the CAPTCHA too hard?\nRefresh the page to get a different question,\nor ask in the %s#d IRC channel on Freenode%s."
-				.replace(`\n`, `<br>`)
+				.replace("\n", `<br>`)
 				.format(`<a href="http://webchat.freenode.net?randomnick=1&channels=%23d">`, `</a>`) ~
 			`</p>`
 		;

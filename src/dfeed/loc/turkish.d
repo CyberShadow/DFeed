@@ -783,7 +783,7 @@ string translate(string s)
 		case `Hint`:
 			return `İpucu`;
 		case "Is the CAPTCHA too hard?\nRefresh the page to get a different question,\nor ask in the %s#d IRC channel on Freenode%s.":
-			return `CAPTCHA çok mu zor?\nFarklı bir soru almak için sayfayı yenileyin\nveya yanıtını %sFreenode üzerindeki #d IRC kanalında%s sorun.`;
+			return "CAPTCHA çok mu zor?\nFarklı bir soru almak için sayfayı yenileyin\nveya yanıtını %sFreenode üzerindeki #d IRC kanalında%s sorun.";
 		case `Unknown or expired CAPTCHA challenge`:
 			return `Bilinmeyen veya süresi dolmuş CAPTCHA testi`;
 		case `The answer is incorrect`:
