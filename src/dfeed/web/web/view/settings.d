@@ -220,8 +220,6 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 	if (user.isLoggedIn())
 	{
 		html.put(
-			`<p><input type="submit" form="subscriptions-form" name="action-subscription-create-content" value="`, _!`Create new content alert subscription`, `"></p>` ~
-
 			`<hr>` ~
 			`<h2>`, _!`Account settings`, `</h2>` ~
 			`<table id="account-settings">` ~
