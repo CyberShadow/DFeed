@@ -983,7 +983,7 @@ final class DatabaseAction : Action
 	{
 		html.put(
 			`<p>`,
-			`Additionally, you can %ssubscribe to an ATOM feed of matched posts%s, or %sread them online%s.`.format(
+			_!`Additionally, you can %ssubscribe to an ATOM feed of matched posts%s, or %sread them online%s.`.format(
 				`<a href="/subscription-feed/` ~ subscriptionID ~ `">`,
 				`</a>`,
 				`<a href="/subscription-posts/` ~ subscriptionID ~ `">`,

@@ -214,7 +214,7 @@ class TopPostingRule : LintRule
 	override @property string longDescription() { return
 		"<p>" ~ _!"When replying a message, it is generally preferred to add your reply under the quoted parent text." ~ "</p>" ~
 		"<p>" ~ _!"Depending on the software (or its configuration) used to read your message, your message may not be displayed below its parent post." ~ " " ~
-		   _!"In such cases, the quoted text provides context for your reply, and readers would need to first read the quoted text below your reply for context." ~ "</p>" ~
+		   _!"In such cases, readers would need to first read the quoted text below your reply for context." ~ "</p>" ~
 		"<p>" ~ _!"Thus, you should add your reply below the quoted text (or reply to individual paragraphs inline), rather than above it." ~ "</p>";
 	}
 
@@ -260,7 +260,7 @@ class TopPostingRule : LintRule
 class OverquotingRule : LintRule
 {
 	override @property string id() { return "overquoting"; }
-	override @property string shortDescription() { return "You are overquoting."; }
+	override @property string shortDescription() { return _!"You are overquoting."; }
 	override @property string longDescription() { return
 		"<p>" ~ _!"The ratio between quoted and added text is vastly disproportional." ~ "</p>" ~
 		"<p>" ~ _!"Quoting should be limited to the amount necessary to provide context for your replies." ~ " " ~

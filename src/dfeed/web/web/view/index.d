@@ -134,7 +134,7 @@ void discussionIndexHeader()
 				) ~ `</li>`;
 		else
 			bits[0] ~= `<li>` ~
-				_!`You can read and post on this forum without %screating an account%s, but doing so offers %sa few benefits%s.`
+				_!`You can read and post on this forum without %screating an account%s, but creating an account offers %sa few benefits%s.`
 				.format(
 					`<a href="/register">`,
 					`</a>`,
