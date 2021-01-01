@@ -29,7 +29,7 @@ string translate(string s)
 		case `Please enter an email address`:
 			return `Lütfen bir e-posta adresi giriniz`;
 		case `Please enter a message subject`:
-			return `Lütfen bir mesaj konusu girin`;
+			return `Lütfen bir mesaj konusu giriniz`;
 		case `Please enter a message`:
 			return `Lütfen bir mesaj giriniz`;
 		case `CAPTCHA error:`:
@@ -41,7 +41,7 @@ string translate(string s)
 		case `NNTP error:`:
 			return `NNTP hatası:`;
 		case `Posting is disabled`:
-			return `Gönderi devre dışı bırakıldı`;
+			return `Gönderim hizmet dışı`;
 		case `SMTP error:`:
 			return `SMTP hatası:`;
 		case `Post not found`:
@@ -55,73 +55,73 @@ string translate(string s)
 		case `Welcome,`:
 			return `Hoşgeldiniz,`;
 		case `You have %d %s to %syour posts%s.`:
-			return `için %d %s %sgönderiniz var%s.`;
+			return `%3$sGönderilerinize%4$s %1$d %2$s var.`;
 		case `No new %sreplies%s to %syour posts%s.`:
-			return `%sGönderilerinize%s yeni %syanıt yok%s.`;
+			return `%3$sGönderilerinize%4$s yeni %1$syanıt yok%2$s.`;
 		case `You have %d %s matching your %s%s subscription%s (%s).`:
-			return `%3$s%4$s aboneliğinizle eşleşen %1$d %2$s var %5$s (%6$s).`;
+			return `%3$s%4$s aboneliğinizle%5$s eşleşen %1$d %2$s var (%6$s).`;
 		case `No new posts matching your %s%s%s.`:
 			return `%s%s%s ile eşleşen yeni gönderi yok.`;
 		case `If you %screate an account%s, you can track replies to %syour posts%s.`:
-			return `%s hesabına %s bakarsanız, %s gönderilerinize %s verilen yanıtları izleyebilirsiniz.`;
-		case `You can read and post on this forum without %screating an account%s, but doing so offers %sa few benefits%s.`:
-			return `Bu forumu %s hesap açmadan okuyabilir ve yayınlayabilirsiniz%s, ancak bunu yapmak %sa birkaç avantaj %s sağlar.`;
+			return `%sHesap açtığınızda%s %sgönderilerinize%s gelen yanıtları izleyebilirsiniz.`;
+		case `You can read and post on this forum without %screating an account%s, but creating an account offers %sa few benefits%s.`:
+			return `Bu forumu hesap açmadan da kullanabilirsiniz. Ancak, %shesap açmanın%s bazı %syararları vardır%s.`;
 		case `%d %s %-(%s and %)`:
-			return `%d %s%-(%s ve%)`;
+			return `%d %s %-(%s ve %) oluşturdu.`;
 		case `No new forum activity`:
 			return `Yeni forum etkinliği yok`;
 		case `since your last visit (%s).`:
-			return `son ziyaretinizden beri (%s).`;
+			return `(son ziyaretinizden beri (%s)).`;
 		case `in the last 24 hours.`:
-			return `son 24 saat içinde.`;
+			return `(son 24 saat içinde).`;
 		case `There are %s %s, %s %s, and %s %s on this forum.`:
 			return `Bu forumda %s %s, %s %s ve %s %s var.`;
 		case `You have read a total of %s %s during your %s.`:
-			return `%s sırasında toplam %s %s okudunuz.`;
+			return `%3$s sırasında toplam %1$s %2$s okudunuz.`;
 		case `Random tip:`:
-			return `Rastgele ipucu:`;
+			return `Bilgi:`;
 		case `This forum has several different <a href="/help#view-modes">view modes</a>. Try them to find one you like best. You can change the view mode in the <a href="/settings">settings</a>.`:
-			return `Bu forumun birkaç farklı <a href="/help#view-modes"> görünüm modu </a> vardır. En sevdiğiniz birini bulmaya çalışın. Görünüm modunu <a href="/settings"> ayarlardan </a> değiştirebilirsiniz.`;
+			return `Bu forumun birkaç farklı <a href="/help#view-modes">görünümü</a> bulunuyor. Kullanışlı bulduğunuz birini seçin. Görünüm seçeneğini <a href="/settings">ayarlardan</a> değiştirebilirsiniz.`;
 		case `This forum supports <a href="/help#keynav">keyboard shortcuts</a>. Press <kbd>?</kbd> to view them.`:
-			return `Bu forum <a href="/help#keynav"> klavye kısayollarını </a> destekler. Görüntülemek için <kbd>? </kbd> tuşuna basın.`;
+			return `Bu forum <a href="/help#keynav">klavye kısayolları</a> kullanır. Görüntülemek için <kbd>?</kbd> tuşuna basın.`;
 		case `You can focus a message with <kbd>j</kbd>/<kbd>k</kbd> and press <kbd>u</kbd> to mark it as unread, to remind you to read it later.`:
-			return `Bir mesajı <kbd> j </kbd> / <kbd> k </kbd> ile odaklayabilir ve <kbd> u </kbd> tuşuna basarak onu daha sonra okumanızı hatırlatmak için okunmadı olarak işaretleyebilirsiniz.`;
+			return `Bir mesajı <kbd>j</kbd> ve <kbd>k</kbd> tuşları ile seçebilir ve <kbd>u</kbd> tuşu ile okunmadı olarak işaretleyebilirsiniz.`;
 		case `The <a href="/help#avatars">avatars on this forum</a> are provided by Gravatar, which allows associating a global avatar with an email address.`:
-			return `<a href="/help#avatars"> Bu forumdaki avatarlar </a>, global bir avatarın bir e-posta adresiyle ilişkilendirilmesine izin veren Gravatar tarafından sağlanmaktadır.`;
+			return `<a href="/help#avatars">Bu forumdaki avatarlar</a>, global bir avatarın bir e-posta adresiyle ilişkilendirilmesini sağlayan Gravatar tarafından sağlanmaktadır.`;
 		case `This forum remembers your read post history on a per-post basis. If you are logged in, the post history is saved on the server, and in a compressed cookie otherwise.`:
-			return `Bu forum, yazı başına temelde okunduğunuz gönderi geçmişinizi hatırlar. Giriş yaptıysanız, gönderi geçmişi sunucuya, aksi takdirde sıkıştırılmış bir tanımlama bilgisine kaydedilir.`;
+			return `Bu forum, okumuş olduğunuz gönderileri hatırlar. Bu bilgi, giriş yapmışsanız sunucuda, aksi takdirde sıkıştırılmış bir çerez olarak tarayıcınızda saklanır.`;
 		case `Much of this forum's content is also available via classic mailing lists or NNTP - see the "Also via" column on the forum index.`:
-			return `Bu forumun içeriğinin çoğu, klasik posta listeleri veya NNTP aracılığıyla da mevcuttur - forum dizinindeki "Ayrıca şu yolla" sütununa bakın.`;
+			return `Bu forumun içeriğinin çoğuna e-posta listeleri veya NNTP aracılığıyla da erişilebilir - forum dizinindeki "Ayrıca" sütununa bakınız.`;
 		case `If you create a Gravatar profile with the email address you post with, it will be accessible when clicking your avatar.`:
 			return `Gönderdiğiniz e-posta adresiyle bir Gravatar profili oluşturursanız, avatarınıza tıkladığınızda erişilebilir olacaktır.`;
 		case `To subscribe to a thread, click the "Subscribe" link on that thread's first post. You need to be logged in to create subscriptions.`:
-			return `Bir ileti dizisine abone olmak için, o ileti dizisinin ilk gönderisindeki "Abone Ol" bağlantısını tıklayın. Abonelik oluşturmak için giriş yapmalısınız.`;
+			return `Bir konuya abone olmak için o konunun ilk gönderisindeki "Abone ol" bağlantısını tıklayın. Abonelik oluşturmak için giriş yapmış olmalısınız.`;
 		case `To search the forum, use the search widget at the top, or you can visit <a href="/search">the search page</a> directly.`:
-			return `Forumda arama yapmak için üstteki arama widget'ını kullanın veya doğrudan <a href="/search"> arama sayfasını </a> ziyaret edebilirsiniz.`;
+			return `Forumda arama yapmak için üstteki arama olanağını kullabilirsiniz veya doğrudan <a href="/search">arama sayfasına</a> gidebilirsiniz.`;
 		case `This forum is open-source! Read or fork the code <a href="https://github.com/CyberShadow/DFeed">on GitHub</a>.`:
-			return `Bu forum açık kaynaklıdır! <a href="https://github.com/CyberShadow/DFeed"> GitHub'da </a> kodu okuyun veya çatallayın.`;
+			return `Bu forum açık kaynaklıdır! Kaynak kodunu <a href="https://github.com/CyberShadow/DFeed">GitHub'da</a> okuyun veya çatallayın.`;
 		case `If you encounter a bug or need a missing feature, you can <a href="https://github.com/CyberShadow/DFeed/issues">create an issue on GitHub</a>.`:
-			return `Bir hatayla karşılaşırsanız veya eksik bir özelliğe ihtiyaç duyarsanız, <a href="https://github.com/CyberShadow/DFeed/issues"> GitHub'da bir sorun oluşturabilirsiniz </a>.`;
+			return `Farkettiğiniz hataları ve eksik özellikleri <a href="https://github.com/CyberShadow/DFeed/issues">GitHub'da bildirebilirsiniz</a>.`;
 		case `Group`:
 			return `Grup`;
 		case `Last Post`:
-			return `Son Posta`;
+			return `Son Gönderi`;
 		case `Threads`:
-			return `İş Parçacığı`;
+			return `Konu`;
 		case `Posts`:
-			return `Gönderiler`;
+			return `Gönderi`;
 		case `Also via`:
-			return `Ayrıca aracılığıyla`;
+			return `Ayrıca`;
 		case `Create thread`:
-			return `IP oluşurmak`;
+			return `Yeni konu aç`;
 		case `Invalid page`:
 			return `Geçersiz sayfa`;
 		case `by`:
-			return `tarafından`;
+			return ``;
 		case `Thread / Thread Starter`:
 			return `Konu / Konuyu Başlatan`;
 		case `Replies`:
-			return `Cevaplar`;
+			return `Yanıt`;
 		case `Loading...`:
 			return `Yükleniyor...`;
 		case `Sorry, this view requires JavaScript.`:
@@ -129,13 +129,13 @@ string translate(string s)
 		case `Unknown group:`:
 			return `Bilinmeyen grup:`;
 		case `Can't find thread's page`:
-			return `Konunun sayfasını bulamıyorum`;
+			return `Konu sayfası bulunamadı`;
 		case `Can't find post's page`:
-			return `Gönderinin sayfasını bulamıyorum`;
+			return `Gönderi sayfası bulunamadı`;
 		case `The specified resource cannot be found on this server.`:
 			return `Belirtilen kaynak bu sunucuda bulunamıyor.`;
 		case `XSRF secret verification failed. Are your cookies enabled?`:
-			return `XSRF gizli doğrulaması başarısız oldu. Çerezleriniz etkinleştirildi mi?`;
+			return `XSRF gizli doğrulaması başarısız oldu. Çerezleriniz etkin mi?`;
 		case `No action specified`:
 			return `Eylem belirtilmedi`;
 		case `Subscription undeleted.`:
@@ -157,29 +157,29 @@ string translate(string s)
 		case `Language:`:
 			return `Dil:`;
 		case `View mode:`:
-			return `Görünüm modu:`;
+			return `Görünüm:`;
 		case `Enable keyboard shortcuts`:
-			return `Klavye kısayollarını etkinleştirin`;
+			return `Klavye kısayollarını etkinleştir`;
 		case `Automatically open messages after selecting them.`:
-			return `Mesajları seçtikten sonra otomatik olarak açın.`;
+			return `Seçilen mesaj otomatik olarak açılır.`;
 		case `Applicable to threaded, horizontal-split and vertical-split view modes.`:
-			return `Dişli, yatay bölünmüş ve dikey bölünmüş görünüm modları için geçerlidir.`;
+			return `Gönderi listesi, yatay bölünmüş ve dikey bölünmüş görünümlere uygulanabilir.`;
 		case `Focus follows message`:
-			return `Odak mesajı takip eder`;
+			return `Mesaj otomatik açılsın`;
 		case `Save`:
-			return `Kayıt etmek`;
+			return `Kaydet`;
 		case `Cancel`:
-			return `İptal etmek`;
+			return `İptal et`;
 		case `Subscriptions`:
-			return `Abonelikler`;
+			return `Konu abonelikleri`;
 		case `Subscription`:
-			return `Abonelik`;
+			return `Seçim`;
 		case `Actions`:
-			return `Hareketler`;
+			return `Eylemler`;
 		case `View posts`:
-			return `Yayınları görüntüle`;
+			return `Gönderileri göster`;
 		case `Get ATOM feed`:
-			return `ATOM beslemesini alın`;
+			return `ATOM beslemesini indir`;
 		case `Edit`:
 			return `Düzenle`;
 		case `Delete`:
@@ -187,37 +187,37 @@ string translate(string s)
 		case `You have no subscriptions.`:
 			return `Aboneliğiniz yok.`;
 		case `Create new content alert subscription`:
-			return `Yeni içerik uyarısı aboneliği oluşturun`;
+			return `Konu aboneliği oluştur`;
 		case `Please %slog in%s to manage your subscriptions and account settings.`:
-			return `Aboneliklerinizi ve hesap ayarlarınızı yönetmek için lütfen %s içinde %slog yapın.`;
+			return `Aboneliklerinizi ve hesap ayarlarınızı yönetebilmek için lütfen %sgiriş yapınız%s.`;
 		case `Account settings`:
 			return `Hesap ayarları`;
 		case `Change the password used to log in to this account.`:
-			return `Bu hesapta oturum açmak için kullanılan parolayı değiştirin.`;
+			return `Bu hesabın şifresini değiştir.`;
 		case `Change password`:
 			return `Şifre değiştir`;
 		case `Download a file containing all data tied to this account.`:
-			return `Bu hesaba bağlı tüm verileri içeren bir dosya indirin.`;
+			return `Bu hesaba bağlı tüm verileri içeren bir dosya indir.`;
 		case `Export data`:
 			return `Verileri dışa aktar`;
 		case `Permanently delete this account.`:
-			return `Bu hesabı kalıcı olarak silin.`;
+			return `Bu hesabı kalıcı olarak sil.`;
 		case `Delete account`:
 			return `Hesabı sil`;
 		case `Edit subscription`:
-			return `Aboneliği düzenleyin`;
+			return `Aboneliği düzenle`;
 		case `Condition`:
-			return `Durum`;
+			return `Seçim`;
 		case `This action is only meaningful for logged-in users.`:
 			return `Bu işlem yalnızca giriş yapmış kullanıcılar için anlamlıdır.`;
 		case `Here you can change the password used to log in to this %s account.`:
-			return `Burada, bu %s hesabına giriş yapmak için kullanılan şifreyi değiştirebilirsiniz.`;
+			return `Burada, bu %s hesabının şifresini değiştirebilirsiniz.`;
 		case `Please pick your new password carefully, as there are no password recovery options.`:
 			return `Şifre kurtarma seçeneği olmadığından, lütfen yeni şifrenizi dikkatlice seçin.`;
 		case `Current password:`:
-			return `Şimdiki Şifre:`;
+			return `Mevcut şifre:`;
 		case `New password:`:
-			return `Yeni Şifre:`;
+			return `Yeni şifre:`;
 		case `New password (confirm):`:
 			return `Yeni şifre (onaylayın):`;
 		case `XSRF secret verification failed`:
@@ -225,7 +225,7 @@ string translate(string s)
 		case `The current password you entered is incorrect`:
 			return `Girdiğiniz mevcut şifre yanlış`;
 		case `New passwords do not match`:
-			return `yeni şifreler uyuşmuyor`;
+			return `Yeni şifreler uyuşmuyor`;
 		case `Password successfully changed.`:
 			return `Şifre başarıyla değiştirildi.`;
 		case `Export account data`:
@@ -233,19 +233,19 @@ string translate(string s)
 		case `Here you can export the information regarding your account from the %s database.`:
 			return `Burada hesabınızla ilgili bilgileri %s veritabanından dışa aktarabilirsiniz.`;
 		case `Export`:
-			return `İhracat`;
+			return `Dışa aktar`;
 		case `Here you can permanently delete your %s account and associated data from the database.`:
 			return `Burada %s hesabınızı ve ilişkili verileri veritabanından kalıcı olarak silebilirsiniz.`;
 		case `After deletion, the account username will become available for registration again.`:
 			return `Silme işleminden sonra, hesap kullanıcı adı tekrar kayıt için uygun hale gelecektir.`;
 		case `To confirm deletion, please enter your account username and password.`:
-			return `Silme işlemini onaylamak için lütfen hesap kullanıcı adınızı ve şifrenizi girin.`;
+			return `Silme işlemini onaylamak için lütfen hesap kullanıcı adınızı ve şifrenizi giriniz.`;
 		case `Account username:`:
 			return `Hesap kullanıcı adı:`;
 		case `Account password:`:
 			return `Hesap şifresi:`;
 		case `Delete this account`:
-			return `Bu hesabı silin`;
+			return `Bu hesabı sil`;
 		case `The username you entered does not match the current logged-in account`:
 			return `Girdiğiniz kullanıcı adı, mevcut oturum açmış hesapla eşleşmiyor`;
 		case `The password you entered is incorrect`:
@@ -259,7 +259,7 @@ string translate(string s)
 		case `Latest threads`:
 			return `Son konular`;
 		case `Latest posts`:
-			return `Son Gönderiler`;
+			return `Son gönderiler`;
 		case `%s subscription (%s)`:
 			return `%s aboneliği (%s)`;
 		case `No such subscription`:
@@ -269,57 +269,57 @@ string translate(string s)
 		case `No such user subscription`:
 			return `Böyle bir kullanıcı aboneliği yok`;
 		case `reply`:
-			return `cevap`;
+			return `yanıt`;
 		case `Replies to your posts`:
 			return `Gönderilerinize verilen yanıtlar`;
 		case `%s replied to your post in the thread "%s"`:
-			return `%s, " %s" başlığındaki yayınınıza yanıt verdi`;
+			return `%s, "%s" konusundaki gönderinize yanıt verdi`;
 		case `%s has just replied to your %s post in the thread titled "%s" in the %s group of %s.`:
-			return `%s, %s %s grubundaki " %s" başlıklı konudaki %s gönderinize az önce yanıt verdi.`;
+			return `%1$s, %5$s sunucusunun %4$s grubundaki "%3$s" başlıklı konusundaki %2$s gönderinize az önce yanıt verdi.`;
 		case `When someone replies to your posts:`:
-			return `Birisi gönderilerinize cevap verdiğinde:`;
+			return `Birisi gönderilerinize yanıt verdiğinde:`;
 		case `thread`:
-			return `Konu`;
+			return `konu`;
 		case `Replies to the thread`:
-			return `Konuya verilen yanıtlar`;
+			return `Konusu:`;
 		case `%s replied to the thread "%s"`:
-			return `%s, " %s" ileti dizisine yanıt verdi`;
+			return `%s, "%s" konusuna yanıt verdi`;
 		case `%s has just replied to a thread you have subscribed to titled "%s" in the %s group of %s.`:
-			return `%s az önce %s %s grubundaki " %s" başlıklı abone olduğunuz bir konuya yanıt verdi.`;
+			return `%1$s, %4$s sunucusunun %3$s grubundaki abone olduğunuz "%2$s" başlıklı konuya yanıt verdi.`;
 		case `When someone posts a reply to the thread`:
-			return `Birisi ileti dizisine yanıt gönderdiğinde`;
+			return `Birisi şu konuya yanıt gönderdiğinde:`;
 		case `No such post`:
 			return `Böyle bir gönderi yok`;
 		case `content`:
 			return `içerik`;
 		case `New threads`:
-			return `Yeni konular`;
+			return `Yeni konu veya gönderi;`;
 		case `New posts`:
-			return `Yeni iletiler`;
+			return `Yeni gönderi;`;
 		case `in`:
-			return `içinde`;
+			return `grup(lar):`;
 		case `and`:
 			return `ve`;
 		case `more`:
-			return `Daha`;
+			return `tane daha`;
 		case `from`:
-			return `itibaren`;
+			return `göndereni:`;
 		case `from email`:
-			return `e-postadan`;
+			return `e-postası:`;
 		case `titled`:
-			return `başlıklı`;
+			return `konusu:`;
 		case `containing`:
-			return `kapsamak`;
+			return `içeriği:`;
 		case `%s %s the thread "%s" in %s`:
-			return `%s %s, %s içindeki " %s" iş parçacığı`;
+			return `%1$s, %4$s grubunun "%3$s" konusunu %2$s`;
 		case `replied to`:
-			return `cevap verdi`;
+			return `yanıtladı`;
 		case `created`:
-			return `yaratıldı`;
+			return `oluşturdu`;
 		case `%s matching %s`:
 			return `%s ile eşleşen %s`;
 		case "%s has just %s a thread titled \"%s\" in the %s group of %s.\n\n%s matches a content alert subscription you have created (%s).":
-			return "%s, %s'nin %s grubunda \"%s\" başlıklı bir konuya sahip.\n\n%s, oluşturduğunuz bir içerik uyarısı aboneliğiyle eşleşiyor (%s).";
+			return "%1$s, %5$s sunucusunun %4$s grubundaki \"%3$s\" başlıklı konuyu %2$s.\n\n%6$s, oluşturduğunuz bir konu aboneliğiyle eşleşiyor (%7$s).";
 		case `This post`:
 			return `Bu gönderi`;
 		case `This thread`:
@@ -327,37 +327,37 @@ string translate(string s)
 		case `When someone`:
 			return `Birisi`;
 		case `posts or replies to a thread`:
-			return `bir ileti dizisine gönderilen mesajlar veya yanıtlar`;
+			return `yeni konu açarsa veya yanıtlarsa`;
 		case `posts a new thread`:
-			return `yeni bir konu gönder`;
+			return `yeni konu açarsa`;
 		case `only in the groups:`:
-			return `sadece gruplarda:`;
+			return `grup şunlardan birisiyse:<br>(birden fazla seçmek için Ctrl-tık):`;
 		case `and when the`:
-			return `ve ne zaman`;
+			return `ve eğer`;
 		case `contains the string`:
-			return `dizeyi içerir`;
+			return `şu dizgiyi içerirse:`;
 		case `matches the regular expression`:
-			return `normal ifadeyle eşleşir`;
+			return `şu düzenli ifadeyle (regex) eşleşirse:`;
 		case `case sensitive`:
-			return `harfe duyarlı`;
+			return `küçük/büyük harfe duyarlı`;
 		case `author name`:
 			return `yazar adı`;
 		case `author email`:
 			return `yazar e-postası`;
 		case `subject`:
-			return `konu`;
+			return `konu başlığı`;
 		case `message`:
-			return `İleti`;
+			return `ileti`;
 		case `No %s search term specified`:
 			return `%s arama terimi belirtilmedi`;
 		case "Invalid %s regex `%s`: %s":
-			return "Geçersiz %s normal ifadesi `%s`: %s";
+			return "Geçersiz %s düzenli ifadesi `%s`: %s";
 		case `No groups selected`:
 			return `Grup seçilmedi`;
 		case `Unknown subscription trigger type:`:
 			return `Bilinmeyen abonelik tetikleyici türü:`;
 		case `Send a private message to`:
-			return `Adlı kişiye özel mesaj gönder`;
+			return `Şu kişiye özel mesaj gönder:`;
 		case `on the`:
 			return `üzerinde`;
 		case `IRC network`:
@@ -367,21 +367,21 @@ string translate(string s)
 		case `Invalid character in nickname.`:
 			return `Takma adda geçersiz karakter.`;
 		case `Send an email to`:
-			return `Adresine bir e-posta gönderin`;
+			return `Şu adrese e-posta gönder:`;
 		case `Error:`:
 			return `Hata:`;
 		case `Howdy %1$s,`:
-			return `Merhaba% 1 $ s,`;
+			return `Merhaba %1$s,`;
 		case `This %3$s is located at:`:
-			return `Bu% 3 $ s şu adreste bulunur:`;
+			return `Bu %3$:`;
 		case `Here is the message that has just been posted:`:
-			return `İşte yeni gönderilmiş mesaj:`;
+			return `Yeni gönderi:`;
 		case `To reply to this message, please visit this page:`:
-			return `Bu mesajı yanıtlamak için lütfen bu sayfayı ziyaret edin:`;
+			return `Bu gönderiyi yanıtlamak için lütfen şu sayfayı ziyaret edin:`;
 		case `There may also be other messages matching your subscription, but you will not receive any more notifications for this subscription until you've read all messages matching this subscription:`:
 			return `Aboneliğinizle eşleşen başka mesajlar da olabilir, ancak bu abonelikle eşleşen tüm mesajları okuyana kadar bu abonelik için başka bildirim almayacaksınız:`;
 		case `All the best,`:
-			return `Herşey gönlünce olsun,`;
+			return `Herşey gönlünüzce olsun,`;
 		case `Unsubscription information:`:
 			return `Abonelik iptali bilgileri:`;
 		case `To stop receiving emails for this subscription, please visit this page:`:
@@ -392,10 +392,12 @@ string translate(string s)
 			return `İleti`;
 		case `Invalid email address`:
 			return `Geçersiz e-posta adresi`;
+		case `Additionally, you can %ssubscribe to an ATOM feed of matched posts%s, or %sread them online%s.`:
+			return `Ek olarak, seçilen gönderiler için bir %sATOM feed aboneliği başlatabilir%s veya gönderileri %sburadan okuyabilirsiniz%s.`;
 		case `No such post:`:
 			return `Böyle bir gönderi yok:`;
 		case `Post #%d of thread %s not found`:
-			return `# %s ileti dizisi %s bulunamadı`;
+			return `#%d numaralı gönderi %s numaralı konuda bulunamadı`;
 		case `Jump to page:`:
 			return `Sayfaya atla:`;
 		case `Page`:
@@ -409,9 +411,9 @@ string translate(string s)
 		case `Permalink`:
 			return `Kalıcı bağlantı`;
 		case `Canonical link to this post. See "Canonical links" on the Help page for more information.`:
-			return `Bu gönderiye standart bağlantı. Daha fazla bilgi için Yardım sayfasındaki "Kanonik bağlantılar" bölümüne bakın.`;
+			return `Bu gönderiye kalıcı bağlantı. Daha fazla bilgi için Yardım sayfasındaki "Kalıcı bağlantılar" bölümüne bakınız.`;
 		case `Reply`:
-			return `Cevapla`;
+			return `Yanıtla`;
 		case `Reply to this post`:
 			return `Bu gönderiyi yanıtla`;
 		case `Subscribe`:
@@ -419,89 +421,89 @@ string translate(string s)
 		case `Subscribe to this thread`:
 			return `Bu konuya abone ol`;
 		case `Flag`:
-			return `Bayrak`;
+			return `Bildir`;
 		case `Flag this post for moderator intervention`:
-			return `Bu gönderiyi moderatör müdahalesi için işaretleyin`;
+			return `Bu gönderiyi yönetici müdahalesi için işaretleyin`;
 		case `Source`:
 			return `Kaynak`;
 		case `View this message's source code`:
-			return `Bu mesajın kaynak kodunu görüntüleyin`;
+			return `Bu mesajın kaynak kodunu görüntüle`;
 		case `Moderate`:
-			return `Orta`;
+			return `Yönet`;
 		case `Perform moderation actions on this post`:
 			return `Bu gönderi üzerinde denetim işlemleri gerçekleştirin`;
 		case `%s's Gravatar profile`:
 			return `%s kullanıcısının Gravatar profili`;
 		case `Posted by %s`:
-			return `%s tarafından yayınlandı`;
+			return `Gönderen: %s`;
 		case `in reply to`:
-			return `cevap olarak`;
+			return `Yanıtlanan: `;
 		case `part`:
 			return `Bölüm`;
 		case `Posted in reply to`:
-			return `Yanıt olarak yayınlandı`;
+			return `Yanıtlanan: `;
 		case `Attachments:`:
 			return `Ekler:`;
 		case `View in thread`:
-			return `Mesaj dizisinde görüntüle`;
+			return `Konusu içinde görüntüle`;
 		case `Replies to %s's post from %s`:
 			return `%s tarafından gönderilen %s gönderisine yanıtlar`;
 		case `Permanent link to this post`:
 			return `Bu gönderiye kalıcı bağlantı`;
 		case `%s's Gravatar profile"`:
-			return `%s Gravatar profili "`;
+			return `Gravatar profili (%s)"`;
 		case `You seem to be posting using an unusual user-agent`:
-			return `Olağandışı bir kullanıcı aracısı kullanarak gönderi paylaşıyorsunuz`;
+			return `Garip bir kullanıcı programı (user-agent) kullanıyorsunuz`;
 		case `Your subject contains a suspicious keyword or character sequence`:
-			return `Konunuz şüpheli bir anahtar kelime veya karakter dizisi içeriyor`;
+			return `Konu başlığınız şüpheli bir anahtar kelime veya karakter dizisi içeriyor`;
 		case `Your post contains a suspicious keyword or character sequence`:
 			return `Gönderiniz şüpheli bir anahtar kelime veya karakter dizisi içeriyor`;
 		case `Your top-level post is suspiciously short`:
-			return `Üst düzey gönderiniz şüpheli derecede kısa`;
+			return `Konu başlığınız ve gönderiniz şüpheli derecede kısa`;
 		case `Your post looks like spam (%d%% spamicity)`:
-			return `Gönderiniz spam gibi görünüyor ( %d % %spamicity)`;
+			return `Gönderiniz spam gibi görünüyor (%d%% spamicity)`;
 		case `from the future`:
 			return `gelecekten`;
 		case `just now`:
-			return `Şu anda`;
+			return `az önce`;
 		case `%d %s ago`:
 			return `%d %s önce`;
 		case `basic`:
-			return `temel`;
+			return `Temel`;
 		case `threaded`:
-			return `dişli`;
+			return `Gönderi listesi`;
 		case `horizontal-split`:
-			return `yatay bölünmüş`;
+			return `Yatay bölünmüş`;
 		case `vertical-split`:
-			return `dikey bölünmüş`;
+			return `Dikey bölünmüş`;
 		case `Unknown view mode`:
-			return `Bilinmeyen görünüm modu`;
+			return `Bilinmeyen görünüm`;
 		case `You have an %sunsent draft message from %s%s.`:
-			return `%s %s tarafından gönderilen bir %sunsent taslak mesajınız var.`;
+			return `%s%s tarihinden kalmış bir taslak mesajınız%s var.`;
 		case `This message is awaiting moderation.`:
-			return `Bu mesaj denetlenmeyi bekliyor.`;
+			return `Bu mesaj bir yönetici tarafından denetlenmeyi bekliyor.`;
 		case `This message has already been posted.`:
-			return `Bu mesaj zaten gönderilmiştir.`;
+			return `Bu mesaj zaten gönderilmiş.`;
 		case `Can't post to archive`:
 			return `Arşive gönderilemiyor`;
 		case `Note: you are posting to a mailing list.`:
 			return `Not: Bir posta listesine gönderiyorsunuz.`;
 		case `Your message will not go through unless you %ssubscribe to the mailing list%s first.`:
-			return `Önce %s posta listesine %s abone olmadığınız sürece mesajınız gönderilmeyecektir.`;
+			return `%sPosta listesine abone olmadığınız%s sürece mesajınız gönderilmeyecek.`;
 		case `You must then use the same email address when posting here as the one you used to subscribe to the list.`:
-			return `Listeye abone olmak için kullandığınız e-posta adresini burada yayınlarken aynı e-posta adresini kullanmanız gerekir.`;
+			return `Buradan gönderirken listeye abone olmak için kullandığınız e-posta adresini kullanmanız gerekir.`;
 		case `If you do not want to receive mailing list mail, you can disable mail delivery at the above link.`:
-			return `Posta listesi postası almak istemiyorsanız, yukarıdaki bağlantıdan posta teslimini devre dışı bırakabilirsiniz.`;
+			return `Posta listesi gönderisi almak istemiyorsanız, yukarıdaki bağlantıdan posta teslimini devre dışı bırakabilirsiniz.`;
 		case `Warning: the post you are replying to is from`:
-			return `Uyarı: yanıtladığınız gönderinin kaynağı`;
+			return `Uyarı: yanıtladığınız gönderi eski:`;
 		case `Posting to`:
-			return `Şurada yayınlanıyor`;
+			return ``;
 		case `unknown post`:
 			return `bilinmeyen gönderi`;
 		case `Your name:`:
 			return `Adınız:`;
 		case `Your email address`:
-			return `e`;
+			return `E-posta adresiniz`;
 		case `Subject:`:
 			return `Konu:`;
 		case `Message:`:
@@ -513,11 +515,11 @@ string translate(string s)
 		case `Discard draft`:
 			return `Taslağı sil`;
 		case `This message has already been sent.`:
-			return `Bu mesaj zaten gönderilmiştir.`;
+			return `Bu mesaj zaten gönderilmiş.`;
 		case `Automatic fix applied.`:
 			return `Otomatik düzeltme uygulandı.`;
 		case `Undo`:
-			return `Geri alma`;
+			return `Geri al`;
 		case `Sorry, a problem occurred while attempting to fix your post`:
 			return `Üzgünüz, gönderinizi düzeltmeye çalışırken bir sorun oluştu`;
 		case `Undo information not found.`:
@@ -527,51 +529,51 @@ string translate(string s)
 		case `Warning:`:
 			return `Uyarı:`;
 		case `Ignore`:
-			return `Göz ardı etmek`;
+			return `Göz ardı et`;
 		case `Explain`:
-			return `Açıklamak`;
+			return `Açıkla`;
 		case `Fix it for me`:
 			return `Benim için düzelt`;
 		case `You've attempted to post %d times in the past %s. Please wait a little bit before trying again.`:
-			return `Geçmiş %s içinde %d kez göndermeye çalıştınız. Tekrar denemeden önce lütfen biraz bekleyin.`;
+			return `Geçmiş %2$s süresi içinde %1$d kez göndermeye çalıştınız. Tekrar denemeden önce lütfen biraz bekleyin.`;
 		case `You've attempted to post %d times in the past %s. Please solve a CAPTCHA to continue.`:
-			return `Geçmiş %s içinde %d kez göndermeye çalıştınız. Devam etmek için lütfen bir CAPTCHA çözün.`;
+			return `Geçmiş %2$s süresi içinde %1$d kez göndermeye çalıştınız. Devam etmek için lütfen bir CAPTCHA çözünüz.`;
 		case `Your message has been saved, and will be posted after being approved by a moderator.`:
-			return `Mesajınız kaydedildi ve bir moderatör tarafından onaylandıktan sonra gönderilecektir.`;
+			return `Mesajınız kaydedildi; bir yönetici tarafından onaylandıktan sonra gönderilecek.`;
 		case `Unknown action`:
 			return `Bilinmeyen eylem`;
 		case `Posting status`:
 			return `Gönderi durumu`;
 		case `Validating...`:
-			return `Doğrulanıyor ...`;
+			return `Doğrulanıyor...`;
 		case `Verifying reCAPTCHA...`:
-			return `ReCAPTCHA doğrulanıyor ...`;
+			return `reCAPTCHA doğrulanıyor ...`;
 		case `Connecting to server...`:
 			return `Sunucuya baglanıyor...`;
 		case `Sending message to server...`:
-			return `Sunucuya mesaj gönderiliyor ...`;
+			return `Sunucuya mesaj gönderiliyor...`;
 		case `Message sent.`:
-			return `Mesajı gönderildi.`;
+			return `Mesaj gönderildi.`;
 		case `Waiting for message announcement...`:
-			return `Mesaj duyurusu bekleniyor ...`;
+			return `Mesaj duyurusu bekleniyor...`;
 		case `Message posted! Redirecting...`:
-			return `Mesaj gönderildi! Yönlendiriliyor ...`;
+			return `Mesaj gönderildi! Yönlendiriliyor...`;
 		case `%s. Please solve a CAPTCHA to continue.`:
-			return `%s. Devam etmek için lütfen bir CAPTCHA çözün.`;
+			return `%s. Devam etmek için lütfen bir CAPTCHA çözünüz.`;
 		case `Spam check error:`:
-			return `Spam kontrolü hatası:`;
+			return `Spam denetimi hatası:`;
 		case `Try clearing your browser's cookies. Create an account to avoid repeated incidents.`:
-			return `Tarayıcınızın çerezlerini temizlemeyi deneyin. Tekrarlanan olaylardan kaçınmak için bir hesap oluşturun.`;
+			return `Tarayıcınızın çerezlerini temizlemeyi deneyin. Bu gibi tekrarlardan kaçınmak için bir hesap oluşturun.`;
 		case `Malformed Base64 in read post history cookie.`:
-			return `Okuma geçmişi tanımlama bilgisinde hatalı biçimlendirilmiş Base64.`;
+			return `Okuma geçmişi çerezinde hatalı Base64.`;
 		case `Malformed deflated data in read post history cookie`:
-			return `Kayıt geçmişi tanımlama çerezinde hatalı biçimlendirilmiş sönük veriler`;
+			return `Okuma geçmişi çerezinde hatalı sıkıştırılmış veri`;
 		case `Please enter a username`:
 			return `Lütfen bir kullanıcı adı giriniz`;
 		case `Username too long`:
 			return `Kullanıcı adı çok uzun`;
 		case `Password too long`:
-			return `Parola çok uzun`;
+			return `Şifre çok uzun`;
 		case `Already logged in`:
 			return `Zaten giriş yapılmış`;
 		case `Already registered`:
@@ -583,27 +585,27 @@ string translate(string s)
 		case `StopForumSpam API error:`:
 			return `StopForumSpam API hatası:`;
 		case `StopForumSpam thinks you may be a spammer (%s last seen: %s, frequency: %s)`:
-			return `StopForumSpam, spam yapan biri olabileceğinizi düşünüyor (en son %s görülme: %s, sıklık: %s)`;
+			return `StopForumSpam, spam yapan birisi olduğunuzdan şüpheleniyor (%s son görülme: %s, sıklık: %s)`;
 		case `Log in`:
 			return `Oturum aç`;
 		case `Username:`:
 			return `Kullanıcı adı:`;
 		case `Password:`:
-			return `Parola:`;
+			return `Şifre:`;
 		case `Remember me`:
 			return `Beni Hatırla`;
 		case `Register`:
 			return `Kayıt ol`;
 		case `to keep your preferences<br>and read post history on the server.`:
-			return `tercihlerinizi korumak <br> ve sunucuda gönderi geçmişini okumak için.`;
+			return `(Ayarlarınızı ve gönderi geçmişinizi sunucuda saklamak için.)`;
 		case `Confirm:`:
-			return `Onaylamak:`;
+			return `Onaylayın:`;
 		case `Please pick your password carefully.`:
 			return `Lütfen şifrenizi dikkatlice seçin.`;
 		case `There are no password recovery options.`:
 			return `Şifre kurtarma seçeneği yoktur.`;
 		case `Passwords do not match`:
-			return `Parolalar uyuşmuyor`;
+			return `Şifre uyuşmuyor`;
 		case `First`:
 			return `İlk`;
 		case `Prev`:
@@ -613,39 +615,39 @@ string translate(string s)
 		case `Last`:
 			return `Son`;
 		case `Advanced Search`:
-			return `gelişmiş Arama`;
+			return `Gelişmiş Arama`;
 		case `Find posts with...`:
-			return `Şu gönderileri bul ...`;
+			return `Aşağıdakilere uyan gönderileri bulur.`;
 		case `all these words:`:
-			return `tüm bu kelimeler:`;
+			return `Şu kelimelerin hepsi:`;
 		case `this exact phrase:`:
-			return `tam olarak şu ifade:`;
+			return `Tam olarak şu söz dizisi:`;
 		case `none of these words:`:
-			return `bu kelimelerin hiçbiri:`;
+			return `Şu kelimelerin hiçbiri:`;
 		case `posted in the group:`:
-			return `grupta yayınlandı:`;
+			return `Gönderildiği grup:`;
 		case `posted by:`:
-			return `tarafından gönderildi:`;
+			return `Gönderenin adı:`;
 		case `posted by (email):`:
-			return `gönderen (e-posta):`;
+			return `Gönderenin e-posta'sı:`;
 		case `in threads titled:`:
-			return `başlıklı konu başlığında:`;
+			return `Konu başlığı:`;
 		case `containing:`:
-			return `kapsamak:`;
+			return `İçeriğinde geçen:`;
 		case `posted between:`:
-			return `arasında yayınlandı:`;
+			return `Tarih aralığı:`;
 		case `yyyy-mm-dd`:
 			return `yyyy-aa-gg`;
 		case `posted as new thread:`:
-			return `yeni konu olarak yayınlandı:`;
+			return `Konunun ilk mesajı:`;
 		case `Advanced search`:
-			return `Gelişmiş Arama`;
+			return `Gelişmiş ara`;
 		case `Search`:
-			return `Arama`;
+			return `Ara`;
 		case `Invalid date: %s (%s)`:
 			return `Geçersiz tarih: %s (%s)`;
 		case `Start date must be before end date`:
-			return `Başlangıç ​​tarihi, bitiş tarihinden önce olmalıdır`;
+			return `Başlangıç ​​tarihi bitiş tarihinden önce olmalıdır`;
 		case `Invalid page number`:
 			return `Geçersiz sayfa numarası`;
 		case `Your search -`:
@@ -659,7 +661,7 @@ string translate(string s)
 		case `Legacy redirect - unsupported feature`:
 			return `Eski yönlendirme - desteklenmeyen özellik`;
 		case `Legacy redirect - article not found`:
-			return `Eski yönlendirme - makale bulunamadı`;
+			return `Eski yönlendirme - gönderi bulunamadı`;
 		case `Legacy redirect - ambiguous artnum (group parameter missing)`:
 			return `Eski yönlendirme - belirsiz artnum (grup parametresi eksik)`;
 		case `No group specified`:
@@ -671,13 +673,13 @@ string translate(string s)
 		case `%s group index`:
 			return `%s grup dizini`;
 		case `New posts on`:
-			return `Üzerinde yeni yayınlar`;
+			return `Yeni gönderiler:`;
 		case `New threads on`:
-			return `Yeni konular`;
+			return `Yeni konular:`;
 		case `No thread specified`:
 			return `Konu belirtilmedi`;
 		case `Viewing thread in basic view mode – click a post's title to open it in %s view mode`:
-			return `Mesaj dizisi temel görünüm modunda görüntüleniyor - %s görüntüleme modunda açmak için bir gönderinin başlığını tıklayın`;
+			return `Konu temel görünüm ile görüntüleniyor - %s olarak görüntülemek için bir konuya tıklayın`;
 		case `No post specified`:
 			return `Gönderi belirtilmedi`;
 		case `(view single post)`:
@@ -687,49 +689,49 @@ string translate(string s)
 		case `No such group`:
 			return `Böyle bir grup yok`;
 		case `Posting to %s`:
-			return `%s adresinde yayınlanıyor`;
+			return `Alıcı: %s`;
 		case `New thread`:
-			return `Yeni Konu`;
+			return `Yeni konu`;
 		case `Replying to "%s"`:
-			return `" %s" yanıtlanıyor`;
+			return `Yanıtlanan: "%s"`;
 		case `Post reply`:
-			return `Cevap Gönder`;
+			return `Yanıt gönder`;
 		case `Posting`:
 			return `Gönderi`;
 		case `No post ID specified`:
-			return `Gönderi kimliği belirtilmedi`;
+			return `Gönderi kimliği belirtilmemiş`;
 		case `Composing message`:
 			return `Mesaj oluşturma`;
 		case `Please log in to do that`:
-			return `Lütfen bunu yapmak için giriş yapın`;
+			return `Lütfen giriş yapınız`;
 		case `Subscribe to thread`:
 			return `Konuya abone ol`;
 		case `No subscription specified`:
-			return `Abonelik belirtilmedi`;
+			return `Abonelik belirtilmemiş`;
 		case `View subscription`:
 			return `Aboneliği görüntüle`;
 		case `Unsubscribe`:
 			return `Aboneliği iptal et`;
 		case `You are not a moderator`:
-			return `Sen bir moderatör değilsin`;
+			return `Yönetici değilsiniz`;
 		case `Moderating post "%s"`:
-			return `" %s" yayını denetleniyor`;
+			return `"%s" gönderisi denetleniyor`;
 		case `Moderate post`:
-			return `Orta düzey yayın`;
+			return `Gönderiyi denetle`;
 		case `You can't flag posts`:
 			return `Gönderileri işaretleyemezsiniz`;
 		case `Flag "%s" by %s`:
-			return `%s tarafından " %s" işaretleyin`;
+			return `%2$s tarafından gönderilen "%1$s" gönderisini işaretle`;
 		case `Flag post`:
 			return `Gönderiyi işaretle`;
 		case `You can't approve moderated drafts`:
-			return `Denetlenen taslakları onaylayamazsınız`;
+			return `Denetlenmiş olan taslakları siz onaylayamazsınız`;
 		case `Approving moderated draft`:
-			return `Denetlenen taslak onaylanıyor`;
+			return `Denetlenmiş olan taslak onaylanıyor`;
 		case `Registration`:
 			return `Kayıt`;
 		case `Login error`:
-			return `Sisteme giriş hatası`;
+			return `Giriş hatası`;
 		case `Registration error`:
 			return `Kayıt Hatası`;
 		case `Account`:
@@ -737,7 +739,7 @@ string translate(string s)
 		case `Change Password`:
 			return `Şifre değiştir`;
 		case `Export Data`:
-			return `Verileri Dışa Aktar`;
+			return `Dışa Aktar`;
 		case `Delete Account`:
 			return `Hesabı sil`;
 		case `Help`:
@@ -747,9 +749,9 @@ string translate(string s)
 		case `Feed type not specified`:
 			return `Feed türü belirtilmedi`;
 		case `Unknown feed type`:
-			return `Bilinmeyen besleme türü`;
+			return `Bilinmeyen feed türü`;
 		case `hours parameter exceeds limit`:
-			return `saat parametresi sınırı aşıyor`;
+			return `hours parametresi sınırı aşıyor`;
 		case `Not Found`:
 			return `Bulunamadı`;
 		case `Error`:
@@ -763,29 +765,29 @@ string translate(string s)
 		case `Settings saved.`:
 			return `Ayarlar kaydedildi.`;
 		case `Warning: cookie size approaching RFC 2109 limit.`:
-			return `Uyarı: tanımlama bilgisi boyutu RFC 2109 sınırına yaklaşıyor.`;
+			return `Uyarı: çerez boyutu RFC 2109 sınırına yaklaşıyor.`;
 		case `Please consider %screating an account%s to avoid losing your read post history.`:
-			return `Okuma gönderi geçmişinizi kaybetmemek için lütfen %s hesabınızı %s göstermeyi düşünün.`;
+			return `Okuma geçmişinizi kaybetmemek için lütfen %shesap açtırın%s.`;
 		case `Forums`:
-			return `Forumlar`;
+			return `Forumlarda`;
 		case `%s group`:
-			return `%s grubu`;
+			return `%s grubunda`;
 		case `View subscription:`:
-			return `Aboneliği görüntüle:`;
+			return ``;
 		case `It looks like there's nothing here! No posts matched this subscription so far.`:
-			return `Görünüşe göre burada hiçbir şey yok! Şu ana kadar bu abonelikle eşleşen gönderi yok.`;
+			return `Görünüşe göre burada hiçbir şey yok! Henüz bu abonelikle eşleşen gönderi yok.`;
 		case `This subscription has been deactivated.`:
 			return `Bu abonelik devre dışı bırakıldı.`;
 		case `If you did not intend to do this, you can reactivate the subscription's actions on your %ssettings page%s.`:
-			return `Bunu yapmak istemediyseniz, aboneliğin eylemlerini %ssettings sayfanızda %s yeniden etkinleştirebilirsiniz.`;
+			return `Bunu yapmak istemediyseniz, aboneliğin eylemlerini %sayarlar sayfanızda%s yeniden etkinleştirebilirsiniz.`;
 		case `Hint`:
 			return `İpucu`;
 		case "Is the CAPTCHA too hard?\nRefresh the page to get a different question,\nor ask in the %s#d IRC channel on Freenode%s.":
-			return `CAPTCHA çok mu zor?\nFarklı bir soru almak için sayfayı yenileyin\nveya %sFreenode üzerindeki #d IRC kanalında%s sorun.`;
+			return "CAPTCHA çok mu zor?\nFarklı bir soru almak için sayfayı yenileyin\nveya yanıtını %sFreenode üzerindeki #d IRC kanalında%s sorun.";
 		case `Unknown or expired CAPTCHA challenge`:
 			return `Bilinmeyen veya süresi dolmuş CAPTCHA testi`;
 		case `The answer is incorrect`:
-			return `Cevap yanlış`;
+			return `Yanıt yanlış`;
 		case `Akismet thinks your post looks like spam`:
 			return `Akismet, gönderinizin spam gibi göründüğünü düşünüyor`;
 		case `Akismet error:`:
@@ -793,95 +795,97 @@ string translate(string s)
 		case `Latest announcements`:
 			return `Son duyurular`;
 		case `Active discussions`:
-			return `Aktif tartışmalar`;
+			return `Aktif konu`;
 		case `ProjectHoneyPot thinks you may be a spammer (%s last seen: %d days ago, threat score: %d/255, type: %s)`:
-			return `ProjectHoneyPot, spam yapan olabileceğinizi düşünüyor (en son %s görülme: %d gün önce, tehdit puanı: %d / 255, tür: %s)`;
+			return `ProjectHoneyPot, spam yapan birisi olduğunuzdan şüpheleniyor (%s son görülme: %d gün önce, tehdit puanı: %d/255, tür: %s)`;
 		case `From`:
-			return `Nereden`;
+			return `Gönderen`;
 		case `Date`:
 			return `Tarih`;
 		case `In reply to`:
-			return `Yanıt olarak`;
+			return `Yanıtlanan:`;
 		case `Attachments`:
 			return `Ekler`;
 		case `Parent post is not quoted.`:
-			return `Ana gönderi alıntı yapılmamış.`;
+			return `Alıntı yapılmamış.`;
 		case `When replying to someone's post, you should provide some context for your replies by quoting the revelant parts of their post.`:
-			return `Birinin gönderisine yanıt verirken, gönderisinin açıklayıcı kısımlarını alıntılayarak yanıtlarınız için bir bağlam sağlamalısınız.`;
+			return `Bir gönderiyi yanıtlarken, gönderinin ilgili bölümlerini alıntılayarak yanıtınızın açıklayıcı olmasını sağlamalısınız.`;
 		case `Depending on the software (or its configuration) used to read your message, it may not be obvious which post you're replying to.`:
-			return `Mesajınızı okumak için kullanılan yazılıma (veya yapılandırmasına) bağlı olarak, hangi gönderiyi yanıtladığınız belli olmayabilir.`;
+			return `Mesajınızın alıcı tarafında okunduğu programa (veya onun ayarlarına) bağlı olarak, hangi gönderiyi yanıtladığınız belli olmayabilir.`;
 		case `Thus, when writing a reply, don't delete all quoted text: instead, leave just enough to provide context for your reply.`:
-			return `Bu nedenle, bir yanıt yazarken, alıntılanan tüm metni silmeyin: bunun yerine, yanıtınız için bağlam sağlamak için yeterli bırakın.`;
+			return `Bu nedenle, bir yanıt yazarken, alıntılanan tüm metni silmek yerine, yanıtınızın anlamlı olmasına yetecek kadar alıntı bırakın.`;
 		case `You can also insert your replies inline (interleaved with quoted text) to address specific parts of the parent post.`:
-			return `Üst gönderinin belirli bölümlerine hitap etmek için yanıtlarınızı satır içi (alıntılanmış metinle karıştırılmış) olarak da ekleyebilirsiniz.`;
+			return `Gönderinin belirli bölümlerine yanıt vermek için yanıtlarınızı alıntılanmış metinle iç içe olarak da ekleyebilirsiniz.`;
 		case `You are quoting a post other than the parent.`:
-			return `Ebeveyn dışında bir gönderiden alıntı yapıyorsunuz.`;
+			return `Bir öncekinden farklı bir gönderiyi alıntılıyorsunuz.`;
 		case `When replying a message, the message you are replying to is referenced in the post's headers.`:
-			return `Bir mesajı yanıtlarken, yanıtladığınız mesaj, yazının başlıklarında belirtilir.`;
+			return `Yanıtladığınız mesaj yazının başlık alanlarında belirtilir.`;
 		case `Depending on the software (or its configuration) used to read your message, your message may be displayed below its parent post.`:
-			return `Mesajınızı okumak için kullanılan yazılıma (veya yapılandırmasına) bağlı olarak, mesajınız ana gönderisinin altında görüntülenebilir.`;
+			return `Mesajınızın alıcı tarafında okunduğu programa (veya onun ayarlarına) bağlı olarak, mesajınız yanıtlanmakta olan gönderinin altında görüntülenebilir.`;
 		case `If your message contains a reply to a different post, following the conversation may become somewhat confusing.`:
-			return `Mesajınız farklı bir gönderiye cevap içeriyorsa, konuşmayı takip etmek biraz kafa karıştırıcı olabilir.`;
+			return `Mesajınız farklı bir gönderiye yanıt içerdiğinde konunun anlaşılırlığı güçleşebilir.`;
 		case `Thus, make sure to click the "Reply" link on the actual post you're replying to, and quote the parent post for context.`:
-			return `Bu nedenle, yanıtladığınız asıl gönderideki "Yanıtla" bağlantısını tıkladığınızdan ve bağlam için ana gönderiden alıntı yaptığınızdan emin olun.`;
+			return `Bu nedenle, lütfen yanıtlamakta olduğunuz gönderinin "Yanıtla" bağlantısını tıkladığınızdan ve onu alıntıladığınızdan emin olun.`;
 		case `Parent post is not indicated.`:
-			return `Ana gönderi belirtilmemiştir.`;
+			return `Yanıtlanan gönderi belirtilmemiş.`;
 		case `When quoting someone's post, you should leave the "On (date), (author) wrote:" line.`:
-			return `Birinin gönderisinden alıntı yaparken, "Tarih (tarih), (yazar) şunu yazdı:" satırını bırakmalısınız.`;
+			return `Bir gönderiyi alıntılarken, lütfen yanıtlanan gönderinin tarih ve yazar bilgisini taşıyan satırı silmeyin.`;
 		case `Thus, this line provides important context for your replies regarding the structure of the conversation.`:
-			return `Bu nedenle, bu satır, sohbetin yapısıyla ilgili yanıtlarınız için önemli bir bağlam sağlar.`;
+			return `O bilgi, sohbetin anlaşılmasına yardımcı olur.`;
 		case `You are quoting multiple posts.`:
 			return `Birden fazla gönderiden alıntı yapıyorsunuz.`;
 		case `Thus, you should avoid replying to multiple posts in one reply.`:
-			return `Bu nedenle, tek bir yanıtta birden fazla gönderiye yanıt vermekten kaçınmalısınız.`;
+			return `Tek bir yanıtta birden fazla gönderiye yanıt vermekten kaçınmalısınız.`;
 		case `If applicable, you should split your message into several, each as a reply to its corresponding parent post.`:
-			return `Mümkünse, mesajınızı, her biri ilgili ana gönderiye yanıt olarak birkaç bölüme ayırmalısınız.`;
+			return `Mümkünse, yanıtlanmakta olan her mesaj için farklı yanıt yazmalısınız.`;
 		case `You are top-posting.`:
-			return `En çok göndericisin.`;
+			return `Yanıtınızı asıl gönderinin üst tarafına yazıyorsunuz.`;
 		case `When replying a message, it is generally preferred to add your reply under the quoted parent text.`:
-			return `Bir mesajı yanıtlarken, genellikle yanıtınızı alıntılanmış ana metnin altına eklemeniz tercih edilir.`;
+			return `Genel tercih, yanıtınızı alıntılanan metnin altına yazmanızdır.`;
 		case `Depending on the software (or its configuration) used to read your message, your message may not be displayed below its parent post.`:
-			return `Mesajınızı okumak için kullanılan yazılıma (veya yapılandırmasına) bağlı olarak, mesajınız ana gönderisinin altında görüntülenmeyebilir.`;
-		case `In such cases, the quoted text provides context for your reply, and readers would need to first read the quoted text below your reply for context.`:
-			return `Bu gibi durumlarda, alıntılanan metin cevabınız için bağlam sağlar ve okuyucuların bağlam için ilk önce cevabınızın altındaki alıntılanan metni okumaları gerekir.`;
+			return `Mesajınızın alıcı tarafında okunduğu programa (veya onun ayarlarına) bağlı olarak, mesajınız yanıtlanmakta olan gönderinin altında görüntülenmiyor olabilir.`;
+		case `In such cases, readers would need to first read the quoted text below your reply for context.`:
+			return `Öyle ise, okuyucular önce yanıtınızın altındaki alıntıyı okumak zorunda kalırlar.`;
 		case `Thus, you should add your reply below the quoted text (or reply to individual paragraphs inline), rather than above it.`:
-			return `Bu nedenle, cevabınızı alıntı yapılan metnin üstüne eklemelisiniz (veya tek tek paragrafları satır içi olarak yanıtlamalısınız).`;
+			return `Bu nedenle, yanıtınızı alıntıladığınız metnin altına (veya birden fazla bölüm halinde iç içe) yazmalısınız.`;
+		case `You are overquoting.`:
+			return `Çok fazla alıntı yapmışsınız.`;
 		case `The ratio between quoted and added text is vastly disproportional.`:
-			return `Alıntılanan ve eklenen metin arasındaki oran büyük ölçüde orantısızdır.`;
+			return `Alıntılanan ve eklenen metin çok orantısız.`;
 		case `Quoting should be limited to the amount necessary to provide context for your replies.`:
-			return `Alıntı yapma, yanıtlarınıza bağlam sağlamak için gereken miktarla sınırlı olmalıdır.`;
+			return `Alıntı, yanıtınıza anlam katmaya yetecek kadar olmalıdır.`;
 		case `Quoting posts in their entirety is thus rarely necessary, and is a waste of vertical space.`:
-			return `Bu nedenle, yazıların tamamını alıntılamak nadiren gereklidir ve dikey alan israfıdır.`;
+			return `Bu nedenle, metnin tamamını alıntılamak nadiren gereklidir ve alan israfıdır.`;
 		case `Please trim the quoted text to just the relevant parts you're addressing in your reply, or add more content to your post.`:
-			return `Lütfen alıntılanan metni yanıtınızda ele aldığınız ilgili kısımlarla birlikte kısaltın veya yayınınıza daha fazla içerik ekleyin.`;
+			return `Lütfen alıntılanan metni yanıtınızda ele aldığınız kısımlarla ilgili olarak kısaltın veya gönderinize daha fazla içerik ekleyin.`;
 		case `Don't use URL shorteners.`:
-			return `URL kısaltıcılar kullanmayın.`;
+			return `URL kısaltıcıları kullanmayınız.`;
 		case `URL shortening services, such as TinyURL, are useful in cases where space is at a premium, e.g. in IRC or Twitter messages.`:
-			return `TinyURL gibi URL kısaltma hizmetleri, alanın önemli olduğu durumlarda kullanışlıdır, ör. IRC veya Twitter mesajlarında.`;
+			return `TinyURL gibi URL kısaltma hizmetleri, alanın kısıtlı olduğu IRC veya Twitter mesajları gibi ortamlarda yararlıdır.`;
 		case `In other circumstances, however, they provide little benefit, and have the significant disadvantage of being opaque:`:
-			return `Ancak diğer durumlarda, çok az fayda sağlarlar ve opak olma gibi önemli dezavantajlara sahiptirler:`;
+			return `Ancak diğer durumlarda çok az fayda sağlarlar ve bağlantının anlaşılırlığını düşürürler:`;
 		case `readers can only guess where the link will lead to before they click it.`:
-			return `okuyucular, yalnızca bağlantıyı tıklamadan önce bağlantının nereye gideceğini tahmin edebilir.`;
+			return `okuyucular, tıklanan bağlantının nereye götüreceği konusunda tahminde bulunamazlar.`;
 		case `Additionally, URL shortening services come and go - your link may work today, but might not in a year or two.`:
-			return `Ek olarak, URL kısaltma hizmetleri gelir ve gider - bağlantınız bugün çalışabilir, ancak bir veya iki yıl içinde olmayabilir.`;
+			return `Ek olarak, URL kısaltma hizmetleri kalıcı değillerdir - bugün işleyen bir bağlantı bir iki yıl içinde yitirilmiş olabilir.`;
 		case `Thus, do not use URL shorteners when posting messages online - post the full link instead, even if it seems exceedingly long.`:
-			return `Bu nedenle, çevrimiçi mesaj gönderirken URL kısaltıcıları kullanmayın - bunun yerine, aşırı uzun görünse bile tam bağlantıyı gönderin.`;
+			return `Bu nedenle, gönderilerinizde URL kısaltmaları kullanmak yerine, aşırı uzun görünüyor olsa bile tam bağlantıyı verin.`;
 		case `If it is too long to be inserted inline, add it as a footnote instead.`:
-			return `Satır içi eklenemeyecek kadar uzunsa, bunun yerine dipnot olarak ekleyin.`;
+			return `Satır içi için fazla uzun olduğunu düşündüğünüzde mesajınıza dipnot olarak ekleyebilirsiniz.`;
 		case `Could not expand URL:`:
 			return `URL genişletilemedi:`;
 		case `Don't put links in the subject.`:
-			return `Konuya bağlantı koymayın.`;
+			return `Konu satırına bağlantı koymayın.`;
 		case `Links in message subjects are usually not clickable.`:
-			return `Mesaj konularındaki bağlantılar genellikle tıklanabilir değildir.`;
+			return `Konu satırlarındaki bağlantılar genellikle tıklanabilir değildir.`;
 		case `Please move the link in the message body instead.`:
-			return `Lütfen bağlantıyı mesaj gövdesine taşıyın.`;
+			return `Lütfen bağlantıyı mesaj içine taşıyın.`;
 		case `Avoid replying to very old threads.`:
 			return `Çok eski konuları yanıtlamaktan kaçının.`;
 		case `The thread / post you are replying to is very old.`:
-			return `Yanıtladığınız konu / gönderi çok eski.`;
+			return `Yanıtladığınız konu veya gönderi çok eski.`;
 		case `Consider creating a new thread instead of replying to an existing one.`:
-			return `Mevcut bir ileti dizisini yanıtlamak yerine yeni bir ileti dizisi oluşturmayı düşünün.`;
+			return `Mevcut konuyu yanıtlamak yerine yeni bir konu başlatmayı düşünün.`;
 		case `BlogSpam.net thinks your post looks like spam:`:
 			return `BlogSpam.net, gönderinizin spam gibi göründüğünü düşünüyor:`;
 		case `BlogSpam.net error:`:
@@ -889,19 +893,19 @@ string translate(string s)
 		case `BlogSpam.net unexpected response:`:
 			return `BlogSpam.net beklenmeyen yanıt:`;
 		case `Perform which moderation actions on this post?`:
-			return `Bu gönderide hangi denetim işlemlerini gerçekleştirin?`;
+			return `Hangi denetim işlemleri uygulansın?`;
 		case `Delete local cached copy of this post from DFeed's database`:
-			return `Bu gönderinin yerel önbelleğe alınmış kopyasını DFeed'in veritabanından silin`;
+			return `Bu gönderinin yerel kopyasını DFeed veritabanından sil`;
 		case `Ban poster (place future posts in moderation queue)`:
-			return `Posteri yasakla (gelecekteki gönderileri denetim kuyruğuna yerleştirin)`;
+			return `Göndericiyi yasakla (gelecekteki gönderileri de denetlensin)`;
 		case `Delete source copy from %-(%s/%)`:
-			return `%-(%s/%) kaynağından kaynak kopyayı sil`;
+			return `%-(%s/%) kaynağındaki asıl kopyasını sil`;
 		case `Reason:`:
 			return `Nedeni:`;
 		case `It looks like you've already flagged this post.`:
 			return `Görünüşe göre bu gönderiyi zaten işaretlemişsiniz.`;
 		case `Would you like to %sunflag it%s?`:
-			return `%s ile %s işaretlemek ister misiniz?`;
+			return `%sİşaretini kaldırmak%s ister misiniz?`;
 		case `Are you sure you want to flag this post?`:
 			return `Bu gönderiyi işaretlemek istediğinizden emin misiniz?`;
 		case `You can't flag posts!`:
@@ -917,7 +921,7 @@ string translate(string s)
 		case `It looks like you've already unflagged this post.`:
 			return `Görünüşe göre bu gönderinin işaretini zaten kaldırmışsınız.`;
 		case `Would you like to %sflag it%s?`:
-			return `%s bayrağı %s ister misiniz?`;
+			return `%sİşaretlemek%s ister misiniz?`;
 		case `Are you sure you want to unflag this post?`:
 			return `Bu gönderinin işaretini kaldırmak istediğinizden emin misiniz?`;
 		case `Unflag`:
@@ -925,11 +929,11 @@ string translate(string s)
 		case `You've already unflagged this post.`:
 			return `Bu gönderinin işaretini zaten kaldırdınız.`;
 		case `Post unflagged.`:
-			return `İşaretsiz yayınlayın.`;
+			return `İşaret kaldırıldı.`;
 		case `You can view it here.`:
 			return `Buradan görüntüleyebilirsiniz.`;
 		case `This is not a post in need of moderation. Its status is currently:`:
-			return `Bu, denetlenmesi gereken bir gönderi değil. Şu anda durumu:`;
+			return `Bu, denetlenmesi gereken bir gönderi değil. Şu andaki durumu:`;
 		case `Are you sure you want to approve this post?`:
 			return `Bu gönderiyi onaylamak istediğinizden emin misiniz?`;
 		case `Approve`:
@@ -945,31 +949,59 @@ string translate(string s)
 
 private string pluralOf(string unit)
 {
-	// TODO!
 	switch (unit)
 	{
 		case "second":
+      return "saniye";
+
 		case "minute":
+      return "dakika";
+
 		case "hour":
+      return "saat";
+
 		case "day":
+      return "gün";
+
 		case "week":
+      return "hafta";
+
 		case "month":
+      return "ay";
+
 		case "year":
+      return "yıl";
 
 		case "thread":
+      return "konu";
+
 		case "post":
+      return "gönderi";
+
 		case "forum post":
+      return "forum gönderisi";
+
 		case "subscription":
+      // This seems to be used only in the `No new posts matching your %s%s%s.` string where it happens to be the first
+      // word in Turkish, so we use it capitalized for now.
+      return "Abonelikleriniz";
+
 		case "unread post":
+      return "okunmamış gönderi";
+
 		case "registered user":
+      return "kayıtlı kullanıcı";
+
 		case "visit":
-			return unit ~ "s";
+      // This seems to be used only in the `You have read a total of %s %s during your %s.` string where it happens to
+      // be the first word in Turkish, so we use it capitalized for now.
+      return "Ziyaretiniz";
 
 		case "new reply":
-			return "new replies";
+      return "yeni yanıt";
 
 		case "user has created":
-			return "users have created";
+      return "kullanıcı tarafından";
 
 		default:
 			assert(false, "Unknown unit: " ~ unit);
@@ -978,9 +1010,8 @@ private string pluralOf(string unit)
 
 string plural(string unit)(long amount)
 {
-	// TODO!
-	static immutable unitPlural = pluralOf(unit);
-	return amount == 1 ? unit : unitPlural;
+	// There are no plural forms of nouns in Turkish.
+	return pluralOf(unit);
 }
 
 const WeekdayShortNames = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];

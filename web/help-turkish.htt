@@ -1,129 +1,127 @@
 <!-- HTML -->
-<h2 id="view-modes">Görünüm modları</h2>
+<h2 id="view-modes">Görünüm seçenekleri</h2>
 
 <p>
-  Birkaç görünüm modundan birini kullanarak foruma göz atabilirsiniz:
+  Bu forumu farklı biçimlerde görüntüleyebilirsiniz:
   <ul>
-    <li><b>Temel</b> - Sayfalanmış doğrusal iş parçacıklarına sahip forum benzeri bir görünüm.</li>
-    <li><b>Zincirlenmiş</b> - Posta listesi arşivlerine benzer şekilde, tek gönderi görünümüyle zincir halinde gruba genel bakış.</li>
-    <li><b>Yatay bölme</b> - bir usenet istemcisine benzer, bölünmüş bir görünüme sahip JavaScript destekli arayüz.</li>
-    <li><b>Dikey bölme</b> - Üstte bir liste bölmesi ve altta bir ileti bölmesi bulunan, bir masaüstü posta istemcisini andıran bir görünüm.</li>
+    <li><b>Temel</b> - Konuların art arda sayfalar halinde listelendiği forum benzeri görünüm.</li>
+    <li><b>Gönderi listesi</b> - Konu gönderilerinin tek satırda gösterildiği genel görünüm.</li>
+    <li><b>Yatay bölünmüş</b> - Usenet programlarına benzer biçimde bölünmüş JavaScript destekli arayüz.</li>
+    <li><b>Dikey bölünmüş</b> - E-posta programlarına benzer biçimde üstte liste, altta ileti olan görünüm.</li>
   </ul>
 
-  Görünüm modu <a href="/settings">ayarlar sayfasından</a>değiştirilebilir.
+  Görünüm, <a href="/settings">ayarlar sayfasında</a> değiştirilebilir.
 </p>
 
-<h2 id="keynav">Klavye gezintisi</h2>
+<h2 id="keynav">Klavye kısayolları</h2>
 
 <p>
-  Tüm görünüm modları için klavye kısayolları mevcuttur (ileti dizisi ve gönderi listesi sayfalarının yanı sıra forum dizininde).
-  JavaScript etkinse, <kbd>?</kbd> kısayolların listesini görüntülemek için basın .
-</p>
-
-<p>
-  Dilerseniz <a href="/settings">ayarlar sayfasından</a>klavye kısayollarını devre dışı bırakabilirsiniz .
-</p>
-
-<h2 id="read-post-history">Gönderi geçmişini okuyun</h2>
-
-<p>
-  Görüntülediğiniz gönderiler sıkıştırılmış bir tanımlama bilgisine veya oturum açmışsanız sunucuya kaydedilir.
-  Bir ileti dizisini temel görünümde görüntülemek, görüntülenen tüm gönderileri "okundu" olarak işaretler.
-  Yayınlar, <kbd>u</kbd> klavye kısayolu kullanılarak "okunmamış" olarak işaretlenebilir .
-</p>
-<p>
-  Okuma gönderi geçmişini kaybetmemek için, çerez sınırlamalarını / süresinin dolmasını / yanlışlıkla silmeyi önlemek için bir hesap kaydetmeyi düşünün.
-</p>
-
-<h2 id="accounts">Hesaplar</h2>
-
-<p>
-  Bu foruma göz atmak veya mesaj göndermek için bir hesaba ihtiyacınız yok.
-  Tercihler ve okuma gönderi geçmişi, kayıtsız kullanıcılar için tarayıcı çerezlerinde saklanır.
+  Tüm görünüm seçenekleri için klavye kısayolları mevcuttur (konu ve gönderi listelerinde ve forum dizininde).
+  Kısayolların listesini görüntülemek için <kbd>?</kbd> tuşuna basın. (JavaScript gerektirir.)
 </p>
 
 <p>
-  Bunun yerine, onları sunucuda tutmak için bir hesap kaydedebilirsiniz.
-  Bir hesabın kaydedilmesi, tüm değişkenleri çerezlerden sunucu veritabanına aktaracaktır.
+  Klavye kısayollarını <a href="/settings">ayarlar sayfasında</a> devre dışı bırakabilirsiniz.
+</p>
+
+<h2 id="read-post-history">Okuma geçmişi</h2>
+
+<p>
+  Daha önce görüntülemiş olduğunuz gönderiler oturum açmışsanız sunucuya, açmamışsanız bir tarayıcı çerezine kaydedilir.
+  Bir konu temel görünümde görüntülendiğinde, görüntülenen tüm gönderiler "okundu" olarak işaretlenir.
+  Gönderiler <kbd>u</kbd> klavye kısayolu kullanılarak tekrar "okunmamış" olarak işaretlenebilir.
+</p>
+<p>
+  Bir hesap açmanız, okuma geçmişinizin çerezlerin uzunluk ve süre sınırlamaları veya yanlışlıkla silinmeleri nedeniyle kaybedilmesini önleyecektir.
+</p>
+
+<h2 id="accounts">Kullanıcı hesapları</h2>
+
+<p>
+  Bu forumu okumak veya mesaj göndermek için hesap açmanıza gerek yok.
+  O durumda ayarlarınız ve okuma geçmişiniz bir tarayıcı çerezinde saklanır.
 </p>
 
 <p>
-  Bir hesap oluşturmak ayrıca abonelikler oluşturmanıza ve IRC veya gönderilerinize veya diğer etkinliklere verilen yanıtlar için e-posta ile bilgilendirilmenize olanak tanır.
-</p>
-
-<h2 id="email">E</h2>
-
-<p>
-  Gönderirken bir e-posta adresi belirtmeniz gerekir.
-  Geçerli olması gerekmez; bu yazılım belirtilen adrese hiçbir şey göndermeyecektir.
-  E-posta adresi, gönderi yayınladığınız haber sunucusunun / posta listesinin diğer kullanıcılarına açıklanacaktır.
-  Bu nedenle, lütfen kötü niyetli robotların adresinizi toplayabileceğini ve ona spam gönderebileceğini unutmayın.
+  Bir hesap açtığınızda ise ayarlarınız ve okuma geçmişiniz sunucu tarafında saklanır.
+  Yeni bir hesabın açılması, tüm değişkenleri çerezlerden sunucu veritabanına aktaracaktır.
 </p>
 
 <p>
-  E-posta adresi ayrıca bir avatar görüntülemek için kullanılır (aşağıya bakın).
+  Bir hesabınızın olması, abonelikler oluşturabilmenize ve gönderilerinize verilen yanıtlar hakkında IRC veya e-posta yoluyla bilgilendirilmenize de olanak tanır.
+</p>
+
+<h2 id="email">E-posta</h2>
+
+<p>
+  Mesaj gönderirken bir e-posta adresi belirtmeniz gerekmektedir. Ancak, bu adresin geçerli olması şart değildir çünkü bu forum sitesi belirtilen adrese hiçbir şey göndermez.
+  Belirttiğiniz e-posta adresi, mesaj gönderdiğiniz haber grubu veya e-posta listesi sunucusunun diğer kullanıcıları tarafında görülecektir.
+  Bu nedenle, verdiğiniz adresi kötü niyetli robotların da görebileceklerini ve bu adrese spam gönderebileceklerini unutmayın.
+</p>
+
+<p>
+  Belirttiğiniz e-posta adresi avatar görüntülemek için de kullanılır.
 </p>
 
 <h2 id="avatars">Avatarlar</h2>
 
 <p>
-  Forum, kullanıcıların e-posta adresleriyle ilişkili avatarları gösterecektir.
-  E-posta adresi <a href="http://en.gravatar.com/">Gravatar'da</a>kayıtlıysa , ilgili avatar gösterilir.
-  Aksi takdirde, e-posta adresinin bir karmasından oluşturulan bir <a href="https://en.wikipedia.org/wiki/Identicon">Identicon</a> , yedek olarak görüntülenir.
+  Forum, kullanıcıların e-posta adresleriyle ilişkili avatarlar gösterir.
+  Kullanılan e-posta adresi <a href="http://en.gravatar.com/">Gravatar'da</a> kayıtlıysa oradaki avatar gösterilir.
+  Değilse, avatar yerine e-posta adresinden otomatik olarak oluşturulmuş bir <a href="https://en.wikipedia.org/wiki/Identicon">Identicon</a> gösterilir.
 </p>
 
 <p>
-  Bu forumda özel bir avatar kullanmak için
-    <a href="http://en.gravatar.com/site/signup/">, Gravatar'da bir hesap açın,</a>
-    bir e-posta adresini bir resimle ilişkilendirin
-    ve bu foruma mesaj gönderirken bu e-posta adresini kullanın.
-  Ek olarak, avatarınıza tıklayarak erişilebilecek bir Gravatar profili oluşturabilirsiniz.
+  Bu forumda avatar kullanmak için
+    <a href="http://tr.gravatar.com/site/signup/">Gravatar'da bir hesap açın,</a>
+    orada bir e-posta adresini bir resimle ilişkilendirin,
+    ve bu foruma mesaj gönderirken o e-posta adresini kullanın.
+  Ek olarak, avatarınıza tıklandığında erişilen bir Gravatar profili de oluşturabilirsiniz.
 </p>
 
-<h2 id="profiles">Kullanıcı profilleri ve imzaları</h2>
+<h2 id="profiles">Kullanıcı profilleri ve bilgileri</h2>
 
 <p>
-  Mesajlar çeşitli kaynaklardan gelebildiğinden, bu forumda özelleştirilebilir kullanıcı profilleri yoktur.
-  Bunun yerine, yukarıdaki <a href="http://en.gravatar.com/">Avatarlar</a> bölümünde açıklandığı gibi bir <a href="#avatars">Gravatar</a> profili oluşturabilirsiniz .
-  Bir kullanıcı oluşturduğunu varsayarak, Gravatar profil sayfasına gitmek için bir kullanıcının avatarına tıklayın.
+  Mesajlar farklı kaynaklardan gelebildiğinden bu forum kullanıcı profili içermez.
+  Bunun yerine, yukarıdaki <a href="http://en.gravatar.com/">Avatarlar</a> bölümünde açıklandığı gibi bir <a href="#avatars">Gravatar</a> profili oluşturabilirsiniz.
+  Gravatar profili olan kullanıcıların profillerine avatarlarına tıklayarak erişebilirsiniz.
 </p>
 
 <p id="signatures">
-  Benzer nedenlerden dolayı, bu forum bir imzanın yapılandırılmasına izin vermez.
-  İmzalar günümüzde web'deki mesajlarda o kadar kullanışlı değildir ve genellikle düşük bir sinyal-gürültü oranına dönüşür.
-  Bunun yerine, ilgili bilgileri Gravatar profilinize veya web sitenize koyabilirsiniz (ve Gravatar profilinizden ona bağlantı verebilirsiniz).
+  Bu forum kullanıcı bilgilerini de benzer nedenlerden dolayı içermez.
+  Bunun yerine, ilgili bilgileri Gravatar profilinize veya web sitenize koyabilirsiniz ve Gravatar profilinizden sitenize bağlantı verebilirsiniz.
 </p>
 
-<h2 id="canonical">Kanonik bağlantılar</h2>
+<h2 id="canonical">Kalıcı bağlantılar</h2>
 
 <p>
-  Varsayılan (temel) görünümü kullanıyorsanız ve belirli bir gönderiye bağlantı almak istiyorsanız, lütfen sol kenar çubuğunda bulunan "Kalıcı Bağlantı" öğesini kullanın
-  (sağ tıklayıp "Bağlantı konumunu kopyala" seçeneğini veya tarayıcınızın eşdeğer).
-  Tarayıcınızın adres çubuğunun içeriğini kopyalarsanız, ortaya çıkan bağlantı aşırı uzun olabilir ve farklı bir görünüm modu seçen kullanıcılar için iyi çalışmayabilir.
-  Kanonik bir bağlantı <tt>https://<i>etkialanı</i>/post/<i>ileti-kimliği@buraya-gider</i></tt>biçimindedir ve <tt>/thread/</tt> veya bir URL parçası (<tt>#</tt> veya onu izleyen herhangi bir metin) içermez.
+  Belirli bir gönderiye bağlantı almak istiyorsanız temel görünümü kullanırken sol kenar çubuğunda bulunan "Kalıcı Bağlantı"yı kullanın
+  (sağ tıklayıp tarayıcınızın bağlantı kopyalama olanağından yararlanarak).
+  Bunun yerine tarayıcınızın adres çubuğundaki bağlantıyı kopyalamak uygun olmayabilir çünkü o bağlantı aşırı derecede uzun olabildiği gibi, sizin seçmiş olduğunuzdan farklı görünüm kullanan kullanıcılar için de doğru çalışmayabilir.
+  Kalıcı bağlantılar <tt>https://<i>site.adresi</i>/post/<i>gönderi@kimliği</i></tt> biçimindedir ve <tt>/thread/</tt> veya URL parçası (<tt>#</tt> veya onu izleyen herhangi bir metin) içermez.
 </p>
 
 <p>
-  Bir ileti dizisine kanonik bağlantı almak için, ilk gönderinin standart bağlantısını kullanmanız yeterlidir.
-  "Dizi" veya "yatay bölme" görünüm modunu kullanıyorsanız, URL'yi adres çubuğunuzdan kopyalamanız yeterlidir.
-  Her gönderinin başlığı aynı zamanda herhangi bir görünüm modunda söz konusu gönderinin kanonik bir bağlantısıdır.
+  Bir konunun kalıcı bağlantısı için ilk gönderinin bağlantısını kullanmanız yeterlidir.
+  "Gönderi listesi" veya "Yatay bölünmüş" görünümü kullanıyorsanız adres çubuğundaki bağlantıyı kopyalayabilirsiniz.
+  Her gönderinin başlığı da görünüm seçeneğinden bağımsız olarak o gönderinin kalıcı bağlantısıdır.
 </p>
 
 <h2 id="drafts">Taslaklar</h2>
 
 <p>
-  "Kaydet ve önizle" yi tıkladığınızda, mesajınızın bir taslağı sunucuya kaydedilir.
-  JavaScript etkinse, siz mesajı yazarken bu da periyodik olarak gerçekleşecektir.
+  "Kaydet ve önizle"yi tıkladığınızda mesajınızın bir taslağı sunucuya kaydedilir.
+  JavaScript etkinse, bu, siz mesajı yazarken de kendiliğinden gerçekleşecektir.
 </p>
 
 <p>
-  Tarayıcı sekmesini yanlışlıkla mesajla kapatırsanız, bir gönderme formu açarak
-  ("Konu oluştur" u tıklayarak veya bir gönderiyi yanıtlayarak) geri yükleyebilirsiniz.
-  Gönderilmemiş taslaklar varsa, formun önünde bir uyarı görünecektir.
-  Bir taslağı silmek için, kayıt formunun altındaki "Taslağı sil" düğmesini tıklayın.
+  Tarayıcı sekmesini henüz mesajı göndermeden yanlışlıkla kapatırsanız, mesajınızın taslağını yeni bir gönderme formu açarak
+  ("Yeni konu aç"ı tıklayarak veya bir gönderiyi yanıtlayarak) geri yükleyebilirsiniz.
+  Gönderilmemiş taslak varsa, gönderme formunun üstünde bir uyarı görünecektir.
+  Bir taslağı silmek için kayıt formunun altındaki "Taslağı sil" düğmesini tıklayın.
 </p>
 
-<h2 id="about">hakkında</h2>
+<h2 id="about">About</h2>
 
 <p>
   This website is powered by DFeed, an NNTP / mailing list web frontend / forum software, news aggregator and IRC bot.
@@ -134,13 +132,13 @@
 
 <?about?>
 
-<h2 id="contributing">Contributing</h2>
+<h2 id="contributing">Sizin katkılarınız</h2>
 
 <p>
-  Bu forum yazılımı açık kaynaklıdır ve D programlama dilinde yazılmıştır.
-  Katkılara açığız. Hataları, geri bildirimleri bildirerek ve çekme istekleri göndererek bu yazılımın geliştirilmesine yardımcı olabilirsiniz.
-  Düzeltmeler, iyileştirmeler, dokümantasyon, birim testleri, yeniden düzenleme vb. İçin yamaların tümü kabul edilir.
+  D programlama dilinde yazılmış olan bu forum açık kaynaklıdır.
+  Katkılara açığız. Bu yazılımın gelişmesine yardımcı olmak için hatalarını bildirebilir, öneri getirebilir, ve "pull request" açabilirsiniz.
+  Düzeltme, iyileştirme, belgeleme, birim testleri, kodun yeniden düzenlenmesi vb. her türlü yardımı kabul etmekteyiz.
 </p>
 <p>
-  DFeed üzerinde çalışmaya başlamak <a href="https://github.com/CyberShadow/DFeed">için GitHub projesini</a>klonlayın ve başlamak için <a href="https://github.com/CyberShadow/DFeed/blob/master/README.md">README.md'deki</a> talimatları kontrol edin.
+  DFeed üzerinde çalışmaya başlamak için <a href="https://github.com/CyberShadow/DFeed">GitHub projesini</a> klonlayın ve programı <a href="https://github.com/CyberShadow/DFeed/blob/master/README.md">README.md</a> dosyasında açıklandığı gibi kendi ortamınızda başlatın.
 </p>
