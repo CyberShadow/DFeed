@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -331,92 +331,8 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 
 				if (auto reason = shouldModerate(draft))
 				{
-					learnModeratedMessage(draft, true, 1);
-
-					draft.status = PostDraft.Status.moderation;
-					draft.serverVars["headers"] = headers.to!(string[][string]).toJson;
 					// draft will be saved by scope(exit) above
-
-					string sanitize(string s) { return "%(%s%)".format(s.only)[1..$-1]; }
-
-					string context;
-					{
-						context = `The message was submitted`;
-						string contextURL = null;
-						auto urlPrefix = site.proto ~ "://" ~ site.host;
-						if (auto parentID = "parent" in draft.serverVars)
-						{
-							context ~= ` in reply to `;
-							auto parent = getPostInfo(*parentID);
-							if (parent)
-								context ~= parent.author.I!sanitize ~ "'s post";
-							else
-								context ~= "a post";
-							contextURL = urlPrefix ~ idToUrl(*parentID);
-						}
-						if ("where" in draft.serverVars)
-						{
-							context ~= ` on the ` ~ draft.serverVars["where"] ~ ` group`;
-							if (!contextURL)
-								contextURL = urlPrefix ~  `/group/` ~ draft.serverVars["where"];
-						}
-						else
-							context ~= ` on an unknown group`;
-
-						context ~= contextURL ? ":\n" ~ contextURL : ".";
-					}
-
-					foreach (mod; site.moderators)
-						sendMail(q"EOF
-From: %1$s <no-reply@%2$s>
-To: %3$s
-Subject: Please moderate: post by %5$s with subject "%7$s"
-Content-Type: text/plain; charset=utf-8
-
-Howdy %4$s,
-
-User %5$s <%6$s> attempted to post a message with the subject "%7$s".
-This post was held for moderation for the following reason: %8$s
-
-Here is the message:
-----------------------------------------------
-%9$-(%s
-%)
-----------------------------------------------
-
-%13$s
-
-IP address this message was posted from: %12$s
-
-You can preview and approve this message here:
-%10$s://%2$s/approve-moderated-draft/%11$s
-
-Otherwise, no action is necessary.
-
-All the best,
-%1$s
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-You are receiving this message because you are configured as a site moderator on %2$s.
-
-To stop receiving messages like this, please ask the administrator of %1$s to remove you from the list of moderators.
-.
-EOF"
-						.format(
-							/* 1*/ site.name.length ? site.name : site.host,
-							/* 2*/ site.host,
-							/* 3*/ mod,
-							/* 4*/ mod.canFind("<") ? mod.findSplit("<")[0].findSplit(" ")[0] : mod.findSplit("@")[0],
-							/* 5*/ clientVars.get("name", "").I!sanitize,
-							/* 6*/ clientVars.get("email", "").I!sanitize,
-							/* 7*/ clientVars.get("subject", "").I!sanitize,
-							/* 8*/ reason,
-							/* 9*/ draft.clientVars.get("text", "").strip.splitAsciiLines.map!(line => line.length ? "> " ~ line : ">"),
-							/*10*/ site.proto,
-							/*11*/ draftID,
-							/*12*/ ip,
-							/*13*/ context,
-						));
+					moderateMessage(draft, headers, reason);
 
 					html.put(`<p>`, _!`Your message has been saved, and will be posted after being approved by a moderator.`, `</p>`);
 					return null;
@@ -467,6 +383,96 @@ string postDraft(ref PostDraft draft, Headers headers)
 	draft.serverVars["pid"] = process.pid;
 
 	return process.pid;
+}
+
+void moderateMessage(ref PostDraft draft, Headers headers, string reason)
+{
+	import std.range : chain, only;
+
+	learnModeratedMessage(draft, true, 1);
+	draft.serverVars["headers"] = headers.to!(string[][string]).toJson;
+	draft.status = PostDraft.Status.moderation;
+
+	string sanitize(string s) { return "%(%s%)".format(s.only)[1..$-1]; }
+
+	string context;
+	{
+		context = `The message was submitted`;
+		string contextURL = null;
+		auto urlPrefix = site.proto ~ "://" ~ site.host;
+		if (auto parentID = "parent" in draft.serverVars)
+		{
+			context ~= ` in reply to `;
+			auto parent = getPostInfo(*parentID);
+			if (parent)
+				context ~= parent.author.I!sanitize ~ "'s post";
+			else
+				context ~= "a post";
+			contextURL = urlPrefix ~ idToUrl(*parentID);
+		}
+		if ("where" in draft.serverVars)
+		{
+			context ~= ` on the ` ~ draft.serverVars["where"] ~ ` group`;
+			if (!contextURL)
+				contextURL = urlPrefix ~  `/group/` ~ draft.serverVars["where"];
+		}
+		else
+			context ~= ` on an unknown group`;
+
+		context ~= contextURL ? ":\n" ~ contextURL : ".";
+	}
+
+	foreach (mod; site.moderators)
+		sendMail(q"EOF
+From: %1$s <no-reply@%2$s>
+To: %3$s
+Subject: Please moderate: post by %5$s with subject "%7$s"
+Content-Type: text/plain; charset=utf-8
+
+Howdy %4$s,
+
+User %5$s <%6$s> attempted to post a message with the subject "%7$s".
+This post was held for moderation for the following reason: %8$s
+
+Here is the message:
+----------------------------------------------
+%9$-(%s
+%)
+----------------------------------------------
+
+%13$s
+
+IP address this message was posted from: %12$s
+
+You can preview and approve this message here:
+%10$s://%2$s/approve-moderated-draft/%11$s
+
+Otherwise, no action is necessary.
+
+All the best,
+%1$s
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You are receiving this message because you are configured as a site moderator on %2$s.
+
+To stop receiving messages like this, please ask the administrator of %1$s to remove you from the list of moderators.
+.
+EOF"
+		.format(
+			/* 1*/ site.name.length ? site.name : site.host,
+			/* 2*/ site.host,
+			/* 3*/ mod,
+			/* 4*/ mod.canFind("<") ? mod.findSplit("<")[0].findSplit(" ")[0] : mod.findSplit("@")[0],
+			/* 5*/ draft.clientVars.get("name", "").I!sanitize,
+			/* 6*/ draft.clientVars.get("email", "").I!sanitize,
+			/* 7*/ draft.clientVars.get("subject", "").I!sanitize,
+			/* 8*/ reason,
+			/* 9*/ draft.clientVars.get("text", "").strip.splitAsciiLines.map!(line => line.length ? "> " ~ line : ">"),
+			/*10*/ site.proto,
+			/*11*/ draft.clientVars.get("did", "").I!sanitize,
+			/*12*/ ip,
+			/*13*/ context,
+		));
 }
 
 void discussionPostStatusMessage(string messageHtml)
