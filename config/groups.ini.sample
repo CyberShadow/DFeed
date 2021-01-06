@@ -48,3 +48,11 @@ subscriptionRequired=true
 # Whether new threads in the post are considered very important, and
 # will be announced to e.g. Twitter (if configured).
 announce=false
+
+# CAPTCHA mechanism to use for challenging users who post
+# messages which triggered a spam filter.
+# Valid values are:
+# - none - no CAPTCHA, messages go directly to the moderation queue
+# - recaptcha - Google's reCAPTCHA service, requires configuring keys
+# - dcaptcha - randomly generated D Programming Language questions
+captcha=none

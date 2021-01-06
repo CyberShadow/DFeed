@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2018, 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -242,6 +242,17 @@ class Rfc850Post : Post
 			!paragraphs[i].quotePrefix.length && (i+1 >= paragraphs.length || !paragraphs[i+1].quotePrefix.length)
 		).array;
 		return paragraphs.indexed(index).map!(p => p.text).join("\n");
+	}
+
+	/// Return configured CAPTCHA method.
+	@property string captcha()
+	{
+		auto groups = xref.map!(x => x.group.getGroupInfo());
+		enforce(groups.length, "No groups");
+		auto group = groups.front;
+		auto captchas = groups.map!(group => group.captcha);
+		enforce(captchas.uniq.walkLength == 1, "Conflicting CAPTCHA methods");
+		return captchas.front;
 	}
 
 private:

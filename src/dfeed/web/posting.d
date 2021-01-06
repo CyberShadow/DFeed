@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -260,12 +260,13 @@ final class PostProcess
 			return;
 		}
 
-		captchaPresent = theCaptcha.isPresent(draft.clientVars);
+		auto captcha = getCaptcha(post.captcha);
+		captchaPresent = captcha ? captcha.isPresent(draft.clientVars) : false;
 		if (captchaPresent)
 		{
 			log("Checking CAPTCHA");
 			status = PostingStatus.captcha;
-			theCaptcha.verify(draft.clientVars, ip, &onCaptchaResult);
+			captcha.verify(draft.clientVars, ip, &onCaptchaResult);
 		}
 		else
 		{

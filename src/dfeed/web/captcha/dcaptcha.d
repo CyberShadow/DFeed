@@ -1,4 +1,4 @@
-/*  Copyright (C) 2012, 2014, 2015, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2012, 2014, 2015, 2017, 2018, 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -25,7 +25,7 @@ import ae.utils.xmllite : encodeEntities;
 import dcaptcha.dcaptcha;
 
 import dfeed.loc;
-import dfeed.web.captcha;
+import dfeed.web.captcha.common;
 
 final class Dcaptcha : Captcha
 {
@@ -85,5 +85,5 @@ final class Dcaptcha : Captcha
 
 static this()
 {
-	theCaptcha = new Dcaptcha();
+	captchas["dcaptcha"] = new Dcaptcha();
 }

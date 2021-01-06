@@ -1,4 +1,4 @@
-/*  Copyright (C) 2012, 2014, 2015, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2012, 2014, 2015, 2018, 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -22,7 +22,7 @@ import ae.net.http.client;
 import ae.utils.sini;
 
 import dfeed.loc;
-import dfeed.web.captcha;
+import dfeed.web.captcha.common;
 
 class Recaptcha : Captcha
 {
@@ -100,5 +100,5 @@ static this()
 {
 	import dfeed.common : createService;
 	if (auto c = createService!Recaptcha("apis/recaptcha"))
-		theCaptcha = c;
+		captchas["recaptcha"] = c;
 }

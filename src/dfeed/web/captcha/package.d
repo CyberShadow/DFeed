@@ -1,4 +1,4 @@
-/*  Copyright (C) 2012, 2014, 2015, 2016, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2012, 2014, 2015, 2016, 2018, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -16,27 +16,16 @@
 
 module dfeed.web.captcha;
 
-public import ae.net.ietf.url : UrlParameters;
+import std.exception;
 
-class Captcha
+public import dfeed.web.captcha.common;
+
+static import dfeed.web.captcha.dcaptcha;
+static import dfeed.web.captcha.recaptcha;
+
+Captcha getCaptcha(string name)
 {
-	/// Get a HTML fragment to insert into the HTML form to present a challenge to the user.
-	/// If showing the form again in response to a wrong CAPTCHA solution,
-	/// the error data passed to the verify handler should be supplied.
-	abstract string getChallengeHtml(CaptchaErrorData error = null);
-
-	/// Check whether a CAPTCHA attempt is included in the form
-	/// (check for the presence of fields added by getChallengeHtml).
-	abstract bool isPresent(UrlParameters fields);
-
-	/// Verify the correctness of the user's CAPTCHA solution.
-	/// handler can be called asynchronously.
-	abstract void verify(UrlParameters fields, string ip, void delegate(bool success, string errorMessage, CaptchaErrorData errorData) handler);
+	auto pcaptcha = name in captchas;
+	enforce(name, "CAPTCHA mechanism unknown or not configured: " ~ name);
+	return *pcaptcha;
 }
-
-/// Opaque class for preserving error data.
-class CaptchaErrorData
-{
-}
-
-Captcha theCaptcha;

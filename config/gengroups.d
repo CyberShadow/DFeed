@@ -154,6 +154,7 @@ void main()
 				f.writefln("alsoVia.%s.url=%s", k, av.url);
 			}
 			f.writeln("announce=", group.urlName == "announce");
+			f.writeln("captcha=", group.internalName.startsWith("digitalmars.D.turkish.") ? "none" : "dcaptcha");
 		}
 	}
 

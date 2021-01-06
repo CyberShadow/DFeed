@@ -1,4 +1,4 @@
-/*  Copyright (C) 2015, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2015, 2017, 2018, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -40,6 +40,7 @@ struct Config
 		OrderedMap!(string, AlsoVia) alsoVia;
 		bool subscriptionRequired = true;
 		bool announce;
+		string captcha;
 	}
 	OrderedMap!(string, Group) groups;
 }

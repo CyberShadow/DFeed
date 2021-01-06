@@ -72,7 +72,7 @@ void draftNotices(string except = null)
 	}
 }
 
-bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error=PostError.init)
+bool discussionPostForm(PostDraft draft, Captcha captcha=null, PostError error=PostError.init)
 {
 	auto draftID = draft.clientVars.get("did", null);
 	draftNotices(draftID);
@@ -157,8 +157,8 @@ bool discussionPostForm(PostDraft draft, bool showCaptcha=false, PostError error
 		`<label for="postform-text">`, _!`Message:`, `</label>` ~
 		`<textarea id="postform-text" name="text" rows="25" cols="80"`, subject.length ? ` autofocus` : ``, `>`), html.putEncodedEntities(draft.clientVars.get("text", null)), html.put(`</textarea>`);
 
-	if (showCaptcha)
-		html.put(`<div id="postform-captcha">`, theCaptcha.getChallengeHtml(error.captchaError), `</div>`);
+	if (captcha)
+		html.put(`<div id="postform-captcha">`, captcha.getChallengeHtml(error.captchaError), `</div>`);
 
 	html.put(
 		`<div>` ~
@@ -302,7 +302,7 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 							error.extraHTML ~= ` <input name="action-lint-fix-` ~ rule.id ~ `" type="submit" value="` ~ _!`Fix it for me` ~ `">`;
 						if (lintDetails)
 							error.extraHTML ~= `<div class="lint-description">` ~ rule.longDescription() ~ `</div>`;
-						discussionPostForm(draft, false, error);
+						discussionPostForm(draft, null, error);
 						return null;
 					}
 
@@ -311,19 +311,30 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 				auto ipPostAttempts = lastPostAttempts.get(ip, null);
 				if (ipPostAttempts.length >= postThrottleRejectCount && now - ipPostAttempts[$-postThrottleRejectCount+1] < postThrottleRejectTime)
 				{
-					discussionPostForm(draft, false,
+					discussionPostForm(draft, null,
 						PostError(_!"You've attempted to post %d times in the past %s. Please wait a little bit before trying again."
 							.format(postThrottleRejectCount, postThrottleRejectTime)));
 					return null;
 				}
 
-				bool captchaPresent = theCaptcha.isPresent(clientVars);
-				if (!captchaPresent)
+				if (ipPostAttempts.length >= postThrottleCaptchaCount && now - ipPostAttempts[$-postThrottleCaptchaCount+1] < postThrottleCaptchaTime)
 				{
-					if (ipPostAttempts.length >= postThrottleCaptchaCount && now - ipPostAttempts[$-postThrottleCaptchaCount+1] < postThrottleCaptchaTime)
+					auto captcha = getCaptcha(draftToPost(draft).captcha);
+					if (captcha)
 					{
-						discussionPostForm(draft, true,
-							PostError(_!"You've attempted to post %d times in the past %s. Please solve a CAPTCHA to continue."
+						bool captchaPresent = captcha.isPresent(clientVars);
+						if (!captchaPresent)
+						{
+							discussionPostForm(draft, captcha,
+								PostError(_!"You've attempted to post %d times in the past %s. Please solve a CAPTCHA to continue."
+									.format(postThrottleCaptchaCount, postThrottleCaptchaTime)));
+							return null;
+						}
+					}
+					else
+					{
+						discussionPostForm(draft, null,
+							PostError(_!"You've attempted to post %d times in the past %s. Please wait a little bit before trying again."
 								.format(postThrottleCaptchaCount, postThrottleCaptchaTime)));
 						return null;
 					}
@@ -368,7 +379,7 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 	catch (Exception e)
 	{
 		auto error = isDebug ? e.toString() : e.msg;
-		discussionPostForm(draft, false, PostError(error));
+		discussionPostForm(draft, null, PostError(error));
 		return null;
 	}
 }
@@ -519,16 +530,26 @@ void discussionPostStatus(PostProcess process, out bool refresh, out string redi
 			return;
 
 		case PostingStatus.captchaFailed:
-			discussionPostForm(process.draft, true, error);
+			discussionPostForm(process.draft, getCaptcha(process.post.captcha), error);
 			form = true;
 			return;
 		case PostingStatus.spamCheckFailed:
-			error.message = format(_!"%s. Please solve a CAPTCHA to continue.", error.message);
-			discussionPostForm(process.draft, true, error);
-			form = true;
+			if (auto captcha = getCaptcha(process.post.captcha))
+			{
+				error.message = format(_!"%s. Please solve a CAPTCHA to continue.", error.message);
+				discussionPostForm(process.draft, captcha, error);
+				form = true;
+			}
+			else
+			{
+				moderateMessage(process.draft, process.headers,
+					"No CAPTCHA configured and spam check failed: " ~ error.message);
+				saveDraft(process.draft);
+				discussionPostStatusMessage(_!`Your message has been saved, and will be posted after being approved by a moderator.`);
+			}
 			return;
 		case PostingStatus.serverError:
-			discussionPostForm(process.draft, false, error);
+			discussionPostForm(process.draft, null, error);
 			form = true;
 			return;
 
