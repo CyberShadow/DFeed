@@ -55,7 +55,7 @@
 
 <p>
   Mesaj gönderirken bir e-posta adresi belirtmeniz gerekmektedir. Ancak, bu adresin geçerli olması şart değildir çünkü bu forum sitesi belirtilen adrese hiçbir şey göndermez.
-  Belirttiğiniz e-posta adresi, mesaj gönderdiğiniz haber grubu veya e-posta listesi sunucusunun diğer kullanıcıları tarafında görülecektir.
+  Belirttiğiniz e-posta adresi, mesaj gönderdiğiniz haber grubu veya e-posta listesi sunucusunun diğer kullanıcıları tarafından görülecektir.
   Bu nedenle, verdiğiniz adresi kötü niyetli robotların da görebileceklerini ve bu adrese spam gönderebileceklerini unutmayın.
 </p>
 
@@ -67,7 +67,7 @@
 
 <p>
   Forum, kullanıcıların e-posta adresleriyle ilişkili avatarlar gösterir.
-  Kullanılan e-posta adresi <a href="http://en.gravatar.com/">Gravatar'da</a> kayıtlıysa oradaki avatar gösterilir.
+  Kullanılan e-posta adresi <a href="http://tr.gravatar.com/">Gravatar'da</a> kayıtlıysa oradaki avatar gösterilir.
   Değilse, avatar yerine e-posta adresinden otomatik olarak oluşturulmuş bir <a href="https://en.wikipedia.org/wiki/Identicon">Identicon</a> gösterilir.
 </p>
 
@@ -83,13 +83,13 @@
 
 <p>
   Mesajlar farklı kaynaklardan gelebildiğinden bu forum kullanıcı profili içermez.
-  Bunun yerine, yukarıdaki <a href="http://en.gravatar.com/">Avatarlar</a> bölümünde açıklandığı gibi bir <a href="#avatars">Gravatar</a> profili oluşturabilirsiniz.
+  Bunun yerine, yukarıdaki <a href="http://tr.gravatar.com/">Avatarlar</a> bölümünde açıklandığı gibi bir <a href="#avatars">Gravatar</a> profili oluşturabilirsiniz.
   Gravatar profili olan kullanıcıların profillerine avatarlarına tıklayarak erişebilirsiniz.
 </p>
 
 <p id="signatures">
   Bu forum kullanıcı bilgilerini de benzer nedenlerden dolayı içermez.
-  Bunun yerine, ilgili bilgileri Gravatar profilinize veya web sitenize koyabilirsiniz ve Gravatar profilinizden sitenize bağlantı verebilirsiniz.
+  Bunun yerine, ilgili bilgileri Gravatar profilinize veya kendi sitenize koyabilirsiniz ve Gravatar profilinizden sitenize bağlantı verebilirsiniz.
 </p>
 
 <h2 id="canonical">Kalıcı bağlantılar</h2>
