@@ -113,7 +113,7 @@ string translate(string s)
 		case `Also via`:
 			return `Ayrıca`;
 		case `Create thread`:
-			return `Yeni konu aç`;
+			return `Yeni konu aç`; // TODO: or "Yeni konu oluştur"?
 		case `Invalid page`:
 			return `Geçersiz sayfa`;
 		case `by`:
@@ -942,6 +942,42 @@ string translate(string s)
 			return `Gönderi onaylandı!`;
 		case `View posting`:
 			return `Gönderiyi görüntüle`;
+		case `Toggle navigation`:
+			return `Gezinti çubuğunu aç / kapa`;
+		case `Loading message`:
+			return `Loading message`; // TODO
+		case `Your browser does not support HTML5 pushState.`:
+			return `Your browser does not support HTML5 pushState.`; // TODO
+		case `Keyboard shortcuts`:
+			return `Keyboard shortcuts`; // TODO
+		case `Ctrl`:
+			return `Ctrl`; // TODO
+		case `Down Arrow`:
+			return `Aşağı Ok`;
+		case `Select next message`:
+			return `Sonraki mesajı seç`;
+		case `Up Arrow`:
+			return `Yukarı Ok`;
+		case `Select previous message`:
+			return `Önceki mesajı seç`;
+		case `Enter / Return`:
+			return `Enter / Return`; // TODO
+		case `Open selected message`:
+			return `Seçili mesajı aç`;
+		case `Mark as unread`:
+			return `Okunmamış olarak işaretle`;
+		case `Open link`:
+			return `Bağlantı aç`;
+		case `Space Bar`:
+			return `Space Bar`; // TODO
+		case `Scroll message / Open next unread message`:
+			return `Mesajı ilerlet / Bir sonraki okunmamış mesajı aç`;
+		case `(press any key or click to close)`:
+			return `(kapatmak için bir tuşa basın veya tıklayın)`;
+		case `Draft saved.`:
+			return `Taslak kaydedildi.`;
+		case `Error auto-saving draft.`:
+			return `Taslağı kaydederken hata oluştu.`;
 		default:
 			assert(false, "Unknown Turkish string: " ~ s);
 	}

@@ -1,3 +1,10 @@
+function _(s) {
+	if (s in localization)
+		return localization[s];
+	console.log('Unlocalized string: ' + JSON.stringify(s));
+	return s;
+}
+
 $(document).ready(function() {
 	if (enableKeyNav) {
 		// Chrome does not pass Ctrl+keys to keypress - but in many
@@ -81,7 +88,7 @@ function initSplitView() {
 	toolsTemplate =
 		$('<a class="tip">')
 		.attr('href', 'javascript:toggleNav()')
-		.text('Toggle navigation')
+		.text(_('Toggle navigation'))
 		[0].outerHTML
 		+ ' '
 		+ toolsTemplate;
@@ -146,7 +153,7 @@ function onPopState() {
 		focusRow($row, FocusScroll.withMargin, false);
 		currentID = id;
 
-		showText('Loading message\n<'+id+'> ...');
+		showText(_('Loading message')+'\n<'+id+'> ...');
 
 		//var resource = $('#group-vsplit').length ? '/vsplit-post/' : '/split-post/';
 		var resource = '/split-post/';
@@ -164,7 +171,7 @@ function onPopState() {
 		if (window.history.pushState)
 			showHtml(keyboardHelp);
 		else
-			showHtml('Your browser does not support HTML5 pushState.');
+			showHtml(_('Your browser does not support HTML5 pushState.'));
 	}
 
 	updateTools();
@@ -566,20 +573,20 @@ function followLink(n) {
 
 var keyboardHelp =
 	'<table class="keyboardhelp">' +
-		'<tr><th colspan="2">Keyboard shortcuts</th></tr>' +
-		'<tr><td><kbd>j</kbd> / <kbd>Ctrl</kbd><kbd title="Down Arrow">&darr;</kbd></td><td>Select next message</td></tr>' +
-		'<tr><td><kbd>k</kbd> / <kbd>Ctrl</kbd><kbd title="Up Arrow">&uarr;</kbd></td><td>Select previous message</td></tr>' +
-		'<tr><td><kbd title="Enter / Return">&crarr;</kbd></td><td>Open selected message</td></tr>' +
-		'<tr><td><kbd>n</kbd></td><td>Create thread</td></tr>' +
-		'<tr><td><kbd>r</kbd></td><td>Reply</td></tr>' +
-		'<tr><td><kbd>u</kbd></td><td>Mark as unread</td></tr>' +
-		'<tr><td><kbd>1</kbd> &middot;&middot;&middot; <kbd>9</kbd></td><td>Open link [1] &hellip; [9]</td></tr>' +
-		'<tr><td><kbd title="Space Bar" style="width: 70px">&nbsp;</kbd></td><td>Scroll message / Open next unread message</td></tr>' +
+		'<tr><th colspan="2">' + _('Keyboard shortcuts') + '</th></tr>' +
+		'<tr><td><kbd>j</kbd> / <kbd>' + _('Ctrl') + '</kbd><kbd title="' + _('Down Arrow') + '">&darr;</kbd></td><td>' + _('Select next message') + '</td></tr>' +
+		'<tr><td><kbd>k</kbd> / <kbd>' + _('Ctrl') + '</kbd><kbd title="' + _('Up Arrow') + '">&uarr;</kbd></td><td>' + _('Select previous message') + '</td></tr>' +
+		'<tr><td><kbd title="' + _('Enter / Return') + '">&crarr;</kbd></td><td>' + _('Open selected message') + '</td></tr>' +
+		'<tr><td><kbd>n</kbd></td><td>' + _('Create thread') + '</td></tr>' +
+		'<tr><td><kbd>r</kbd></td><td>' + _('Reply') + '</td></tr>' +
+		'<tr><td><kbd>u</kbd></td><td>' + _('Mark as unread') + '</td></tr>' +
+		'<tr><td><kbd>1</kbd> &middot;&middot;&middot; <kbd>9</kbd></td><td>' + _('Open link') + ' [1] &hellip; [9]</td></tr>' +
+		'<tr><td><kbd title="' + _('Space Bar') + '" style="width: 70px">&nbsp;</kbd></td><td>' + _('Scroll message / Open next unread message') + '</td></tr>' +
 	'</table>';
 
 function showHelp() {
 	$('<div class="keyboardhelp-popup">')
-		.html(keyboardHelp + '<div class="keyboardhelp-popup-closetext">(press any key or click to close)</div>')
+		.html(keyboardHelp + '<div class="keyboardhelp-popup-closetext">' + _('(press any key or click to close)') + '</div>')
 		.click(closeHelp)
 		.appendTo($('body'))
 		.hide()
@@ -740,7 +747,7 @@ function initAutoSave() {
 		$('.autosave-notice').remove();
 		$.post('/auto-save', $('#postform').serialize(), function(data, status, xhr) {
 			$('<span>')
-				.text(xhr.status == 200 ? 'Draft saved.' : 'Error auto-saving draft.')
+				.text(xhr.status == 200 ? _('Draft saved.') : _('Error auto-saving draft.'))
 				.addClass('autosave-notice')
 				.insertAfter($('#postform input[name=action-send]'))
 				.fadeOut(autoSaveCooldown)

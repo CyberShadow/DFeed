@@ -1,4 +1,4 @@
-/*  Copyright (C) 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -22,6 +22,7 @@ import std.datetime;
 import std.string;
 
 import ae.utils.array;
+import ae.utils.json;
 import ae.utils.meta;
 import ae.utils.time.common;
 import ae.utils.time.format;
@@ -162,4 +163,41 @@ mainLoop:
 		result ~= s.shift;
 	}
 	return result;
+}
+
+/// List of strings used in dfeed.js.
+immutable jsStrings = [
+	`Toggle navigation`,
+	`Loading message`,
+	`Your browser does not support HTML5 pushState.`,
+	`Keyboard shortcuts`,
+	`Ctrl`,
+	`Down Arrow`,
+	`Select next message`,
+	`Up Arrow`,
+	`Select previous message`,
+	`Enter / Return`,
+	`Open selected message`,
+	`Create thread`,
+	`Reply`,
+	`Mark as unread`,
+	`Open link`,
+	`Space Bar`,
+	`Scroll message / Open next unread message`,
+	`(press any key or click to close)`,
+	`Draft saved.`,
+	`Error auto-saving draft.`,
+];
+
+string getJsStrings()
+{
+	string[enumLength!Language] translations;
+	if (!translations[currentLanguage])
+	{
+		string[string] object;
+		foreach (i; RangeTuple!(jsStrings.length))
+			object[jsStrings[i]] = _!(jsStrings[i]);
+		translations[currentLanguage] = object.toJson();
+	}
+	return translations[currentLanguage];
 }
