@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -96,7 +96,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		if (!cookies)
 			cookies = user.save();
 		foreach (cookie; cookies)
-			response.headers.add("Set-Cookie", cookie);
+			response.headers.add("Set-Cookie", cookie ~ "; SameSite=Strict");
 	}
 
 	string title;
@@ -813,6 +813,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 
 	jsVars["enableKeyNav"] = userSettings.enableKeyNav;
 	jsVars["autoOpen"] = userSettings.autoOpen;
+	jsVars["localization"] = getJsStrings();
 
 	string[] extraJS;
 	if (jsVars.length)
