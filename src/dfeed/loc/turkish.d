@@ -978,6 +978,10 @@ string translate(string s)
 			return `Taslak kaydedildi.`;
 		case `Error auto-saving draft.`:
 			return `Taslağı kaydederken hata oluştu.`;
+		case `The CAPTCHA solution was incorrect`:
+			return `CAPTCHA çözümü yanlıştı`; // TODO
+		case `The solution was received after the CAPTCHA timed out`:
+			return `Çözüm, CAPTCHA zaman aşımına uğradıktan sonra alındı`; // TODO
 		default:
 			assert(false, "Unknown Turkish string: " ~ s);
 	}
