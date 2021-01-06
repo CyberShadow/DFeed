@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -264,7 +264,7 @@ void discussionIndex()
 			with (*info)
 				return
 					`<div class="truncated"><a class="forum-postsummary-subject ` ~ (user.isRead(rowid) ? "forum-read" : "forum-unread") ~ `" href="` ~ encodeHtmlEntities(idToUrl(id)) ~ `" title="` ~ encodeHtmlEntities(subject) ~ `">` ~ encodeHtmlEntities(subject) ~ `</a></div>` ~
-					`<div class="truncated">by <span class="forum-postsummary-author" title="` ~ encodeHtmlEntities(author) ~ `">` ~ encodeHtmlEntities(author) ~ `</span></div>` ~
+					`<div class="truncated">` ~ _!`by` ~ ` <span class="forum-postsummary-author" title="` ~ encodeHtmlEntities(author) ~ `">` ~ encodeHtmlEntities(author) ~ `</span></div>` ~
 					`<span class="forum-postsummary-time">` ~ summarizeTime(time) ~ `</span>`;
 
 		return `<div class="forum-no-data">-</div>`;
