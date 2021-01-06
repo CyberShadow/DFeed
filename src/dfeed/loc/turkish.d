@@ -67,11 +67,11 @@ string translate(string s)
 		case `You can read and post on this forum without %screating an account%s, but creating an account offers %sa few benefits%s.`:
 			return `Bu forumu hesap açmadan da kullanabilirsiniz. Ancak, %shesap açmanın%s bazı %syararları vardır%s.`;
 		case `%d %s %-(%s and %)`:
-			return `%d %s %-(%s ve %) oluşturdu.`;
+			return `%d %s %-(%s ve %) oluşturuldu.`;
 		case `No new forum activity`:
 			return `Yeni forum etkinliği yok`;
 		case `since your last visit (%s).`:
-			return `(son ziyaretinizden beri (%s)).`;
+			return `(Son ziyaretinizden beri (%s)).`;
 		case `in the last 24 hours.`:
 			return `(son 24 saat içinde).`;
 		case `There are %s %s, %s %s, and %s %s on this forum.`:
@@ -113,7 +113,7 @@ string translate(string s)
 		case `Also via`:
 			return `Ayrıca`;
 		case `Create thread`:
-			return `Yeni konu aç`; // TODO: or "Yeni konu oluştur"?
+			return `Yeni konu oluştur`;
 		case `Invalid page`:
 			return `Geçersiz sayfa`;
 		case `by`:
@@ -359,7 +359,7 @@ string translate(string s)
 		case `Send a private message to`:
 			return `Şu kişiye özel mesaj gönder:`;
 		case `on the`:
-			return `üzerinde`;
+			return `sunucusu üzerinde`;
 		case `IRC network`:
 			return `IRC ağı`;
 		case `No nickname indicated`:
@@ -945,13 +945,13 @@ string translate(string s)
 		case `Toggle navigation`:
 			return `Gezinti çubuğunu aç / kapa`;
 		case `Loading message`:
-			return `Loading message`; // TODO
+			return `Mesaj yükleniyor`;
 		case `Your browser does not support HTML5 pushState.`:
-			return `Your browser does not support HTML5 pushState.`; // TODO
+			return `Tarayıcınızda 'HTML5 pushState' olanağı yok.`;
 		case `Keyboard shortcuts`:
-			return `Keyboard shortcuts`; // TODO
+			return `Klavye kısayolları`;
 		case `Ctrl`:
-			return `Ctrl`; // TODO
+			return `Ctrl`;
 		case `Down Arrow`:
 			return `Aşağı Ok`;
 		case `Select next message`:
@@ -961,7 +961,7 @@ string translate(string s)
 		case `Select previous message`:
 			return `Önceki mesajı seç`;
 		case `Enter / Return`:
-			return `Enter / Return`; // TODO
+			return `Enter / Return`;
 		case `Open selected message`:
 			return `Seçili mesajı aç`;
 		case `Mark as unread`:
@@ -969,7 +969,7 @@ string translate(string s)
 		case `Open link`:
 			return `Bağlantı aç`;
 		case `Space Bar`:
-			return `Space Bar`; // TODO
+			return `Boşluk Tuşu`;
 		case `Scroll message / Open next unread message`:
 			return `Mesajı ilerlet / Bir sonraki okunmamış mesajı aç`;
 		case `(press any key or click to close)`:
@@ -979,9 +979,9 @@ string translate(string s)
 		case `Error auto-saving draft.`:
 			return `Taslağı kaydederken hata oluştu.`;
 		case `The CAPTCHA solution was incorrect`:
-			return `CAPTCHA çözümü yanlıştı`; // TODO
+			return `CAPTCHA çözümü doğru değil`;
 		case `The solution was received after the CAPTCHA timed out`:
-			return `Çözüm, CAPTCHA zaman aşımına uğradıktan sonra alındı`; // TODO
+			return `Çözüm, CAPTCHA zaman aşımına uğradıktan sonra alındı`;
 		default:
 			assert(false, "Unknown Turkish string: " ~ s);
 	}
