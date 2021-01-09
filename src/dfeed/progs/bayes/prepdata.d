@@ -1,4 +1,4 @@
-/*  Copyright (C) 2015, 2016, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2015, 2016, 2018, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -155,7 +155,7 @@ void main()
 		}
 
 	stderr.writeln("Saving...");
-	rmdirRecurse("data/bayes");
+	rmdirRecurse("data/bayes").collectException;
 	foreach (post, status; posts)
 	{
 		auto fn = "data/bayes/%s/%s.txt".format(status, ids[post]);
