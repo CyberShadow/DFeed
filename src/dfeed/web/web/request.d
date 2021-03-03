@@ -96,7 +96,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		if (!cookies)
 			cookies = user.save();
 		foreach (cookie; cookies)
-			response.headers.add("Set-Cookie", cookie ~ "; SameSite=Strict");
+			response.headers.add("Set-Cookie", cookie ~ "; SameSite=Lax");
 	}
 
 	string title;
