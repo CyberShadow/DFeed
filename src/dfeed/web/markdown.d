@@ -38,7 +38,13 @@ bool haveMarkdown()
 /// Render this text as Markdown to HTML now.
 string renderMarkdown(string s)
 {
-	auto p = pipeProcess(["timeout", "1", "cmark"], Redirect.stdin | Redirect.stdout);
+	auto p = pipeProcess([
+			"timeout", "1",
+			"cmark-gfm",
+			"--extension", "table",
+			"--extension", "strikethrough",
+			"--extension", "autolink",
+		], Redirect.stdin | Redirect.stdout);
 	// cmark reads all input before emitting any output, so it's safe
 	// for us to write all input while not reading anything.
 	p.stdin.rawWrite(s);
