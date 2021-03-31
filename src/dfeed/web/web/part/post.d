@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -253,9 +253,9 @@ void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts, bool markAsRead 
 		html.put(
 					`<div class="post-actions">`), postActions(actions), html.put(`</div>` ~
 				`</td>` ~
-				`<td class="post-body">` ~
+				`<td class="post-body">`,
 //		); miniPostInfo(post, knownPosts); html.put(
-					`<pre class="post-text">`), formatBody(post), html.put(`</pre>`,
+					), formatBody(post), html.put(
 					(error ? `<span class="post-error">` ~ encodeHtmlEntities(error) ~ `</span>` : ``),
 				`</td>` ~
 			`</tr>` ~

@@ -36,6 +36,7 @@ enum reURL = `\w+://[^<>\s]+[\w/\-+=]`;
 
 void formatBody(Rfc850Message post)
 {
+	html.put(`<pre class="post-text">`);
 	auto paragraphs = unwrapText(post.content, post.wrapFormat);
 	bool inSignature = false;
 	int quoteLevel = 0;
@@ -178,6 +179,7 @@ void formatBody(Rfc850Message post)
 		html ~= `</span>`;
 	if (inSignature)
 		html ~= `</span>`;
+	html.put(`</pre>`);
 }
 
 // https://github.com/CyberShadow/DFeed/issues/121
@@ -191,5 +193,5 @@ http://a/b+
 EOF");
 	scope(exit) html.clear();
 	formatBody(msg);
-	assert(html.get.strip == `<a rel="nofollow" href="http://a/b+">http://a/b+</a>`);
+	assert(html.get.strip == `<pre class="post-text"><a rel="nofollow" href="http://a/b+">http://a/b+</a></pre>`);
 }

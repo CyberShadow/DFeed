@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -118,8 +118,8 @@ void formatSplitPost(Rfc850Post post, bool footerNav)
 		miniPostInfo(post, null);
 		html.put(
 				`</td></tr>` ~
-				`<tr class="post-layout-body"><td>` ~
-					`<pre class="post-text">`), formatBody(post), html.put(`</pre>`,
+				`<tr class="post-layout-body"><td>`,
+					), formatBody(post), html.put(
 					(error ? `<span class="post-error">` ~ encodeHtmlEntities(error) ~ `</span>` : ``),
 				`</td></tr>` ~
 				`<tr class="post-layout-footer"><td>`

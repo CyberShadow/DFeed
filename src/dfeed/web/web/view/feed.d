@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -101,9 +101,7 @@ CachedResource makeFeed(Rfc850Post[] posts, string feedUrl, string feedTitle, bo
 	foreach (post; posts)
 	{
 		html.clear();
-		html.put("<pre>");
 		formatBody(post);
-		html.put("</pre>");
 
 		auto postTitle = post.rawSubject;
 		if (addGroup)
