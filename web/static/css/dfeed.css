@@ -264,7 +264,7 @@ img.post-gravatar {
 	font-size: 120%;
 }
 
-.post-form label,
+.post-form > label,
 .forum-form input[type=submit] {
 	margin-top: 0.75em !important;
 	display: block;
@@ -600,6 +600,44 @@ tr.mini-post-info-cell > td {
 
 a > .forcewrap {
 	text-decoration: underline;
+}
+
+/* Body (Markdown) */
+
+@media all {
+	/* Approach 1: preserve line breaks */
+
+	.post-text.markdown {
+		line-height: normal;
+	}
+	.post-text.markdown .forum-quote-prefix {
+		display: inline;
+	}
+	.post-text.markdown p {
+		margin: 0;
+		display: block;
+	}
+}
+@media not(all) {
+	/* Approach 2: remove line breaks */
+
+	.post-text.markdown {
+		line-height: normal;
+		white-space: normal;
+		margin: -15px 0;
+	}
+}
+
+.post-text.markdown {
+	font-family: "Roboto Slab", sans-serif;
+	font-size: 16px;
+}
+.post-text.markdown pre {
+	font-family: Consolas, Lucida Console, Menlo, monospace;
+	font-size: inherit;
+}
+.post-text.markdown code {
+	font-family: Consolas, Lucida Console, Menlo, monospace;
 }
 
 /* Threading */
@@ -1028,6 +1066,9 @@ kbd { /* stolen from http://en.wikipedia.org/wiki/Template:Key_press */
 
 .postform-action-left {
 	float: left;
+}
+.postform-action-left label {
+	padding-left: 1em;
 }
 
 .postform-action-right {

@@ -316,6 +316,8 @@ final class PostProcess
 		post.authorEmail = draft.clientVars.get("email", null);
 		post.subject = post.rawSubject = draft.clientVars.get("subject", null);
 		post.setText(draft.clientVars.get("text", null));
+		if ("markdown" in draft.clientVars)
+			post.markup = "markdown";
 
 		if (auto pUserAgent = "User-Agent" in headers)
 			post.headers["X-Web-User-Agent"] = *pUserAgent;

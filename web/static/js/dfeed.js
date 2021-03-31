@@ -424,9 +424,9 @@ function getSelectables() {
 
 function getSelectedPost() {
 	if ($('.split-post').length) {
-		return $('.split-post pre.post-text');
+		return $('.split-post .post-text');
 	} else if ($('.focused.post').length) {
-		return $('.focused.post pre.post-text');
+		return $('.focused.post .post-text');
 	} else {
 		return null;
 	}
@@ -749,7 +749,7 @@ function initAutoSave() {
 			$('<span>')
 				.text(xhr.status == 200 ? _('Draft saved.') : _('Error auto-saving draft.'))
 				.addClass('autosave-notice')
-				.insertAfter($('#postform input[name=action-send]'))
+				.insertAfter($('#postform input[name=action-send]').parent().children().last())
 				.fadeOut(autoSaveCooldown)
 		});
 	}

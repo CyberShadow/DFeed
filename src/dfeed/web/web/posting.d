@@ -47,6 +47,7 @@ import dfeed.sinks.subscriptions : createReplySubscription;
 import dfeed.site : site;
 import dfeed.web.captcha;
 import dfeed.web.lint : getLintRule, lintRules;
+import dfeed.web.markdown : haveMarkdown;
 import dfeed.web.posting : PostDraft, PostProcess, PostError, SmtpConfig, PostingStatus;
 import dfeed.web.web.draft : getDraft, saveDraft, draftToPost;
 import dfeed.web.web.page : html;
@@ -164,8 +165,12 @@ bool discussionPostForm(PostDraft draft, Captcha captcha=null, PostError error=P
 		`<div>` ~
 			`<div class="postform-action-left">` ~
 				`<input name="action-save" type="submit" value="`, _!`Save and preview`, `">` ~
-				`<input name="action-send" type="submit" value="`, _!`Send`, `">` ~
-			`</div>` ~
+				`<input name="action-send" type="submit" value="`, _!`Send`, `">`);
+				if (haveMarkdown) html.put(
+					`<label for="postform-markdown"><input name="markdown" id="postform-markdown" type="checkbox" `,
+						("markdown" in draft.clientVars ? `checked="checked"` : ""),
+						`> `, _!"Enable Markdown", `</label>`);
+			html.put(`</div>` ~
 			`<div class="postform-action-right">` ~
 				`<input name="action-discard" type="submit" value="`, _!`Discard draft`, `">` ~
 			`</div>` ~
@@ -282,6 +287,7 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 				discussionPostForm(draft);
 				// Show preview
 				auto post = draftToPost(draft, headers, ip);
+				post.compile();
 				formatPost(post, null);
 				return null;
 			}

@@ -1,4 +1,4 @@
-/*  Copyright (C) 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -982,6 +982,10 @@ string translate(string s)
 			return `CAPTCHA çözümü doğru değil`;
 		case `The solution was received after the CAPTCHA timed out`:
 			return `Çözüm, CAPTCHA zaman aşımına uğradıktan sonra alındı`;
+		case `Failed to render Markdown:`:
+			return `Failed to render Markdown:`; // TODO
+		case `Enable Markdown`:
+			return `Enable Markdown`; // TODO
 		default:
 			assert(false, "Unknown Turkish string: " ~ s);
 	}

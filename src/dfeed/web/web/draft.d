@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -29,7 +29,7 @@ import ae.utils.text : randomString;
 import dfeed.loc;
 import dfeed.database : query;
 import dfeed.groups : GroupInfo;
-import dfeed.message : Rfc850Post;
+import dfeed.message : Rfc850Post, isMarkdown;
 import dfeed.web.posting : PostDraft, PostProcess;
 import dfeed.web.web.postinfo : getPost;
 import dfeed.web.web.user : user, userSettings;
@@ -111,6 +111,7 @@ PostDraft newPostDraft(GroupInfo groupInfo, UrlParameters parameters = null)
 		"name" : userSettings.name,
 		"email" : userSettings.email,
 		"subject" : parameters.get("subject", null),
+		"markdown" : "on",
 	]), [
 		"where" : groupInfo.internalName,
 	]);
@@ -132,6 +133,9 @@ PostDraft newReplyDraft(Rfc850Post post)
 		"where" : post.where,
 		"parent" : post.id,
 	]);
+	if (post.isMarkdown())
+		draft.clientVars["markdown"] = "on";
+
 	createDraft(draft);
 	return draft;
 }

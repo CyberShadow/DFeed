@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -19,6 +19,7 @@ module dfeed.web.web.part.postbody;
 
 import std.algorithm.comparison : max;
 import std.algorithm.iteration : splitter, map, reduce;
+import std.array : join;
 import std.range : iota, radial;
 import std.regex : matchAll;
 
@@ -30,14 +31,41 @@ import ae.utils.text : contains, segmentByWhitespace;
 import ae.utils.text.html : encodeHtmlEntities;
 import ae.utils.xmllite : putEncodedEntities;
 
+import dfeed.loc;
+import dfeed.message : isMarkdown;
+import dfeed.web.markdown : haveMarkdown, renderMarkdownCached;
 import dfeed.web.web.page : html;
 
 enum reURL = `\w+://[^<>\s]+[\w/\-+=]`;
 
 void formatBody(Rfc850Message post)
 {
-	html.put(`<pre class="post-text">`);
 	auto paragraphs = unwrapText(post.content, post.wrapFormat);
+
+	if (post.isMarkdown() && haveMarkdown())
+	{
+		auto content = paragraphs.map!((ref p) => p.quotePrefix ~ p.text ~ "\n").join();
+		auto result = renderMarkdownCached(content);
+		if (result.error)
+		{
+			html.put(
+				`<div class="forum-notice">`,
+					_!`Failed to render Markdown:`), html.putEncodedEntities(result.error), html.put(
+				`</div>`);
+			// continue on to plain text
+		}
+		else
+		{
+			html.put(
+				`<div class="post-text markdown">`,
+				result.html,
+				`</div>`
+			);
+			return;
+		}
+	}
+
+	html.put(`<pre class="post-text">`);
 	bool inSignature = false;
 	int quoteLevel = 0;
 	foreach (paragraph; paragraphs)
