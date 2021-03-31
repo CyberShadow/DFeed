@@ -41,6 +41,7 @@ string renderMarkdown(string s)
 	auto p = pipeProcess([
 			"timeout", "1",
 			"cmark-gfm",
+			"--hardbreaks", // paragraphs are unwrapped in formatBody
 			"--extension", "table",
 			"--extension", "strikethrough",
 			"--extension", "autolink",

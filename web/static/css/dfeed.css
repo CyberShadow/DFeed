@@ -604,31 +604,11 @@ a > .forcewrap {
 
 /* Body (Markdown) */
 
-@media all {
-	/* Approach 1: preserve line breaks */
-
-	.post-text.markdown {
-		line-height: normal;
-	}
-	.post-text.markdown .forum-quote-prefix {
-		display: inline;
-	}
-	.post-text.markdown p {
-		margin: 0;
-		display: block;
-	}
-}
-@media not(all) {
-	/* Approach 2: remove line breaks */
-
-	.post-text.markdown {
-		line-height: normal;
-		white-space: normal;
-		margin: -15px 0;
-	}
-}
-
 .post-text.markdown {
+	line-height: normal;
+	white-space: normal;
+	margin: -15px 0;
+
 	font-family: "Roboto Slab", sans-serif;
 	font-size: 16px;
 }
