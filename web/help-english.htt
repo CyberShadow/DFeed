@@ -64,6 +64,53 @@
   The email address is also used to display an avatar (see below).
 </p>
 
+<h2 id="markdown">Markdown formatting</h2>
+
+<p>
+  You may optionally use Markdown formatting when authoring posts.
+  The specific variant of Markdown used is <a href="https://github.github.com/gfm/#what-is-github-flavored-markdown-">GitHub Flavored Markdown</a>.
+</p>
+
+<p>
+  The following is a quick guide for some available syntax:
+</p>
+
+<style>
+#forum-content table.help-table {
+	border-spacing: initial;
+	margin: 16px 0;
+	width: auto;
+}
+#forum-content table.help-table th {
+	background-color: #F5F5F5;
+}
+#forum-content table.help-table th,
+#forum-content table.help-table td {
+	border: 1px solid #E6E6E6;
+	padding: 0.1em 0.3em;
+}
+</style>
+
+<table class="help-table">
+ <tr><th>Formatting</th><th>What you type</th><th>What you get</th></tr>
+ <tr><td>Bold text</td><td><code>**sample text**</code></td><td> <b>sample text</b> </td></tr>
+ <tr><td>Italic text</td><td><code>*sample text*</code></td><td> <i>sample text</i> </td></tr>
+ <tr><td>Links</td><td><code>[GitHub](https://github.com/)</code></td><td> <a href="https://github.com/">GitHub</a> </td></tr>
+ <tr><td>Lists</td><td><code>- First item<br>- Second item</code></td><td> <ul><li>First item</li><li>Second item</li></ul></td></tr>
+ <tr><td>Syntax<br>highlighting</td><td><code>```d<br>writeln("D is great!");<br>```</code></td><td> <pre>writeln(<span style="color: red">"D is great!"</span>);</pre> </td></tr>
+ <tr><td>Tables</td><td><code>| A | B |<br>|---|---|<br>| 1 | 2 |<br>| 3 | 4 | </code></td><td> <table><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr><tr><td>3</td><td>4</td></tr> </table> </td></tr>
+</table>
+
+<p>
+	For more information, consult <a href="https://guides.github.com/features/mastering-markdown/">GitHub's documentation</a>
+	or <a href="https://github.github.com/gfm/">the full specification</a>,
+	though please note that not all GitHub extensions are enabled on this forum.
+</p>
+
+<p>
+	Markdown rendering may be completely disabled from the <a href="/settings">settings page</a>.
+</p>
+
 <h2 id="avatars">Avatars</h2>
 
 <p>
