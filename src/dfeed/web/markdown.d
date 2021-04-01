@@ -32,7 +32,7 @@ import ae.utils.path;
 bool haveMarkdown()
 {
 	__gshared bool result;
-	return initOnce!result(haveExecutable("cmark"));
+	return initOnce!result(haveExecutable("cmark-gfm"));
 }
 
 /// Render this text as Markdown to HTML now.
