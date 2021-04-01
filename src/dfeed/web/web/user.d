@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -59,6 +59,9 @@ struct UserSettings
 
 	/// Enable or disable keyboard hotkeys. Can be changed in the settings.
 	alias enableKeyNav = userSetting!("enable-keynav", "true", SettingType.client);
+
+	/// Enable or disable rendering Markdown content.. Can be changed in the settings.
+	alias renderMarkdown = userSetting!("render-markdown", "true", SettingType.server);
 
 	/// Whether messages are opened automatically after being focused
 	/// (message follows focus). Can be changed in the settings.

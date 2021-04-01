@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -61,7 +61,7 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 				if (setting in postVars)
 					userSettings.set(setting, postVars[setting]);
 			// Checkboxes
-			foreach (setting; ["enable-keynav", "auto-open"])
+			foreach (setting; ["enable-keynav", "auto-open", "render-markdown"])
 				userSettings.set(setting, setting in postVars ? "true" : "false");
 
 			userSettings.pendingNotice = "settings-saved";
@@ -165,6 +165,11 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 		`<span title="`, _!`Automatically open messages after selecting them.`, `&#13;&#10;`, _!`Applicable to threaded, horizontal-split and vertical-split view modes.`, `">` ~
 			`<input type="checkbox" name="auto-open" id="auto-open"`, userSettings.autoOpen == "true" ? ` checked` : null, `>` ~
 			`<label for="auto-open">`, _!`Focus follows message`, `</label>` ~
+		`</span><br>` ~
+
+		`<span title="`, _!`Render Markdown posts as HTML. If disabled, they will just be shown as-is, in plain text.`, `">` ~
+			`<input type="checkbox" name="render-markdown" id="render-markdown"`, userSettings.renderMarkdown == "true" ? ` checked` : null, `>` ~
+			`<label for="render-markdown">`, _!`Render Markdown`, `</label>` ~
 		`</span><br>` ~
 
 		`<p>` ~

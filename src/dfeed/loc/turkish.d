@@ -986,6 +986,10 @@ string translate(string s)
 			return `Failed to render Markdown:`; // TODO
 		case `Enable Markdown`:
 			return `Enable Markdown`; // TODO
+		case `Render Markdown`:
+			return `Render Markdown`; // TODO
+		case `Render Markdown posts as HTML. If disabled, they will just be shown as-is, in plain text.`:
+			return `Render Markdown posts as HTML. If disabled, they will just be shown as-is, in plain text.`; // TODO
 		default:
 			assert(false, "Unknown Turkish string: " ~ s);
 	}

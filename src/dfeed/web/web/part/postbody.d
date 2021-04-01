@@ -35,6 +35,7 @@ import dfeed.loc;
 import dfeed.message : isMarkdown;
 import dfeed.web.markdown : haveMarkdown, renderMarkdownCached;
 import dfeed.web.web.page : html;
+import dfeed.web.web.user : userSettings;
 
 enum reURL = `\w+://[^<>\s]+[\w/\-+=]`;
 
@@ -42,7 +43,7 @@ void formatBody(Rfc850Message post)
 {
 	auto paragraphs = unwrapText(post.content, post.wrapFormat);
 
-	if (post.isMarkdown() && haveMarkdown())
+	if (post.isMarkdown() && userSettings.renderMarkdown == "true" && haveMarkdown())
 	{
 		auto content = paragraphs.map!((ref p) => p.quotePrefix ~ p.text ~ "\n").join();
 		auto result = renderMarkdownCached(content);
