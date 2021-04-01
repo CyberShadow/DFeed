@@ -984,7 +984,7 @@ string translate(string s)
 			return `Çözüm, CAPTCHA zaman aşımına uğradıktan sonra alındı`;
 		case `Failed to render Markdown:`:
 			return `Failed to render Markdown:`; // TODO
-		case `Enable Markdown`:
+		case `Enable %sMarkdown%s`:
 			return `Enable Markdown`; // TODO
 		case `Render Markdown`:
 			return `Render Markdown`; // TODO

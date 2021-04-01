@@ -169,7 +169,7 @@ bool discussionPostForm(PostDraft draft, Captcha captcha=null, PostError error=P
 				if (haveMarkdown && userSettings.renderMarkdown == "true") html.put(
 					`<label for="postform-markdown"><input name="markdown" id="postform-markdown" type="checkbox" `,
 						("markdown" in draft.clientVars ? `checked="checked"` : ""),
-						`> `, _!"Enable Markdown", `</label>`);
+						`> `, _!"Enable %sMarkdown%s".format(`<a href="/help#markdown">`, `</a>`), `</label>`);
 			html.put(`</div>` ~
 			`<div class="postform-action-right">` ~
 				`<input name="action-discard" type="submit" value="`, _!`Discard draft`, `">` ~
