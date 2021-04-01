@@ -392,7 +392,10 @@ function syntaxHighlight($root) {
 		if (match) {
 			var language = match[1];
 			try {
-				this.innerHTML = hljs.highlight(language, this.textContent, true).value;
+				this.innerHTML = hljs.highlight(this.textContent, {
+					language : language,
+					ignoreIllegals : true
+				}).value;
 			} catch (e) {
 				console.log('Error highlighting', this, ':', e);
 			}
