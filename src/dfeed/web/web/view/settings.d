@@ -174,7 +174,7 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 		`<span title="`, _!`Render Markdown posts as HTML. If disabled, they will just be shown as-is, in plain text.`, `">` ~
 			`<input type="checkbox" name="render-markdown" id="render-markdown"`, userSettings.renderMarkdown == "true" ? ` checked` : null, `>` ~
 			`<label for="render-markdown">`, _!`Render Markdown`, `</label>` ~
-		`</span><br>`);
+		`</span> (<a href="/help#markdown">?</a>)<br>`);
 
 	html.put(
 		`<p>` ~
