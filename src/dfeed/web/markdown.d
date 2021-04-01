@@ -43,7 +43,7 @@ string renderMarkdown(string s)
 			"cmark-gfm",
 			"--hardbreaks", // paragraphs are unwrapped in formatBody
 			"--extension", "table",
-			"--extension", "strikethrough",
+			"--extension", "strikethrough", "--strikethrough-double-tilde",
 			"--extension", "autolink",
 		], Redirect.stdin | Redirect.stdout);
 	// cmark reads all input before emitting any output, so it's safe

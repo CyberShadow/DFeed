@@ -615,9 +615,41 @@ a > .forcewrap {
 .post-text.markdown pre {
 	font-family: Consolas, Lucida Console, Menlo, monospace;
 	font-size: inherit;
+	background-color: #F5F5F5;
+	outline: 1px solid #E6E6E6;
 }
 .post-text.markdown code {
 	font-family: Consolas, Lucida Console, Menlo, monospace;
+	background-color: #F5F5F5;
+	outline: 1px solid #E6E6E6;
+}
+.post-text.markdown pre code {
+	font-family: unset;
+	background-color: unset;
+	outline: unset;
+}
+#forum-content .post-text.markdown table {
+	border-spacing: initial;
+	margin: 16px 0;
+}
+#forum-content .post-text.markdown th {
+	background-color: #F5F5F5;
+}
+#forum-content .post-text.markdown th,
+#forum-content .post-text.markdown td {
+	border: 1px solid #E6E6E6;
+	padding: 0.1em 0.3em;
+}
+#forum-content .post-text.markdown h1,
+#forum-content .post-text.markdown h2,
+#forum-content .post-text.markdown h3,
+#forum-content .post-text.markdown h4,
+#forum-content .post-text.markdown h5,
+#forum-content .post-text.markdown h6,
+#forum-content .post-text.markdown h7 {
+	/* TODO: replace with "all: revert;" when that becomes more available */
+	margin: 16px 0;
+	font-weight: bold;
 }
 
 /* Threading */
@@ -1049,6 +1081,10 @@ kbd { /* stolen from http://en.wikipedia.org/wiki/Template:Key_press */
 }
 .postform-action-left label {
 	padding-left: 1em;
+}
+.postform-action-left input[type=checkbox] {
+	position: relative;
+	top: 0.1em;
 }
 
 .postform-action-right {
