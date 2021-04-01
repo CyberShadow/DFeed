@@ -61,9 +61,6 @@ class Rfc850Post : Post
 	/// If no, don't announce this message and don't trigger subscriptions
 	Fresh fresh = Fresh.yes;
 
-	/// Extra Content-Type field.
-	string markup;
-
 	this(string _message, string _id=null, int rowid=0, string threadID=null)
 	{
 		msg = new Rfc850Message(_message);
@@ -142,8 +139,6 @@ class Rfc850Post : Post
 	{
 		msg.compile();
 		headers["User-Agent"] = "DFeed";
-		if (markup)
-			headers["Content-Type"] ~= "; markup=" ~ markup;
 	}
 
 	override void formatForIRC(void delegate(string) handler)
