@@ -32,6 +32,7 @@ import ae.utils.xmllite;
 import dfeed.loc;
 import dfeed.sinks.subscriptions;
 import dfeed.site : site;
+import dfeed.web.markdown : haveMarkdown;
 import dfeed.web.web.page : html, Redirect;
 import dfeed.web.web.request : currentRequest;
 import dfeed.web.web.user;
@@ -61,8 +62,10 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 				if (setting in postVars)
 					userSettings.set(setting, postVars[setting]);
 			// Checkboxes
-			foreach (setting; ["enable-keynav", "auto-open", "render-markdown"])
+			foreach (setting; ["enable-keynav", "auto-open"])
 				userSettings.set(setting, setting in postVars ? "true" : "false");
+			if (haveMarkdown())
+				userSettings.set("render-markdown", "render-markdown" in postVars ? "true" : "false");
 
 			userSettings.pendingNotice = "settings-saved";
 			throw new Redirect(settingsReferrer ? settingsReferrer : "/settings");
@@ -165,13 +168,15 @@ void discussionSettings(UrlParameters getVars, UrlParameters postVars)
 		`<span title="`, _!`Automatically open messages after selecting them.`, `&#13;&#10;`, _!`Applicable to threaded, horizontal-split and vertical-split view modes.`, `">` ~
 			`<input type="checkbox" name="auto-open" id="auto-open"`, userSettings.autoOpen == "true" ? ` checked` : null, `>` ~
 			`<label for="auto-open">`, _!`Focus follows message`, `</label>` ~
-		`</span><br>` ~
+		`</span><br>`);
 
+	if (haveMarkdown) html.put(
 		`<span title="`, _!`Render Markdown posts as HTML. If disabled, they will just be shown as-is, in plain text.`, `">` ~
 			`<input type="checkbox" name="render-markdown" id="render-markdown"`, userSettings.renderMarkdown == "true" ? ` checked` : null, `>` ~
 			`<label for="render-markdown">`, _!`Render Markdown`, `</label>` ~
-		`</span><br>` ~
+		`</span><br>`);
 
+	html.put(
 		`<p>` ~
 			`<input type="submit" name="action-save" value="`, _!`Save`, `">` ~
 			`<input type="submit" name="action-cancel" value="`, _!`Cancel`, `">` ~
