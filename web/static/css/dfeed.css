@@ -617,6 +617,7 @@ a > .forcewrap {
 	font-size: inherit;
 	background-color: #F5F5F5;
 	outline: 1px solid #E6E6E6;
+	padding: 4px;
 }
 .post-text.markdown code {
 	font-family: Consolas, Lucida Console, Menlo, monospace;
