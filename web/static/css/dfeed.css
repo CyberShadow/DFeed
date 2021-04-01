@@ -632,6 +632,8 @@ a > .forcewrap {
 	outline: unset;
 	padding: 0;
 	margin: 0;
+	tab-size: 4;
+	-moz-tab-size: 4;
 }
 #forum-content .post-text.markdown table {
 	border-spacing: initial;
