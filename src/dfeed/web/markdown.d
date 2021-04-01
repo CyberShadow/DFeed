@@ -38,6 +38,11 @@ bool haveMarkdown()
 /// Render this text as Markdown to HTML now.
 string renderMarkdown(string s)
 {
+	// Pre-process the string
+	s = s
+		.replace("\n-- \n", "\n\n-- \n") // Disambiguate signatures (from setext headings)
+	;
+
 	auto p = pipeProcess([
 			"timeout", "1",
 			"cmark-gfm",
