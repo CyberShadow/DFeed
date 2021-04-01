@@ -34,7 +34,7 @@ $(document).ready(function() {
 	    return false;
 	});
 
-	syntaxHighlight();
+	syntaxHighlight($(document));
 });
 
 // **************************************************************************
@@ -184,11 +184,13 @@ function updateTools() {
 }
 
 function showPost(postHtml) {
-	$('#group-split-message')
+	var $container = $('#group-split-message');
+	$container
 		.html(postHtml)
 		.removeClass('group-split-message-none');
 	updateSize(false);
 	addLinkNavigation();
+	syntaxHighlight($container);
 }
 
 function showText(text) {
@@ -380,10 +382,10 @@ function scrollIntoView($element, $container, withMargin) {
 	}
 }
 
-function syntaxHighlight() {
+function syntaxHighlight($root) {
 	if (hljs === undefined)
 		return;
-	$('.post-text.markdown pre code').each(function () {
+	$root.find('.post-text.markdown pre code').each(function () {
 		if (/\bhljs\b/.exec(this.className))
 			return;
 		var match = /(?:^|\s)language-([^\s]*)(?:$|\s)/.exec(this.className);
