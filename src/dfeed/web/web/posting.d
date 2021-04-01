@@ -166,7 +166,7 @@ bool discussionPostForm(PostDraft draft, Captcha captcha=null, PostError error=P
 			`<div class="postform-action-left">` ~
 				`<input name="action-save" type="submit" value="`, _!`Save and preview`, `">` ~
 				`<input name="action-send" type="submit" value="`, _!`Send`, `">`);
-				if (haveMarkdown) html.put(
+				if (haveMarkdown && userSettings.renderMarkdown == "true") html.put(
 					`<label for="postform-markdown"><input name="markdown" id="postform-markdown" type="checkbox" `,
 						("markdown" in draft.clientVars ? `checked="checked"` : ""),
 						`> `, _!"Enable Markdown", `</label>`);
