@@ -33,6 +33,8 @@ $(document).ready(function() {
 	    container.toggleClass('open');
 	    return false;
 	});
+
+	syntaxHighlight();
 });
 
 // **************************************************************************
@@ -376,6 +378,24 @@ function scrollIntoView($element, $container, withMargin) {
 		$container.scrollTop(elemBottom - containerHeight + scrollMargin);
 		//$container.scrollTo(elemBottom - $container.height(), 200)
 	}
+}
+
+function syntaxHighlight() {
+	if (hljs === undefined)
+		return;
+	$('.post-text.markdown pre code').each(function () {
+		if (/\bhljs\b/.exec(this.className))
+			return;
+		var match = /(?:^|\s)language-([^\s]*)(?:$|\s)/.exec(this.className);
+		if (match) {
+			var language = match[1];
+			try {
+				this.innerHTML = hljs.highlight(language, this.textContent, true).value;
+			} catch (e) {
+				console.log('Error highlighting', this, ':', e);
+			}
+		}
+	});
 }
 
 // **************************************************************************
