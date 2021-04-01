@@ -622,11 +622,15 @@ a > .forcewrap {
 	font-family: Consolas, Lucida Console, Menlo, monospace;
 	background-color: #F5F5F5;
 	outline: 1px solid #E6E6E6;
+	padding: 0 1px;
+	margin: 0 1px;
 }
 .post-text.markdown pre code {
 	font-family: unset;
 	background-color: unset;
 	outline: unset;
+	padding: 0;
+	margin: 0;
 }
 #forum-content .post-text.markdown table {
 	border-spacing: initial;
