@@ -61,6 +61,7 @@ string renderMarkdown(string s)
 	result = result
 		.replace("<blockquote>\n", `<span class="forum-quote"><span class="forum-quote-prefix">&gt; </span>`)
 		.replace("\n</blockquote>", `</span>`)
+		.replace(`<a href="`, `<a rel="nofollow" href="`)
 	;
 
 	return result;
