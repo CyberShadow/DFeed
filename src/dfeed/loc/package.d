@@ -20,6 +20,7 @@ import std.algorithm.iteration;
 import std.algorithm.searching;
 import std.datetime;
 import std.string;
+import std.traits : staticMap, EnumMembers;
 
 import ae.utils.array;
 import ae.utils.json;
@@ -69,12 +70,30 @@ static immutable string[][4][enumLength!Language] timeStrings = [
 	],
 ];
 
+private template translate(string s, Language language)
+{
+	static if (language == Language.english)
+		enum translation = s;
+	else
+	static if (language == Language.turkish)
+		enum translation = dfeed.loc.turkish.translate(s);
+	else
+		enum translation = string.init;
+
+	static if (translation is null)
+	{
+		import std.conv : text;
+		pragma(msg, "Untranslated ", text(language), " string: ", s);
+		enum translate = s;
+	}
+	else
+		enum translate = translation;
+}
+
 string _(string s)()
 {
-	static string[enumLength!Language] translations = [
-		s,
-		dfeed.loc.turkish.translate(s),
-	];
+	enum translation(Language language) = translate!(s, language);
+	static string[enumLength!Language] translations = [staticMap!(translation, EnumMembers!Language)];
 	return translations[currentLanguage];
 }
 

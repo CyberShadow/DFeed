@@ -982,16 +982,8 @@ string translate(string s)
 			return `CAPTCHA çözümü doğru değil`;
 		case `The solution was received after the CAPTCHA timed out`:
 			return `Çözüm, CAPTCHA zaman aşımına uğradıktan sonra alındı`;
-		case `Failed to render Markdown:`:
-			return `Failed to render Markdown:`; // TODO
-		case `Enable %sMarkdown%s`:
-			return `Enable Markdown`; // TODO
-		case `Render Markdown`:
-			return `Render Markdown`; // TODO
-		case `Render Markdown posts as HTML. If disabled, they will just be shown as-is, in plain text.`:
-			return `Render Markdown posts as HTML. If disabled, they will just be shown as-is, in plain text.`; // TODO
 		default:
-			assert(false, "Unknown Turkish string: " ~ s);
+			return null;
 	}
 }
 
