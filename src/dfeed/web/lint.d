@@ -19,6 +19,7 @@ module dfeed.web.lint;
 import core.time;
 
 import std.algorithm;
+import std.conv : to;
 import std.datetime.systime;
 import std.exception;
 import std.range;
@@ -570,6 +571,58 @@ class MarkdownHTMLRule : LintRule
 	}
 }
 
+class MarkdownEntitiesRule : LintRule
+{
+	import ae.utils.xml.entities : entities;
+
+	override @property string id() { return "markdownentities"; }
+	override @property string shortDescription() { return _!"Avoid using HTML entities."; }
+	override @property string longDescription() { return
+		"<p>" ~ _!`HTML character entities, such as "&amp;mdash;", are rendered to the corresponding character when using Markdown, but will still appear as you typed them to users of software where Markdown rendering is unavailable or disabled.` ~ "</p>" ~
+		"<p>" ~ _!"As such, it is preferable to use the Unicode characters directly instead of their HTML entity encoded form (e.g. \"\&mdash;\" instead of \"&amp;mdash;\")." ~ "</p>" ~
+		"<p>" ~ _!`If you did not mean to use an HTML entity to represent a character, escape the leading ampersand (&amp;) by prepending a backslash (e.g. "\&").` ~ "</p>" ~
+		"";
+	}
+
+	alias reEntity = re!(`(?<=[^\\](?:\\\\)*)&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-fA-F]{1,6});`, "ig");
+
+	override bool check(in ref PostDraft draft)
+	{
+		if ("markdown" !in draft.clientVars)
+			return false;
+
+		return !!draft.clientVars.get("text", null).matchFirst(reEntity);
+	}
+
+	override bool canFix(in ref PostDraft draft)
+	{
+		return !draft.clientVars.get("text", null)
+			.matchAll(reEntity)
+			.map!(match => match[1])
+			.filter!(entityName => entityName.startsWith("#") || entityName in entities)
+			.empty;
+	}
+
+	override void fix(ref PostDraft draft)
+	{
+		string dg(Captures!string m)
+		{
+			if (m[1].startsWith("#x"))
+				return dchar(m[1][2 .. $].to!uint(16)).to!string;
+			else
+			if (m[1].startsWith("#"))
+				return dchar(m[1][1 .. $].to!uint(10)).to!string;
+			else
+			if (auto c = m[1] in entities)
+				return (*c).to!string;
+			else
+				return m[0];
+		}
+		draft.clientVars["text"] = draft.clientVars.get("text", null)
+			.replaceAll!dg(reEntity);
+	}
+}
+
 @property LintRule[] lintRules()
 {
 	static LintRule[] result;
@@ -585,6 +638,7 @@ class MarkdownHTMLRule : LintRule
 			new LinkInSubjectRule,
 			new NecropostingRule,
 			new MarkdownHTMLRule,
+			new MarkdownEntitiesRule,
 		];
 	return result;
 }
