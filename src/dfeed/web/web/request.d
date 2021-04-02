@@ -437,6 +437,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			}
 			case "send":
 			{
+				enforce(request.method == "POST", _!"No post form submitted. Please click \"Back\" in your web browser to navigate back to the posting form, and resubmit it.");
 				auto postVars = request.decodePostData();
 				auto redirectTo = discussionSend(postVars, request.headers);
 				if (redirectTo)
