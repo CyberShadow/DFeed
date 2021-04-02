@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2015, 2016, 2017, 2018, 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -26,10 +26,12 @@ import std.regex;
 import std.string;
 
 import ae.sys.persistence;
+import ae.utils.array : contains;
 import ae.utils.regex;
 
 import dfeed.loc;
 import dfeed.message;
+import dfeed.web.markdown;
 import dfeed.web.posting;
 import dfeed.web.web.part.postbody : reURL;
 import dfeed.web.web.postinfo : getPost;
@@ -516,6 +518,58 @@ class NecropostingRule : LintRule
 	}
 }
 
+class MarkdownHTMLRule : LintRule
+{
+	override @property string id() { return "markdownhtml"; }
+	override @property string shortDescription() { return _!"Raw HTML has been discarded."; }
+	override @property string longDescription() { return
+		"<p>" ~ _!"Your message seems to contain content which the Markdown renderer has interpreted as raw HTML." ~ " " ~
+			_!"Since using raw HTML is not allowed, this content has been discarded from the rendered output." ~ "</p>" ~
+		"<p>" ~ _!"If your intention was to use HTML for formatting, please revise your message to use the %savailable Markdown formatting syntax%s instead.".format(
+			`<a href="/help#markdown">`, `</a>`,
+		) ~ "</p>" ~
+		"<p>" ~ _!"If your intention was to use characters such as &gt; &lt; &amp; verbatim in your message, you can prevent them from being interpreted as special characters by escaping them with a backslash character (\\)." ~ " " ~
+			_!`Clicking "Fix it for me" will apply this escaping automatically.` ~ "</p>" ~
+		"<p>" ~ _!`Finally, if you do not want any special characters to be treated as formatting at all, you may uncheck the "Enable Markdown" checkbox to disable Markdown rendering completely.` ~ "</p>" ~
+		"";
+	}
+
+	override bool check(in ref PostDraft draft)
+	{
+		if ("markdown" !in draft.clientVars)
+			return false;
+
+		// Note: this is an approximation of how text content is
+		// transformed into a post and then to rendered Markdown
+		// (normally that goes through draftToPost and then
+		// unwrapText), but it doesn't matter for this check.
+		auto result = renderMarkdownCached(draft.clientVars.get("text", null));
+		if (result.error)
+			return false;
+		return result.html.contains("<!-- raw HTML omitted -->");
+	}
+
+	override bool canFix(in ref PostDraft draft) { return true; }
+
+	override void fix(ref PostDraft draft)
+	{
+		string result;
+		size_t numEscapes;
+		foreach (c; draft.clientVars.get("text", null))
+		{
+			if (c.among('<') && numEscapes % 2 == 0)
+				result ~= '\\';
+			else
+			if (c == '\\')
+				numEscapes++;
+			else
+				numEscapes = 0;
+			result ~= c;
+		}
+		draft.clientVars["text"] = result;
+	}
+}
+
 @property LintRule[] lintRules()
 {
 	static LintRule[] result;
@@ -530,6 +584,7 @@ class NecropostingRule : LintRule
 			new ShortLinkRule,
 			new LinkInSubjectRule,
 			new NecropostingRule,
+			new MarkdownHTMLRule,
 		];
 	return result;
 }
