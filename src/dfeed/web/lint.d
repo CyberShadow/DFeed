@@ -27,6 +27,7 @@ import std.regex;
 import std.string;
 
 import ae.sys.persistence;
+import ae.utils.aa; // `require` polyfill
 import ae.utils.array : contains;
 import ae.utils.regex;
 
@@ -623,6 +624,106 @@ class MarkdownEntitiesRule : LintRule
 	}
 }
 
+class MarkdownCodeRule : LintRule
+{
+	override @property string id() { return "markdowncode"; }
+	override @property string shortDescription() { return _!"A code block may be misformatted."; }
+	override @property string longDescription() { return
+		"<p>" ~ _!"It looks like your post may include a code block, but it is not formatted as such. (Click \"Save and preview\" to see how your message will look once posted.)" ~ "</p>" ~
+		"<p>" ~ _!"When using %sMarkdown formatting%s, you should either wrap code blocks in fences (<code>```</code> lines), or indent all lines by four spaces.".format(
+			`<a href="/help#markdown">`, `</a>`,
+		) ~ "</p>" ~
+		"<p>" ~ _!`Click "Fix it for me" to have the forum software attempt to do this automatically.` ~ "</p>" ~
+		"<p>" ~ _!`Alternatively, you may uncheck the "Enable Markdown" checkbox to disable Markdown rendering completely, which will cause whitespace to be rendered verbatim.` ~ "</p>" ~
+		"";
+	}
+
+	override bool check(in ref PostDraft draft)
+	{
+		if ("markdown" !in draft.clientVars)
+			return false;
+
+		// Attempt to detect lines with leading indentation which has
+		// been lost after conversion.  Avoid false positives by also
+		// tracking lines which were not indented.
+
+		struct TrieNode { TrieNode[char] children; bool[2] sawWithIndent; }
+		TrieNode root;
+
+		bool detectIndent(ref string line)
+		{
+			if (line.startsWith(" ") || line.startsWith("\t"))
+			{
+				line = line.strip();
+				return true;
+			}
+			return false;
+		}
+
+		foreach (line; draft.clientVars.get("text", null).splitLines())
+		{
+			bool isIndented = detectIndent(line);
+			TrieNode* n = &root;
+			foreach (c; line)
+			{
+				n.sawWithIndent[isIndented] = true;
+				n = &n.children.require(c, TrieNode.init);
+			}
+			n.sawWithIndent[isIndented] = true;
+		}
+
+		// Note: this is an approximation of how text content is
+		// transformed into a post and then to rendered Markdown
+		// (normally that goes through draftToPost and then
+		// unwrapText), but it doesn't matter for this check.
+		auto result = renderMarkdownCached(draft.clientVars.get("text", null));
+		if (result.error)
+			return false;
+
+		// We trigger a positive if and only if there exists a line prefix which:
+		// 1. Exists in an INDENTED line in the Markdown source
+		// 2. Does NOT exist in a NON-indented line in the Markdown source
+		// 3. Exists in a NON-indented line in the rendered Markdown HTML
+
+		foreach (line; result.html.splitLines())
+		{
+			bool isIndented = detectIndent(line);
+			if (isIndented)
+				continue; // Look only at non-indented lines in output
+
+			TrieNode* n = &root;
+			foreach (c; line)
+			{
+				if (n.sawWithIndent[true] && !n.sawWithIndent[false])
+					return true; // This prefix only occurred as indented.
+				n = c in n.children;
+				if (!n)
+					break;
+			}
+		}
+
+		return false;
+	}
+
+	override bool canFix(in ref PostDraft draft) { return true; }
+
+	override void fix(ref PostDraft draft)
+	{
+		auto paragraphs = draft.clientVars.get("text", null).replace("\r\n", "\n").split("\n\n");
+		foreach (ref paragraph; paragraphs)
+		{
+			auto lines = paragraph.split("\n");
+			if (lines.canFind!(line => line.startsWith(" ") || line.startsWith("\t")))
+			{
+				foreach (ref line; lines)
+					line = "    " ~ line;
+				paragraph = lines.join("\n");
+			}
+		}
+		draft.clientVars["text"] = paragraphs.join("\n\n").replace("\n", "\r\n");
+	}
+}
+
 @property LintRule[] lintRules()
 {
 	static LintRule[] result;
@@ -639,6 +740,7 @@ class MarkdownEntitiesRule : LintRule
 			new NecropostingRule,
 			new MarkdownHTMLRule,
 			new MarkdownEntitiesRule,
+			new MarkdownCodeRule,
 		];
 	return result;
 }
