@@ -222,5 +222,7 @@ http://a/b+
 EOF");
 	scope(exit) html.clear();
 	formatBody(msg);
-	assert(html.get.strip == `<pre class="post-text"><a rel="nofollow" href="http://a/b+">http://a/b+</a></pre>`);
+	assert(html.get.strip == `<pre class="post-text"><a rel="nofollow" href="http://a/b+">http://a/b+</a>
+
+</pre>`, html.get.strip);
 }
