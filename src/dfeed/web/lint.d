@@ -22,6 +22,7 @@ import std.algorithm;
 import std.conv : to;
 import std.datetime.systime;
 import std.exception;
+import std.functional : not;
 import std.range;
 import std.regex;
 import std.string;
@@ -660,6 +661,10 @@ class MarkdownCodeRule : LintRule
 			return false;
 		}
 
+		auto paragraphs = draft.clientVars.get("text", null).replace("\r\n", "\n").split("\n\n").map!splitLines.array;
+		if (!paragraphs.canFind!(paragraph => !paragraph.all!detectIndent && !paragraph.all!(not!detectIndent)))
+			return false;
+
 		foreach (line; draft.clientVars.get("text", null).splitLines())
 		{
 			bool isIndented = detectIndent(line);
@@ -722,6 +727,30 @@ class MarkdownCodeRule : LintRule
 		}
 		draft.clientVars["text"] = paragraphs.join("\n\n").replace("\n", "\r\n");
 	}
+}
+
+unittest
+{
+	bool check(string text)
+	{
+		PostDraft draft;
+		draft.clientVars["markdown"] = "on";
+		draft.clientVars["text"] = text;
+		return (new MarkdownCodeRule).check(draft);
+	}
+
+	assert(check(q"EOF
+if (true)
+    code();
+EOF"));
+
+	assert(!check(q"EOF
+code
+    code
+EOF"));
+
+	// https://github.com/CyberShadow/DFeed/issues/125#issuecomment-830469649
+	assert(!check("    Code"));
 }
 
 @property LintRule[] lintRules()
