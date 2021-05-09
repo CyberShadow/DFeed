@@ -69,11 +69,7 @@ void main()
 		]),
 		makeDGroupSet("Development", [
 			makeDGroupInfo("digitalmars.D.internals"       , "Internals"               , "internals"               , null                      , null                      , "Discussion of language development and internals"                 , false, false),
-			makeDGroupInfo("digitalmars.D.bugs"            , "Issues"                  , "issues"                  , "digitalmars/D/bugs"      , "Digitalmars-d-bugs"      , "Bug reports for D compiler and library"                           , false, true ),
-			makeDGroupInfo("dmd-beta"                      , "Beta"                    , "beta"                    , null                      , "dmd-beta"                , "Notifications and discussion of D beta versions"                  , true , false),
-			makeDGroupInfo("dmd-internals"                 , "DMD"                     , "dmd"                     , null                      , "dmd-internals"           , "Compiler internal design and implementation"                      , true , false),
-			makeDGroupInfo("phobos"                        , "Phobos"                  , "phobos"                  , null                      , "phobos"                  , "Standard library design and implementation"                       , true , false),
-			makeDGroupInfo("D-runtime"                     , "Druntime"                , "druntime"                , null                      , "D-runtime"               , "Runtime library design and implementation"                        , true , false),
+			makeDGroupInfo("digitalmars.D.bugs"            , "Issues"                  , "issues"                  , "digitalmars/D/bugs"      , "Digitalmars-d-bugs"      , "Bug reports for D compiler and library"                           , false, true ),			
 			makeDGroupInfo("Dlang-study"                   , "Study"                   , "study"                   , null                      , "Dlang-study"             , "Study groups for D programming language design"                   , true , false),
 		]),
 		makeDGroupSet("Turkish", [
@@ -82,7 +78,10 @@ void main()
 		]),
 		makeDGroupSet("Unused", [
 			makeDGroupInfo("dmd-concurrency"               , "Concurrency"             , "concurrency"             , null                      , "dmd-concurrency"         , "Design of concurrency features in D and standard library"         , true , false),
-
+			makeDGroupInfo("dmd-beta"                      , "Beta"                    , "beta"                    , null                      , "dmd-beta"                , "Notifications and discussion of D beta versions"                  , true , false),
+			makeDGroupInfo("dmd-internals"                 , "DMD"                     , "dmd"                     , null                      , "dmd-internals"           , "Compiler internal design and implementation"                      , true , false),
+			makeDGroupInfo("phobos"                        , "Phobos"                  , "phobos"                  , null                      , "phobos"                  , "Standard library design and implementation"                       , true , false),
+			makeDGroupInfo("D-runtime"                     , "Druntime"                , "druntime"                , null                      , "D-runtime"               , "Runtime library design and implementation"                        , true , false),
 			makeDGroupInfo("digitalmars.D.dtl"             , "digitalmars.D.dtl"       , "digitalmars.D.dtl"       , "digitalmars/D/dtl"       , "Digitalmars-d-dtl"       , "Developing the D Template Library"                                , false, false),
 			makeDGroupInfo("DMDScript"                     , "DMDScript"               , "DMDScript"               , "DMDScript"               , null                      , "General discussion of DMDScript"                                  , false, false),
 			makeDGroupInfo("digitalmars.empire"            , "digitalmars.empire"      , "digitalmars.empire"      , "digitalmars/empire"      , null                      , "General discussion of Empire, the Wargame of the Century"         , false, false),
