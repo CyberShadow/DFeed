@@ -140,7 +140,7 @@ final class PostProcess
 			log("[Header] " ~ name ~ ": " ~ value);
 
 		// Discard duplicate posts (redirect to original)
-		string allContent = draft.clientVars.values.sort().release().join("\0");
+		string allContent = draftContent(draft);
 		if (allContent in postsByContent && postsByContent[allContent] in postProcesses && postProcesses[postsByContent[allContent]].status != PostingStatus.serverError)
 		{
 			string original = postsByContent[allContent];
@@ -329,6 +329,18 @@ final class PostProcess
 		post.msg.time = post.time;
 
 		return post;
+	}
+
+	// **********************************************************************
+
+	private static string draftContent(ref /*const*/ PostDraft draft)
+	{
+		return draft.clientVars.values.sort().release().join("\0");
+	}
+
+	static void allowReposting(ref /*const*/ PostDraft draft)
+	{
+		postsByContent.remove(draftContent(draft));
 	}
 
 	// **********************************************************************

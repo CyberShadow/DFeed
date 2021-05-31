@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -149,6 +149,7 @@ string approvePost(string draftID, string who)
 	auto draft = getDraft(draftID);
 	draft.serverVars["preapproved"] = null;
 	auto headers = Headers(draft.serverVars.get("headers", "null").jsonParse!(string[][string]));
+	PostProcess.allowReposting(draft);
 	auto pid = postDraft(draft, headers);
 	saveDraft(draft, Yes.force);
 
