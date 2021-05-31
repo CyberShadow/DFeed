@@ -10,7 +10,7 @@ DFeed is:
 - an IRC bot
 
 DFeed is running on [forum.dlang.org](https://forum.dlang.org/)
-and the [#d channel on FreeNode](irc://chat.freenode.net/d).
+and the [#d channel on Libera.Chat](irc://irc.libera.chat/d).
 
 Quick start guide:
 

@@ -1,7 +1,7 @@
 # IRC sink parameters.
 
 # IRC server to connect to.
-#server = irc.freenode.net
+#server = irc.libera.chat
 
 # Port. Defaults to 6667.
 #port = 6667
