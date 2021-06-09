@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -30,6 +30,8 @@ import ae.sys.timing;
 import ae.utils.math : flipBits;
 import ae.utils.text;
 import ae.utils.time : StdTime;
+import ae.utils.time.common;
+import ae.utils.time.format;
 import ae.utils.zlib;
 
 enum SettingType
@@ -272,8 +274,7 @@ class GuestUser : User
 				if (settingType == SettingType.session)
 					result ~= "dfeed_" ~ name ~ "=" ~ value ~ "; Path=/";
 				else
-					// TODO Expires
-					result ~= "dfeed_" ~ name ~ "=" ~ value ~ "; Expires=Wed, 09 Jun 2021 10:18:14 GMT; Path=/";
+					result ~= "dfeed_" ~ name ~ "=" ~ value ~ "; Expires=" ~ (Clock.currTime() + 365.days).formatTime!(TimeFormats.HTTP) ~ "; Path=/";
 			}
 		}
 		return result;
