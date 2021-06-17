@@ -524,7 +524,7 @@ class NecropostingRule : LintRule
 class MarkdownHTMLRule : LintRule
 {
 	override @property string id() { return "markdownhtml"; }
-	override @property string shortDescription() { return _!"Raw HTML has been discarded."; }
+	override @property string shortDescription() { return _!"HTML-like text was discarded."; }
 	override @property string longDescription() { return
 		"<p>" ~ _!"Your message seems to contain content which the Markdown renderer has interpreted as raw HTML." ~ " " ~
 			_!"Since using raw HTML is not allowed, this content has been discarded from the rendered output." ~ "</p>" ~
