@@ -1,5 +1,5 @@
 /*  Copyright (C) 2018  Sebastian Wilzbach
- *  Copyright (C) 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+ *  Copyright (C) 2018, 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -83,7 +83,7 @@ protected:
 		request.resource = fullURL;
 		request.method = "POST";
 		request.headers["Authorization"] = session.prepareRequest(baseURL, "POST", parameters).oauthHeader;
-		request.data = [Data([])];
+		request.data = DataVec(Data([]));
 		httpRequest(request, null);
 	}
 

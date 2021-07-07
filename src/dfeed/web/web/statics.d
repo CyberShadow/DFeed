@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -34,7 +34,7 @@ static import std.file;
 import std.regex : Regex, matchAll;
 
 import ae.net.http.responseex : HttpResponseEx;
-import ae.sys.data : Data;
+import ae.sys.data : Data, DataVec;
 import ae.utils.meta : isDebug;
 import ae.utils.regex : re;
 
@@ -134,12 +134,12 @@ HttpResponseEx makeBundle(string time, string url)
 				auto oldText = cast(string)pathResponse.data[0].contents;
 				auto newText = fixCSS(oldText, bundlePath, n == 0);
 				if (oldText !is newText)
-					pathResponse.data = [Data(newText)];
+					pathResponse.data = DataVec(Data(newText));
 			}
 			if (!bundleResponse)
 				bundleResponse = pathResponse;
 			else
-				bundleResponse.data ~= pathResponse.data;
+				bundleResponse.data ~= pathResponse.data[];
 		}
 		cache[url] = Bundle(time, bundleResponse);
 	}

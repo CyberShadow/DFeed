@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014, 2015, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015, 2017, 2018, 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -45,7 +45,7 @@ class BlogSpam : SpamChecker
 	{
 		auto params = getParams(process);
 
-		return httpPost("http://test.blogspam.net:9999/", [Data(toJson(params))], "application/json", (string responseText) {
+		return httpPost("http://test.blogspam.net:9999/", DataVec(Data(toJson(params))), "application/json", (string responseText) {
 			auto response = responseText.jsonParse!(string[string]);
 			auto result = response.get("result", null);
 			auto reason = response.get("reason", "no reason given");
@@ -69,7 +69,7 @@ class BlogSpam : SpamChecker
 		auto params = getParams(process);
 		string[SpamFeedback] names = [ SpamFeedback.spam : "spam", SpamFeedback.ham : "ok" ];
 		params["train"] = names[feedback];
-		return httpPost("http://test.blogspam.net:9999/classify", [Data(toJson(params))], "application/json", (string responseText) {
+		return httpPost("http://test.blogspam.net:9999/classify", DataVec(Data(toJson(params))), "application/json", (string responseText) {
 			auto response = responseText.jsonParse!(string[string]);
 			auto result = response.get("result", null);
 			auto reason = response.get("reason", "no reason given");

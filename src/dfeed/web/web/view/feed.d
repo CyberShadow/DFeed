@@ -25,7 +25,7 @@ import std.datetime.systime;
 import std.format : format;
 
 import ae.net.http.caching : CachedResource;
-import ae.sys.data : Data;
+import ae.sys.data : Data, DataVec;
 import ae.utils.feed : AtomFeedWriter;
 
 import dfeed.loc;
@@ -111,7 +111,7 @@ CachedResource makeFeed(Rfc850Post[] posts, string feedUrl, string feedTitle, bo
 	}
 	feed.endFeed();
 
-	return new CachedResource([Data(feed.xml.output.get())], "application/atom+xml");
+	return new CachedResource(DataVec(Data(feed.xml.output.get())), "application/atom+xml");
 }
 
 CachedResource getSubscriptionFeed(string subscriptionID)
