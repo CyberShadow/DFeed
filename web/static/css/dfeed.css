@@ -1356,3 +1356,191 @@ body.frame .post-gravatar {
 	-webkit-border-radius: 5px;
 	border-radius: 5px;
 }
+
+a
+{
+	text-decoration-line: none;
+}
+
+a:hover
+{
+	text-decoration-line: underline;
+}
+
+.group {
+	display: flex;
+	align-items: center;
+	height: 4em;
+	border-bottom: 1px solid lightgray;
+	justify-content: space-between;
+	padding: 0 10px;
+}
+
+.group .title {
+	font-weight: bold;
+}
+
+.group .create-thread {
+	text-align: right;
+}
+
+.group .create-thread img {
+	height: 12px;
+}
+
+a.button {
+	display: inline-block;
+	padding: 2px 5px;
+	color: initial;
+	background-color: rgb(240, 240, 240);
+	text-decoration: none;
+	border-radius: 5px;
+	border: 1px solid lightgray;
+}
+
+a.button:hover {
+	background-color: rgb(224, 224, 224);
+	text-decoration: none;
+}
+
+.thread {
+	border-bottom: 1px solid lightgray;
+	padding: 10px;
+}
+
+.thread .title {
+	margin: 0 0 .25em 0;
+}
+
+.thread .info {
+	display: table;
+	table-layout: fixed;
+	width: 100%;
+	font-size: small;
+}
+
+.thread .info .firstpost {
+	display: table-cell;
+	text-align: left;
+}
+
+.thread .info .firstpost .time .short {
+	display: none;
+}
+
+.thread .info .firstpost .time .long {
+	display: inline-block;
+}
+
+@media only screen and (max-width: 50em) {
+	.thread .info .firstpost .time .short {
+		display: inline-block;
+	}
+	
+	.thread .info .firstpost .time .long {
+		display: none;
+	}
+}
+
+.thread .info .firstpost .author {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.thread .info .firstpost .author img {
+	vertical-align: bottom;
+	height: 1.5em;
+	border-radius: 50%;
+}
+
+.thread .info .firstpost .author .name {
+	color: gray;
+	white-space: nowrap;
+}
+
+.thread .info .replies {
+	display: table-cell;
+	overflow: visible;
+	text-align: center;
+}
+
+.thread .info .replies .short {
+	display: none;
+}
+
+.thread .info .replies .long {
+	display: inline;
+}
+
+@media only screen and (max-width: 20em) {
+	.thread .info .replies .short {
+		display: inline;
+	}
+	
+	.thread .info .replies .long {
+		display: none;
+	}
+}
+
+.thread .info .lastpost {
+	display: table-cell;
+	overflow: hidden;
+	text-align: right;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.thread .info .lastpost .link {
+	display: inline;
+}
+
+.thread .info .lastpost .time .short {
+	display: none;
+}
+
+.thread .info .lastpost .time .long {
+	display: inline;
+}
+
+@media only screen and (max-width: 50em) {
+	.thread .info .lastpost .time .short {
+		display: inline;
+	}
+	
+	.thread .info .lastpost .time .long {
+		display: none;
+	}
+}
+
+.thread .info .lastpost .author {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.thread .info .lastpost .author img {
+	vertical-align: bottom;
+	height: 1.5em;
+	border-radius: 50%;
+}
+
+.thread .info .lastpost .author .name {
+	color: gray;
+	white-space: nowrap;
+}
+
+.pager-left {
+  padding: 0 10px;
+}
+
+.pager-right {
+  padding: 0 10px;
+}
+
+.pager-numbers {
+	text-align: center;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}

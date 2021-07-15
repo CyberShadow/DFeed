@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -42,7 +42,7 @@ import dfeed.web.web.cache : postCountCache, getPostCounts;
 import dfeed.web.web.page : html;
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
 import dfeed.web.web.part.pager : THREADS_PER_PAGE, getPageOffset, threadPager, indexToPage, getPageCount, getPageCount, pager;
-import dfeed.web.web.part.strings : summarizeTime, formatNumber, truncateString;
+import dfeed.web.web.part.strings : formatTinyTime, formatShortTime, formatLongTime, summarizeTime, formatNumber;
 import dfeed.web.web.part.thread : formatThreadedPosts;
 import dfeed.web.web.postinfo : PostInfo, getPostInfo, getPost;
 import dfeed.web.web.statics : staticPath;
@@ -108,65 +108,87 @@ void discussionGroup(GroupInfo groupInfo, int page)
 			threads ~= Thread(firstPostID, getPostInfo(firstPostID), getPostInfo(lastPostID), count, getUnreadPostCount(firstPostID));
 		}
 
-	void summarizeThread(string tid, PostInfo* info, bool isRead)
+	void summarizeThread(ref Thread thread)
 	{
-		if (info)
-			with (*info)
-			{
-				putGravatar(getGravatarHash(info.authorEmail), idToUrl(tid, "thread"), `class="forum-postsummary-gravatar" `);
-				html.put(
-				//	`<!-- Thread ID: ` ~ encodeHtmlEntities(threadID) ~ ` | First Post ID: ` ~ encodeHtmlEntities(id) ~ `-->` ~
-					`<div class="truncated"><a class="forum-postsummary-subject `, (isRead ? "forum-read" : "forum-unread"), `" href="`), html.putEncodedEntities(idToUrl(tid, "thread")), html.put(`" title="`), html.putEncodedEntities(subject), html.put(`">`), html.putEncodedEntities(subject), html.put(`</a></div>` ~
-					`<div class="truncated">`, _!`by`, ` <span class="forum-postsummary-author" title="`), html.putEncodedEntities(author), html.put(`">`), html.putEncodedEntities(author), html.put(`</span></div>`);
-				return;
-			}
-
-		html.put(`<div class="forum-no-data">-</div>`);
+		html.put(`<div class="thread">`);
+			html.put(`<div class="title">`);
+				html.put(`<a `);
+					html.put(`class="`, thread.isRead ? "forum-read" : "forum-unread", `" `);
+					html.put(`href="`); html.putEncodedEntities(idToUrl(thread.id, "thread")); html.put(`" `);
+					html.put(`title="`); html.putEncodedEntities(thread.firstPost.subject); html.put(`">`);
+					html.putEncodedEntities(thread.firstPost.subject);
+				html.put(`</a>`);
+			html.put(`</div>`);
+			html.put(`<div class="info">`);
+				html.put(`<div class="firstpost">`);
+					html.put(`<span class="time" `);
+						html.put(`title="`); html.putEncodedEntities(thread.firstPost.time.formatTimeLoc!"Y-m-d H:i:s P"); html.put(`">`);
+						html.put(`<span class="short">`); html.putEncodedEntities(formatTinyTime(thread.firstPost.time)); html.put(`</span>`);
+						html.put(`<span class="long">`); html.putEncodedEntities(formatShortTime(thread.firstPost.time, false)); html.put(`</span>`);
+					html.put(`</span>`);
+					html.put(`<div class="author">`);
+						// html.put(`by `);
+						string threadGravatarHash = getGravatarHash(thread.firstPost.authorEmail);
+						html.put(`<img alt="Gravatar" `);
+							html.put(`src="//www.gravatar.com/avatar/`, threadGravatarHash, `?d=identicon"> `);
+						html.put(`<span class="name">`);
+							html.putEncodedEntities(thread.firstPost.author);
+						html.put(`</span>`);
+					html.put(`</div>`);
+				html.put(`</div>`);
+				html.put(`<div class="replies">`);
+					html.put(`<span class="short">`);
+						html.put(formatNumber(thread.postCount - 1));
+						if (thread.unreadPostCount && thread.unreadPostCount != thread.postCount)
+							html.put(`<br>(<a href="`, idToUrl(thread.id, "first-unread"), `">`, formatNumber(thread.unreadPostCount), `</a>)`);
+					html.put(`</span>`);
+					html.put(`<span class="long">`);
+						html.put(formatNumber(thread.postCount - 1), " ", (thread.postCount - 1) == 1 ? _!"reply" : _!"replies");
+						if (thread.unreadPostCount && thread.unreadPostCount != thread.postCount)
+							html.put(`<br><a href="`, idToUrl(thread.id, "first-unread"), `">`, formatNumber(thread.unreadPostCount), ` `, _!`new`, `</a>`);
+					html.put(`</span>`);
+				html.put(`</div>`);
+				html.put(`<div class="lastpost">`);
+					html.put(`<a class="link" `);
+						html.put(`href="`); html.putEncodedEntities(idToUrl(thread.lastPost.id)); html.put(`">`);
+						html.put(_!`Last Post`);
+					html.put(`</a>`);
+					html.put(`: `);
+					html.put(`<span class="time" `);
+						html.put(`title="`); html.putEncodedEntities(thread.lastPost.time.toISOExtString); html.put(`">`);
+						html.put(`<span class="short">`); html.putEncodedEntities(formatTinyTime(thread.lastPost.time)); html.put(`</span>`);
+						html.put(`<span class="long">`); html.putEncodedEntities(formatShortTime(thread.lastPost.time, false)); html.put(`</span>`);
+					html.put(`</span>`);
+					html.put(`<div class="author">`);
+						// html.put(`by `);
+						string lastpostGravatarHash = getGravatarHash(thread.lastPost.authorEmail);
+						html.put(`<img alt="Gravatar" `);
+							html.put(`src="//www.gravatar.com/avatar/`, lastpostGravatarHash, `?d=identicon"> `);
+						html.put(`<span class="name">`);
+							html.putEncodedEntities(thread.lastPost.author);
+						html.put(`</span>`);
+					html.put(`</div>`);
+				html.put(`</div>`);
+			html.put(`</div>`);
+		html.put(`</div>`);
 	}
-
-	void summarizeLastPost(PostInfo* info)
-	{
-		if (info)
-			with (*info)
-			{
-				html.put(
-					`<a class="forum-postsummary-time `, user.isRead(rowid) ? "forum-read" : "forum-unread", `" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`">`, summarizeTime(time), `</a>` ~
-					`<div class="truncated">`, _!`by`, ` <span class="forum-postsummary-author" title="`), html.putEncodedEntities(author), html.put(`">`), html.putEncodedEntities(author), html.put(`</span></div>`);
-				return;
-			}
-		html.put(`<div class="forum-no-data">-</div>`);
-	}
-
-	void summarizePostCount(ref Thread thread)
-	{
-		html.put(`<a class="secretlink" href="`), html.putEncodedEntities(idToUrl(thread.id, "thread")), html.put(`">`);
-		if (thread.unreadPostCount == 0)
-			html ~= formatNumber(thread.postCount-1);
-		else
-			html.put(`<b>`, formatNumber(thread.postCount-1), `</b>`);
-		html.put(`</a>`);
-
-		if (thread.unreadPostCount && thread.unreadPostCount != thread.postCount)
-			html.put(
-				`<br>(<a href="`, idToUrl(thread.id, "first-unread"), `">`, formatNumber(thread.unreadPostCount), ` new</a>)`);
-	}
-
-	html.put(
-		`<table id="group-index" class="forum-table">` ~
-		`<tr class="table-fixed-dummy">`, `<td></td>`.replicate(3), `</tr>` ~ // Fixed layout dummies
-		`<tr class="group-index-header"><th colspan="3"><div class="header-with-tools">`), newPostButton(groupInfo), html.putEncodedEntities(groupInfo.publicName), html.put(`</div></th></tr>` ~
-		`<tr class="subheader"><th>`, _!`Thread / Thread Starter`, `</th><th>`, _!`Last Post`, `</th><th>`, _!`Replies`, `</th>`);
+	
+	html.put(`<div class="group">`);
+		html.put(`<div class="title">`);
+			html.putEncodedEntities(groupInfo.publicName);
+		html.put(`</div>`);
+		html.put(`<div class="create-thread">`);
+			html.put(`<a class="button" href="/newpost/`); html.putEncodedEntities(groupInfo.urlName); html.put(`">`);
+				html.put(`<img src="`, staticPath("/images/newthread.png"), `"> `);
+				html.put(_!`Create thread`);
+			html.put(`</a>`);
+		html.put(`</div>`);
+	html.put(`</div>`);
+	
 	foreach (thread; threads)
-		html.put(
-			`<tr class="thread-row">` ~
-				`<td class="group-index-col-first">`), summarizeThread(thread.id, thread.firstPost, thread.isRead), html.put(`</td>` ~
-				`<td class="group-index-col-last">`), summarizeLastPost(thread.lastPost), html.put(`</td>` ~
-				`<td class="number-column">`), summarizePostCount(thread), html.put(`</td>` ~
-			`</tr>`);
+		summarizeThread(thread);
+	
 	threadPager(groupInfo, page);
-	html.put(
-		`</table>`
-	);
 }
 
 // ***********************************************************************
