@@ -113,7 +113,7 @@ string translate(string s)
 		case `Also via`:
 			return `Ayrıca`;
 		case `Create thread`:
-			return `Yeni konu oluştur`;
+			return `Yeni konu`;
 		case `Invalid page`:
 			return `Geçersiz sayfa`;
 		case `by`:
@@ -269,7 +269,10 @@ string translate(string s)
 		case `No such user subscription`:
 			return `Böyle bir kullanıcı aboneliği yok`;
 		case `reply`:
+		case `replies`: // HACK: Plural is context dependent
 			return `yanıt`;
+		case "new":
+			return "yeni";
 		case `Replies to your posts`:
 			return `Gönderilerinize verilen yanıtlar`;
 		case `%s replied to your post in the thread "%s"`:
