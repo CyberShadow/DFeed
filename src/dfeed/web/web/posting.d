@@ -280,11 +280,31 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 			action = "send";
 		}
 
+		bool lint() {
+			foreach (rule; lintRules)
+				if ("lint-ignore-" ~ rule.id !in draft.serverVars && rule.check(draft))
+				{
+					PostError error;
+					error.message = _!"Warning:" ~ " " ~ rule.shortDescription();
+					error.extraHTML ~= ` <input name="action-lint-ignore-` ~ rule.id ~ `" type="submit" value="` ~ _!`Ignore` ~ `">`;
+					if (!lintDetails)
+						error.extraHTML ~= ` <input name="action-lint-explain" type="submit" value="` ~ _!`Explain` ~ `">`;
+					if (rule.canFix(draft))
+						error.extraHTML ~= ` <input name="action-lint-fix-` ~ rule.id ~ `" type="submit" value="` ~ _!`Fix it for me` ~ `">`;
+					if (lintDetails)
+						error.extraHTML ~= `<div class="lint-description">` ~ rule.longDescription() ~ `</div>`;
+					discussionPostForm(draft, null, error);
+					return false;
+				}
+			return true;
+		}
+
 		switch (action)
 		{
 			case "save":
 			{
-				discussionPostForm(draft);
+				if (lint())
+					discussionPostForm(draft);
 				// Show preview
 				auto post = draftToPost(draft, headers, ip);
 				post.compile();
@@ -296,21 +316,8 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 				userSettings.name  = aaGet(clientVars, "name");
 				userSettings.email = aaGet(clientVars, "email");
 
-				foreach (rule; lintRules)
-					if ("lint-ignore-" ~ rule.id !in draft.serverVars && rule.check(draft))
-					{
-						PostError error;
-						error.message = _!"Warning:" ~ " " ~ rule.shortDescription();
-						error.extraHTML ~= ` <input name="action-lint-ignore-` ~ rule.id ~ `" type="submit" value="` ~ _!`Ignore` ~ `">`;
-						if (!lintDetails)
-							error.extraHTML ~= ` <input name="action-lint-explain" type="submit" value="` ~ _!`Explain` ~ `">`;
-						if (rule.canFix(draft))
-							error.extraHTML ~= ` <input name="action-lint-fix-` ~ rule.id ~ `" type="submit" value="` ~ _!`Fix it for me` ~ `">`;
-						if (lintDetails)
-							error.extraHTML ~= `<div class="lint-description">` ~ rule.longDescription() ~ `</div>`;
-						discussionPostForm(draft, null, error);
-						return null;
-					}
+				if (!lint())
+					return null;
 
 				auto now = Clock.currTime();
 
