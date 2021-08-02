@@ -25,6 +25,7 @@ import std.exception : enforce;
 import std.file : readText;
 import std.format : format;
 import std.functional : not;
+import std.string : indexOf;
 import std.uni : icmp, toLower;
 
 import dfeed.loc;
@@ -39,6 +40,7 @@ import dfeed.sources.github;
 import dfeed.web.list;
 import dfeed.web.posting : postProcesses;
 import dfeed.web.user : User, getUser;
+import dfeed.web.web.config : config;
 import dfeed.web.web.draft : getDraft, draftToPost, newPostDraft, newReplyDraft, autoSaveDraft;
 import dfeed.web.web.page : html, NotFoundException, Redirect;
 import dfeed.web.web.part.gravatar;
@@ -70,10 +72,7 @@ import ae.utils.exception;
 import ae.utils.json : toJson;
 import ae.utils.meta : I;
 import ae.utils.regex : re;
-import ae.utils.text : indexOf;
 import ae.utils.text.html : encodeHtmlEntities;
-
-alias config = dfeed.web.web.config.config;
 
 HttpRequest currentRequest;
 string ip;
