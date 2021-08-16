@@ -22,7 +22,7 @@ subPackage {
 	dependency "ae" version="==0.0.3074"
 	dependency "ae:sqlite" version="==0.0.3074"
 	dependency "ae:openssl" version="==0.0.3074"
-	dependency "dcaptcha" version="==1.0.0"
+	dependency "dcaptcha" version="==1.0.1"
 }
 
 ---------------------------
