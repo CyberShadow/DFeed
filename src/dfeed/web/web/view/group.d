@@ -113,7 +113,7 @@ void discussionGroup(GroupInfo groupInfo, int page)
 		if (info)
 			with (*info)
 			{
-				putGravatar(getGravatarHash(info.authorEmail), idToUrl(tid, "thread"), `class="forum-postsummary-gravatar" `);
+				putGravatar(getGravatarHash(info.authorEmail), author, idToUrl(tid, "thread"), null, `class="forum-postsummary-gravatar" `);
 				html.put(
 				//	`<!-- Thread ID: ` ~ encodeHtmlEntities(threadID) ~ ` | First Post ID: ` ~ encodeHtmlEntities(id) ~ `-->` ~
 					`<div class="truncated"><a class="forum-postsummary-subject `, (isRead ? "forum-read" : "forum-unread"), `" href="`), html.putEncodedEntities(idToUrl(tid, "thread")), html.put(`" title="`), html.putEncodedEntities(subject), html.put(`">`), html.putEncodedEntities(subject), html.put(`</a></div>` ~

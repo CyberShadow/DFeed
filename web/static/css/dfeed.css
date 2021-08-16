@@ -395,10 +395,13 @@ div#footernav a {
 }
 
 #group-index a.forum-postsummary-gravatar img.post-gravatar {
-	width : 2.2em;
-	height: 2.2em;
-	border-width: 0.3em;
+	width : 2.2rem;
+	height: 2.2rem;
+	border-width: 0.3rem;
 	margin: 0;
+	overflow: hidden;
+	font-size: 6pt;
+	text-align: center;
 }
 
 /*************** Thread view, individual posts ***************/

@@ -79,7 +79,7 @@ void summarizeFrameThread(PostInfo* info, string infoText)
 	if (info)
 		with (*info)
 		{
-			putGravatar(getGravatarHash(info.authorEmail), idToUrl(id), `target="_top" class="forum-postsummary-gravatar" `);
+			putGravatar(getGravatarHash(info.authorEmail), author, idToUrl(id), null, `target="_top" class="forum-postsummary-gravatar" `);
 			html.put(
 				`<a target="_top" class="forum-postsummary-subject `, (user.isRead(rowid) ? "forum-read" : "forum-unread"), `" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`">`), html.putEncodedEntities(subject), html.put(`</a><br>` ~
 				`<div class="forum-postsummary-info">`, infoText, `</div>`,
