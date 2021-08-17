@@ -40,11 +40,18 @@ string getGravatarHash(string email)
 	return email.toLower().strip().md5Of().toHexString!(LetterCase.lower)().idup; // Issue 9279
 }
 
-void putGravatar(string gravatarHash, string linkTarget, string aProps = null, int size = 0)
+void putGravatar(string gravatarHash, string personName, string linkTarget, string linkDescription, string aProps = null, int size = 0)
 {
 	html.put(
 		`<a `, aProps, ` href="`), html.putEncodedEntities(linkTarget), html.put(`">` ~
-			`<img alt="Gravatar" class="post-gravatar" `);
+			`<img class="post-gravatar" alt="Gravatar of `), html.putEncodedEntities(personName),
+			html.put(`" `);
+	if (linkDescription.length)
+	{
+		html.put(`title="`), html.putEncodedEntities(linkDescription),
+		html.put(`" aria-label="`), html.putEncodedEntities(linkDescription),
+		html.put(`" `);
+	}
 	if (size)
 	{
 		string sizeStr = size ? text(size) : null;

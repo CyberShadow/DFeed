@@ -291,7 +291,7 @@ void formatSearchResult(Rfc850Post post, string snippet)
 			`<tr>` ~
 				`<td class="post-info">` ~
 					`<div class="post-author">`), html.putEncodedEntities(author), html.put(`</div>`);
-		putGravatar(gravatarHash, "http://www.gravatar.com/" ~ gravatarHash, `title="` ~ _!`%s's Gravatar profile`.format(encodeHtmlEntities(author)) ~ `"`, 80);
+		putGravatar(gravatarHash, author, "http://www.gravatar.com/" ~ gravatarHash, _!`%s's Gravatar profile`.format(author), null, 80);
 
 		html.put(
 				`</td>` ~

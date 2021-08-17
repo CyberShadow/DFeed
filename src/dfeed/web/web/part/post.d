@@ -142,7 +142,7 @@ void miniPostInfo(Rfc850Post post, Rfc850Post[string] knownPosts, bool showActio
 		html.put(
 			`<table class="mini-post-info"><tr>` ~
 				`<td class="mini-post-info-avatar">`);
-		putGravatar(gravatarHash, "http://www.gravatar.com/" ~ gravatarHash, `title="` ~ encodeHtmlEntities(_!`%s's Gravatar profile`.format(author)) ~ `"`, 32);
+		putGravatar(gravatarHash, author, "http://www.gravatar.com/" ~ gravatarHash, _!`%s's Gravatar profile`.format(author), null, 32);
 		html.put(
 				`</td>` ~
 				`<td>` ~
@@ -237,7 +237,7 @@ void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts, bool markAsRead 
 			`<tr>` ~
 				`<td class="post-info">` ~
 					`<div class="post-author">`), html.putEncodedEntities(author), html.put(`</div>`);
-		putGravatar(gravatarHash, "http://www.gravatar.com/" ~ gravatarHash, `title="` ~ encodeHtmlEntities(_!`%s's Gravatar profile"`.format(author)), 80);
+		putGravatar(gravatarHash, author, "http://www.gravatar.com/" ~ gravatarHash, _!`%s's Gravatar profile`.format(author), null, 80);
 		if (infoBits.length)
 		{
 			html.put(`<hr>`);
