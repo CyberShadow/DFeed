@@ -614,6 +614,8 @@ a > .forcewrap {
 
 	font-family: "Roboto Slab", sans-serif;
 	font-size: 16px;
+
+	overflow-wrap: anywhere;
 }
 .post-text.markdown pre {
 	font-family: Consolas, Lucida Console, Menlo, monospace;
