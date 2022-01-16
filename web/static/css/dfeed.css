@@ -664,6 +664,10 @@ a > .forcewrap {
 	font-weight: bold;
 }
 
+#forum-content .post-text.markdown img {
+	max-width: 100%;
+}
+
 /* Threading */
 
 .post-nester {
