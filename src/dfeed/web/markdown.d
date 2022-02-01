@@ -1,4 +1,4 @@
-/*  Copyright (C) 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2021, 2022  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -66,6 +66,7 @@ string renderMarkdown(string s)
 	result = result
 		.replace("<blockquote>\n", `<span class="forum-quote"><span class="forum-quote-prefix">&gt; </span>`)
 		.replace("\n</blockquote>", `</span>`)
+		.replace("</blockquote>", `</span>`)
 		.replace(`<a href="`, `<a rel="nofollow" href="`)
 	;
 
