@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2022  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -100,10 +100,8 @@ void discussionFrameAnnouncements()
 		`<a target="_top" href="/group/digitalmars.D.announce">`, _!`Latest announcements`, `</a>` ~
 		`</th></tr></thead><tbody>`);
 	foreach (row; latestAnnouncements)
-	{
-		auto info = getPostInfo(row);
-		html.put(`<tr><td>`), summarizeFrameThread(info, summarizeTime(info.time)), html.put(`</td></tr>`);
-	}
+		if (auto info = getPostInfo(row))
+			html.put(`<tr><td>`), summarizeFrameThread(info, summarizeTime(info.time)), html.put(`</td></tr>`);
 	html.put(`</tbody></table>`);
 }
 
@@ -113,7 +111,8 @@ void discussionFrameDiscussions()
 
 	html.put(`<table class="forum-table"><thead><tr><th><a target="_top" href="/">`, _!`Active discussions`, `</a></th></tr></thead><tbody>`);
 	foreach (row; activeDiscussions)
-		html.put(`<tr><td>`), summarizeFrameThread(getPostInfo(row.id), "%d posts".format(row.postCount)), html.put(`</td></tr>`);
+		if (auto info = getPostInfo(row.id))
+			html.put(`<tr><td>`), summarizeFrameThread(info, "%d posts".format(row.postCount)), html.put(`</td></tr>`);
 	html.put(`</tbody></table>`);
 }
 
