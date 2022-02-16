@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021, 2022  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -411,6 +411,23 @@ void moderateMessage(ref PostDraft draft, Headers headers, string reason)
 	draft.status = PostDraft.Status.moderation;
 
 	string sanitize(string s) { return "%(%s%)".format(s.only)[1..$-1]; }
+
+	try
+	{
+		import std.file : readText;
+		auto badStrings = "config/known-spammers.txt".readText();
+		foreach (badString; badStrings)
+			if (draft.clientVars.get("text", null).canFind(badString))
+			{
+				import ae.sys.log : fileLogger;
+				auto moderationLog = fileLogger("Deleted");
+				scope(exit) moderationLog.close();
+
+				moderationLog("Silently ignoring known spammer: " ~ draft.clientVars.get("did", "").I!sanitize);
+				return;
+			}
+	}
+	catch (Exception e) {}
 
 	string context;
 	{
