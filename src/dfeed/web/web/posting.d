@@ -26,7 +26,7 @@ import std.datetime.systime : SysTime, Clock;
 import std.datetime.timezone : UTC;
 import std.exception : enforce;
 import std.format : format;
-import std.string : strip;
+import std.string : strip, splitLines;
 
 import ae.net.ietf.headers : Headers;
 import ae.net.ietf.url : UrlParameters;
@@ -415,9 +415,9 @@ void moderateMessage(ref PostDraft draft, Headers headers, string reason)
 	try
 	{
 		import std.file : readText;
-		auto badStrings = "config/known-spammers.txt".readText();
+		auto badStrings = "config/known-spammers.txt".readText().splitLines;
 		foreach (badString; badStrings)
-			if (draft.clientVars.get("text", null).canFind(badString))
+			if (badString.length && draft.clientVars.get("text", null).canFind(badString))
 			{
 				import ae.sys.log : fileLogger;
 				auto moderationLog = fileLogger("Deleted");
