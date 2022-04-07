@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2015, 2016, 2017, 2018, 2020, 2022  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -691,8 +691,9 @@ void checkPost(Rfc850Post post)
 	foreach (string subscriptionID; query!"SELECT [SubscriptionID] FROM [ContentTriggers]".iterate())
 	{
 		auto subscription = getSubscription(subscriptionID);
-		if ((cast(ContentTrigger)subscription.trigger).checkPost(post))
-			subscription.runActions(post);
+		if (auto trigger = cast(ContentTrigger)subscription.trigger)
+			if (trigger.checkPost(post))
+				subscription.runActions(post);
 	}
 }
 
