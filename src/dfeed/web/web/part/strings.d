@@ -54,32 +54,6 @@ string summarizeTime(SysTime time, bool colorize = false)
 	return `<span style="` ~ style ~ `" title="` ~ encodeHtmlEntities(formatLongTime(time)) ~ `">` ~ encodeHtmlEntities(formatShortTime(time, shorter)) ~ `</span>`;
 }
 
-string formatTinyTime(SysTime time)
-{
-	SysTime now = Clock.currTime(UTC());
-	Duration duration = now - time;
-	
-	if (duration < 1.seconds)
-		return "0s";
-	else
-	if (duration < 1.minutes)
-		return text(duration.total!"seconds", _!"s");
-	else
-	if (duration < 1.hours)
-		return text(duration.total!"minutes", _!"m");
-	else
-	if (duration < 1.days)
-		return text(duration.total!"hours", _!"h");
-	else
-	if (duration < 31.days)
-		return text(duration.total!"days", _!"d");
-	else
-	if (duration < 365.days)
-		return time.formatTimeLoc!"M j"();
-	else
-		return time.formatTimeLoc!"M 'y"();
-}
-
 string formatShortTime(SysTime time, bool shorter)
 {
 	if (!time.stdTime)

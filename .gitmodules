@@ -1,6 +1,6 @@
 [submodule "ae"]
 	path = lib/ae
-	url = https://github.com/CyberShadow/ae
+	url = git://github.com/CyberShadow/ae.git
 [submodule "dcaptcha"]
 	path = lib/dcaptcha
 	url = https://github.com/CyberShadow/dcaptcha
