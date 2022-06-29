@@ -1429,3 +1429,269 @@ body.frame .post-gravatar {
 	-webkit-border-radius: 5px;
 	border-radius: 5px;
 }
+
+.viewmode-narrow-index a {
+	text-decoration-line: none;
+}
+
+.viewmode-narrow-index a * {
+	text-decoration-line: inherit;
+}
+
+.viewmode-narrow-index a:hover {
+	text-decoration-line: underline;
+}
+
+.viewmode-narrow-index a:hover * {
+	text-decoration-line: inherit;
+}
+
+.viewmode-narrow-index .group-index-header {
+	display: flex;
+	align-items: center;
+	line-height: 1.5em;
+	height: 4em;
+	border-bottom: 1px solid lightgray;
+	justify-content: space-between;
+}
+
+@media only screen and (max-width: 50em) {
+	.viewmode-narrow-index .group-index-header {
+		margin: 0 10px;
+	}
+	
+	.viewmode-narrow-index {
+		padding: 0 10px;
+	}
+}
+
+.viewmode-narrow-index .group-index-header .title {
+	font-weight: bold;
+}
+
+.viewmode-narrow-index .group-index-header .create-thread {
+	text-align: right;
+}
+
+.viewmode-narrow-index .group-index-header .create-thread img {
+	height: 12px;
+}
+
+.viewmode-narrow-index .group-index-header a.button {
+	display: inline-block;
+	padding: 2px 5px;
+	color: initial;
+	background-color: rgb(240, 240, 240);
+	text-decoration: none;
+	border-radius: 5px;
+	border: 1px solid lightgray;
+}
+
+.viewmode-narrow-index .group-index-header a.button:hover {
+	background-color: rgb(224, 224, 224);
+	text-decoration: none;
+}
+
+.viewmode-narrow-index .thread {
+	display: grid;
+	grid-template-columns: auto minmax(0, 0.925fr) minmax(0, 1fr) minmax(0, 1.075fr);
+	grid-template-rows: auto;
+	grid-template-areas:
+		"firstpost-author-image thread-title          thread-title  thread-title"
+		"firstpost-author-image firstpost-time        replies-total lastpost-time"
+		"firstpost-author-image firstpost-author-name replies-new   lastpost-author";
+	border-bottom: 1px solid lightgray;
+	padding: 5px 0;
+}
+
+.viewmode-narrow-index .thread > * {
+	align-self: center;
+}
+
+.viewmode-narrow-index .thread .title {
+	grid-area: thread-title;
+	margin-bottom: .25em;
+	font-size: 1em;
+}
+
+.viewmode-narrow-index .thread :not(:first-child) {
+	font-size: small;
+}
+
+.viewmode-narrow-index .thread .firstpost-time {
+	grid-area: firstpost-time;
+}
+
+.viewmode-narrow-index .thread .firstpost-time .short {
+	display: none;
+}
+
+.viewmode-narrow-index .thread .firstpost-time .long {
+	display: inline-block;
+}
+
+.viewmode-narrow-index .thread .firstpost-author-image {
+	grid-area: firstpost-author-image;
+	width: 3em;
+	height: 3em;
+	border-radius: 50%;
+	margin-top: 0.75ch;
+	margin-right: 10px;
+	align-self: start;
+}
+
+.viewmode-narrow-index .thread .firstpost-author-name {
+	grid-area: firstpost-author-name;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: gray;
+}
+
+.viewmode-narrow-index .thread .replies-total {
+	grid-area: replies-total;
+	text-align: center;
+}
+
+.viewmode-narrow-index .thread .replies-total .short {
+	display: none;
+}
+
+.viewmode-narrow-index .thread .replies-total .long {
+	display: inline;
+}
+
+.viewmode-narrow-index .thread .replies-new {
+	grid-area: replies-new;
+	text-align: center;
+}
+
+.viewmode-narrow-index .thread .replies-new .short {
+	display: none;
+}
+
+.viewmode-narrow-index .thread .replies-new .long {
+	display: inline;
+}
+
+@media only screen and (max-width: 40em) {
+	.viewmode-narrow-index .thread .replies-total .short {
+		display: inline;
+	}
+	
+	.viewmode-narrow-index .thread .replies-total .long {
+		display: none;
+	}
+	
+	.viewmode-narrow-index .thread .replies-new .short {
+		display: inline;
+	}
+	
+	.viewmode-narrow-index .thread .replies-new .long {
+		display: none;
+	}
+}
+
+.viewmode-narrow-index .thread .lastpost-time {
+	grid-area: lastpost-time;
+	text-align: right;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.viewmode-narrow-index .thread .lastpost-time .short {
+	display: none;
+}
+
+.viewmode-narrow-index .thread .lastpost-time .long {
+	display: inline;
+}
+
+@media only screen and (max-width: 50em) {
+	.viewmode-narrow-index .thread .firstpost-time .short {
+		display: inline;
+	}
+	
+	.viewmode-narrow-index .thread .firstpost-time .long {
+		display: none;
+	}
+	
+	.viewmode-narrow-index .thread .lastpost-time .short {
+		display: inline;
+	}
+	
+	.viewmode-narrow-index .thread .lastpost-time .long {
+		display: none;
+	}
+}
+
+.viewmode-narrow-index .thread .lastpost-time .last {
+	display: none;
+}
+
+.viewmode-narrow-index .thread .lastpost-time .last-post {
+	display: inline;
+}
+
+@media only screen and (max-width: 40em) {
+	.viewmode-narrow-index .thread .lastpost-time .last {
+		display: inline;
+	}
+	
+	.viewmode-narrow-index .thread .lastpost-time .last-post {
+		display: none;
+	}
+}
+
+.viewmode-narrow-index .thread .lastpost-author {
+	grid-area: lastpost-author;
+	text-align: right;
+	display: flex;
+	align-items: center;
+	justify-content: right;
+	color: gray;
+}
+
+.viewmode-narrow-index .thread .lastpost-author-image {
+	width: 1.5em;
+	height: 1.5em;
+	border-radius: 50%;
+	margin-right: 0.5ch;
+}
+
+.viewmode-narrow-index .thread .lastpost-author-name {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.viewmode-narrow-index .pager-left {
+	padding: 5px 0;
+}
+
+.viewmode-narrow-index .pager-right {
+	padding: 5px 0;
+}
+
+.viewmode-narrow-index .pager-numbers {
+	padding: 5px 10px;
+	text-align: center;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+@media only screen and (max-width: 50em) {
+	.viewmode-narrow-index .pager-left {
+		padding: 5px 10px;
+	}
+
+	.viewmode-narrow-index .pager-right {
+		padding: 5px 10px;
+	}
+
+	.viewmode-narrow-index .pager-numbers {
+		padding: 5px 0;
+	}
+}

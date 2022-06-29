@@ -42,7 +42,7 @@ import dfeed.web.web.cache : postCountCache, getPostCounts;
 import dfeed.web.web.page : html;
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
 import dfeed.web.web.part.pager : THREADS_PER_PAGE, getPageOffset, threadPager, indexToPage, getPageCount, getPageCount, pager;
-import dfeed.web.web.part.strings : summarizeTime, formatNumber, truncateString;
+import dfeed.web.web.part.strings : formatTinyTime, formatShortTime, formatLongTime, summarizeTime, formatNumber;
 import dfeed.web.web.part.thread : formatThreadedPosts;
 import dfeed.web.web.postinfo : PostInfo, getPostInfo, getPost;
 import dfeed.web.web.statics : staticPath;
@@ -85,7 +85,9 @@ void discussionGroup(GroupInfo groupInfo, int page)
 
 		@property bool isRead() { return unreadPostCount==0; }
 	}
+
 	Thread[] threads;
+	threads.reserve(THREADS_PER_PAGE);
 
 	int getUnreadPostCount(string id)
 	{
@@ -167,6 +169,159 @@ void discussionGroup(GroupInfo groupInfo, int page)
 	html.put(
 		`</table>`
 	);
+}
+
+void discussionGroupNarrowIndex(GroupInfo groupInfo, int page)
+{
+	enforce(page >= 1, _!"Invalid page");
+
+	struct Thread
+	{
+		string id;
+		PostInfo* _firstPost, _lastPost;
+		int postCount, unreadPostCount;
+
+		/// Handle orphan posts
+		@property PostInfo* firstPost() { return _firstPost ? _firstPost : _lastPost; }
+		@property PostInfo* lastPost() { return _lastPost; }
+
+		@property bool isRead() { return unreadPostCount == 0; }
+	}
+
+	Thread[] threads;
+	threads.reserve(THREADS_PER_PAGE);
+
+	int getUnreadPostCount(string id)
+	{
+		auto posts = threadPostIndexCache(id, getThreadPostIndexes(id));
+		int count = 0;
+		foreach (post; posts)
+			if (!user.isRead(post))
+				count++;
+		return count;
+	}
+
+	foreach (string firstPostID, string lastPostID; query!"SELECT `ID`, `LastPost` FROM `Threads` WHERE `Group` = ? ORDER BY `LastUpdated` DESC LIMIT ? OFFSET ?".iterate(groupInfo.internalName, THREADS_PER_PAGE, getPageOffset(page, THREADS_PER_PAGE)))
+		foreach (int count; query!"SELECT COUNT(*) FROM `Posts` WHERE `ThreadID` = ?".iterate(firstPostID))
+		{
+			if (count == 0 && user.getLevel() < User.Level.sysadmin)
+			{
+				// 0-count threads can occur after deleting the last post in a thread, and that post's message ID did not match the thread's.
+				continue;
+			}
+			threads ~= Thread(firstPostID, getPostInfo(firstPostID), getPostInfo(lastPostID), count, getUnreadPostCount(firstPostID));
+		}
+
+	void summarizeThread(ref Thread thread)
+	{
+		html.put(`<div class="thread">` ~
+			`<div class="title">` ~
+			`<a ` ~
+			`class="`, thread.isRead ? "forum-read" : "forum-unread", `" ` ~
+			`href="`);
+		html.putEncodedEntities(idToUrl(thread.id, "thread"));
+		html.put(`" title="`);
+		html.putEncodedEntities(thread.firstPost.subject);
+		html.put(`">`);
+		html.putEncodedEntities(thread.firstPost.subject);
+		html.put(`</a>` ~
+			`</div>` ~
+			`<time class="firstpost-time" ` ~
+			`datetime="`);
+		html.putEncodedEntities(thread.firstPost.time.formatTimeLoc!"c");
+		html.put(`" ` ~
+			`title="`);
+		html.putEncodedEntities(thread.firstPost.time.formatTimeLoc!"l, d F Y, H:i:s e");
+		html.put(`">` ~
+			`<span class="short">`);
+		html.putEncodedEntities(formatTinyTime(thread.firstPost.time));
+		html.put(`</span>` ~
+			`<span class="long">`);
+		html.putEncodedEntities(formatShortTime(thread.firstPost.time, false));
+		html.put(`</span>` ~
+			`</time>` ~
+			`<img  class="firstpost-author-image" src="//www.gravatar.com/avatar/`, getGravatarHash(thread.firstPost.authorEmail), `?d=identicon">` ~
+			`<div class="firstpost-author-name">`);
+		html.putEncodedEntities(thread.firstPost.author);
+		html.put(`</div>` ~
+			`<div class="replies-total">` ~
+			`<span class="short">`,
+			formatNumber(thread.postCount - 1),
+			`</span>` ~
+			`<span class="long">`,
+			formatNumber(thread.postCount - 1), " ", (thread.postCount - 1) == 1 ? _!"reply" : _!"replies");
+		html.put(`</span>` ~
+			`</div>` ~
+			`<div class="replies-new">` ~
+			`<span class="short">`);
+		if (thread.unreadPostCount && thread.unreadPostCount != thread.postCount)
+			html.put(`(<a href="`, idToUrl(thread.id, "first-unread"), `">`, formatNumber(thread.unreadPostCount), `</a>)`);
+		html.put(`</span>` ~
+			`<span class="long">`);
+		if (thread.unreadPostCount && thread.unreadPostCount != thread.postCount)
+			html.put(`<a href="`, idToUrl(thread.id, "first-unread"), `">`, formatNumber(thread.unreadPostCount), ` `, _!`new`, `</a>`);
+		html.put(`</span>` ~
+			`</div>` ~
+			`<div class="lastpost-time">` ~
+			`<a ` ~
+			`href="`);
+		html.putEncodedEntities(idToUrl(thread.lastPost.id));
+		html.put(`">`,
+			`<span class="last">`,
+			_!`Last`,
+			`: ` ~
+			`</span>` ~
+			`<span class="last-post">`,
+			_!`Last Post`,
+			`: ` ~
+			`</span>` ~
+			`<time ` ~
+			`datetime="`);
+		html.putEncodedEntities(thread.lastPost.time.formatTimeLoc!"c");
+		html.put(`" ` ~
+			`title="`);
+		html.putEncodedEntities(thread.lastPost.time.formatTimeLoc!"l, d F Y, H:i:s e");
+		html.put(`">` ~
+			`<span class="short">`);
+		html.putEncodedEntities(formatTinyTime(thread.lastPost.time));
+		html.put(`</span>` ~
+			`<span class="long">`);
+		html.putEncodedEntities(formatShortTime(thread.lastPost.time, false));
+		html.put(`</span>` ~
+			`</time>` ~
+			`</a>` ~
+			`</div>` ~
+			`<div class="lastpost-author">` ~
+			`<img class="lastpost-author-image" src="//www.gravatar.com/avatar/`, getGravatarHash(thread.lastPost.authorEmail), `?d=identicon">`);
+		html.put(`<span class="lastpost-author-name">`);
+		html.putEncodedEntities(thread.lastPost.author);
+		html.put(`</span>` ~
+			`</div>` ~
+			`</div>`);
+	}
+	
+	html.put(`<div class="viewmode-narrow-index">` ~
+		`<div class="group-index-header">` ~
+		`<div class="title">`);
+	html.putEncodedEntities(groupInfo.publicName);
+	html.put(`</div>` ~
+		`<div class="create-thread">`);
+	html.put(`<a class="button" href="/newpost/`);
+	html.putEncodedEntities(groupInfo.urlName);
+	html.put(`">` ~
+		`<img src="`, staticPath("/images/newthread.png"), `"> `);
+	html.put(_!`Create thread`);
+	html.put(`</a>` ~
+		`</div>` ~
+		`</div>`);
+	
+	html.put(`<div class="group-index">`);
+	foreach (thread; threads)
+		summarizeThread(thread);
+	html.put(`</div>`);
+	
+	threadPager(groupInfo, page);
+	html.put(`</div>`);
 }
 
 // ***********************************************************************

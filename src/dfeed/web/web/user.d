@@ -92,12 +92,13 @@ struct UserSettings
 }
 UserSettings userSettings;
 
-static immutable allViewModes = ["basic", "threaded", "horizontal-split", "vertical-split"];
+static immutable allViewModes = ["basic", "narrow-index", "threaded", "horizontal-split", "vertical-split"];
 string viewModeName(string viewMode)
 {
 	switch (viewMode)
 	{
 		case "basic"           : return _!"basic"           ;
+		case "narrow-index"    : return _!"narrow-index"    ;
 		case "threaded"        : return _!"threaded"        ;
 		case "horizontal-split": return _!"horizontal-split";
 		case "vertical-split"  : return _!"vertical-split"  ;

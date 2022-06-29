@@ -470,6 +470,8 @@ string translate(string s)
 			return `%d %s önce`;
 		case `basic`:
 			return `Temel`;
+		case `narrow-index`:
+			return `Dar dizin`;
 		case `threaded`:
 			return `Gönderi listesi`;
 		case `horizontal-split`:
@@ -982,6 +984,14 @@ string translate(string s)
 			return `CAPTCHA çözümü doğru değil`;
 		case `The solution was received after the CAPTCHA timed out`:
 			return `Çözüm, CAPTCHA zaman aşımına uğradıktan sonra alındı`;
+		case `s`:
+			return `sn`;
+		case `m`:
+			return `dk`;
+		case `h`:
+			return `sa`;
+		case `d`:
+			return `g`;
 		default:
 			return null;
 	}
