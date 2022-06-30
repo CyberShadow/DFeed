@@ -34,7 +34,7 @@ import dfeed.web.web.page : html;
 void pager(string base, int page, int pageCount, int maxWidth = 50)
 {
 	if (!pageCount)
-		return html.put(`<tr class="pager"><th colspan="3">-</th></tr>`);
+		return html.put(`<tr><th colspan="3">-</th></tr>`);
 
 	string linkOrNot(string text, int page, bool cond)
 	{
@@ -85,18 +85,18 @@ void pager(string base, int page, int pageCount, int maxWidth = 50)
 		pager ~= "&hellip;";
 
 	html.put(
-		`<tr class="pager"><th colspan="3">` ~
+		`<tr><th class="pager-row" colspan="3"><div class="pager">` ~
 			`<div class="pager-left">`,
 				linkOrNot("&laquo; " ~ _!"First", 1, page!=1),
 				`&nbsp;&nbsp;&nbsp;`,
 				linkOrNot("&lsaquo; " ~ _!"Prev", page-1, page>1),
 			`</div>` ~
+			`<div class="pager-numbers">`, pager.join(` `), `</div>` ~
 			`<div class="pager-right">`,
 				linkOrNot(_!"Next" ~ " &rsaquo;", page+1, page<pageCount),
 				`&nbsp;&nbsp;&nbsp;`,
 				linkOrNot(_!"Last" ~ " &raquo; ", pageCount, page!=pageCount && pageCount!=int.max),
-			`</div>` ~
-			`<div class="pager-numbers">`, pager.join(` `), `</div>` ~
+			`</div></div>` ~
 		`</th></tr>`);
 }
 

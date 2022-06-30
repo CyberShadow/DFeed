@@ -238,15 +238,42 @@ img.post-gravatar {
 
 /* Pager */
 
-.pager th {
+.pager-row {
+	padding: 0 !important;
+}
+
+.pager {
 	font-weight: normal;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 5px 0.33em;
 }
+
+.viewmode-narrow-index .pager {
+	padding: 5px 0;
+}
+
 .pager-left {
-	float: left;
+	flex: 0 1 auto;
+	margin-right: 5px;
+	text-align: left;
+	white-space: nowrap;
 }
+
+.pager-numbers {
+	flex: 1 1 auto;
+	margin: 0 5px;
+	text-align: center;
+}
+
 .pager-right {
-	float: right;
+	flex: 0 1 auto;
+	margin-left: 5px;
+	text-align: right;
+	white-space: nowrap;
 }
+
 .disabled-link {
 	color: #999;
 }
@@ -1456,10 +1483,6 @@ body.frame .post-gravatar {
 }
 
 @media only screen and (max-width: 50em) {
-	.viewmode-narrow-index .group-index-header {
-		margin: 0 10px;
-	}
-	
 	.viewmode-narrow-index {
 		padding: 0 10px;
 	}
@@ -1664,34 +1687,4 @@ body.frame .post-gravatar {
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-}
-
-.viewmode-narrow-index .pager-left {
-	padding: 5px 0;
-}
-
-.viewmode-narrow-index .pager-right {
-	padding: 5px 0;
-}
-
-.viewmode-narrow-index .pager-numbers {
-	padding: 5px 10px;
-	text-align: center;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-	overflow: hidden;
-}
-
-@media only screen and (max-width: 50em) {
-	.viewmode-narrow-index .pager-left {
-		padding: 5px 10px;
-	}
-
-	.viewmode-narrow-index .pager-right {
-		padding: 5px 10px;
-	}
-
-	.viewmode-narrow-index .pager-numbers {
-		padding: 5px 0;
-	}
 }
