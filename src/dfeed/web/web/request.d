@@ -52,7 +52,7 @@ import dfeed.web.web.user;
 import dfeed.web.web.view.feed : getFeed, getSubscriptionFeed, FEED_HOURS_DEFAULT, FEED_HOURS_MAX;
 import dfeed.web.web.view.index : discussionIndex;
 import dfeed.web.web.view.login : discussionLoginForm, discussionRegisterForm, discussionLogin, discussionRegister;
-import dfeed.web.web.view.group : discussionGroup, discussionGroupThreaded, discussionGroupSplit, discussionGroupVSplit, discussionGroupSplitFromPost, discussionGroupVSplitFromPost;
+import dfeed.web.web.view.group : discussionGroup, discussionGroupNarrowIndex, discussionGroupThreaded, discussionGroupSplit, discussionGroupVSplit, discussionGroupSplitFromPost, discussionGroupVSplitFromPost;
 import dfeed.web.web.view.moderation : discussionModeration, deletePostApi, discussionFlagPage, discussionApprovePage;
 import dfeed.web.web.view.widgets;
 import dfeed.web.web.view.post : discussionSplitPost, discussionVSplitPost, discussionSinglePost;
@@ -258,6 +258,9 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				if (viewMode == "basic")
 					discussionGroup(groupInfo, page);
 				else
+				if (viewMode == "narrow-index")
+					discussionGroupNarrowIndex(groupInfo, page);
+				else
 				if (viewMode == "threaded")
 					discussionGroupThreaded(groupInfo, page);
 				else
@@ -281,14 +284,14 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 
 				auto firstPostUrl = idToUrl(getPostAtThreadIndex(threadID, getPageOffset(page, POSTS_PER_PAGE)));
 				auto viewMode = userSettings.groupViewMode;
-				if (viewMode != "basic")
+				if (viewMode != "basic" && viewMode != "narrow-index")
 					html.put(`<div class="forum-notice">` ~ _!"Viewing thread in basic view mode \&ndash; click a post's title to open it in %s view mode".format(viewModeName(viewMode)).encodeHtmlEntities() ~ `</div>`);
 				returnPage = firstPostUrl;
 
 				string pageStr = page==1 ? "" : " " ~ format(_!"(page %d)", page);
 				GroupInfo groupInfo;
 				string subject, authorEmail;
-				discussionThread(threadID, page, groupInfo, subject, authorEmail, viewMode == "basic");
+				discussionThread(threadID, page, groupInfo, subject, authorEmail, viewMode == "basic" || viewMode == "narrow-index");
 				enforce(groupInfo, _!"Unknown group");
 				title = subject ~ pageStr;
 				currentGroup = groupInfo;
@@ -308,7 +311,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 					return response.redirect(idToUrl(id));
 
 				auto viewMode = userSettings.groupViewMode;
-				if (viewMode == "basic")
+				if (viewMode == "basic" || viewMode == "narrow-index")
 					return response.redirect(resolvePostUrl(id));
 				else
 				if (viewMode == "threaded")

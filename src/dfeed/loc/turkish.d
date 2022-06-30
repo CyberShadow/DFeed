@@ -113,7 +113,7 @@ string translate(string s)
 		case `Also via`:
 			return `Ayrıca`;
 		case `Create thread`:
-			return `Yeni konu oluştur`;
+			return `Yeni konu`;
 		case `Invalid page`:
 			return `Geçersiz sayfa`;
 		case `by`:
@@ -122,6 +122,8 @@ string translate(string s)
 			return `Konu / Konuyu Başlatan`;
 		case `Replies`:
 			return `Yanıt`;
+		case `replies`:
+			return `yanıt`;
 		case `Loading...`:
 			return `Yükleniyor...`;
 		case `Sorry, this view requires JavaScript.`:
@@ -270,6 +272,8 @@ string translate(string s)
 			return `Böyle bir kullanıcı aboneliği yok`;
 		case `reply`:
 			return `yanıt`;
+		case "new":
+			return "yeni";
 		case `Replies to your posts`:
 			return `Gönderilerinize verilen yanıtlar`;
 		case `%s replied to your post in the thread "%s"`:
@@ -470,6 +474,8 @@ string translate(string s)
 			return `%d %s önce`;
 		case `basic`:
 			return `Temel`;
+		case `narrow-index`:
+			return `Dar dizin`;
 		case `threaded`:
 			return `Gönderi listesi`;
 		case `horizontal-split`:
@@ -982,6 +988,14 @@ string translate(string s)
 			return `CAPTCHA çözümü doğru değil`;
 		case `The solution was received after the CAPTCHA timed out`:
 			return `Çözüm, CAPTCHA zaman aşımına uğradıktan sonra alındı`;
+		case `s`:
+			return `sn`;
+		case `m`:
+			return `dk`;
+		case `h`:
+			return `sa`;
+		case `d`:
+			return `g`;
 		default:
 			return null;
 	}
@@ -1036,6 +1050,9 @@ private string pluralOf(string unit)
       // This seems to be used only in the `You have read a total of %s %s during your %s.` string where it happens to
       // be the first word in Turkish, so we use it capitalized for now.
       return "Ziyaretiniz";
+
+		case "reply":
+      return "yanıt";
 
 		case "new reply":
       return "yeni yanıt";
