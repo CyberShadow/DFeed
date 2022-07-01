@@ -35,7 +35,7 @@ import dfeed.web.web.page : html;
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
 import dfeed.web.web.part.post : getParentLink, miniPostInfo, getPostActions, postActions, postLink, formatPost, formatPostParts;
 import dfeed.web.web.part.postbody : formatBody;
-import dfeed.web.web.part.strings : formatShortTime, summarizeTime, formatLongTime;
+import dfeed.web.web.part.strings : formatShortTime, summarizeTime, formatAbsoluteTime;
 import dfeed.web.web.part.thread : discussionThreadOverview;
 import dfeed.web.web.postinfo : PostInfo, getPost, idToThreadUrl, getPostInfo;
 import dfeed.web.web.user : user;
@@ -63,8 +63,8 @@ void formatSplitPost(Rfc850Post post, bool footerNav)
 	string parentLink;
 
 	infoRows ~= InfoRow(_!"From", encodeHtmlEntities(post.author));
-	// infoRows ~= InfoRow(_!"Date", format("%s (%s)", formatLongTime(post.time), formatShortTime(post.time, false)));
-	infoRows ~= InfoRow(_!"Date", formatLongTime(post.time));
+	// infoRows ~= InfoRow(_!"Date", format("%s (%s)", formatAbsoluteTime(post.time), formatShortTime(post.time, false)));
+	infoRows ~= InfoRow(_!"Date", formatAbsoluteTime(post.time));
 
 	if (post.parentID)
 	{

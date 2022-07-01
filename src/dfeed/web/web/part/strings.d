@@ -51,7 +51,7 @@ string summarizeTime(SysTime time, bool colorize = false)
 	}
 
 	bool shorter = colorize; // hack
-	return `<span style="` ~ style ~ `" title="` ~ encodeHtmlEntities(formatLongTime(time)) ~ `">` ~ encodeHtmlEntities(formatShortTime(time, shorter)) ~ `</span>`;
+	return `<span style="` ~ style ~ `" title="` ~ encodeHtmlEntities(formatAbsoluteTime(time)) ~ `">` ~ encodeHtmlEntities(formatShortTime(time, shorter)) ~ `</span>`;
 }
 
 string formatTinyTime(SysTime time)
@@ -145,6 +145,20 @@ string formatDuration(Duration duration)
 }
 
 string formatLongTime(SysTime time)
+{
+	if (!time.stdTime)
+		return "-";
+
+	SysTime now = Clock.currTime(UTC());
+	Duration duration = now - time;
+	
+	if (duration < 7.days)
+		return formatDuration(duration);
+	else
+		return formatAbsoluteTime(time);
+}
+
+string formatAbsoluteTime(SysTime time)
 {
 	return time.formatTimeLoc!"l, d F Y, H:i:s e"();
 }

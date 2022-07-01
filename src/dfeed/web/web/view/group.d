@@ -42,7 +42,7 @@ import dfeed.web.web.cache : postCountCache, getPostCounts;
 import dfeed.web.web.page : html;
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
 import dfeed.web.web.part.pager : THREADS_PER_PAGE, getPageOffset, threadPager, indexToPage, getPageCount, getPageCount, pager;
-import dfeed.web.web.part.strings : formatTinyTime, formatShortTime, formatLongTime, summarizeTime, formatNumber;
+import dfeed.web.web.part.strings : formatTinyTime, formatShortTime, formatLongTime, formatAbsoluteTime, summarizeTime, formatNumber;
 import dfeed.web.web.part.thread : formatThreadedPosts;
 import dfeed.web.web.postinfo : PostInfo, getPostInfo, getPost;
 import dfeed.web.web.statics : staticPath;
