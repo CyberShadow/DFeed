@@ -1517,14 +1517,31 @@ body.frame .post-gravatar {
 
 .viewmode-narrow-index .thread {
 	display: grid;
-	grid-template-columns: auto minmax(0, 0.925fr) minmax(0, 1fr) minmax(0, 1.075fr);
+	grid-template-columns: auto minmax(0, 1fr) 10ch 25ch;
 	grid-template-rows: auto;
 	grid-template-areas:
-		"firstpost-author-image thread-title          thread-title  thread-title"
-		"firstpost-author-image firstpost-time        replies-total lastpost-time"
-		"firstpost-author-image firstpost-author-name replies-new   lastpost-author";
+		"firstpost-author-image thread-title replies lastpost"
+		"firstpost-author-image firstpost    replies lastpost";
 	border-bottom: 1px solid lightgray;
 	padding: 5px 0;
+}
+
+.viewmode-narrow-index .firstpost-time {
+	display: none;
+}
+
+@media only screen and (max-width: 50em) {
+	.viewmode-narrow-index .thread {
+		grid-template-columns: auto minmax(0, 0.925fr) minmax(0, 1fr) minmax(0, 1.075fr);
+		grid-template-rows: auto;
+		grid-template-areas:
+			"firstpost-author-image thread-title thread-title thread-title"
+			"firstpost-author-image firstpost    replies      lastpost";
+	}
+
+	.viewmode-narrow-index .thread .firstpost-time {
+		display: block;
+	}
 }
 
 .viewmode-narrow-index .thread > * {
@@ -1541,8 +1558,8 @@ body.frame .post-gravatar {
 	font-size: small;
 }
 
-.viewmode-narrow-index .thread .firstpost-time {
-	grid-area: firstpost-time;
+.viewmode-narrow-index .thread .firstpost {
+	grid-area: firstpost;
 }
 
 .viewmode-narrow-index .thread .firstpost-time .short {
@@ -1571,8 +1588,11 @@ body.frame .post-gravatar {
 	color: gray;
 }
 
+.viewmode-narrow-index .thread .replies {
+	grid-area: replies;
+}
+
 .viewmode-narrow-index .thread .replies-total {
-	grid-area: replies-total;
 	text-align: center;
 }
 
@@ -1585,7 +1605,6 @@ body.frame .post-gravatar {
 }
 
 .viewmode-narrow-index .thread .replies-new {
-	grid-area: replies-new;
 	text-align: center;
 }
 
@@ -1615,8 +1634,11 @@ body.frame .post-gravatar {
 	}
 }
 
+.viewmode-narrow-index .thread .lastpost {
+	grid-area: lastpost;
+}
+
 .viewmode-narrow-index .thread .lastpost-time {
-	grid-area: lastpost-time;
 	text-align: right;
 	white-space: nowrap;
 	overflow: hidden;
@@ -1667,8 +1689,11 @@ body.frame .post-gravatar {
 	}
 }
 
+.viewmode-narrow-index .thread .lastpost {
+	grid-area: lastpost;
+}
+
 .viewmode-narrow-index .thread .lastpost-author {
-	grid-area: lastpost-author;
 	text-align: right;
 	display: flex;
 	align-items: center;
