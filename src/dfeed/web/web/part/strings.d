@@ -51,11 +51,14 @@ string summarizeTime(SysTime time, bool colorize = false)
 	}
 
 	bool shorter = colorize; // hack
-	return `<span style="` ~ style ~ `" title="` ~ encodeHtmlEntities(formatLongTime(time)) ~ `">` ~ encodeHtmlEntities(formatShortTime(time, shorter)) ~ `</span>`;
+	return `<span style="` ~ style ~ `" title="` ~ encodeHtmlEntities(formatAbsoluteTime(time)) ~ `">` ~ encodeHtmlEntities(formatShortTime(time, shorter)) ~ `</span>`;
 }
 
 string formatTinyTime(SysTime time)
 {
+	if (!time.stdTime)
+		return "-";
+
 	SysTime now = Clock.currTime(UTC());
 	Duration duration = now - time;
 	
@@ -71,10 +74,10 @@ string formatTinyTime(SysTime time)
 	if (duration < 1.days)
 		return text(duration.total!"hours", _!"h");
 	else
-	if (duration < 31.days)
+	if (duration < 7.days)
 		return text(duration.total!"days", _!"d");
 	else
-	if (duration < 365.days)
+	if (duration < 300.days)
 		return time.formatTimeLoc!"M j"();
 	else
 		return time.formatTimeLoc!"M 'y"();
@@ -88,10 +91,10 @@ string formatShortTime(SysTime time, bool shorter)
 	auto now = Clock.currTime(UTC());
 	auto duration = now - time;
 
-	if (duration < dur!"days"(7))
+	if (duration < 7.days)
 		return formatDuration(duration);
 	else
-	if (duration < dur!"days"(300))
+	if (duration < 300.days)
 		if (shorter)
 			return time.formatTimeLoc!"M d"();
 		else
@@ -145,6 +148,20 @@ string formatDuration(Duration duration)
 }
 
 string formatLongTime(SysTime time)
+{
+	if (!time.stdTime)
+		return "-";
+
+	SysTime now = Clock.currTime(UTC());
+	Duration duration = now - time;
+	
+	if (duration < 7.days)
+		return formatDuration(duration);
+	else
+		return formatAbsoluteTime(time);
+}
+
+string formatAbsoluteTime(SysTime time)
 {
 	return time.formatTimeLoc!"l, d F Y, H:i:s e"();
 }

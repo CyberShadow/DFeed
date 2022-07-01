@@ -42,7 +42,7 @@ import dfeed.web.web.cache : postCountCache, getPostCounts;
 import dfeed.web.web.page : html;
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
 import dfeed.web.web.part.pager : THREADS_PER_PAGE, getPageOffset, threadPager, indexToPage, getPageCount, getPageCount, pager;
-import dfeed.web.web.part.strings : formatTinyTime, formatShortTime, formatLongTime, summarizeTime, formatNumber;
+import dfeed.web.web.part.strings : formatTinyTime, formatShortTime, formatLongTime, formatAbsoluteTime, summarizeTime, formatNumber;
 import dfeed.web.web.part.thread : formatThreadedPosts;
 import dfeed.web.web.postinfo : PostInfo, getPostInfo, getPost;
 import dfeed.web.web.statics : staticPath;
@@ -221,17 +221,19 @@ void discussionGroupNarrowIndex(GroupInfo groupInfo, int page)
 			`href="`);
 		html.putEncodedEntities(idToUrl(thread.id, "thread"));
 		html.put(`" title="`);
-		html.putEncodedEntities(thread.firstPost.subject);
+		html.putEncodedEntities(formatLongTime(thread.firstPost.time));
 		html.put(`">`);
 		html.putEncodedEntities(thread.firstPost.subject);
 		html.put(`</a>` ~
 			`</div>` ~
+			`<img  class="firstpost-author-image" src="//www.gravatar.com/avatar/`, getGravatarHash(thread.firstPost.authorEmail), `?d=identicon">` ~
+			`<div class="firstpost">` ~
 			`<time class="firstpost-time" ` ~
 			`datetime="`);
 		html.putEncodedEntities(thread.firstPost.time.formatTimeLoc!"c");
 		html.put(`" ` ~
 			`title="`);
-		html.putEncodedEntities(thread.firstPost.time.formatTimeLoc!"l, d F Y, H:i:s e");
+		html.putEncodedEntities(formatAbsoluteTime(thread.firstPost.time));
 		html.put(`">` ~
 			`<span class="short">`);
 		html.putEncodedEntities(formatTinyTime(thread.firstPost.time));
@@ -240,10 +242,11 @@ void discussionGroupNarrowIndex(GroupInfo groupInfo, int page)
 		html.putEncodedEntities(formatShortTime(thread.firstPost.time, false));
 		html.put(`</span>` ~
 			`</time>` ~
-			`<img  class="firstpost-author-image" src="//www.gravatar.com/avatar/`, getGravatarHash(thread.firstPost.authorEmail), `?d=identicon">` ~
 			`<div class="firstpost-author-name">`);
 		html.putEncodedEntities(thread.firstPost.author);
 		html.put(`</div>` ~
+			`</div>` ~
+			`<div class="replies">` ~
 			`<div class="replies-total">` ~
 			`<span class="short">`,
 			formatNumber(thread.postCount - 1),
@@ -252,7 +255,7 @@ void discussionGroupNarrowIndex(GroupInfo groupInfo, int page)
 			formatNumber(thread.postCount - 1), " ", (thread.postCount - 1) == 1 ? _!"reply" : _!"replies");
 		html.put(`</span>` ~
 			`</div>` ~
-			`<div class="replies-new">` ~
+			`<div class="replies-new `, thread.isRead ? "forum-read" : "forum-unread", `">` ~
 			`<span class="short">`);
 		if (thread.unreadPostCount && thread.unreadPostCount != thread.postCount)
 			html.put(`(<a href="`, idToUrl(thread.id, "first-unread"), `">`, formatNumber(thread.unreadPostCount), `</a>)`);
@@ -261,11 +264,15 @@ void discussionGroupNarrowIndex(GroupInfo groupInfo, int page)
 		if (thread.unreadPostCount && thread.unreadPostCount != thread.postCount)
 			html.put(`<a href="`, idToUrl(thread.id, "first-unread"), `">`, formatNumber(thread.unreadPostCount), ` `, _!`new`, `</a>`);
 		html.put(`</span>` ~
+			`</div>` ~
 			`</div>`);
 		if (thread.lastPost != null)
 		{
-			html.put(`<div class="lastpost-time">` ~
-				`<a ` ~
+			html.put(`<div class="lastpost">` ~
+				`<div class="lastpost-time">` ~
+				`<a title="`);
+			html.putEncodedEntities(formatAbsoluteTime(thread.lastPost.time));
+			html.put(`" ` ~
 				`href="`);
 			html.putEncodedEntities(idToUrl(thread.lastPost.id));
 			html.put(`">`,
@@ -280,9 +287,6 @@ void discussionGroupNarrowIndex(GroupInfo groupInfo, int page)
 				`<time ` ~
 				`datetime="`);
 			html.putEncodedEntities(thread.lastPost.time.formatTimeLoc!"c");
-			html.put(`" ` ~
-				`title="`);
-			html.putEncodedEntities(thread.lastPost.time.formatTimeLoc!"l, d F Y, H:i:s e");
 			html.put(`">` ~
 				`<span class="short">`);
 			html.putEncodedEntities(formatTinyTime(thread.lastPost.time));
@@ -298,12 +302,15 @@ void discussionGroupNarrowIndex(GroupInfo groupInfo, int page)
 			html.put(`<span class="lastpost-author-name">`);
 			html.putEncodedEntities(thread.lastPost.author);
 			html.put(`</span>` ~
+				`</div>` ~
 				`</div>`);
 		}
 		else
 		{
-			html.put(`<div class="lastpost-time">-</div>` ~
-				`<div class="lastpost-author">-</div>`);
+			html.put(`<div class="lastpost">` ~
+				`<div class="lastpost-time">-</div>` ~
+				`<div class="lastpost-author">-</div>` ~
+				`</div>`);
 		}
 		html.put(`</div>`);
 	}
