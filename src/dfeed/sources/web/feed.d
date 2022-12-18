@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014, 2015, 2016, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015, 2016, 2018, 2022  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -16,6 +16,7 @@
 
 module dfeed.sources.web.feed;
 
+import std.exception;
 import std.string;
 import std.datetime;
 
@@ -73,32 +74,42 @@ private:
 protected:
 	override void getPosts()
 	{
-		httpGet(config.url, (string result) {
-			static import std.file;
-			scope(failure) std.file.write("feed-error.xml", result);
-			auto data = new XmlDocument(result);
-			Post[string] r;
-			auto feed = data["feed"];
+		httpGet(config.url, (HttpResponse response, string disconnectReason) {
+			try
+			{
+				enforce(response, disconnectReason);
+				enforce(response.status / 100 == 2, format("HTTP %d (%s)", response.status, response.statusMessage));
 
-			foreach (e; feed)
-				if (e.tag == "entry")
-				{
-					auto key = e["id"].text ~ " / " ~ e["updated"].text;
+				auto result = (cast(char[])response.getContent().contents).idup;
+				static import std.utf;
+				std.utf.validate(result);
 
-					auto published = e.findChild("published");
-					SysTime time;
-					if (published)
-						time = SysTime.fromISOExtString(published.text);
-					else
-						time = Clock.currTime();
+				static import std.file;
+				scope(failure) std.file.write("feed-error.xml", result);
+				auto data = new XmlDocument(result);
+				Post[string] r;
+				auto feed = data["feed"];
 
-					auto post = new FeedPost(e["title"].text, e["author"]["name"].text, e["link"].attributes["href"], time);
-					r[key] = post;
-				}
+				foreach (e; feed)
+					if (e.tag == "entry")
+					{
+						auto key = e["id"].text ~ " / " ~ e["updated"].text;
 
-			handlePosts(r);
-		}, (string error) {
-			handleError(error);
+						auto published = e.findChild("published");
+						SysTime time;
+						if (published)
+							time = SysTime.fromISOExtString(published.text);
+						else
+							time = Clock.currTime();
+
+						auto post = new FeedPost(e["title"].text, e["author"]["name"].text, e["link"].attributes["href"], time);
+						r[key] = post;
+					}
+
+				handlePosts(r);
+			}
+			catch (Exception e)
+				handleError(e.msg);
 		});
 	}
 }
