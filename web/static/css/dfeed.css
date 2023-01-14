@@ -598,6 +598,11 @@ tr.mini-post-info-cell > td {
 	word-wrap: break-word;
 }
 
+/* Add spacing between each paragraph in a post */
+.post-text p {
+	margin: 10px;
+}
+
 .forum-quote, .forum-signature {
 	color: #666;
 }
