@@ -1,0 +1,45 @@
+name: build
+on: [ push, pull_request ]
+
+jobs:
+  build-dub:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-20.04, ubuntu-22.04 ]
+        dc: [ dmd-2.100.2, ldc-1.30.0 ]
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Install dependencies
+        run: sudo apt-get install -y libcurl4-openssl-dev
+
+      - name: Prepare compiler
+        uses: dlang-community/setup-dlang@v1
+        with:
+          compiler: ${{ matrix.dc }}
+
+      - uses: actions/checkout@v2
+
+      - name: Build
+        run: |
+          dub build
+
+  build-manual:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-20.04, ubuntu-22.04 ]
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Install dependencies
+        run: sudo apt-get install -y libcurl4-openssl-dev
+
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Build
+        run: |
+          ./rebuild
