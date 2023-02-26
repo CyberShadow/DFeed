@@ -38,14 +38,28 @@ private:
 	immutable Config config;
 
 	string pubKey;
-	EVP_CIPHER_CTX e;
+	static if (!OPENSSL_VERSION_AT_LEAST(1, 1, 0))
+	{
+		EVP_CIPHER_CTX ctx_storage;
+
+		inout(EVP_CIPHER_CTX*) ctx() pure @safe nothrow @nogc inout scope return
+		{
+			return &ctx_storage;
+		}
+	}
+	else
+		EVP_CIPHER_CTX* ctx;
 
 	void aesInit(ubyte[] key)
 	{
 		enforce(key.length == 16, "Invalid private key length");
 
-		EVP_CIPHER_CTX_init(&e);
-		EVP_EncryptInit_ex(&e, EVP_aes_128_cbc(), null, key.ptr, null).sslEnforce();
+		static if (OPENSSL_VERSION_AT_LEAST(1, 1, 0))
+			ctx = enforce(EVP_CIPHER_CTX_new(), "Failed to allocate cipher context");
+		else
+			ctx = &ctx_storage;
+		EVP_CIPHER_CTX_init(ctx);
+		EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), null, key.ptr, null).sslEnforce();
 	}
 
 	ubyte[] aesEncrypt(ubyte[] plaintext)
@@ -58,9 +72,9 @@ private:
 		int c_len = cast(uint)plaintext.length + AES_BLOCK_SIZE, f_len = 0;
 		ubyte[] ciphertext = new ubyte[c_len];
 
-		EVP_EncryptInit_ex(&e, null, null, null, null).sslEnforce();
-		EVP_EncryptUpdate(&e, ciphertext.ptr, &c_len, plaintext.ptr, cast(uint)plaintext.length).sslEnforce();
-		EVP_EncryptFinal_ex(&e, ciphertext.ptr+c_len, &f_len).sslEnforce();
+		EVP_EncryptInit_ex(ctx, null, null, null, null).sslEnforce();
+		EVP_EncryptUpdate(ctx, ciphertext.ptr, &c_len, plaintext.ptr, cast(uint)plaintext.length).sslEnforce();
+		EVP_EncryptFinal_ex(ctx, ciphertext.ptr+c_len, &f_len).sslEnforce();
 
 		return ciphertext[0..c_len+f_len];
 	}
