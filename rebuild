@@ -37,6 +37,33 @@ else
 	)
 fi
 
+case "$(openssl version)" in
+	'')
+		printf 'WARNING: failed to detect OpenSSL version.\n' >&2
+		;;
+	'OpenSSL 1.0.0'*)
+		flags+=(-version=DeimosOpenSSL_1_0_0)
+		;;
+	'OpenSSL 1.0.1'*)
+		flags+=(-version=DeimosOpenSSL_1_0_1)
+		;;
+	'OpenSSL 1.0.2'*)
+		flags+=(-version=DeimosOpenSSL_1_0_2)
+		;;
+	'OpenSSL 1.1.0'*)
+		flags+=(-version=DeimosOpenSSL_1_1_0)
+		;;
+	'OpenSSL 1.1.1'*)
+		flags+=(-version=DeimosOpenSSL_1_1_1)
+		;;
+	'OpenSSL 3.0.'*)
+		flags+=(-version=DeimosOpenSSL_3_0)
+		;;
+	*)
+		printf 'WARNING: unknown OpenSSL version: %s\n' "$(openssl version)" >&2
+		;;
+esac
+
 progs=()
 
 for arg in "$@"
