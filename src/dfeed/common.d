@@ -88,6 +88,11 @@ abstract class NewsSink
 	abstract void handlePost(Post p, Fresh fresh);
 }
 
+interface ModerationSink
+{
+	void handleModeration(Post p, Flag!"ban" ban);
+}
+
 private NewsSource[string] newsSources;
 private NewsSink[] newsSinks;
 
@@ -106,6 +111,13 @@ void announcePost(Post p, Fresh fresh)
 {
 	foreach (sink; newsSinks)
 		sink.handlePost(p, fresh);
+}
+
+void handleModeration(Post p, Flag!"ban" ban)
+{
+	foreach (sink; newsSinks)
+		if (auto mod = cast(ModerationSink)sink)
+			mod.handleModeration(p, ban);
 }
 
 // ***************************************************************************
