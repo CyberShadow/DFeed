@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2014, 2015, 2018  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2014, 2015, 2018, 2023  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -16,6 +16,7 @@
 
 module dfeed.sources.web.reddit;
 
+import std.exception;
 import std.string;
 import std.regex;
 import std.datetime;
@@ -80,24 +81,38 @@ private:
 protected:
 	override void getPosts()
 	{
-		httpGet("http://www.reddit.com/r/"~config.subreddit~"/.rss", (string result) {
-			auto data = new XmlDocument(result);
-			Post[string] r;
+		auto url = "http://www.reddit.com/r/"~config.subreddit~"/.rss";
+		httpGet(url, (HttpResponse response, string disconnectReason) {
+			try
+			{
+				enforce(response, disconnectReason);
+				enforce(response.status / 100 == 2, format("HTTP %d (%s)", response.status, response.statusMessage));
 
-			auto feed = data["rss"]["channel"];
-			foreach (e; feed)
-				if (e.tag == "item")
-					if (!match(e["title"].text, filter).empty)
-						r[e["guid"].text ~ " / " ~ e["pubDate"].text] = new RedditPost(
-							e["title"].text,
-							getAuthor(e["description"].text),
-							e["link"].text,
-							e["pubDate"].text.parseTime!(TimeFormats.RSS)()
-						);
+				auto result = (cast(char[])response.getContent().contents).idup;
+				static import std.utf;
+				std.utf.validate(result);
 
-			handlePosts(r);
-		}, (string error) {
-			handleError(error);
+				static import std.file;
+				scope(failure) std.file.write("reddit-error.xml", result);
+
+				auto data = new XmlDocument(result);
+				Post[string] r;
+
+				auto feed = data["rss"]["channel"];
+				foreach (e; feed)
+					if (e.tag == "item")
+						if (!match(e["title"].text, filter).empty)
+							r[e["guid"].text ~ " / " ~ e["pubDate"].text] = new RedditPost(
+								e["title"].text,
+								getAuthor(e["description"].text),
+								e["link"].text,
+								e["pubDate"].text.parseTime!(TimeFormats.RSS)()
+							);
+
+				handlePosts(r);
+			}
+			catch (Exception e)
+				handleError(e.msg);
 		});
 	}
 }
