@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2017, 2018, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2017, 2018, 2021, 2023  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -196,6 +196,7 @@ class GitHubPost : Post
 				case "check_run":
 				case "check_suite":
 				case "workflow_job":
+				case "workflow_run":
 					return Importance.none;				
 				default:
 					return Importance.low;
