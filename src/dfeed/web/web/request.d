@@ -47,6 +47,7 @@ import dfeed.web.web.part.gravatar;
 import dfeed.web.web.part.pager : getPageOffset, POSTS_PER_PAGE;
 import dfeed.web.web.postinfo;
 import dfeed.web.web.posting : discussionPostForm, discussionSend, discussionPostStatus;
+import dfeed.web.web.site : putSiteNotice;
 import dfeed.web.web.statics : optimizedPath, serveFile, makeBundle, staticPath, createBundles, createBundles;
 import dfeed.web.web.user;
 import dfeed.web.web.view.feed : getFeed, getSubscriptionFeed, FEED_HOURS_DEFAULT, FEED_HOURS_MAX;
@@ -234,6 +235,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				extraHeaders ~= `<link rel="alternate" type="application/atom+xml" title="` ~ _!`New posts` ~ `" href="/feed/posts" />`;
 				extraHeaders ~= `<link rel="alternate" type="application/atom+xml" title="` ~ _!`New threads` ~ `" href="/feed/threads" />`;
 				addMetadata(null, "/", null);
+				putSiteNotice();
 				discussionIndex();
 				break;
 			case "group":
@@ -254,6 +256,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				enforce(groupInfo, _!"Unknown group");
 				title = _!"%s group index".format(groupInfo.publicName) ~ pageStr;
 				breadcrumbs ~= `<a href="/group/`~encodeHtmlEntities(groupUrlName)~`">` ~ encodeHtmlEntities(groupInfo.publicName) ~ `</a>` ~ pageStr;
+				putSiteNotice();
 				auto viewMode = userSettings.groupViewMode;
 				if (viewMode == "basic")
 					discussionGroup(groupInfo, page);
