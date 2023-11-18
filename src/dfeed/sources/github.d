@@ -86,81 +86,81 @@ class GitHubPost : Post
 				);
 				break;
 			case "push":
-				str = "%s pushed %d commit%s to %s %s".format(
+				str = "%s: %s pushed %d commit%s to %s".format(
+					data["repository"]["name"].str,
 					data["sender"]["login"].str.filterIRCName,
 					data["commits"].array.length,
 					data["commits"].array.length == 1 ? "" : "s",
-					data["repository"]["name"].str,
 					data["ref"].str.replace("refs/heads/", "branch "),
 				);
 				url = data["compare"].str;
 				break;
 			case "pull_request":
-				str = "%s %s %s pull request #%s (\"%s\")".format(
+				str = "%s: %s %s pull request #%s (\"%s\")".format(
+					data["repository"]["name"].str,
 					data["sender"]["login"].str.filterIRCName,
 					   (data["action"].str == "closed" && data["pull_request"]["merged"].type == JSON_TYPE.TRUE) ? "merged" :
 						data["action"].str == "synchronize" ? "updated" :
 						data["action"].str,
-					data["repository"]["name"].str,
 					data["pull_request"]["number"].integer,
 					data["pull_request"]["title"].str,
 				);
 				url = data["pull_request"]["html_url"].str;
 				break;
 			case "issue_comment":
-				str = "%s %s a comment on %s issue #%s (\"%s\")".format(
+				str = "%s: %s %s a comment on issue #%s (\"%s\")".format(
+					data["repository"]["name"].str,
 					data["sender"]["login"].str.filterIRCName,
 					data["action"].str,
-					data["repository"]["name"].str,
 					data["issue"]["number"].integer,
 					data["issue"]["title"].str,
 				);
 				url = data["comment"]["html_url"].str;
 				break;
 			case "pull_request_review_comment":
-				str = "%s %s a review comment on %s pull request #%s (\"%s\")".format(
+				str = "%s: %s %s a review comment on pull request #%s (\"%s\")".format(
+					data["repository"]["name"].str,
 					data["sender"]["login"].str.filterIRCName,
 					data["action"].str,
-					data["repository"]["name"].str,
 					data["pull_request"]["number"].integer,
 					data["pull_request"]["title"].str,
 				);
 				url = data["comment"]["html_url"].str;
 				break;
 			case "commit_comment":
-				str = "%s %s a comment on %s commit %s".format(
+				str = "%s: %s a comment on %s commit %s".format(
+					data["repository"]["name"].str,
 					data["sender"]["login"].str.filterIRCName,
 					data["action"].str,
-					data["repository"]["name"].str,
 					data["comment"]["commit_id"].str[0..8],
 				);
 				url = data["comment"]["html_url"].str;
 				break;
 			case "create":
 			case "delete":
-				str = "%s %sd %s %s on %s".format(
+				str = "%s: %s %sd %s on %s".format(
+					data["repository"]["name"].str,
 					data["sender"]["login"].str.filterIRCName,
 					event,
 					data["ref_type"].str,
 					data["ref"].str,
-					data["repository"]["name"].str,
 				);
 				if (event == "create")
 					url = data["repository"]["html_url"].str ~ "/compare/master..." ~ data["ref"].str;
 				break;
 			case "fork":
-				str = "%s forked %s to %s".format(
-					data["sender"]["login"].str.filterIRCName,
+				str = "%s: %s forked to %s".format(
 					data["repository"]["name"].str,
+					data["sender"]["login"].str.filterIRCName,
 					data["forkee"]["full_name"].str,
 				);
 				url = data["forkee"]["html_url"].str;
 				break;
 			case "watch":
-				str = "%s %s watching %s".format(
+				str = "%s %s %s watching".format(
+					data["repository"]["name"].str,
 					data["sender"]["login"].str.filterIRCName,
 					data["action"].str,
-					data["repository"]["name"].str,
 				);
 				url = data["sender"]["html_url"].str;
 				break;
