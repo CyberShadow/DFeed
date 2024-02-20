@@ -58,6 +58,10 @@ void main()
 			makeDGroupInfo("digitalmars.D"                 , "General"                 , "general"                 , "digitalmars/D"           , "Digitalmars-d"           , "Discussion of the D programming language"                         , false, false),
 			makeDGroupInfo("digitalmars.D.announce"        , "Announce"                , "announce"                , "digitalmars/D/announce"  , "Digitalmars-d-announce"  , "News and announcements for anything D related"                    , false, false),
 		]),
+		makeDGroupSet("Improvements", [
+			makeDGroupInfo("digitalmars.dip.ideas"         , "DIP Ideas"               , "dip.ideas"               , null                      , null                      , "Ideas for improving the D programming language"                   , false, false),
+			makeDGroupInfo("digitalmars.dip.development"   , "DIP Development"         , "dip.development"         , null                      , null                      , "Development of D Improvement Proposals"                           , false, false),
+		]),
 		makeDGroupSet("Ecosystem", [
 			makeDGroupInfo("D.gnu"                         , "GDC"                     , "gdc"                     , "D/gnu"                   , "D.gnu"                   , "GCC-based D Compiler"                                             , false, false),
 			makeDGroupInfo("digitalmars.D.ldc"             , "LDC"                     , "ldc"                     , null                      , "digitalmars-d-ldc"       , "LLVM-based D Compiler"                                            , false, false),
