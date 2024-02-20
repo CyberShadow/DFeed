@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021, 2023  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021, 2023, 2024  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -907,7 +907,7 @@ string renderNav(string html, GroupInfo currentGroup)
 
 	return nav.render(groupHierarchy.filter!(set => set.visible).map!(set =>
 		[set.shortName, nav2.render(set.groups.map!(group =>
-			["/group/" ~ group.urlName, group.publicName]
+			["/group/" ~ group.urlName, group.navName ? group.navName : group.publicName]
 		).array).I!highlightCurrent]
 	).array);
 }

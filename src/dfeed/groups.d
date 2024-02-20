@@ -1,4 +1,4 @@
-/*  Copyright (C) 2015, 2017, 2018, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2015, 2017, 2018, 2021, 2024  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -35,7 +35,7 @@ struct Config
 
 	struct Group
 	{
-		string internalName, publicName, urlName, groupSet, description, postMessage, sinkType, sinkName;
+		string internalName, publicName, navName, urlName, groupSet, description, postMessage, sinkType, sinkName;
 		string[] urlAliases;
 		OrderedMap!(string, AlsoVia) alsoVia;
 		bool subscriptionRequired = true;

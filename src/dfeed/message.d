@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2018, 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2018, 2020, 2021, 2024  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -148,12 +148,6 @@ class Rfc850Post : Post
 				shortURL = shortenedURL;
 				formatForIRC(handler);
 			});
-
-		string groupPublicName(string internalName)
-		{
-			auto groupInfo = getGroupInfo(internalName);
-			return groupInfo ? groupInfo.publicName : internalName;
-		}
 
 		handler(format("%s%s %s %s%s",
 			xref.length ? "[" ~ publicGroupNames.join(",") ~ "] " : null,
