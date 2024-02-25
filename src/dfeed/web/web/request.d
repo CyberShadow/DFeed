@@ -257,6 +257,8 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				title = _!"%s group index".format(groupInfo.publicName) ~ pageStr;
 				breadcrumbs ~= `<a href="/group/`~encodeHtmlEntities(groupUrlName)~`">` ~ encodeHtmlEntities(groupInfo.publicName) ~ `</a>` ~ pageStr;
 				putSiteNotice();
+				if (groupInfo.notice)
+					html.put(`<div class="forum-notice">`, groupInfo.notice, `</div>`);
 				auto viewMode = userSettings.groupViewMode;
 				if (viewMode == "basic")
 					discussionGroup(groupInfo, page);

@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021, 2022  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021, 2022, 2024  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -105,6 +105,9 @@ bool discussionPostForm(PostDraft draft, Captcha captcha=null, PostError error=P
 			`</table>`);
 		return false;
 	}
+	if (info.notice)
+		html.put(`<div class="forum-notice">`, info.notice, `</div>`);
+
 	if (info.sinkType == "smtp" && info.subscriptionRequired)
 	{
 		auto config = loadIni!SmtpConfig("config/sources/smtp/" ~ info.sinkName ~ ".ini");

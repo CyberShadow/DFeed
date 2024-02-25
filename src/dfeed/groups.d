@@ -35,7 +35,7 @@ struct Config
 
 	struct Group
 	{
-		string internalName, publicName, navName, urlName, groupSet, description, postMessage, sinkType, sinkName;
+		string internalName, publicName, navName, urlName, groupSet, description, postMessage, notice, sinkType, sinkName;
 		string[] urlAliases;
 		OrderedMap!(string, AlsoVia) alsoVia;
 		bool subscriptionRequired = true;
