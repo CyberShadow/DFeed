@@ -7,7 +7,7 @@ import std.stdio;
 import std.string;
 
 struct DAlsoVia { string name, url; }
-struct DGroupInfo { string internalName, publicName, navName, urlName, description, postMessage, mlName; bool mlOnly; DAlsoVia[string] alsoVia; }
+struct DGroupInfo { string internalName, publicName, navName, urlName, description, postMessage, notice, mlName; bool mlOnly; DAlsoVia[string] alsoVia; }
 struct DGroupSet { string id, name, shortName; DGroupInfo[] groups; bool visible; }
 
 DGroupSet makeDGroupSet(string name, DGroupInfo[] groups, bool visible = true)
@@ -36,6 +36,11 @@ DGroupInfo makeDGroupInfo(string internalName, string publicName, string navName
 			`You are viewing a Bugzilla message archive.<br>` ~
 			`To report a bug, please visit the <a href="https://issues.dlang.org/">D Bugzilla</a> or `~
 				`<a href="/newpost/digitalmars.D">post to digitalmars.D</a>.`;
+	}
+	if (internalName.startsWith("digitalmars.dip."))
+	{
+		info.notice =
+			`Please read and understand the <a href="https://github.com/dlang/DIPs/blob/master/docs/guidelines-forums.md">DIP forum guidelines</a> before posting in this forum.`;
 	}
 	if (mlOnly)
 		info.alsoVia["04-archive"] = DAlsoVia("archive", `http://lists.puremagic.com/pipermail/`~internalName.toLower());
@@ -142,6 +147,8 @@ void main()
 			f.writeln("description=", group.description);
 			if (group.postMessage)
 				f.writeln("postMessage=", group.postMessage);
+			if (group.notice)
+				f.writeln("notice=", group.notice);
 			if (group.mlOnly)
 			{
 				f.writeln("sinkType=smtp");
