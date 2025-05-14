@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2015, 2016, 2017, 2018, 2020, 2022  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2015, 2016, 2017, 2018, 2020, 2022, 2025  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -966,7 +966,7 @@ final class EmailAction : Action
 	{
 		if (!enabled)
 			return;
-		enforce(address.match(re!(`^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$`, "i")), _!"Invalid email address");
+		enforce(address.match(re!(`^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]+$`, "i")), _!"Invalid email address");
 	}
 
 	override void save() {}
