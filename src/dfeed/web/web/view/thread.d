@@ -169,5 +169,7 @@ string discussionFirstUnread(string threadID)
 	foreach (int rowid, string id; query!"SELECT `ROWID`, `ID` FROM `Posts` WHERE `ThreadID` = ? ORDER BY `Time` ASC".iterate(threadID))
 		if (!user.isRead(rowid))
 			return idToUrl(id);
-	return idToUrl(threadID, "thread", getPageCount(getPostCount(threadID), POSTS_PER_PAGE));
+	auto numPages = getPageCount(getPostCount(threadID), POSTS_PER_PAGE);
+	enforce(numPages, _!"Thread not found");
+	return idToUrl(threadID, "thread", numPages);
 }
