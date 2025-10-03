@@ -731,6 +731,10 @@ class MarkdownCodeRule : LintRule
 
 unittest
 {
+	import dfeed.web.markdown : haveMarkdown;
+	if (!haveMarkdown())
+		return;
+
 	bool check(string text)
 	{
 		PostDraft draft;
