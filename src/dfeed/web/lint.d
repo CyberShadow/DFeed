@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2015, 2016, 2017, 2018, 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2015, 2016, 2017, 2018, 2020, 2021, 2025  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -757,6 +757,87 @@ EOF"));
 	assert(!check("    Code"));
 }
 
+class MarkdownSyntaxRule : LintRule
+{
+	override @property string id() { return "markdownsyntax"; }
+	override @property string shortDescription() { return _!"Markdown syntax was used, but Markdown is disabled."; }
+	override @property string longDescription() { return
+		"<p>" ~ _!"It looks like your post may include Markdown syntax, but %sMarkdown%s is not enabled. (Click \"Save and preview\" to see how your message will look once posted.)".format(
+			`<a href="/help#markdown">`, `</a>`,
+		) ~ "</p>" ~
+		"<p>" ~ _!`Click "Fix it for me" to enable Markdown rendering automatically.` ~ "</p>" ~
+		"";
+	}
+
+	override bool check(in ref PostDraft draft)
+	{
+		// Only check when Markdown is DISABLED
+		if ("markdown" in draft.clientVars)
+			return false;
+
+		auto text = draft.clientVars.get("text", null);
+
+		// Check for Markdown links: [text](url)
+		// Require the URL part to look like an actual URL (contain :// or start with http/https/www or /)
+		if (!text.matchFirst(re!`\[.+?\]\((https?://|www\.|/|\.\./).+?\)`).empty)
+			return true;
+
+		// Check for GFM fenced code blocks
+		auto lines = text.splitLines();
+		foreach (line; lines)
+			if (line.startsWith("```"))
+				return true;
+
+		return false;
+	}
+
+	override bool canFix(in ref PostDraft draft) { return true; }
+
+	override void fix(ref PostDraft draft)
+	{
+		// Enable Markdown
+		draft.clientVars["markdown"] = "on";
+	}
+}
+
+unittest
+{
+	bool check(string text)
+	{
+		PostDraft draft;
+		// Markdown is disabled (no "markdown" in clientVars)
+		draft.clientVars["text"] = text;
+		return (new MarkdownSyntaxRule).check(draft);
+	}
+
+	// Fenced code blocks
+	assert(check("```\ncode\n```"));
+	assert(check("```d\ncode\n```"));
+
+	// Links
+	assert(check("Click [here](http://example.com)"));
+
+	// Should not trigger when Markdown is enabled
+	PostDraft draft;
+	draft.clientVars["markdown"] = "on";
+	draft.clientVars["text"] = "[link](url)";
+	assert(!(new MarkdownSyntaxRule).check(draft));
+
+	// Should not trigger on plain text formatting or D code
+	assert(!check("This is **bold** text"));
+	assert(!check("This is *italic* text"));
+	assert(!check("- item"));
+	assert(!check("> quote"));
+	assert(!check("Use `code` here"));
+	assert(!check(`auto str = r"raw string";`));
+	assert(!check(`auto str = q"EOS\ntext\nEOS";`));
+	assert(!check(`auto str = q{code};`));
+	assert(!check(`myFunctions[0]()`));
+	assert(!check(`urlHandlers[i]("http://google.com")`));
+	assert(!check(`array[index](param)`));
+	assert(!check("Just plain text"));
+}
+
 @property LintRule[] lintRules()
 {
 	static LintRule[] result;
@@ -774,6 +855,7 @@ EOF"));
 			new MarkdownHTMLRule,
 			new MarkdownEntitiesRule,
 			new MarkdownCodeRule,
+			new MarkdownSyntaxRule,
 		];
 	return result;
 }
