@@ -46,6 +46,7 @@ void formatThreadedPosts(PostInfo*[] postInfos, bool narrow, string selectedID =
 	class Post
 	{
 		PostInfo* info;
+		Post parent;
 
 		SysTime maxTime;
 		Post[] children;
@@ -81,12 +82,23 @@ void formatThreadedPosts(PostInfo*[] postInfos, bool narrow, string selectedID =
 	foreach (info; postInfos)
 		posts[info.id] = new Post(info);
 
+	// Check if linking child under parent would create a cycle
+	// by walking up parent's ancestor chain
+	bool wouldCreateCycle(Post child, Post parent)
+	{
+		for (Post p = parent; p !is null; p = p.parent)
+			if (p is child)
+				return true;
+		return false;
+	}
+
 	posts[null] = new Post();
 	foreach (post; posts.values)
 		if (post.info)
 		{
 			auto parent = post.info.parentID;
-			if (parent !in posts) // mailing-list users
+			// Parent missing or would create cycle - find alternate parent
+			if (parent !in posts || wouldCreateCycle(post, posts[parent]))
 			{
 				string[] references;
 				if (post.info.id in referenceCache)
@@ -94,24 +106,29 @@ void formatThreadedPosts(PostInfo*[] postInfos, bool narrow, string selectedID =
 				else
 					references = referenceCache[post.info.id] = getPost(post.info.id).references;
 
+				// Search References header for any ancestor in this thread
 				parent = null;
 				foreach_reverse (reference; references)
-					if (reference in posts)
+					if (reference in posts && !wouldCreateCycle(post, posts[reference]))
 					{
 						parent = reference;
 						break;
 					}
 
-				if (!parent)
+				// No valid parent found - create ghost post for missing parent
+				if (!parent && references.length)
 				{
 					auto dummy = new Post;
 					dummy.ghost = true;
 					dummy.ghostSubject = post.info.subject; // HACK
 					parent = references[0];
 					posts[parent] = dummy;
+					dummy.parent = posts[null];
 					posts[null].children ~= dummy;
 				}
 			}
+			// Link post to its parent (or root if none was found)
+			post.parent = posts[parent];
 			posts[parent].children ~= post;
 		}
 
@@ -156,6 +173,7 @@ void formatThreadedPosts(PostInfo*[] postInfos, bool narrow, string selectedID =
 			{
 				if (prevChild.ghost) // add to the existing ghost
 				{
+					child.parent = prevChild;
 					prevChild.children ~= child;
 					thread.children = thread.children[0..i] ~ thread.children[i+1..$];
 				}
@@ -164,7 +182,9 @@ void formatThreadedPosts(PostInfo*[] postInfos, bool narrow, string selectedID =
 					auto dummy = new Post;
 					dummy.ghost = true;
 					dummy.ghostSubject = child.subject;
+					prevChild.parent = child.parent = dummy;
 					dummy.children = [prevChild, child];
+					dummy.parent = thread;
 					thread.children = thread.children[0..i-1] ~ dummy ~ thread.children[i+1..$];
 				}
 			}
