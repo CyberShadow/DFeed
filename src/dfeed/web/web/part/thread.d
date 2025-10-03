@@ -116,9 +116,9 @@ void formatThreadedPosts(PostInfo*[] postInfos, bool narrow, string selectedID =
 		}
 
 	bool reversed = userSettings.groupViewMode == "threaded";
+	posts[null].calcStats();
 	foreach (post; posts)
 	{
-		post.calcStats();
 		if (post.info || post.ghost)
 			sort!"a.info.time < b.info.time"(post.children);
 		else // sort threads by last-update
