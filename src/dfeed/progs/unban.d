@@ -23,7 +23,7 @@ import std.format;
 import std.stdio;
 import std.string;
 
-import dfeed.web.moderation;
+import dfeed.web.moderation : loadBanList, saveBanList, banned, parseParents;
 
 void main(string[] args)
 {
@@ -88,16 +88,4 @@ void main(string[] args)
 
 	saveBanList();
 	writeln("Restart DFeed to apply ban list.");
-}
-
-string[] parseParents(string s)
-{
-	string[] result;
-	while ((s = s.findSplit(" (propagated from ")[2]) != null)
-	{
-		auto p = s.findSplit(")");
-		result ~= p[0];
-		s = p[2];
-	}
-	return result;
 }

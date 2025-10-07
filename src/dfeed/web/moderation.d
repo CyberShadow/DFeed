@@ -46,3 +46,17 @@ void saveBanList()
 	f.close();
 	rename(inProgressFileName, banListFileName);
 }
+
+/// Parse parent keys from a propagated ban reason string
+string[] parseParents(string s)
+{
+	import std.algorithm.searching : findSplit;
+	string[] result;
+	while ((s = s.findSplit(" (propagated from ")[2]) != null)
+	{
+		auto p = s.findSplit(")");
+		result ~= p[0];
+		s = p[2];
+	}
+	return result;
+}

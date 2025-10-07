@@ -54,7 +54,7 @@ import dfeed.web.web.view.feed : getFeed, getSubscriptionFeed, FEED_HOURS_DEFAUL
 import dfeed.web.web.view.group : discussionGroup, discussionGroupNarrowIndex, discussionGroupThreaded, discussionGroupSplit, discussionGroupVSplit, discussionGroupSplitFromPost, discussionGroupVSplitFromPost;
 import dfeed.web.web.view.index : discussionIndex;
 import dfeed.web.web.view.login : discussionLoginForm, discussionRegisterForm, discussionLogin, discussionRegister;
-import dfeed.web.web.view.moderation : discussionModeration, deletePostApi, discussionFlagPage, discussionApprovePage;
+import dfeed.web.web.view.moderation : discussionModeration, deletePostApi, discussionFlagPage, discussionApprovePage, discussionUnbanByKeyPage;
 import dfeed.web.web.view.post : discussionSplitPost, discussionVSplitPost, discussionSinglePost;
 import dfeed.web.web.view.search : discussionSearch;
 import dfeed.web.web.view.settings;
@@ -583,6 +583,16 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				enforce(path.length == 2 || path.length == 3, _!"Invalid URL"); // Backwards compatibility with old one-click URLs
 				auto draftID = path[1];
 				discussionApprovePage(draftID, request.method == "POST" ? request.decodePostData() : UrlParameters.init);
+				break;
+			}
+			case "unban":
+			{
+				enforce(user.getLevel() >= User.Level.canModerate, _!"You are not a moderator");
+				title = _!"Unban by key";
+				breadcrumbs ~= `<a href="/unban">` ~ _!`Unban by key` ~ `</a>`;
+				auto key = path.length > 1 ? urlDecode(pathX) : parameters.get("key", "");
+				discussionUnbanByKeyPage(key, request.method == "POST" ? request.decodePostData() : UrlParameters.init);
+				bodyClass ~= " formdoc";
 				break;
 			}
 			case "loginform":

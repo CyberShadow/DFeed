@@ -29,7 +29,7 @@ import std.format : format;
 import std.string : strip, splitLines;
 
 import ae.net.ietf.headers : Headers;
-import ae.net.ietf.url : UrlParameters;
+import ae.net.ietf.url : UrlParameters, encodeUrlParameter;
 import ae.utils.aa : aaGet;
 import ae.utils.json : toJson, jsonParse;
 import ae.utils.meta : I, isDebug;
@@ -54,7 +54,7 @@ import dfeed.web.web.page : html;
 import dfeed.web.web.part.post : formatPost, postLink;
 import dfeed.web.web.part.strings : formatShortTime, formatDuration;
 import dfeed.web.web.postinfo : getPostInfo, getPost;
-import dfeed.web.web.postmod : shouldModerate, learnModeratedMessage;
+import dfeed.web.web.postmod : shouldModerate, learnModeratedMessage, ModerationReason;
 import dfeed.web.web.request : ip;
 import dfeed.web.web.user : user, userSettings;
 
@@ -349,10 +349,11 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 					}
 				}
 
-				if (auto reason = shouldModerate(draft))
+				auto moderationReason = shouldModerate(draft);
+				if (moderationReason.kind != ModerationReason.Kind.none)
 				{
 					// draft will be saved by scope(exit) above
-					moderateMessage(draft, headers, reason);
+					moderateMessage(draft, headers, moderationReason);
 
 					html.put(`<p>`, _!`Your message has been saved, and will be posted after being approved by a moderator.`, `</p>`);
 					return null;
@@ -405,7 +406,7 @@ string postDraft(ref PostDraft draft, Headers headers)
 	return process.pid;
 }
 
-void moderateMessage(ref PostDraft draft, Headers headers, string reason)
+void moderateMessage(ref PostDraft draft, Headers headers, ModerationReason reason)
 {
 	import std.range : chain, only;
 
@@ -459,8 +460,16 @@ void moderateMessage(ref PostDraft draft, Headers headers, string reason)
 		context ~= contextURL ? ":\n" ~ contextURL : ".";
 	}
 
+	// Check if moderation is due to ban
+	string unbanSection = reason.kind == ModerationReason.Kind.bannedUser && reason.bannedKey.length
+		? `
+If this user was previously banned and you would like to unban them, you can do so here:
+%10$s://%2$s/unban/%14$s
+`
+		: "";
+
 	foreach (mod; site.moderators)
-		sendMail(q"EOF
+		sendMail((q"EOF
 From: %1$s <no-reply@%2$s>
 To: %3$s
 Subject: Please moderate: post by %5$s with subject "%7$s"
@@ -483,7 +492,7 @@ IP address this message was posted from: %12$s
 
 You can preview and approve this message here:
 %10$s://%2$s/approve-moderated-draft/%11$s
-
+%14$s
 Otherwise, no action is necessary.
 
 All the best,
@@ -494,7 +503,7 @@ You are receiving this message because you are configured as a site moderator on
 
 To stop receiving messages like this, please ask the administrator of %1$s to remove you from the list of moderators.
 .
-EOF"
+EOF")
 		.format(
 			/* 1*/ site.name.length ? site.name : site.host,
 			/* 2*/ site.host,
@@ -503,12 +512,13 @@ EOF"
 			/* 5*/ draft.clientVars.get("name", "").I!sanitize,
 			/* 6*/ draft.clientVars.get("email", "").I!sanitize,
 			/* 7*/ draft.clientVars.get("subject", "").I!sanitize,
-			/* 8*/ reason,
+			/* 8*/ reason.toString(),
 			/* 9*/ draft.clientVars.get("text", "").strip.splitAsciiLines.map!(line => line.length ? "> " ~ line : ">"),
 			/*10*/ site.proto,
 			/*11*/ draft.clientVars.get("did", "").I!sanitize,
 			/*12*/ ip,
 			/*13*/ context,
+			/*14*/ encodeUrlParameter(reason.bannedKey),
 		));
 }
 
@@ -568,8 +578,8 @@ void discussionPostStatus(PostProcess process, out bool refresh, out string redi
 			}
 			else
 			{
-				moderateMessage(process.draft, process.headers,
-					"No CAPTCHA configured and spam check failed: " ~ error.message);
+				auto reason = ModerationReason(ModerationReason.Kind.spam, "No CAPTCHA configured and spam check failed: " ~ error.message);
+				moderateMessage(process.draft, process.headers, reason);
 				saveDraft(process.draft);
 				discussionPostStatusMessage(_!`Your message has been saved, and will be posted after being approved by a moderator.`);
 			}

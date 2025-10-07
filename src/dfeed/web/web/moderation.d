@@ -48,7 +48,7 @@ import dfeed.message : Rfc850Post;
 import dfeed.sinks.cache : dbVersion;
 import dfeed.site : site;
 import dfeed.sources.newsgroups : NntpConfig;
-import dfeed.web.moderation : banned, saveBanList;
+import dfeed.web.moderation : banned, saveBanList, parseParents;
 import dfeed.web.posting : PostProcess, PostDraft;
 import dfeed.web.web.draft : getDraft, saveDraft;
 import dfeed.web.web.postinfo : getPost;
@@ -213,9 +213,20 @@ void banPoster(string who, string id, string reason)
 	banLog("Done.");
 }
 
-/// If the user is banned, returns the ban reason.
-/// Otherwise, returns null.
-string banCheck(string ip, HttpRequest request)
+struct BanCheckResult
+{
+	string key;     // The matched ban key (empty if not banned)
+	string reason;  // The ban reason (empty if not banned)
+
+	bool opCast(T : bool)() const
+	{
+		return key.length > 0;
+	}
+}
+
+/// If the user is banned, returns the matched key and ban reason.
+/// Otherwise, returns an empty BanCheckResult.
+BanCheckResult banCheck(string ip, HttpRequest request)
 {
 	string[] keys = [ip];
 	foreach (cookie; request.headers.get("Cookie", null).split("; "))
@@ -242,7 +253,7 @@ string banCheck(string ip, HttpRequest request)
 		}
 
 	if (!bannedKey)
-		return null;
+		return BanCheckResult.init;
 
 	needBanLog();
 	banLog("Request from banned user: " ~ request.resource);
@@ -262,5 +273,100 @@ string banCheck(string ip, HttpRequest request)
 	if (propagated)
 		saveBanList();
 
-	return reason;
+	return BanCheckResult(bannedKey, reason);
+}
+
+struct UnbanTree
+{
+	struct Node
+	{
+		string key;
+		string reason;
+		string unbanReason;
+		Node*[] children;
+	}
+
+	Node*[] roots;
+	Node*[string] allNodes;
+}
+
+UnbanTree getUnbanPreviewByKey(string key)
+{
+	if (key !in banned)
+		return UnbanTree.init;
+
+	// Build parent-child relationships from ban list
+	string[][string] parents;
+	string[][string] children;
+	foreach (k, reason; banned)
+	{
+		auto p = parseParents(reason);
+		parents[k] = p;
+		foreach (parent; p)
+			children[parent] ~= k;
+	}
+
+	// Build the tree structure starting from the given key
+	UnbanTree result;
+	string[] queue;
+	bool[string] visited;
+
+	void addNode(string k, string unbanReason, UnbanTree.Node* parent = null)
+	{
+		if (k in visited || k !in banned)
+			return;
+		visited[k] = true;
+
+		auto node = new UnbanTree.Node(k, banned[k], unbanReason);
+		result.allNodes[k] = node;
+
+		if (parent)
+			parent.children ~= node;
+		else
+			result.roots ~= node;
+
+		queue ~= k;
+	}
+
+	// Start with the specified key as root
+	addNode(key, "specified key");
+
+	// Process queue to add children and parents
+	while (queue.length)
+	{
+		auto k = queue[0];
+		queue = queue[1..$];
+		auto node = result.allNodes[k];
+
+		// Add parent keys as children in the tree
+		foreach (p; parents.get(k, null))
+			addNode(p, "parent of " ~ k, node);
+
+		// Add child keys
+		foreach (c; children.get(k, null))
+			addNode(c, "child of " ~ k, node);
+	}
+
+	return result;
+}
+
+void unbanPoster(string who, string id, string[] keysToUnban)
+{
+	needBanLog();
+	banLog("User %s is unbanning poster of post %s".format(who, id));
+
+	size_t count = 0;
+	foreach (key; keysToUnban)
+	{
+		if (key in banned)
+		{
+			banLog(format("Unbanning %s", key));
+			banned.remove(key);
+			count++;
+		}
+	}
+
+	banLog(format("Unbanned a total of %d keys.", count));
+	saveBanList();
+	banLog("Done.");
 }

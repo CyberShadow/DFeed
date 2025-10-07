@@ -26,6 +26,37 @@ import dfeed.web.spam : bayes, getSpamicity;
 import dfeed.web.web.moderation : banCheck;
 import dfeed.web.web.request : ip, currentRequest;
 
+struct ModerationReason
+{
+	enum Kind
+	{
+		none,
+		spam,
+		bannedUser,
+		similarToModerated,
+	}
+
+	Kind kind;
+	string details;  // Additional information (ban reason, percentage, etc.)
+	string bannedKey;  // The specific banned key that matched (only for bannedUser)
+
+	/// Returns a human-readable description
+	string toString() const
+	{
+		final switch (kind)
+		{
+			case Kind.none:
+				return null;
+			case Kind.spam:
+				return "Very high Bayes spamicity (" ~ details ~ ")";
+			case Kind.bannedUser:
+				return "Post from banned user (ban reason: " ~ details ~ ")";
+			case Kind.similarToModerated:
+				return "Very similar to recently moderated messages (" ~ details ~ ")";
+		}
+	}
+}
+
 /// Bayes model trained to detect recently moderated messages. RAM only.
 /// The model is based off the spam model, but we throw away all spam data at first.
 BayesModel* getModerationModel()
@@ -59,19 +90,20 @@ double checkModeratedMessage(in ref PostDraft draft)
 }
 
 /// Should this post be queued for moderation instead of being posted immediately?
-/// If yes, return a reason; if no, return null.
-string shouldModerate(in ref PostDraft draft)
+/// If yes, return a reason; if no, return ModerationReason with kind == none.
+ModerationReason shouldModerate(in ref PostDraft draft)
 {
 	auto spamicity = getSpamicity(draft);
 	if (spamicity >= 0.98)
-		return "Very high Bayes spamicity (%s%%)".format(spamicity * 100);
+		return ModerationReason(ModerationReason.Kind.spam, format("%s%%", spamicity * 100), null);
 
-	if (auto reason = banCheck(ip, currentRequest))
-		return "Post from banned user (ban reason: " ~ reason ~ ")";
+	auto banResult = banCheck(ip, currentRequest);
+	if (banResult)
+		return ModerationReason(ModerationReason.Kind.bannedUser, banResult.reason, banResult.key);
 
 	auto modScore = checkModeratedMessage(draft);
 	if (modScore >= 0.95)
-		return "Very similar to recently moderated messages (%s%%)".format(modScore * 100);
+		return ModerationReason(ModerationReason.Kind.similarToModerated, format("%s%%", modScore * 100), null);
 
-	return null;
+	return ModerationReason(ModerationReason.Kind.none, null, null);
 }

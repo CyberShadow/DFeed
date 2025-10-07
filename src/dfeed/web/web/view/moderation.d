@@ -48,7 +48,7 @@ import dfeed.web.web.draft : getDraft, draftToPost;
 import dfeed.web.web.page : html, Redirect;
 import dfeed.web.web.part.post : formatPost;
 import dfeed.web.web.posting : postDraft;
-import dfeed.web.web.moderation : findPostingLog, moderatePost, approvePost;
+import dfeed.web.web.moderation : findPostingLog, moderatePost, approvePost, getUnbanPreviewByKey, unbanPoster, UnbanTree;
 import dfeed.web.web.user : user, userSettings;
 
 void discussionModeration(Rfc850Post post, UrlParameters postVars)
@@ -315,6 +315,108 @@ void discussionApprovePage(string draftID, UrlParameters postParams)
 			auto pid = approvePost(draftID, user.getName());
 
 			html.put(_!`Post approved!`, ` <a href="/posting/` ~ pid ~ `">`, _!`View posting`, `</a>`);
+		}
+		else
+			throw new Redirect("/");
+	}
+}
+
+void discussionUnbanByKeyPage(string key, UrlParameters postParams)
+{
+	import std.algorithm.iteration : map;
+	import std.conv : to;
+
+	if (postParams == UrlParameters.init)
+	{
+		auto tree = getUnbanPreviewByKey(key);
+		if (tree.allNodes.length == 0)
+		{
+			html.put(
+				`<div id="unbanform-info" class="forum-notice">`,
+					_!`The specified key is not banned.`,
+				`</div>` ~
+				`<form action="" method="get" class="forum-form unban-form" id="unbanform">` ~
+					`<label for="key">`, _!`Key to unban:`, `</label>` ~
+					`<input type="text" name="key" id="key" size="60" value="`), html.putEncodedEntities(key), html.put(`">` ~
+					`<input type="submit" value="`, _!`Look up`, `"></input>` ~
+				`</form>`);
+			return;
+		}
+
+		html.put(
+			`<div id="unbanform-info" class="forum-notice">`,
+				_!`Select which keys to unban:`,
+			`</div>` ~
+			`<style>` ~
+				`.unban-tree { margin-left: 0; padding-left: 20px; list-style: none; }` ~
+				`.unban-tree li { margin: 8px 0; }` ~
+				`.unban-tree .unban-key { font-family: monospace; font-weight: bold; }` ~
+				`.unban-tree .unban-reason { color: #666; font-style: italic; }` ~
+				`.unban-tree .unban-unban-reason { color: #080; }` ~
+				`.unban-node { padding: 4px; }` ~
+				`.unban-node:hover { background-color: #f0f0f0; }` ~
+			`</style>`);
+
+		void renderNode(UnbanTree.Node* node, int depth = 0)
+		{
+			html.put(`<li><div class="unban-node">`);
+			html.put(`<input type="checkbox" name="key" value="`);
+			html.putEncodedEntities(node.key);
+			html.put(`" id="key-`, depth.to!string, `-`);
+			html.putEncodedEntities(node.key);
+			html.put(`" checked> <label for="key-`, depth.to!string, `-`);
+			html.putEncodedEntities(node.key);
+			html.put(`"><span class="unban-key">`);
+			html.putEncodedEntities(node.key);
+			html.put(`</span> <span class="unban-reason">(`);
+			html.putEncodedEntities(node.reason);
+			html.put(`)</span> <span class="unban-unban-reason">— `);
+			html.putEncodedEntities(node.unbanReason);
+			html.put(`</span></label></div>`);
+
+			if (node.children.length > 0)
+			{
+				html.put(`<ul class="unban-tree">`);
+				foreach (child; node.children)
+					renderNode(child, depth + 1);
+				html.put(`</ul>`);
+			}
+
+			html.put(`</li>`);
+		}
+
+		html.put(`<ul class="unban-tree">`);
+		foreach (root; tree.roots)
+			renderNode(root);
+		html.put(`</ul>`);
+
+		html.put(
+			`<form action="" method="post" class="forum-form unban-form" id="unbanform">` ~
+				`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
+				`<input type="hidden" name="lookup-key" value="`), html.putEncodedEntities(key), html.put(`">` ~
+				`<input type="submit" name="unban" value="`, _!`Unban Selected`, `"></input>` ~
+				`<input type="submit" name="cancel" value="`, _!`Cancel`, `"></input>` ~
+			`</form>`);
+	}
+	else
+	{
+		enforce(postParams.get("secret", "") == userSettings.secret, _!"XSRF secret verification failed. Are your cookies enabled?");
+
+		if ("unban" in postParams)
+		{
+			// Collect all checked keys
+			string[] keysToUnban;
+			foreach (name, value; postParams)
+				if (name == "key")
+					keysToUnban ~= value;
+
+			enforce(keysToUnban.length > 0, _!"No keys selected to unban");
+
+			// Use the lookup key as a dummy ID for logging
+			auto lookupKey = postParams.get("lookup-key", key);
+			unbanPoster(user.getName(), "<unban-by-key:" ~ lookupKey ~ ">", keysToUnban);
+
+			html.put(format(_!`Unbanned %d key(s)!`, keysToUnban.length), ` <a href="/unban">`, _!`Unban another key`, `</a>`);
 		}
 		else
 			throw new Redirect("/");
