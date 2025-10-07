@@ -1,4 +1,4 @@
-/*  Copyright (C) 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2020, 2021, 2025  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -788,8 +788,8 @@ string translate(string s)
 			return `Bunu yapmak istemediyseniz, aboneliğin eylemlerini %sayarlar sayfanızda%s yeniden etkinleştirebilirsiniz.`;
 		case `Hint`:
 			return `İpucu`;
-		case "Is the CAPTCHA too hard?\nRefresh the page to get a different question,\nor ask in the %s#d IRC channel on Freenode%s.":
-			return "CAPTCHA çok mu zor?\nFarklı bir soru almak için sayfayı yenileyin\nveya yanıtını %sFreenode üzerindeki #d IRC kanalında%s sorun.";
+		case "Is the CAPTCHA too hard?\nRefresh the page to get a different question,\nor ask in the %s#d IRC channel on Libera.Chat%s.":
+			return "CAPTCHA çok mu zor?\nFarklı bir soru almak için sayfayı yenileyin\nveya yanıtını %sLibera.Chat üzerindeki #d IRC kanalında%s sorun.";
 		case `Unknown or expired CAPTCHA challenge`:
 			return `Bilinmeyen veya süresi dolmuş CAPTCHA testi`;
 		case `The answer is incorrect`:
@@ -996,6 +996,74 @@ string translate(string s)
 			return `sa`;
 		case `d`:
 			return `g`;
+		case `HTML-like text was discarded.`:
+			return `HTML benzeri metin atıldı.`;
+		case `Your message seems to contain content which the Markdown renderer has interpreted as raw HTML.`:
+			return `Mesajınız, Markdown yorumlayıcısı tarafından ham HTML olarak yorumlanan içerik içeriyor gibi görünüyor.`;
+		case `Since using raw HTML is not allowed, this content has been discarded from the rendered output.`:
+			return `Ham HTML kullanımına izin verilmediğinden, bu içerik oluşturulan çıktıdan atılmıştır.`;
+		case `If your intention was to use HTML for formatting, please revise your message to use the %savailable Markdown formatting syntax%s instead.`:
+			return `Biçimlendirme için HTML kullanmak istediyseniz, lütfen mesajınızı %sMarkdown sözdizimi%s ile yeniden yazın.`;
+		case "If your intention was to use characters such as &gt; &lt; &amp; verbatim in your message, you can prevent them from being interpreted as special characters by escaping them with a backslash character (\\).":
+			return "Mesajınızda &gt; &lt; &amp; gibi karakterleri aynen kullanmak istediyseniz, bunları ters eğik çizgi karakteriyle (\\) kaçırarak özel karakter olarak yorumlanmalarını engelleyebilirsiniz.";
+		case `Clicking "Fix it for me" will apply this escaping automatically.`:
+			return `"Benim için düzelt" üzerine tıklamak bu kaçırma işlemini otomatik olarak uygular.`;
+		case `Finally, if you do not want any special characters to be treated as formatting at all, you may uncheck the "Enable Markdown" checkbox to disable Markdown rendering completely.`:
+			return `Son olarak, hiçbir özel karakterin biçimlendirme olarak ele alınmasını istemiyorsanız, Markdown işlemeyi tamamen devre dışı bırakmak için "Markdown'ı Etkinleştir" onay kutusunun işaretini kaldırabilirsiniz.`;
+		case `Avoid using HTML entities.`:
+			return `HTML varlıklarını kullanmaktan kaçının.`;
+		case `HTML character entities, such as "&amp;mdash;", are rendered to the corresponding character when using Markdown, but will still appear as you typed them to users of software where Markdown rendering is unavailable or disabled.`:
+			return `"&amp;mdash;" gibi HTML karakter varlıkları, Markdown kullanılırken karşılık gelen karaktere dönüştürülür, ancak Markdown işlemenin kullanılamadığı veya devre dışı bırakıldığı yazılımların kullanıcılarına yazdığınız gibi görünmeye devam eder.`;
+		case `As such, it is preferable to use the Unicode characters directly instead of their HTML entity encoded form (e.g. "—" instead of "&amp;mdash;").`:
+			return `Bu nedenle, Unicode karakterlerini HTML varlık kodlu biçimleri yerine doğrudan kullanmak tercih edilir (örn. "&amp;mdash;" yerine "—").`;
+		case `If you did not mean to use an HTML entity to represent a character, escape the leading ampersand (&amp;) by prepending a backslash (e.g. "\&").`:
+			return `Bir karakteri temsil etmek için bir HTML varlığı kullanmak istemediyseniz, başındaki ve işaretini (&amp;) ters eğik çizgi ekleyerek kaçırın (örn. "\&").`;
+		case `A code block may be misformatted.`:
+			return `Bir kod bloğu yanlış biçimlendirilmiş olabilir.`;
+		case `It looks like your post may include a code block, but it is not formatted as such. (Click "Save and preview" to see how your message will look once posted.)`:
+			return `Gönderiniz bir kod bloğu içeriyor gibi görünüyor, ancak öyle biçimlendirilmemiş. (Gönderildikten sonra mesajınızın nasıl görüneceğini görmek için "Kaydet ve önizle" üzerine tıklayın.)`;
+		case "When using %sMarkdown formatting%s, you should either wrap code blocks in fences (<code>```</code> lines), or indent all lines by four spaces.":
+			return "%sMarkdown biçimlendirmesi%s kullanırken, kod bloklarını çitlerle (<code>```</code> satırları) sarmalı veya tüm satırları dört boşlukla girintilemelisisiniz.";
+		case `Click "Fix it for me" to have the forum software attempt to do this automatically.`:
+			return `Otomatik düzeltme için "Benim için düzelt" üzerine tıklayın.`;
+		case `Alternatively, you may uncheck the "Enable Markdown" checkbox to disable Markdown rendering completely, which will cause whitespace to be rendered verbatim.`:
+			return `Alternatif olarak, Markdown işlemeyi tamamen devre dışı bırakmak için "Markdown'ı Etkinleştir" onay kutusunun işaretini kaldırabilirsiniz; bu, boşlukların aynen işlenmesine neden olur.`;
+		case `Markdown syntax was used, but Markdown is disabled.`:
+			return `Markdown sözdizimi kullanıldı, ancak Markdown devre dışı bırakıldı.`;
+		case `It looks like your post may include Markdown syntax, but %sMarkdown%s is not enabled. (Click "Save and preview" to see how your message will look once posted.)`:
+			return `Gönderiniz Markdown sözdizimi içeriyor gibi görünüyor, ancak %sMarkdown%s etkin değil. (Gönderildikten sonra mesajınızın nasıl görüneceğini görmek için "Kaydet ve önizle" üzerine tıklayın.)`;
+		case `Click "Fix it for me" to enable Markdown rendering automatically.`:
+			return `Markdown işlemeyi otomatik olarak etkinleştirmek için "Benim için düzelt" üzerine tıklayın.`;
+		case `Failed to render Markdown:`:
+			return `Markdown işlenemedi:`;
+		case `Enable %sMarkdown%s`:
+			return `%sMarkdown%s'ı etkinleştir`;
+		case `No post form submitted. Please click "Back" in your web browser to navigate back to the posting form, and resubmit it.`:
+			return `Hiçbir gönderi formu gönderilmedi. Lütfen gönderi formuna geri dönmek için web tarayıcınızda "Geri" düğmesini tıklayın ve yeniden gönderin.`;
+		case `Unban by key`:
+			return `Anahtara göre yasağı kaldır`;
+		case `Try to moderate in other message sinks (e.g. Twitter)`:
+			return `Diğer mesaj havuzlarında denetlemeyi deneyin (örn. Twitter)`;
+		case `The specified key is not banned.`:
+			return `Belirtilen anahtar yasaklanmamış.`;
+		case `Key to unban:`:
+			return `Yasağı kaldırılacak anahtar:`;
+		case `Look up`:
+			return `Ara`;
+		case `Select which keys to unban:`:
+			return `Yasağı kaldırılacak anahtarları seçin:`;
+		case `Unban Selected`:
+			return `Seçilenlerin Yasağını Kaldır`;
+		case `No keys selected to unban`:
+			return `Yasağı kaldırılacak hiçbir anahtar seçilmedi`;
+		case `Unbanned %d key(s)!`:
+			return `%d anahtarın yasağı kaldırıldı!`;
+		case `Unban another key`:
+			return `Başka bir anahtarın yasağını kaldır`;
+		case `Render Markdown posts as HTML. If disabled, they will just be shown as-is, in plain text.`:
+			return `Markdown gönderilerini HTML olarak işleyin. Devre dışı bırakılırsa, düz metin olarak olduğu gibi gösterilecektir.`;
+		case `Render Markdown`:
+			return `Markdown İşle`;
 		default:
 			return null;
 	}
