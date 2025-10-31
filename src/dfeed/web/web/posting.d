@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021, 2022, 2024  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021, 2022, 2024, 2025  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -464,8 +464,13 @@ void moderateMessage(ref PostDraft draft, Headers headers, ModerationReason reas
 	string unbanSection = reason.kind == ModerationReason.Kind.bannedUser && reason.bannedKey.length
 		? `
 If this user was previously banned and you would like to unban them, you can do so here:
-%10$s://%2$s/unban/%14$s
+%s://%s/unban/%s
 `
+		.format(
+			site.proto,
+			site.host,
+			encodeUrlParameter(reason.bannedKey),
+		)
 		: "";
 
 	foreach (mod; site.moderators)
@@ -518,7 +523,7 @@ EOF")
 			/*11*/ draft.clientVars.get("did", "").I!sanitize,
 			/*12*/ ip,
 			/*13*/ context,
-			/*14*/ encodeUrlParameter(reason.bannedKey),
+			/*14*/ unbanSection,
 		));
 }
 
