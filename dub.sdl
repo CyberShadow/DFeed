@@ -19,10 +19,10 @@ subPackage {
 	name "lib"
 	excludedSourceFiles "src/dfeed/progs/*.d"
 	targetType "sourceLibrary"
-	dependency "ae" version="==0.0.3406"
-	dependency "ae:zlib" version="==0.0.3406"
-	dependency "ae:sqlite" version="==0.0.3406"
-	dependency "ae:openssl" version="==0.0.3406"
+	dependency "ae" version="==0.0.3655"
+	dependency "ae:zlib" version="==0.0.3655"
+	dependency "ae:sqlite" version="==0.0.3655"
+	dependency "ae:openssl" version="==0.0.3655"
 	dependency "dcaptcha" version="==1.0.1"
 }
 
