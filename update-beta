@@ -7,8 +7,8 @@ git fetch
 git stash save
 git reset --hard origin/next
 
-git submodule update
+git submodule update --init --recursive
 
-./rebuild
+./rebuild-nix
 
 ./restart

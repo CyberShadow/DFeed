@@ -43,3 +43,26 @@ jobs:
       - name: Build
         run: |
           ./rebuild
+
+  build-nix:
+    timeout-minutes: 60
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v18
+        with:
+          extra-conf: |
+            extra-experimental-features = nix-command flakes
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v11
+
+      - name: Build DFeed with Nix
+        run: nix build --show-trace --print-build-logs
+
+      - name: Run flake checks
+        run: nix flake check --show-trace --print-build-logs

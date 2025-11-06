@@ -1,0 +1,23 @@
+#!/bin/bash
+set -eu
+
+cd "$(dirname "$0")"
+
+# Source Nix environment if available
+if [ -e /etc/profile.d/nix.sh ]; then
+	source /etc/profile.d/nix.sh
+fi
+
+# Build using Nix flake (enable experimental features for flakes and nix-command)
+nix --extra-experimental-features 'nix-command flakes' build
+
+# Copy binaries from Nix store to current directory
+for prog in result/bin/*; do
+	if [ -f "$prog" ]; then
+		progname=$(basename "$prog")
+		cp -f "$prog" ./"$progname"
+		chmod +x "./$progname"
+	fi
+done
+
+# Keep result symlink to prevent Nix from GC-ing dependencies
