@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2014, 2015, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2014, 2015, 2018, 2020, 2025  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -62,7 +62,7 @@ abstract class NewsSource
 	this(string name)
 	{
 		this.name = name;
-		log = createLogger(name);
+		log = createLogger(name).asyncLogger();
 		newsSources[name] = this;
 	}
 
