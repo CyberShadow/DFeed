@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2015, 2016, 2017, 2018, 2020, 2025  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -57,6 +57,11 @@ static this()
 		// Add missing index
 		q"SQL
 CREATE INDEX [SubscriptionUser] ON [Subscriptions] ([Username]);
+SQL",
+
+		// Add covering index for COUNT(DISTINCT AuthorEmail) queries with Time filter
+		q"SQL
+CREATE INDEX [PostTimeAuthorEmail] ON [Posts] ([Time] DESC, [AuthorEmail]);
 SQL",
 	]);
 }
