@@ -154,6 +154,8 @@ private:
 		// The listGroup commands will be queued all together
 		// before any getMessage commands.
 
+		log(format("Fetching group info for: %s", group.name));
+
 		int maxNum = 0;
 		foreach (int num; query!"SELECT MAX(`ArtNum`) FROM `Groups` WHERE `Group` = ?".iterate(group.name))
 			maxNum = num;
