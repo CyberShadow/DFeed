@@ -146,7 +146,7 @@ void discussionIndexHeader()
 	SysTime cutOff = previousSession ? SysTime(previousSession) : now - 24.hours;
 	int numThreads = query!"SELECT COUNT(*)                      FROM [Threads] WHERE [Created] >= ?".iterate(cutOff.stdTime).selectValue!int;
 	int numPosts   = query!"SELECT COUNT(*)                      FROM [Posts]   WHERE [Time]    >= ?".iterate(cutOff.stdTime).selectValue!int;
-	int numUsers   = query!"SELECT COUNT(DISTINCT [AuthorEmail]) FROM [Posts]   WHERE [Time]    >= ?".iterate(cutOff.stdTime).selectValue!int;
+	int numUsers   = query!"SELECT COUNT(DISTINCT [AuthorEmail]) FROM [Posts] INDEXED BY [PostTimeAuthorEmail] WHERE [Time] >= ?".iterate(cutOff.stdTime).selectValue!int;
 
 	bits[(numThreads || numPosts) ? 1 : 2] ~=
 		"<li>"
