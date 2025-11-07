@@ -64,6 +64,14 @@ SQL",
 CREATE INDEX [PostTimeAuthorEmail] ON [Posts] ([Time] DESC, [AuthorEmail]);
 SQL",
 	]);
+
+	// Enable WAL mode for better concurrency and performance on COW filesystems
+	// Must be set outside of transactions, so done here rather than in migrations
+	db.exec("PRAGMA journal_mode = WAL;");
+
+	// Set per-connection performance settings
+	db.exec("PRAGMA synchronous = NORMAL;");  // Balance safety vs performance (1 fsync instead of 2)
+	db.exec("PRAGMA cache_size = -50000;");   // 50MB cache (reduces disk I/O)
 }
 
 int transactionDepth;
