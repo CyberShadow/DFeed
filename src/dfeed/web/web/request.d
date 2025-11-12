@@ -879,8 +879,8 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			case "tools"          : return toolStr;
 			case "search-options" : return searchOptionStr;
 			default:
-				if (name.startsWith("static:"))
-					return staticPath(name[7..$]);
+				if (name.skipOver("static:"))
+					return staticPath(name);
 				throw new Exception("Unknown variable in template: " ~ name);
 		}
 	}
