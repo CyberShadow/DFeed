@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021, 2023, 2024  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021, 2023, 2024, 2025  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -48,7 +48,7 @@ import dfeed.web.web.part.pager : getPageOffset, POSTS_PER_PAGE;
 import dfeed.web.web.postinfo;
 import dfeed.web.web.posting : discussionPostForm, discussionSend, discussionPostStatus;
 import dfeed.web.web.site : putSiteNotice;
-import dfeed.web.web.statics : optimizedPath, serveFile, makeBundle, staticPath, createBundles, createBundles;
+import dfeed.web.web.statics : optimizedPath, serveFile, makeBundle, staticPath, createBundles;
 import dfeed.web.web.user;
 import dfeed.web.web.view.feed : getFeed, getSubscriptionFeed, FEED_HOURS_DEFAULT, FEED_HOURS_MAX;
 import dfeed.web.web.view.group : discussionGroup, discussionGroupNarrowIndex, discussionGroupThreaded, discussionGroupSplit, discussionGroupVSplit, discussionGroupSplitFromPost, discussionGroupVSplitFromPost;
@@ -890,12 +890,23 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	auto page = readText(optimizedPath(null, "web/skel.htt"));
 	//scope(failure) std.file.write("bad-tpl.html", page);
 	page = renderNav(page, currentGroup);
-	page = parseTemplate(page, &getVar);
+
+	// First pass: resolve only static: placeholders
+	page = parseTemplate(page, (string name) {
+		if (name.startsWith("static:"))
+			return staticPath(name[7..$]);
+		return null; // Don't touch other placeholders
+	});
+
 	debug {} else
 	{
+		// Bundle the resolved static resources
 		page = createBundles(page, re!`<link rel="stylesheet" href="(/[^/][^"]*?)" ?/?>`);
 		page = createBundles(page, re!`<script type="text/javascript" src="(/[^/][^"]*?\.js)"></script>`);
 	}
+
+	// Substitute remaining template variables with page-specific content
+	page = parseTemplate(page, name => getVar(name).nonNull);
 	response.serveData(page);
 
 	response.setStatus(status);
@@ -924,7 +935,7 @@ string renderNav(string html, GroupInfo currentGroup)
 	).array);
 }
 
-static string parseTemplate(string data, string delegate(string) dictionary)
+static string parseTemplate(string data, scope string delegate(string) dictionary)
 {
 	import ae.utils.textout;
 	StringBuilder sb;
@@ -939,7 +950,15 @@ static string parseTemplate(string data, string delegate(string) dictionary)
 			throw new Exception("Bad syntax in template");
 		string token = data[startpos+2 .. endpos];
 		auto value = dictionary(token);
-		sb.put(data[0 .. startpos], value);
+		if (value is null)
+		{
+			// Don't substitute this placeholder, keep it as-is
+			sb.put(data[0 .. endpos+2]);
+		}
+		else
+		{
+			sb.put(data[0 .. startpos], value);
+		}
 		data = data[endpos+2 .. $];
 	}
 	sb.put(data);
