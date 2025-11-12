@@ -891,25 +891,44 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		}
 	}
 
+	// Disable HTTP caching, as we're serving dynamic content
 	response.disableCache();
 
-	auto page = readText(optimizedPath(null, "web/skel.htt"));
-	//scope(failure) std.file.write("bad-tpl.html", page);
-	page = renderNav(page);
-
-	// First pass: resolve only static: placeholders
-	page = parseTemplate(page, (string name) {
-		if (name.startsWith("static:"))
-			return staticPath(name[7..$]);
-		return null; // Don't touch other placeholders
-	});
-
-	debug {} else
+	// Cache the template with resolved static resources and bundling
+	static Cached!string pageTemplateCache;
+	if (!pageTemplateCache.isValid)
 	{
-		// Bundle the resolved static resources
-		page = createBundles(page, re!`<link rel="stylesheet" href="(/[^/][^"]*?)" ?/?>`);
-		page = createBundles(page, re!`<script type="text/javascript" src="(/[^/][^"]*?\.js)"></script>`);
+		Cached!string newCache;
+
+		auto skelPath = optimizedPath(null, "web/skel.htt");
+		auto page = readText(skelPath);
+		newCache.addFile(skelPath);
+
+		// Render navigation (now cacheable since it doesn't depend on currentGroup)
+		page = renderNav(page);
+
+		// First pass: resolve only static: placeholders, tracking files
+		page = parseTemplate(page, (string name) {
+			if (name.startsWith("static:"))
+			{
+				auto resourcePath = name[7..$];
+				newCache.addFile("web/static" ~ resourcePath);
+				return staticPath(resourcePath);
+			}
+			return null; // Don't touch other placeholders
+		});
+
+		debug {} else
+		{
+			// Bundle the resolved static resources
+			page = createBundles(page, re!`<link rel="stylesheet" href="(/[^/][^"]*?)" ?/?>`);
+			page = createBundles(page, re!`<script type="text/javascript" src="(/[^/][^"]*?\.js)"></script>`);
+		}
+
+		newCache.value = page;
+		pageTemplateCache = newCache;
 	}
+	auto page = pageTemplateCache.value;
 
 	// Substitute remaining template variables with page-specific content
 	page = parseTemplate(page, name => getVar(name).nonNull);
@@ -917,6 +936,33 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 
 	response.setStatus(status);
 	return response;
+}
+
+// Generic file-based cache
+import std.datetime.systime : SysTime;
+alias CacheKey = SysTime[string]; // fileName -> modificationTime
+
+struct Cached(T)
+{
+	CacheKey key;
+	T value;
+
+	bool isValid()
+	{
+		import dfeed.web.web.statics : timeLastModified;
+		if (this is typeof(this).init)
+			return false;
+		foreach (fileName, mtime; key)
+			if (timeLastModified(fileName) != mtime)
+				return false;
+		return true;
+	}
+
+	void addFile(string fileName)
+	{
+		import dfeed.web.web.statics : timeLastModified;
+		key[fileName] = timeLastModified(fileName);
+	}
 }
 
 string renderNav(string html)
