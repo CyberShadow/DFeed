@@ -103,6 +103,9 @@ string createBundles(string page, Regex!char re)
 	string[] paths;
 	foreach (m; page.matchAll(re))
 		paths ~= m.captures[1];
+	if (paths.length == 0)
+		return page;
+
 	auto maxTime = paths.map!(path => path[8..26].to!long).reduce!max;
 	string bundleUrl = "/static-bundle/%d/%-(%s+%)".format(maxTime, paths.map!(path => path[27..$]));
 	int index;
