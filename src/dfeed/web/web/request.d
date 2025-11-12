@@ -867,30 +867,6 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 					encodeHtmlEntities(option.name) ~ `</option>`;
 	}
 
-	string getVar(string name)
-	{
-		switch (name)
-		{
-			case "title"          : return encodeHtmlEntities(title);
-			case "content"        : return htmlStr;
-			case "extraheaders"   : return extraHeaders.join();
-			case "extrajs"        : return extraJS.join();
-			case "bodyclass"      : return bodyClass;
-			case "tools"          : return toolStr;
-			case "search-options" : return searchOptionStr;
-			default:
-				if (name.skipOver("active-group:"))
-				{
-					return (currentGroup && name == currentGroup.urlName)
-						? ` class="active"`
-						: ``;
-				}
-				if (name.skipOver("static:"))
-					return staticPath(name);
-				throw new Exception("Unknown variable in template: " ~ name);
-		}
-	}
-
 	// Disable HTTP caching, as we're serving dynamic content
 	response.disableCache();
 
@@ -931,9 +907,32 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	auto page = pageTemplateCache.value;
 
 	// Substitute remaining template variables with page-specific content
+	string getVar(string name)
+	{
+		switch (name)
+		{
+			case "title"          : return encodeHtmlEntities(title);
+			case "content"        : return htmlStr;
+			case "extraheaders"   : return extraHeaders.join();
+			case "extrajs"        : return extraJS.join();
+			case "bodyclass"      : return bodyClass;
+			case "tools"          : return toolStr;
+			case "search-options" : return searchOptionStr;
+			default:
+				if (name.skipOver("active-group:"))
+				{
+					return (currentGroup && name == currentGroup.urlName)
+						? ` class="active"`
+						: ``;
+				}
+				if (name.skipOver("static:"))
+					return staticPath(name);
+				throw new Exception("Unknown variable in template: " ~ name);
+		}
+	}
 	page = parseTemplate(page, name => getVar(name).nonNull);
-	response.serveData(page);
 
+	response.serveData(page);
 	response.setStatus(status);
 	return response;
 }
