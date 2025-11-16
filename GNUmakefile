@@ -23,13 +23,34 @@ TARGETS : \
 	config/groups.ini
 
 %.min.htt : %.htt $(HTMLCOMPRESSOR) $(YUICOMPRESSOR)
-	$(HTMLTOOL) < $< > $@
+	$(HTMLTOOL) < $< > $@.tmp
+	@if grep -q "^ERROR:" $@.tmp 2>/dev/null; then \
+		echo "Compression failed for $@:"; \
+		cat $@.tmp; \
+		rm -f $@.tmp; \
+		exit 1; \
+	fi
+	@mv $@.tmp $@
 
 %.min.js : %.js $(YUICOMPRESSOR)
-	$(JSTOOL) < $< > $@
+	$(JSTOOL) < $< > $@.tmp
+	@if grep -q "^ERROR:" $@.tmp 2>/dev/null; then \
+		echo "Compression failed for $@:"; \
+		cat $@.tmp; \
+		rm -f $@.tmp; \
+		exit 1; \
+	fi
+	@mv $@.tmp $@
 
 %.min.css : %.css $(YUICOMPRESSOR)
-	$(CSSTOOL) < $< > $@
+	$(CSSTOOL) < $< > $@.tmp
+	@if grep -q "^ERROR:" $@.tmp 2>/dev/null; then \
+		echo "Compression failed for $@:"; \
+		cat $@.tmp; \
+		rm -f $@.tmp; \
+		exit 1; \
+	fi
+	@mv $@.tmp $@
 
 web/skel.htt : $(DLANG)/forum-template.html
 	cp $^ $@
