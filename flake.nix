@@ -53,8 +53,11 @@
           # Setup build environment
           preConfigure = ''
             # Make compressors available
-            ln -sf ${htmlcompressor} htmlcompressor-1.5.3.jar
-            ln -sf ${yuicompressor} yuicompressor-2.4.8.jar
+            # htmlcompressor with --compress-css expects yuicompressor.jar to be
+            # in the same directory as htmlcompressor.jar, so we can't just symlink
+            # to read-only Nix store paths
+            cp ${htmlcompressor} htmlcompressor-1.5.3.jar
+            cp ${yuicompressor} yuicompressor-2.4.8.jar
           '';
 
           buildPhase = ''
