@@ -22,7 +22,7 @@ import std.format : format;
 
 import dfeed.bayes : BayesModel, splitWords, splitWords, train, checkMessage;
 import dfeed.web.posting : PostDraft;
-import dfeed.web.spam : bayes, getSpamicity;
+import dfeed.web.spam : bayes, getSpamicity, certainlySpamThreshold;
 import dfeed.web.web.moderation : banCheck;
 import dfeed.web.web.request : ip, currentRequest;
 
@@ -94,7 +94,7 @@ double checkModeratedMessage(in ref PostDraft draft)
 ModerationReason shouldModerate(in ref PostDraft draft)
 {
 	auto spamicity = getSpamicity(draft);
-	if (spamicity >= 0.98)
+	if (spamicity >= certainlySpamThreshold)
 		return ModerationReason(ModerationReason.Kind.spam, format("%s%%", spamicity * 100), null);
 
 	auto banResult = banCheck(ip, currentRequest);

@@ -32,6 +32,7 @@ import ae.utils.json;
 
 import dfeed.bayes;
 import dfeed.site;
+import dfeed.web.spam : spamThreshold;
 
 void main(string[] args)
 {
@@ -71,7 +72,7 @@ void main(string[] args)
 			auto name = pair[0];
 			auto prob = pair[1];
 
-			bool rSpam = prob >= probThreshold;
+			bool rSpam = prob >= spamThreshold;
 			counts[rSpam][rSpam == isSpam]++;
 			counts2[isSpam][rSpam == isSpam]++;
 

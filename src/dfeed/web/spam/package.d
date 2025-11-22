@@ -113,6 +113,9 @@ alias Spamicity = double;
 /// Confidence threshold - scores >= this value are considered spam
 enum Spamicity spamThreshold = 0.5;
 
+/// Very high confidence threshold - scores >= this value should be quarantined/moderated
+enum Spamicity certainlySpamThreshold = 0.98;
+
 /// Predefined spamicity levels for checkers that don't provide granular scores
 enum Spamicity certainlyHam  = 0.0;  /// Definitely not spam
 enum Spamicity likelyHam     = 0.25; /// Probably not spam
@@ -152,7 +155,7 @@ BayesChecker bayes()
 	return bayesInst;
 }
 
-double getSpamicity(in ref PostDraft draft)
+Spamicity getSpamicity(in ref PostDraft draft)
 {
 	return bayes.checkDraft(draft);
 }

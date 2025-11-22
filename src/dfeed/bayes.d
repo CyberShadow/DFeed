@@ -101,5 +101,3 @@ double checkMessage(in ref BayesModel model, string s)
 	debug(bayes) writefln("---- final probability %s (%s)", prob, plsum);
 	return prob;
 }
-
-enum probThreshold = 0.5;
