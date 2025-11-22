@@ -51,10 +51,200 @@ import dfeed.web.web.posting : postDraft;
 import dfeed.web.web.moderation : findPostingLog, moderatePost, approvePost, getUnbanPreviewByKey, unbanPoster, UnbanTree;
 import dfeed.web.web.user : user, userSettings;
 
+struct JourneyEvent
+{
+	string timestamp;
+	string type;      // "captcha", "spam_check", "moderation", "posted", "info"
+	string message;
+	bool success;     // true for success, false for failure
+	string details;   // additional details like spamicity value
+}
+
+JourneyEvent[] parsePostingJourney(string messageID)
+{
+	import std.file : exists, read, dirEntries, SpanMode;
+	import std.algorithm : filter, startsWith, endsWith;
+	import std.array : array;
+	import std.string : split, indexOf, strip;
+	import std.regex : match, matchFirst;
+	import std.path : baseName;
+	import std.process : execute;
+
+	JourneyEvent[] events;
+
+	// Extract the post ID from message ID
+	if (!messageID.startsWith("<") || !messageID.endsWith(">"))
+		return events;
+
+	auto messageIDclean = messageID[1..$-1];
+	auto atPos = messageIDclean.indexOf("@");
+	if (atPos < 0)
+		return events;
+
+	auto postID = messageIDclean[0..atPos];
+	if (postID.length != 20)
+		return events;
+
+	// Find all PostProcess logs for this post ID (there may be multiple attempts)
+	string[] logFiles;
+	version (Windows)
+		logFiles = dirEntries("logs", "*PostProcess-" ~ postID ~ ".log", SpanMode.depth).array.map!(e => e.name).array;
+	else
+	{
+		auto result = execute(["find", "logs/", "-name", "*PostProcess-" ~ postID ~ ".log"]);
+		if (result.status == 0)
+			logFiles = result.output.split("\n").filter!(f => f.length > 0).array;
+	}
+
+	// Also find previous attempt logs (different post IDs but same user/content)
+	// For now, we'll parse all logs for the same date/prefix
+	version (Windows)
+	{
+		// On Windows, search for logs from the same day
+		auto dayPrefix = baseName(logFiles.length > 0 ? logFiles[0] : "");
+		if (dayPrefix.length >= 10)
+		{
+			dayPrefix = dayPrefix[0..10]; // e.g., "2025-11-19"
+			auto sameDayLogs = dirEntries("logs", dayPrefix ~ "*PostProcess-*.log", SpanMode.depth).array.map!(e => e.name).array;
+			logFiles ~= sameDayLogs.filter!(f => !logFiles.canFind(f)).array;
+		}
+	}
+	else
+	{
+		// Use find to get logs from the same date
+		if (logFiles.length > 0)
+		{
+			auto dayPrefix = baseName(logFiles[0]);
+			if (dayPrefix.length >= 10)
+			{
+				dayPrefix = dayPrefix[0..10];
+				auto result2 = execute(["find", "logs/", "-name", dayPrefix ~ "*PostProcess-*.log"]);
+				if (result2.status == 0)
+				{
+					auto sameDayLogs = result2.output.split("\n").filter!(f => f.length > 0).array;
+					logFiles ~= sameDayLogs.filter!(f => !logFiles.canFind(f)).array;
+				}
+			}
+		}
+	}
+
+	// Sort logs by filename (which includes timestamp)
+	import std.algorithm.sorting : sort;
+	logFiles.sort();
+
+	// Parse each log file
+	foreach (logFile; logFiles)
+	{
+		if (!exists(logFile))
+			continue;
+
+		auto content = cast(string)read(logFile);
+		auto logPostID = "";
+		auto m = logFile.match(` - PostProcess-([a-z]{20})\.log`);
+		if (m)
+			logPostID = m.captures[1];
+
+		foreach (line; content.split("\n"))
+		{
+			if (line.length < 30 || line[0] != '[')
+				continue;
+
+			// Extract timestamp
+			auto closeBracket = line.indexOf("]");
+			if (closeBracket < 0)
+				continue;
+			auto timestamp = line[1..closeBracket];
+			auto message = line[closeBracket + 2 .. $];
+
+			// Parse different event types
+			if (message.startsWith("IP: "))
+			{
+				events ~= JourneyEvent(timestamp, "info", "IP Address", true, message[4..$]);
+			}
+			else if (message.startsWith("CAPTCHA OK"))
+			{
+				events ~= JourneyEvent(timestamp, "captcha", "CAPTCHA solved successfully", true, "");
+			}
+			else if (message.startsWith("CAPTCHA failed: "))
+			{
+				events ~= JourneyEvent(timestamp, "captcha", "CAPTCHA failed", false, message[16..$]);
+			}
+			else if (message.startsWith("Spam check failed (spamicity: "))
+			{
+				auto spamMatch = message.matchFirst(`Spam check failed \(spamicity: ([\d.]+)\): (.+)`);
+				if (spamMatch)
+					events ~= JourneyEvent(timestamp, "spam_check", "Spam check failed", false,
+						"Spamicity: " ~ spamMatch[1] ~ " - " ~ spamMatch[2]);
+			}
+			else if (message.startsWith("Spam check OK (spamicity: "))
+			{
+				auto spamMatch = message.matchFirst(`Spam check OK \(spamicity: ([\d.]+)\)`);
+				if (spamMatch)
+					events ~= JourneyEvent(timestamp, "spam_check", "Spam check passed", true,
+						"Spamicity: " ~ spamMatch[1]);
+			}
+			else if (message.startsWith("Quarantined for moderation: "))
+			{
+				events ~= JourneyEvent(timestamp, "moderation", "Quarantined for moderation", false, message[28..$]);
+			}
+			else if (message.startsWith("< Message-ID: <"))
+			{
+				events ~= JourneyEvent(timestamp, "posted", "Post created with Message-ID", true,
+					message[15..$-1]); // Remove "< Message-ID: <" and final ">"
+			}
+		}
+	}
+
+	return events;
+}
+
+void renderJourneyTimeline(JourneyEvent[] events)
+{
+	if (events.length == 0)
+		return;
+
+	html.put(
+		`<div class="journey-timeline">` ~
+			`<h3>User Journey</h3>` ~
+			`<style>` ~
+				`.journey-timeline { margin: 20px 0; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; }` ~
+				`.journey-timeline h3 { margin-top: 0; color: #333; }` ~
+				`.journey-event { margin: 10px 0; padding: 10px; background: white; border-left: 4px solid #ccc; }` ~
+				`.journey-event.success { border-left-color: #4caf50; }` ~
+				`.journey-event.failure { border-left-color: #f44336; }` ~
+				`.journey-event.info { border-left-color: #2196f3; }` ~
+				`.journey-timestamp { font-family: monospace; color: #666; font-size: 0.9em; }` ~
+				`.journey-message { font-weight: bold; margin: 5px 0; }` ~
+				`.journey-details { color: #555; font-size: 0.95em; font-family: monospace; }` ~
+			`</style>`
+	);
+
+	foreach (event; events)
+	{
+		string cssClass = event.success ? "success" : (event.type == "info" ? "info" : "failure");
+		html.put(
+			`<div class="journey-event `, cssClass, `">` ~
+				`<div class="journey-timestamp">`), html.putEncodedEntities(event.timestamp), html.put(`</div>` ~
+				`<div class="journey-message">`), html.putEncodedEntities(event.message), html.put(`</div>`
+		);
+		if (event.details.length > 0)
+		{
+			html.put(`<div class="journey-details">`), html.putEncodedEntities(event.details), html.put(`</div>`);
+		}
+		html.put(`</div>`);
+	}
+
+	html.put(`</div>`);
+}
+
 void discussionModeration(Rfc850Post post, UrlParameters postVars)
 {
 	if (postVars == UrlParameters.init)
 	{
+		// Display user journey timeline
+		auto journeyEvents = parsePostingJourney(post.id);
+		renderJourneyTimeline(journeyEvents);
+
 		auto sinkNames = post.xref
 			.map!(x => x.group.getGroupInfo())
 			.filter!(g => g.sinkType == "nntp")
