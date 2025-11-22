@@ -33,21 +33,21 @@ class SimpleChecker : SpamChecker
 		auto ua = process.headers.get("User-Agent", "");
 
 		if (ua.startsWith("WWW-Mechanize"))
-			return handler(false, _!"You seem to be posting using an unusual user-agent");
+			return handler(likelySpam, _!"You seem to be posting using an unusual user-agent");
 
 		auto subject = process.draft.clientVars.get("subject", "").toLower();
 		foreach (keyword; ["kitchen", "spamtest"])
 			if (subject.contains(keyword))
-				return handler(false, _!"Your subject contains a suspicious keyword or character sequence");
+				return handler(likelySpam, _!"Your subject contains a suspicious keyword or character sequence");
 
 		auto text = process.draft.clientVars.get("text", "").toLower();
 		foreach (keyword; ["<a href=", "[url=", "[url]http"])
 			if (text.contains(keyword))
-				return handler(false, _!"Your post contains a suspicious keyword or character sequence");
+				return handler(likelySpam, _!"Your post contains a suspicious keyword or character sequence");
 
 		if (subject.length + text.length < 30 && "parent" !in process.draft.serverVars)
-			return handler(false, _!"Your top-level post is suspiciously short");
+			return handler(likelySpam, _!"Your top-level post is suspiciously short");
 
-		handler(true, null);
+		handler(likelyHam, null);
 	}
 }

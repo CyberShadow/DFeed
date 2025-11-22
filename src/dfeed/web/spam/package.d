@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014, 2015, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015, 2017, 2018, 2020, 2025  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -33,6 +33,7 @@ import dfeed.web.posting;
 import dfeed.web.spam.akismet;
 import dfeed.web.spam.bayes;
 import dfeed.web.spam.blogspam;
+import dfeed.web.spam.openai;
 import dfeed.web.spam.projecthoneypot;
 import dfeed.web.spam.simple;
 import dfeed.web.spam.stopforumspam;
@@ -44,27 +45,38 @@ void spamCheck(PostProcess process, SpamResultHandler handler, void delegate(str
 
 	int totalResults = 0;
 	bool foundSpam = false;
+	Spamicity maxSpamicity = 0.0;
+	string maxSpamicityMessage = null;
 
 	// Start all checks simultaneously
 	foreach (checker; spamCheckers)
 	{
 		try
 			(SpamChecker checker) {
-				checker.check(process, (bool ok, string message) {
+				checker.check(process, (Spamicity spamicity, string message) {
 					totalResults++;
-					if (log) log("Got reply from spam checker %s: %s (%s)".format(
-						checker.classinfo.name, ok ? "ham" : "spam", message));
+					if (log) log("Got reply from spam checker %s: spamicity %.2f (%s)".format(
+						checker.classinfo.name, spamicity, message));
 					if (!foundSpam)
 					{
-						if (!ok)
+						// Track the highest spamicity score
+						if (spamicity > maxSpamicity)
 						{
-							handler(false, message);
+							maxSpamicity = spamicity;
+							maxSpamicityMessage = message;
+						}
+
+						// If spamicity exceeds threshold, immediately report as spam
+						if (spamicity >= spamThreshold)
+						{
+							handler(spamicity, message);
 							foundSpam = true;
 						}
 						else
 						{
+							// If all checkers are done and none found spam, report max spamicity
 							if (totalResults == spamCheckers.length)
-								handler(true, null);
+								handler(maxSpamicity, maxSpamicityMessage);
 						}
 					}
 				});
@@ -74,7 +86,7 @@ void spamCheck(PostProcess process, SpamResultHandler handler, void delegate(str
 			if (log) log("Error with spam checker %s: %s".format(
 				checker.classinfo.name, e.msg));
 			foundSpam = true;
-			handler(false, _!"Spam check error:" ~ " " ~ e.msg);
+			handler(errorSpam, _!"Spam check error:" ~ " " ~ e.msg);
 		}
 
 		// Avoid starting slow checks if the first engines instantly return a positive
@@ -94,7 +106,29 @@ void sendSpamFeedback(PostProcess process, SpamResultHandler handler, SpamFeedba
 
 // **************************************************************************
 
-alias void delegate(bool ok, string message) SpamResultHandler;
+/// Spam confidence score: 0.0 = definitely ham (not spam), 1.0 = definitely spam
+/// This follows industry-standard semantics where higher values indicate higher spam probability
+alias Spamicity = double;
+
+/// Confidence threshold - scores >= this value are considered spam
+enum Spamicity spamThreshold = 0.5;
+
+/// Predefined spamicity levels for checkers that don't provide granular scores
+enum Spamicity certainlyHam  = 0.0;  /// Definitely not spam
+enum Spamicity likelyHam     = 0.25; /// Probably not spam
+enum Spamicity likelySpam    = 0.75; /// Probably spam
+enum Spamicity certainlySpam = 1.0;  /// Definitely spam
+
+/// Confidence level returned by spam checkers when they are not configured
+/// (missing API keys or other configuration).
+/// We return 0 so that the maximizing logic in spamCheck treats this result
+/// synonymously with the spam checker not being present.
+alias unconfiguredHam = certainlyHam;
+
+/// Confidence level for errors (challenge instead of outright rejection)
+alias errorSpam = likelySpam;
+
+alias void delegate(Spamicity spamicity, string message) SpamResultHandler;
 
 enum SpamFeedback { unknown, spam, ham }
 
@@ -104,7 +138,7 @@ class SpamChecker
 
 	void sendFeedback(PostProcess process, SpamResultHandler handler, SpamFeedback feedback)
 	{
-		handler(true, "Not implemented");
+		handler(likelyHam, "Not implemented");
 	}
 }
 

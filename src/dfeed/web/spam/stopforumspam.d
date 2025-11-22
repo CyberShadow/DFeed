@@ -41,7 +41,7 @@ class StopForumSpam : SpamChecker
 		if (ip.canFind(':') || ip.split(".").length != 4)
 		{
 			// Not an IPv4 address, skip StopForumSpam check
-			return handler(true, "Not an IPv4 address");
+			return handler(certainlyHam, "Not an IPv4 address");
 		}
 
 		httpGet("http://api.stopforumspam.org/api?ip=" ~ ip, (string result) {
@@ -61,19 +61,19 @@ class StopForumSpam : SpamChecker
 			}
 
 			if (response["appears"].text == "no")
-				handler(true, null);
+				handler(likelyHam, null);
 			else
 			{
 				auto date = response["lastseen"].text.parseTime!"Y-m-d H:i:s"();
 				if (Clock.currTime() - date < dur!"days"(DAYS_THRESHOLD))
-					handler(false, format(
+					handler(likelySpam, format(
 						_!"StopForumSpam thinks you may be a spammer (%s last seen: %s, frequency: %s)",
 						process.ip, response["lastseen"].text, response["frequency"].text));
 				else
-					handler(true, null);
+					handler(likelyHam, null);
 			}
 		}, (string errorMessage) {
-			handler(false, "StopForumSpam error: " ~ errorMessage);
+			handler(errorSpam, "StopForumSpam error: " ~ errorMessage);
 		});
 	}
 }

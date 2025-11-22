@@ -35,7 +35,7 @@ class ProjectHoneyPot : SpamChecker
 	override void check(PostProcess process, SpamResultHandler handler)
 	{
 		if (!config.key)
-			return handler(true, "ProjectHoneyPot is not set up");
+			return handler(certainlyHam, "ProjectHoneyPot is not set up");
 
 		enum DAYS_THRESHOLD  =  7; // consider an IP match as a positive if it was last seen at most this many days ago
 		enum SCORE_THRESHOLD = 10; // consider an IP match as a positive if its ProjectHoneyPot score is at least this value
@@ -66,7 +66,10 @@ class ProjectHoneyPot : SpamChecker
 		auto result = phpCheck(process.ip);
 		with (result)
 			if (present && daysLastSeen <= DAYS_THRESHOLD && threatScore >= SCORE_THRESHOLD)
-				handler(false, format(
+			{
+				// Normalize threat score (0-255) to spamicity (0.0-1.0)
+				auto spamicity = threatScore / 255.0;
+				handler(spamicity, format(
 					_!"ProjectHoneyPot thinks you may be a spammer (%s last seen: %d days ago, threat score: %d/255, type: %s)",
 					process.ip,
 					daysLastSeen,
@@ -77,8 +80,9 @@ class ProjectHoneyPot : SpamChecker
 						((type & 0b0010) ? ["Harvester"      ] : []) ~
 						((type & 0b0100) ? ["Comment Spammer"] : [])
 					).join(", ")));
+			}
 			else
-				handler(true, null);
+				handler(likelyHam, null);
 	}
 
 }

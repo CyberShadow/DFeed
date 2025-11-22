@@ -372,17 +372,17 @@ private:
 		postMessage();
 	}
 
-	void onSpamResult(bool ok, string errorMessage)
+	void onSpamResult(Spamicity spamicity, string errorMessage)
 	{
-		if (!ok)
+		if (spamicity >= spamThreshold)
 		{
 			this.status = PostingStatus.spamCheckFailed;
 			this.error = PostError(errorMessage);
-			log("Spam check failed: " ~ errorMessage);
+			log("Spam check failed (spamicity: %.2f): %s".format(spamicity, errorMessage));
 			log.close();
 			return;
 		}
-		log("Spam check OK");
+		log("Spam check OK (spamicity: %.2f)".format(spamicity));
 
 		postMessage();
 	}

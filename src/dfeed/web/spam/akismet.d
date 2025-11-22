@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2014, 2015, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2014, 2015, 2017, 2018, 2020, 2025  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -32,7 +32,7 @@ class Akismet : SpamChecker
 	override void check(PostProcess process, SpamResultHandler handler)
 	{
 		if (!config.key)
-			return handler(true, "Akismet is not set up");
+			return handler(unconfiguredHam, "Akismet is not set up");
 
 		string[string] params = [
 			"blog"                 : site.proto ~ "://" ~ site.host ~ "/",
@@ -46,21 +46,21 @@ class Akismet : SpamChecker
 
 		return httpPost("http://" ~ config.key ~ ".rest.akismet.com/1.1/comment-check", UrlParameters(params), (string result) {
 			if (result == "false")
-				handler(true, null);
+				handler(likelyHam, null);
 			else
 			if (result == "true")
-				handler(false, _!"Akismet thinks your post looks like spam");
+				handler(likelySpam, _!"Akismet thinks your post looks like spam");
 			else
-				handler(false, _!"Akismet error:" ~ " " ~ result);
+				handler(errorSpam, _!"Akismet error:" ~ " " ~ result);
 		}, (string error) {
-			handler(false, _!"Akismet error:" ~ " " ~ error);
+			handler(errorSpam, _!"Akismet error:" ~ " " ~ error);
 		});
 	}
 
 	override void sendFeedback(PostProcess process, SpamResultHandler handler, SpamFeedback feedback)
 	{
 		if (!config.key)
-			return handler(true, "Akismet is not set up");
+			return handler(unconfiguredHam, "Akismet is not set up");
 
 		string[string] params = [
 			"blog"                 : site.proto ~ "://" ~ site.host ~ "/",
@@ -75,11 +75,11 @@ class Akismet : SpamChecker
 		string[SpamFeedback] names = [ SpamFeedback.spam : "spam", SpamFeedback.ham : "ham" ];
 		return httpPost("http://" ~ config.key ~ ".rest.akismet.com/1.1/submit-" ~ names[feedback], UrlParameters(params), (string result) {
 			if (result == "Thanks for making the web a better place.")
-				handler(true, null);
+				handler(likelyHam, null);
 			else
-				handler(false, "Akismet error: " ~ result);
+				handler(errorSpam, "Akismet error: " ~ result);
 		}, (string error) {
-			handler(false, "Akismet error: " ~ error);
+			handler(errorSpam, "Akismet error: " ~ error);
 		});
 	}
 }
