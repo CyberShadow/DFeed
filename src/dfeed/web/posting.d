@@ -43,6 +43,8 @@ import dfeed.sources.newsgroups : NntpConfig;
 import dfeed.web.captcha;
 import dfeed.web.spam;
 import dfeed.web.user;
+import dfeed.web.web.postmod : ModerationReason, shouldModerate;
+import dfeed.web.web.posting : moderateMessage;
 
 struct PostDraft
 {
@@ -84,6 +86,7 @@ enum PostingStatus
 	posting,
 	waiting,
 	posted,
+	moderated,
 
 	captchaFailed,
 	spamCheckFailed,
@@ -369,7 +372,7 @@ private:
 			log("  (user solved %d CAPTCHAs)".format(n));
 		}
 
-		postMessage();
+		checkForModeration();
 	}
 
 	void onSpamResult(Spamicity spamicity, string errorMessage)
@@ -383,6 +386,21 @@ private:
 			return;
 		}
 		log("Spam check OK (spamicity: %.2f)".format(spamicity));
+
+		checkForModeration();
+	}
+
+	void checkForModeration()
+	{
+		auto moderationReason = shouldModerate(draft);
+		if (moderationReason.kind != ModerationReason.Kind.none)
+		{
+			this.status = PostingStatus.moderated;
+			moderateMessage(draft, headers, moderationReason);
+			log("Quarantined for moderation: " ~ moderationReason.toString());
+			log.close();
+			return;
+		}
 
 		postMessage();
 	}

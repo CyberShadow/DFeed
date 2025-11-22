@@ -349,16 +349,6 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 					}
 				}
 
-				auto moderationReason = shouldModerate(draft);
-				if (moderationReason.kind != ModerationReason.Kind.none)
-				{
-					// draft will be saved by scope(exit) above
-					moderateMessage(draft, headers, moderationReason);
-
-					html.put(`<p>`, _!`Your message has been saved, and will be posted after being approved by a moderator.`, `</p>`);
-					return null;
-				}
-
 				auto pid = postDraft(draft, headers);
 
 				lastPostAttempts[ip] ~= Clock.currTime();
@@ -568,6 +558,10 @@ void discussionPostStatus(PostProcess process, out bool refresh, out string redi
 			redirectTo = idToUrl(process.post.id);
 			discussionPostStatusMessage(_!`Message posted! Redirecting...`);
 			refresh = true;
+			return;
+
+		case PostingStatus.moderated:
+			discussionPostStatusMessage(_!`Your message has been saved, and will be posted after being approved by a moderator.`);
 			return;
 
 		case PostingStatus.captchaFailed:
