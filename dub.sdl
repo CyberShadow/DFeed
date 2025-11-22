@@ -9,6 +9,7 @@ license "Affero GPL v3"
 # Main package is the DFeed program itself.
 sourcePaths
 sourceFiles "src/dfeed/progs/dfeed.d"
+mainSourceFile "src/dfeed/progs/dfeed.d"
 dependency "dfeed:lib" version="*" path="."
 targetType "executable"
 

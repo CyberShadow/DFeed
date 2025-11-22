@@ -41,6 +41,8 @@
 /bayes-checkdatum
 /bayes-prepdata
 /bayes-train
+/*-test-application
+result
 
 # Deimos
 /deimos/openssl/
@@ -48,4 +50,3 @@
 # Generated from dlang.org
 /web/skel.htt
 /config/gengroups
-result
