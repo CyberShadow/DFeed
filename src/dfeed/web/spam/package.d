@@ -180,6 +180,8 @@ void initSpamCheckers()
 		spamCheckers ~= c;
 	if (auto c = createService!Akismet("apis/akismet"))
 		spamCheckers ~= c;
+	if (auto c = createService!OpenAI("apis/openai"))
+		spamCheckers ~= c;
 	spamCheckers ~= new StopForumSpam();
 	//spamCheckers ~= new BlogSpam();
 }

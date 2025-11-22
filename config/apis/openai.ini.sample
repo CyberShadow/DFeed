@@ -1,0 +1,10 @@
+# OpenAI API configuration for spam detection
+# Sign up at https://platform.openai.com/ to get an API key
+
+# API key (required)
+#apiKey = sk-proj-...
+
+# Model to use (default: gpt-4o-mini)
+# Supported models: gpt-4o-mini, gpt-4o, gpt-4-turbo, gpt-3.5-turbo
+# Note: We use logprobs for confidence assessment, so reasoning models (o1/o3) are not supported
+#model = gpt-4o-mini
