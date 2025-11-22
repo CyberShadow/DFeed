@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021, 2025  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -379,9 +379,24 @@ private:
 	{
 		if (spamicity >= spamThreshold)
 		{
-			this.status = PostingStatus.spamCheckFailed;
-			this.error = PostError(errorMessage);
 			log("Spam check failed (spamicity: %.2f): %s".format(spamicity, errorMessage));
+
+			// Check if CAPTCHA is available to challenge the user
+			if (getCaptcha(post.captcha))
+			{
+				// CAPTCHA available - let user try to solve it
+				this.status = PostingStatus.spamCheckFailed;
+				this.error = PostError(errorMessage);
+			}
+			else
+			{
+				// No CAPTCHA configured - quarantine for moderation
+				auto reason = ModerationReason(ModerationReason.Kind.spam, "No CAPTCHA configured and spam check failed: " ~ errorMessage);
+				this.status = PostingStatus.moderated;
+				moderateMessage(draft, headers, reason);
+				log("Quarantined for moderation: " ~ reason.toString());
+			}
+
 			log.close();
 			return;
 		}

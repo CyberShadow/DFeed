@@ -569,19 +569,11 @@ void discussionPostStatus(PostProcess process, out bool refresh, out string redi
 			form = true;
 			return;
 		case PostingStatus.spamCheckFailed:
-			if (auto captcha = getCaptcha(process.post.captcha))
-			{
-				error.message = format(_!"%s. Please solve a CAPTCHA to continue.", error.message);
-				discussionPostForm(process.draft, captcha, error);
-				form = true;
-			}
-			else
-			{
-				auto reason = ModerationReason(ModerationReason.Kind.spam, "No CAPTCHA configured and spam check failed: " ~ error.message);
-				moderateMessage(process.draft, process.headers, reason);
-				saveDraft(process.draft);
-				discussionPostStatusMessage(_!`Your message has been saved, and will be posted after being approved by a moderator.`);
-			}
+			// CAPTCHA is available (checked in onSpamResult) - show form with challenge
+			auto captcha = getCaptcha(process.post.captcha);
+			error.message = format(_!"%s. Please solve a CAPTCHA to continue.", error.message);
+			discussionPostForm(process.draft, captcha, error);
+			form = true;
 			return;
 		case PostingStatus.serverError:
 			discussionPostForm(process.draft, null, error);
