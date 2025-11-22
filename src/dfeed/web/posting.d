@@ -377,6 +377,9 @@ private:
 
 	void onSpamResult(Spamicity spamicity, string errorMessage)
 	{
+		// Cache the overall spamicity for later retrieval
+		draft.serverVars["spamicity"] = spamicity.text;
+
 		if (spamicity >= spamThreshold)
 		{
 			log("Spam check failed (spamicity: %.2f): %s".format(spamicity, errorMessage));

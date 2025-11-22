@@ -157,7 +157,11 @@ BayesChecker bayes()
 
 Spamicity getSpamicity(in ref PostDraft draft)
 {
-	return bayes.checkDraft(draft);
+	auto p = *("spamicity" in draft.serverVars)
+		.enforce("getSpamicity called without running spam check first");
+
+	import std.conv : to;
+	return p.to!Spamicity;
 }
 
 // **************************************************************************
