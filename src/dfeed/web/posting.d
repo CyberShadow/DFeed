@@ -442,6 +442,9 @@ private:
 			case "smtp":
 				smtpSend(group);
 				break;
+			case "local":
+				localSend();
+				break;
 			default:
 				assert(false, "Unknown sinkType: " ~ group.sinkType);
 		}
@@ -537,6 +540,15 @@ private:
 			recipient,
 			["To: " ~ recipient] ~ post.message.splitAsciiLines()
 		);
+	}
+
+	void localSend()
+	{
+		status = PostingStatus.posting;
+		announcePost(post, Fresh.yes);
+		this.status = PostingStatus.posted;
+		log("Message stored locally.");
+		log.close();
 	}
 }
 

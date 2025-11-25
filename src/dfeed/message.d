@@ -100,6 +100,11 @@ class Rfc850Post : Post
 		if ("X-DFeed-List" in headers && !xref.length)
 			xref = [Xref(headers["X-DFeed-List"])];
 
+		// Fallback for local posts that have Newsgroups header but no Xref
+		if ("Newsgroups" in headers && !xref.length)
+			foreach (group; headers["Newsgroups"].split(","))
+				xref ~= Xref(group.strip());
+
 		if ("List-ID" in headers && subject.startsWith("[") && xref.length == 1)
 		{
 			auto p = subject.indexOf("] ");
