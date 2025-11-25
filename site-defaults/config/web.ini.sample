@@ -29,4 +29,4 @@
 # addr = 127.0.0.1
 
 # Port to listen on.
-port = 80
+port = 8080

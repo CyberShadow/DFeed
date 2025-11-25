@@ -50,7 +50,7 @@ cp site-defaults/config/site.ini.sample site/config/site.ini
 echo "host = your.nntp.server" > site/config/sources/nntp/myserver.ini
 
 # Configure web interface:
-echo "listen.port = 8080" > site/config/web.ini
+echo "listen.port = 80" > site/config/web.ini
 ```
 
 ### Running
