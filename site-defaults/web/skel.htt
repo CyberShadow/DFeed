@@ -61,7 +61,6 @@
 </div>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
-<script>window.jQuery || document.write('\x3Cscript src="<?static:/js/jquery-1.7.2.min.js?>">\x3C/script>');</script>
 <script><?extrajs?></script>
 <script src="<?static:/js/dfeed.js?>"></script>
 <link rel="stylesheet" href="<?static:/css/highlight-js.css?>">

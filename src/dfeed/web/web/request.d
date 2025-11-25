@@ -835,6 +835,13 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	jsVars["localization"] = getJsStrings();
 
 	string[] extraJS;
+
+	// Add jQuery fallback only if local copy exists
+	import std.file : exists;
+	static immutable jqueryPath = "/js/jquery-1.7.2.min.js";
+	if (resolveStaticFileBase(jqueryPath))
+		extraJS ~= `window.jQuery || document.write('\x3Cscript src="` ~ staticPath(jqueryPath) ~ `">\x3C/script>');`;
+
 	if (jsVars.length)
 		extraJS ~= "var %-(%s,%);".format(jsVars.byKeyValue.map!(pair => pair.key ~ "=" ~ pair.value));
 
