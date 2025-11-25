@@ -23,8 +23,9 @@ import dfeed.web.web.page;
 private string getSiteNotice()
 {
 	import std.file : readText;
+	import dfeed.paths : resolveSiteFile;
 	try
-		return readText("config/site-notice.html");
+		return readText(resolveSiteFile("config/site-notice.html"));
 	catch (Exception e)
 		return null;
 }

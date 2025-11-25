@@ -8,6 +8,20 @@
 # The default is false.
 #indexable = true
 
+# API secret for programmatic access (e.g., for moderation APIs).
+# If not set, API endpoints will be disabled.
+#apiSecret = your-secret-here
+
+# Widget configuration for the home page.
+
+# Group to use for the "Latest announcements" widget.
+# If not set, the widget will not be displayed.
+#announceGroup = announce
+
+# Groups to exclude from the "Active discussions" widget.
+# Use an array format: ["group1", "group2"]
+#activeDiscussionExclude = ["announce"]
+
 # HTTP socket parameters.
 [listen]
 

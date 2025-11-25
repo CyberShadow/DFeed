@@ -210,16 +210,21 @@ void discussionIndexHeader()
 	//html.put("<p>Random tip: " ~ tips[uniform(0, $)] ~ "</p>");
 }
 
+bool hasAlsoVia()
+{
+	import std.algorithm.searching : any;
+	return groupHierarchy.any!(set => set.groups.any!(group => group.alsoVia.length > 0));
+}
+
 string randomTip()
 {
-	static immutable string[] tips =
+	static immutable string[] defaultTips =
 	[
 		`This forum has several different <a href="/help#view-modes">view modes</a>. Try them to find one you like best. You can change the view mode in the <a href="/settings">settings</a>.`,
 		`This forum supports <a href="/help#keynav">keyboard shortcuts</a>. Press <kbd>?</kbd> to view them.`,
 		`You can focus a message with <kbd>j</kbd>/<kbd>k</kbd> and press <kbd>u</kbd> to mark it as unread, to remind you to read it later.`,
 		`The <a href="/help#avatars">avatars on this forum</a> are provided by Gravatar, which allows associating a global avatar with an email address.`,
 		`This forum remembers your read post history on a per-post basis. If you are logged in, the post history is saved on the server, and in a compressed cookie otherwise.`,
-		`Much of this forum's content is also available via classic mailing lists or NNTP - see the "Also via" column on the forum index.`,
 		`If you create a Gravatar profile with the email address you post with, it will be accessible when clicking your avatar.`,
 	//	`You don't need to create an account to post on this forum, but doing so <a href="/help#accounts">offers a few benefits</a>.`,
 		`To subscribe to a thread, click the "Subscribe" link on that thread's first post. You need to be logged in to create subscriptions.`,
@@ -227,13 +232,21 @@ string randomTip()
 		`This forum is open-source! Read or fork the code <a href="https://github.com/CyberShadow/DFeed">on GitHub</a>.`,
 		`If you encounter a bug or need a missing feature, you can <a href="https://github.com/CyberShadow/DFeed/issues">create an issue on GitHub</a>.`,
 	];
-	auto index = uniform(0, tips.length);
-	final switch (index)
+	static immutable alsoViaTip = `Much of this forum's content is also available via classic mailing lists or NNTP - see the "Also via" column on the forum index.`;
+
+	immutable numTips = defaultTips.length + (hasAlsoVia() ? 1 : 0);
+	auto index = uniform(0, numTips);
+	if (index < defaultTips.length)
 	{
-		foreach (n; RangeTuple!(tips.length))
-			case n:
-				return _!(tips[n]);
+		final switch (index)
+		{
+			foreach (n; RangeTuple!(defaultTips.length))
+				case n:
+					return _!(defaultTips[n]);
+		}
 	}
+	else
+		return _!alsoViaTip;
 }
 
 string[string] getLastPosts()

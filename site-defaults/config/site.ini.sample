@@ -20,6 +20,11 @@ proto = http
 
 about = <p>This is an example DFeed instance.</p>
 
+# OpenGraph image URL for social media previews.
+# If not set, no image will be used in OpenGraph metadata.
+
+ogImage =
+
 # List of email addresses of site moderators.
 # These will be used for notifications when a post is flagged.
 # E.g.: moderators=["John Doe <johndoe@example.tld>", "Jane Doe <janedoe@example.tld>"]

@@ -48,8 +48,9 @@ immutable Config config;
 
 import ae.utils.aa;
 import ae.utils.sini;
+import dfeed.paths : resolveSiteFile;
 
-shared static this() { config = cast(immutable)loadIni!Config("config/groups.ini"); }
+shared static this() { config = cast(immutable)loadIni!Config(resolveSiteFile("config/groups.ini")); }
 
 struct GroupSet
 {

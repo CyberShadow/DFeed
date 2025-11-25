@@ -25,25 +25,6 @@ jobs:
         run: |
           dub build
 
-  build-manual:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-22.04 ]
-
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
-
-      - uses: actions/checkout@v2
-        with:
-          submodules: recursive
-
-      - name: Build
-        run: |
-          ./rebuild
-
   build-nix:
     timeout-minutes: 60
     runs-on: ubuntu-24.04

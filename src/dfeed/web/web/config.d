@@ -18,6 +18,7 @@
 module dfeed.web.web.config;
 
 import ae.utils.sini : loadIni;
+import dfeed.paths : resolveSiteFile;
 
 struct ListenConfig
 {
@@ -31,7 +32,11 @@ struct Config
 	string staticDomain = null;
 	string apiSecret = null;
 	bool indexable = false;
+
+	// Widget configuration
+	string announceGroup;              // Group for "Latest announcements" widget
+	string[] activeDiscussionExclude;  // Groups to exclude from "Active discussions"
 }
 const Config config;
 
-shared static this() { config = loadIni!Config("config/web.ini"); }
+shared static this() { config = loadIni!Config(resolveSiteFile("config/web.ini")); }

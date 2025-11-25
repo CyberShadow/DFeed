@@ -39,6 +39,7 @@ import ae.utils.text.html : encodeHtmlEntities;
 import ae.utils.xmllite;
 
 import dfeed.loc;
+import dfeed.paths : resolveSiteFile;
 import dfeed.database : query;
 import dfeed.groups : getGroupInfo;
 import dfeed.mail : sendMail;
@@ -110,7 +111,7 @@ bool discussionPostForm(PostDraft draft, Captcha captcha=null, PostError error=P
 
 	if (info.sinkType == "smtp" && info.subscriptionRequired)
 	{
-		auto config = loadIni!SmtpConfig("config/sources/smtp/" ~ info.sinkName ~ ".ini");
+		auto config = loadIni!SmtpConfig(resolveSiteFile("config/sources/smtp/" ~ info.sinkName ~ ".ini"));
 		html.put(`<div class="forum-notice">`, _!`Note: you are posting to a mailing list.`, `<br>`,
 			_!`Your message will not go through unless you %ssubscribe to the mailing list%s first.`.format(
 				`<a href="` ~ encodeHtmlEntities(config.listInfo ~ info.internalName) ~`">`,

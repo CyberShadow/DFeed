@@ -1,4 +1,11 @@
-/*************** style.css overrides ***************/
+/*
+ * DFeed Forum Stylesheet
+ *
+ * Forum-specific styles that work alongside style.css (base styles).
+ * The first section contains overrides for base styles.
+ */
+
+/*************** Base style adjustments ***************/
 
 table, table th {
 	border-style: none;

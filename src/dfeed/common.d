@@ -167,6 +167,7 @@ unittest
 import ae.utils.sini;
 import std.file;
 import std.path;
+import dfeed.paths : resolveSiteFile, siteSearchPaths;
 
 template services(C)
 {
@@ -176,7 +177,7 @@ template services(C)
 /// Create a Class instance if the corresponding .ini file exists.
 Class createService(Class)(string configName)
 {
-	auto fn = "config/" ~ configName ~ ".ini";
+	auto fn = resolveSiteFile("config/" ~ configName ~ ".ini");
 	if (fn.exists)
 		return new Class(loadIni!(Class.Config)(fn));
 	return null;
@@ -184,14 +185,24 @@ Class createService(Class)(string configName)
 
 /// Create one instance of Class for each .ini configuration file
 /// found in the specified config subdirectory.
+/// Searches both site/ and site-defaults/ directories, with site/ taking priority.
 void createServices(Class, Args...)(string configDir, Args args)
 {
-	auto dir = "config/" ~ configDir;
-	if (!dir.exists)
-		return;
-	foreach (de; dir.dirEntries("*.ini", SpanMode.breadth))
+	bool[string] loaded;  // Track which configs have been loaded
+
+	foreach (base; siteSearchPaths)
 	{
-		auto config = loadIni!(Class.Config)(de.name);
-		services!Class[de.baseName.stripExtension] = new Class(config, args);
+		auto dir = buildPath(base, "config", configDir);
+		if (!dir.exists)
+			continue;
+		foreach (de; dir.dirEntries("*.ini", SpanMode.breadth))
+		{
+			auto name = de.baseName.stripExtension;
+			if (name in loaded)
+				continue;  // Already loaded from higher-priority path
+			auto config = loadIni!(Class.Config)(de.name);
+			services!Class[name] = new Class(config, args);
+			loaded[name] = true;
+		}
 	}
 }

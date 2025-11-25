@@ -34,6 +34,7 @@ import ae.utils.sini;
 import ae.utils.text;
 
 import dfeed.loc;
+import dfeed.paths : resolveSiteFile;
 import dfeed.common;
 import dfeed.database;
 import dfeed.groups;
@@ -491,7 +492,7 @@ private:
 
 		status = PostingStatus.connecting;
 
-		auto config = loadIni!NntpConfig("config/sources/nntp/" ~ name ~ ".ini");
+		auto config = loadIni!NntpConfig(resolveSiteFile("config/sources/nntp/" ~ name ~ ".ini"));
 		if (!config.postingAllowed)
 			throw new Exception(_!"Posting is disabled");
 
@@ -528,7 +529,7 @@ private:
 
 		status = PostingStatus.connecting;
 
-		auto config = loadIni!SmtpConfig("config/sources/smtp/" ~ group.sinkName ~ ".ini");
+		auto config = loadIni!SmtpConfig(resolveSiteFile("config/sources/smtp/" ~ group.sinkName ~ ".ini"));
 		auto recipient = "<" ~ toLower(group.internalName) ~ "@" ~ config.domain ~ ">";
 
 		smtp = new SmtpClient(log, site.host, config.server, config.port);

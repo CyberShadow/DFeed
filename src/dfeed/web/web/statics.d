@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2021, 2025  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -38,6 +38,7 @@ import ae.sys.data : Data, DataVec;
 import ae.utils.meta : isDebug;
 import ae.utils.regex : re;
 
+import dfeed.paths : resolveSiteFileBase, resolveSiteFile, resolveStaticFileBase;
 import dfeed.web.web.config : config;
 
 /// Caching wrapper
@@ -68,12 +69,17 @@ SysTime timeLastModified(string path)
 
 string staticPath(string path)
 {
-	auto url = "/static/" ~ text(timeLastModified("web/static" ~ path).stdTime) ~ path;
+	auto resolvedBase = resolveStaticFileBase(path)
+		.enforce("Static file not found: " ~ path);
+	auto resolvedFile = resolvedBase ~ path;
+	auto url = "/static/" ~ text(timeLastModified(resolvedFile).stdTime) ~ path;
 	if (config.staticDomain !is null)
 		url = "//" ~ config.staticDomain ~ url;
 	return url;
 }
 
+/// Return `resource`, or `resource ~ ".min"` if it
+/// exists in `base` and is not older than `resource`.
 string optimizedPath(string base, string resource)
 {
 	debug
@@ -90,10 +96,20 @@ string optimizedPath(string base, string resource)
 	}
 }
 
+/// Resolve the site location of and return the optimized version of `path`.
+string optimizedPath(string path)
+{
+	auto resolvedBase = resolveSiteFileBase(path);
+	auto relativePath = optimizedPath(resolvedBase, path);
+	return resolvedBase ~ relativePath;
+}
+
 HttpResponseEx serveFile(HttpResponseEx response, string path)
 {
+	auto resolvedBase = resolveStaticFileBase("/" ~ path);
+	auto optimizedFile = optimizedPath(resolvedBase, path);
 	response.cacheForever();
-	return response.serveFile(optimizedPath("web/static/", path), "web/static/");
+	return response.serveFile(path, resolvedBase);
 }
 
 // ***********************************************************************

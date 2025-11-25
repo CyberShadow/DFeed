@@ -12,7 +12,7 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
 
-        # Helper to download compressors
+        # Helper to download compressors (for minification)
         htmlcompressor = pkgs.fetchurl {
           url = "https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/htmlcompressor/htmlcompressor-1.5.3.jar";
           sha256 = "1ydh1hqndnvw0d8kws5339mj6qn2yhjd8djih27423nv1hrlx2c8";
@@ -37,9 +37,7 @@
           nativeBuildInputs = with pkgs; [
             dmd
             dtools  # Provides rdmd
-            dub
             jre_minimal  # For htmlcompressor and yuicompressor
-            gnumake
             git
             which
           ];
@@ -53,9 +51,6 @@
           # Setup build environment
           preConfigure = ''
             # Make compressors available
-            # htmlcompressor with --compress-css expects yuicompressor.jar to be
-            # in the same directory as htmlcompressor.jar, so we can't just symlink
-            # to read-only Nix store paths
             cp ${htmlcompressor} htmlcompressor-1.5.3.jar
             cp ${yuicompressor} yuicompressor-2.4.8.jar
           '';
@@ -66,7 +61,7 @@
             # Set rdmd to use dmd by default
             export DCOMPILER=dmd
 
-            # Detect OpenSSL version (like in the original rebuild script)
+            # Detect OpenSSL version
             if [ -f lib/deimos-openssl/scripts/generate_version.d ]; then
               echo "Generating OpenSSL version detection..."
               rdmd --compiler=dmd lib/deimos-openssl/scripts/generate_version.d
@@ -89,10 +84,6 @@
               flags+=(-version=DeimosOpenSSLAutoDetect)
             fi
 
-            # Build config/groups.ini first (needed by make)
-            echo "Generating config/groups.ini..."
-            (cd config && rdmd --compiler=dmd gengroups)
-
             # Build all programs
             for fn in src/dfeed/progs/*.d; do
               name=$(basename "$fn" .d)
@@ -100,9 +91,36 @@
               rdmd --compiler=dmd --build-only -of"$name" "''${flags[@]}" "$fn"
             done
 
-            # Build resources
-            echo "Building resources..."
-            make -s
+            # Minify site-defaults resources (if not already minified)
+            HTMLTOOL="java -jar htmlcompressor-1.5.3.jar --compress-css"
+            JSTOOL="java -jar yuicompressor-2.4.8.jar --type js"
+            CSSTOOL="java -jar yuicompressor-2.4.8.jar --type css"
+
+            for htt in site-defaults/web/*.htt; do
+              min="''${htt%.htt}.min.htt"
+              if [ ! -f "$min" ] || [ "$htt" -nt "$min" ]; then
+                echo "Minifying $htt..."
+                $HTMLTOOL < "$htt" > "$min" || cp "$htt" "$min"
+              fi
+            done
+
+            for css in site-defaults/web/static/css/*.css; do
+              [[ "$css" == *.min.css ]] && continue
+              min="''${css%.css}.min.css"
+              if [ ! -f "$min" ] || [ "$css" -nt "$min" ]; then
+                echo "Minifying $css..."
+                $CSSTOOL < "$css" > "$min" || cp "$css" "$min"
+              fi
+            done
+
+            for js in site-defaults/web/static/js/*.js; do
+              [[ "$js" == *.min.js ]] && continue
+              min="''${js%.js}.min.js"
+              if [ ! -f "$min" ] || [ "$js" -nt "$min" ]; then
+                echo "Minifying $js..."
+                $JSTOOL < "$js" > "$min" || cp "$js" "$min"
+              fi
+            done
 
             runHook postBuild
           '';
@@ -120,14 +138,8 @@
               fi
             done
 
-            # Install resources and configuration
-            cp -r web $out/share/dfeed/
-            cp -r config $out/share/dfeed/
-
-            # Install any other necessary runtime files
-            if [ -d data ]; then
-              cp -r data $out/share/dfeed/
-            fi
+            # Install site-defaults (generic resources)
+            cp -r site-defaults $out/share/dfeed/
 
             runHook postInstall
           '';
@@ -176,7 +188,6 @@
             nativeBuildInputs = with pkgs; [
               dmd
               dtools
-              gnumake
             ];
 
             buildInputs = with pkgs; [
@@ -188,12 +199,6 @@
             buildPhase = ''
               runHook preBuild
 
-              # Source Nix environment if available
-              if [ -e /etc/profile.d/nix.sh ]; then
-                source /etc/profile.d/nix.sh
-              fi
-
-              # Set rdmd to use dmd by default
               export DCOMPILER=dmd
 
               # Detect OpenSSL version

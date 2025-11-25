@@ -97,7 +97,7 @@
  <tr><td>Italic text</td><td><code>*sample text*</code></td><td> <i>sample text</i> </td></tr>
  <tr><td>Links</td><td><code>[GitHub](https://github.com/)</code></td><td> <a href="https://github.com/">GitHub</a> </td></tr>
  <tr><td>Lists</td><td><code>- First item<br>- Second item</code></td><td> <ul><li>First item</li><li>Second item</li></ul></td></tr>
- <tr><td>Syntax<br>highlighting</td><td><code>```d<br>writeln("D is great!");<br>```</code></td><td> <pre>writeln(<span style="color: red">"D is great!"</span>);</pre> </td></tr>
+ <tr><td>Syntax<br>highlighting</td><td><code>```python<br>print("Hello world")<br>```</code></td><td> <pre>print(<span style="color: red">"Hello world"</span>)</pre> </td></tr>
  <tr><td>Tables</td><td><code>| A | B |<br>|---|---|<br>| 1 | 2 |<br>| 3 | 4 | </code></td><td> <table><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr><tr><td>3</td><td>4</td></tr> </table> </td></tr>
 </table>
 

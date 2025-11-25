@@ -39,6 +39,8 @@ import ae.utils.json : toJson, jsonParse;
 import ae.utils.meta : identity;
 import ae.utils.regex : escapeRE;
 import ae.utils.sini : loadIni;
+
+import dfeed.paths : resolveSiteFile;
 import ae.utils.text : splitAsciiLines, asciiStrip;
 
 import dfeed.common : handleModeration;
@@ -124,7 +126,7 @@ void moderatePost(
 		auto deleteCommands = post.xref
 			.map!(x => x.group.getGroupInfo())
 			.filter!(g => g.sinkType == "nntp")
-			.map!(g => loadIni!NntpConfig("config/sources/nntp/" ~ g.sinkName ~ ".ini").deleteCommand)
+			.map!(g => loadIni!NntpConfig(resolveSiteFile("config/sources/nntp/" ~ g.sinkName ~ ".ini")).deleteCommand)
 			.filter!identity
 			.array.sort.uniq
 		;

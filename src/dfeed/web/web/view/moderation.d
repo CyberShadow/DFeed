@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2025  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -40,15 +40,16 @@ import dfeed.groups : getGroupInfo;
 import dfeed.loc;
 import dfeed.mail : sendMail;
 import dfeed.message : Rfc850Post, idToUrl;
+import dfeed.paths : resolveSiteFile;
 import dfeed.site : site;
 import dfeed.sources.newsgroups : NntpConfig;
 import dfeed.web.posting : PostDraft, PostProcess;
 import dfeed.web.user : User;
 import dfeed.web.web.draft : getDraft, draftToPost;
+import dfeed.web.web.moderation : findPostingLog, moderatePost, approvePost, getUnbanPreviewByKey, unbanPoster, UnbanTree;
 import dfeed.web.web.page : html, Redirect;
 import dfeed.web.web.part.post : formatPost;
 import dfeed.web.web.posting : postDraft;
-import dfeed.web.web.moderation : findPostingLog, moderatePost, approvePost, getUnbanPreviewByKey, unbanPoster, UnbanTree;
 import dfeed.web.web.user : user, userSettings;
 
 struct JourneyEvent
@@ -252,7 +253,7 @@ void discussionModeration(Rfc850Post post, UrlParameters postVars)
 			.array.sort.uniq
 		;
 		auto deleteCommands = sinkNames
-			.map!(sinkName => loadIni!NntpConfig("config/sources/nntp/" ~ sinkName ~ ".ini").deleteCommand)
+			.map!(sinkName => loadIni!NntpConfig(resolveSiteFile("config/sources/nntp/" ~ sinkName ~ ".ini")).deleteCommand)
 			.filter!identity
 		;
 		html.put(

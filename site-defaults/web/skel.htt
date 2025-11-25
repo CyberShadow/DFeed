@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><?title?> - Forum</title>
+<link rel="shortcut icon" href="<?static:/favicon.ico?>">
+<?extraheaders?>
+<link rel="stylesheet" href="<?static:/css/style.css?>">
+<link rel="stylesheet" href="<?static:/css/dfeed.css?>">
+</head>
+<body class="forum <?bodyclass?>">
+<script>document.body.className += ' have-javascript'</script>
+
+<div id="top">
+    <div class="site-header">
+        <div class="logo"><a href="/">Forum</a></div>
+        <div id="search-box">
+            <form method="get" action="/search">
+                <input id="q" name="q" placeholder="Search">
+                <select id="search-scope" name="scope">
+                    <?search-options?>
+                </select>
+                <button type="submit">Search</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="subnav">
+        <div class="head">
+            <h2>Forums</h2>
+            <p><a href="/">Forum Index</a></p>
+        </div>
+        <ul>
+            <li><?category1?> <ul>
+                <li<?class1?>><a href="<?url1?>"><?title1?></a></li>
+                <li<?class2?>><a href="<?url2?>"><?title2?></a></li>
+            </ul></li>
+            <li><?category2?> <ul>
+                <li<?class1?>><a href="<?url1?>"><?title1?></a></li>
+                <li<?class2?>><a href="<?url2?>"><?title2?></a></li>
+            </ul></li>
+        </ul>
+    </div>
+
+    <div id="content">
+        <div class="smallprint" id="tools"><?tools?></div>
+        <div id="forum-content"><?content?></div>
+
+        <div id="footernav">
+            <a href="#top">Top</a> |
+            <a href="/">Forum index</a> |
+            <a href="/help">Help</a>
+        </div>
+        <div class="smallprint" id="copyright">
+            Powered by <a href="https://github.com/CyberShadow/DFeed">DFeed</a>
+        </div>
+    </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script>window.jQuery || document.write('\x3Cscript src="<?static:/js/jquery-1.7.2.min.js?>">\x3C/script>');</script>
+<script><?extrajs?></script>
+<script src="<?static:/js/dfeed.js?>"></script>
+<link rel="stylesheet" href="<?static:/css/highlight-js.css?>">
+<script src="<?static:/js/highlight.js?>"></script>
+</body>
+</html>

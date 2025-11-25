@@ -24,8 +24,8 @@
 # Data, logs and configuration
 /data/
 /logs/
-/config/**/*.ini
 /build.local
+/site/
 
 # Binaries
 /dfeed
@@ -42,11 +42,9 @@
 /bayes-prepdata
 /bayes-train
 /*-test-application
+/src/dfeed/progs/*
+!/src/dfeed/progs/*.d
 result
 
 # Deimos
 /deimos/openssl/
-
-# Generated from dlang.org
-/web/skel.htt
-/config/gengroups

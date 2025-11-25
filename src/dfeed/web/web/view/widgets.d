@@ -32,6 +32,7 @@ import dfeed.web.web.postinfo : PostInfo, getPostInfo;
 import dfeed.web.web.statics;
 import dfeed.database;
 import dfeed.message;
+import dfeed.web.web.config : config;
 import dfeed.web.web.user : user;
 
 Cached!(ActiveDiscussion[]) activeDiscussionsCache;
@@ -43,12 +44,11 @@ static struct ActiveDiscussion { string id; int postCount; }
 ActiveDiscussion[] getActiveDiscussions()
 {
 	enum PERF_SCOPE = "getActiveDiscussions"; mixin(MeasurePerformanceMixin);
-	const groupFilter = ["digitalmars.D.announce", "digitalmars.D.bugs"]; // TODO: config
 	enum postCountLimit = 10;
 	ActiveDiscussion[] result;
 	foreach (string group, string firstPostID; query!"SELECT [Group], [ID] FROM [Threads] ORDER BY [Created] DESC LIMIT 100".iterate())
 	{
-		if (groupFilter.canFind(group))
+		if (config.activeDiscussionExclude.canFind(group))
 			continue;
 
 		int postCount;
@@ -67,9 +67,10 @@ ActiveDiscussion[] getActiveDiscussions()
 string[] getLatestAnnouncements()
 {
 	enum PERF_SCOPE = "getLatestAnnouncements"; mixin(MeasurePerformanceMixin);
-	enum group = "digitalmars.D.announce"; // TODO: config
+	if (!config.announceGroup.length)
+		return null;
 	string[] result;
-	foreach (string firstPostID; query!"SELECT [ID] FROM [Threads] WHERE [Group] = ? ORDER BY [RowID] DESC LIMIT ?".iterate(group, framePostsLimit))
+	foreach (string firstPostID; query!"SELECT [ID] FROM [Threads] WHERE [Group] = ? ORDER BY [RowID] DESC LIMIT ?".iterate(config.announceGroup, framePostsLimit))
 		result ~= firstPostID;
 	return result;
 }
@@ -93,11 +94,16 @@ void summarizeFrameThread(PostInfo* info, string infoText)
 
 void discussionFrameAnnouncements()
 {
+	if (!config.announceGroup.length)
+	{
+		html.put(`<div class="forum-no-data">`, _!`Announcements widget not configured`, `</div>`);
+		return;
+	}
 	auto latestAnnouncements = latestAnnouncementsCache(getLatestAnnouncements());
 
 	html.put(`<table class="forum-table"><thead><tr><th>` ~
-		`<a target="_top" class="feed-icon" title="`, _!`Subscribe`, `" href="/feed/threads/digitalmars.D.announce"><img src="`, staticPath("/images/rss.png"),`"></img></a>` ~
-		`<a target="_top" href="/group/digitalmars.D.announce">`, _!`Latest announcements`, `</a>` ~
+		`<a target="_top" class="feed-icon" title="`, _!`Subscribe`, `" href="/feed/threads/`), html.putEncodedEntities(config.announceGroup), html.put(`"><img src="`, staticPath("/images/rss.png"),`"></img></a>` ~
+		`<a target="_top" href="/group/`), html.putEncodedEntities(config.announceGroup), html.put(`">`, _!`Latest announcements`, `</a>` ~
 		`</th></tr></thead><tbody>`);
 	foreach (row; latestAnnouncements)
 		if (auto info = getPostInfo(row))

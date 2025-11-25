@@ -561,4 +561,5 @@ struct Config
 immutable Config config;
 
 import ae.utils.sini;
-shared static this() { config = loadIni!Config("config/user.ini"); }
+import dfeed.paths : resolveSiteFile;
+shared static this() { config = loadIni!Config(resolveSiteFile("config/user.ini")); }

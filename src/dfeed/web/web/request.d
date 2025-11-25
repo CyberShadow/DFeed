@@ -29,6 +29,7 @@ import std.string : indexOf;
 import std.uni : icmp, toLower;
 
 import dfeed.common;
+import dfeed.paths : resolveSiteFile, resolveStaticFileBase;
 import dfeed.database : query;
 import dfeed.groups : GroupInfo, groupHierarchy, getGroupInfoByUrl, getGroupInfo;
 import dfeed.loc;
@@ -148,7 +149,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			description = site.name;
 
 		if (!image)
-			image = "https://dlang.org/images/dlogo_opengraph.png";
+			image = site.ogImage;
 
 		auto canonicalURL = site.proto ~ "://" ~ site.host ~ canonicalLocation;
 
@@ -683,7 +684,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				break;
 			case "help":
 				breadcrumbs ~= title = _!"Help";
-				html.put(readText(optimizedPath(null, "web/help-%s.htt".format(currentLanguage)))
+				html.put(readText(optimizedPath("web/help-%s.htt".format(currentLanguage)))
 					.parseTemplate(
 						(string name)
 						{
@@ -876,7 +877,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	{
 		Cached!string newCache;
 
-		auto skelPath = optimizedPath(null, "web/skel.htt");
+		auto skelPath = optimizedPath("web/skel.htt");
 		auto page = readText(skelPath);
 		newCache.addFile(skelPath);
 
@@ -888,7 +889,10 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			if (name.startsWith("static:"))
 			{
 				auto resourcePath = name[7..$];
-				newCache.addFile("web/static" ~ resourcePath);
+				auto resolvedBase = resolveStaticFileBase(resourcePath)
+					.enforce("Static file not found: " ~ resourcePath);
+				auto resolvedFile = resolvedBase ~ resourcePath;
+				newCache.addFile(resolvedFile);
 				return staticPath(resourcePath);
 			}
 			return null; // Don't touch other placeholders

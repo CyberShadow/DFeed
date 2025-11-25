@@ -22,9 +22,11 @@ struct SiteConfig
 	string host = "localhost";
 	string proto = "http";
 	string about;
+	string ogImage;  // OpenGraph image URL for social media previews
 	immutable(string)[] moderators;
 }
 immutable SiteConfig site;
 
 import ae.utils.sini;
-shared static this() { site = loadIni!SiteConfig("config/site.ini"); }
+import dfeed.paths : resolveSiteFile;
+shared static this() { site = loadIni!SiteConfig(resolveSiteFile("config/site.ini")); }
