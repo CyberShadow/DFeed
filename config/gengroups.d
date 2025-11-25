@@ -7,7 +7,7 @@ import std.stdio;
 import std.string;
 
 struct DAlsoVia { string name, url; }
-struct DGroupInfo { string internalName, publicName, navName, urlName, description, postMessage, notice, mlName; bool mlOnly; DAlsoVia[string] alsoVia; }
+struct DGroupInfo { string internalName, publicName, navName, urlName, description, postMessage, notice, mlName; bool mlOnly, localOnly; DAlsoVia[string] alsoVia; }
 struct DGroupSet { string id, name, shortName; DGroupInfo[] groups; bool visible; }
 
 DGroupSet makeDGroupSet(string name, DGroupInfo[] groups, bool visible = true)
@@ -47,6 +47,13 @@ DGroupInfo makeDGroupInfo(string internalName, string publicName, string navName
 	else
 	if (archiveName)
 		info.alsoVia["04-archive"] = DAlsoVia("archive", `http://www.digitalmars.com/d/archives/`~archiveName~`/`);
+	return info;
+}
+
+DGroupInfo makeLocalGroupInfo(string internalName, string publicName, string navName, string urlName, string description)
+{
+	auto info = DGroupInfo(internalName, publicName, navName, urlName, description.chomp(".").strip());
+	info.localOnly = true;
 	return info;
 }
 
@@ -120,6 +127,9 @@ void main()
 			makeDGroupInfo("c++.windows.32-bits"           , "c++.windows.32-bits"     , "c++.windows.32-bits"     , "c++.windows.32-bits"     , "c++/windows/32-bits"     , null                      , "32 bit Windows topics"                                            , false, false),
 			makeDGroupInfo("c++.wxwindows"                 , "c++.wxwindows"           , "c++.wxwindows"           , "c++.wxwindows"           , "c++/wxwindows"           , null                      , "wxWindows"                                                        , false, false),
 		], false),
+		makeDGroupSet("Local", [
+			makeLocalGroupInfo("local.test"                , "Test"                    , "Test"                    , "local.test"              , "Local test group"),
+		], false),
 	];
 
 	auto f = File("groups.ini", "wb");
@@ -149,7 +159,11 @@ void main()
 				f.writeln("postMessage=", group.postMessage);
 			if (group.notice)
 				f.writeln("notice=", group.notice);
-			if (group.mlOnly)
+			if (group.localOnly)
+			{
+				f.writeln("sinkType=local");
+			}
+			else if (group.mlOnly)
 			{
 				f.writeln("sinkType=smtp");
 				f.writeln("sinkName=puremagic");
