@@ -9,6 +9,10 @@ DFeed is a multi-protocol news aggregator and forum system:
 - ATOM feed aggregator
 - IRC bot
 
+## Demo Instance
+
+A demo instance is available here: https://dfeed-demo.cy.md/
+
 ## Directory Structure
 
 - `src/` - Application source code
