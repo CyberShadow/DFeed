@@ -55,21 +55,23 @@ import dfeed.web.web.user : user, userSettings;
 struct JourneyEvent
 {
 	string timestamp;
-	string type;      // "captcha", "spam_check", "moderation", "posted", "info"
+	string type;      // "captcha", "spam_check", "moderation", "posted", "info", "log_file"
 	string message;
 	bool success;     // true for success, false for failure
 	string details;   // additional details like spamicity value
+	string sourceFile; // log file name
+	int lineNumber;    // line number in log file (1-based)
 }
 
 JourneyEvent[] parsePostingJourney(string messageID)
 {
 	import std.file : exists, read, dirEntries, SpanMode;
-	import std.algorithm : filter, startsWith, endsWith;
+	import std.algorithm : filter, startsWith, endsWith, sort, map;
 	import std.array : array;
-	import std.string : split, indexOf, strip;
-	import std.regex : match, matchFirst;
-	import std.path : baseName;
+	import std.string : split, indexOf;
+	import std.regex : matchFirst;
 	import std.process : execute;
+	import std.path : baseName;
 
 	JourneyEvent[] events;
 
@@ -86,7 +88,22 @@ JourneyEvent[] parsePostingJourney(string messageID)
 	if (postID.length != 20)
 		return events;
 
-	// Find all PostProcess logs for this post ID (there may be multiple attempts)
+	// Helper function to extract dfeed_id from log content
+	string extractDfeedId(string content)
+	{
+		foreach (line; content.split("\n"))
+		{
+			if (line.indexOf("[Header] Cookie:") >= 0)
+			{
+				auto idMatch = line.matchFirst(`dfeed_id=([a-z]{20})`);
+				if (idMatch)
+					return idMatch[1];
+			}
+		}
+		return null;
+	}
+
+	// Find the PostProcess log for this post ID
 	string[] logFiles;
 	version (Windows)
 		logFiles = dirEntries("logs", "*PostProcess-" ~ postID ~ ".log", SpanMode.depth).array.map!(e => e.name).array;
@@ -97,56 +114,91 @@ JourneyEvent[] parsePostingJourney(string messageID)
 			logFiles = result.output.split("\n").filter!(f => f.length > 0).array;
 	}
 
-	// Also find previous attempt logs (different post IDs but same user/content)
-	// For now, we'll parse all logs for the same date/prefix
-	version (Windows)
+	// Extract dfeed_id from the primary log to find related attempts
+	string dfeedId;
+	string dayPrefix;
+	foreach (logFile; logFiles)
 	{
-		// On Windows, search for logs from the same day
-		auto dayPrefix = baseName(logFiles.length > 0 ? logFiles[0] : "");
-		if (dayPrefix.length >= 10)
-		{
-			dayPrefix = dayPrefix[0..10]; // e.g., "2025-11-19"
-			auto sameDayLogs = dirEntries("logs", dayPrefix ~ "*PostProcess-*.log", SpanMode.depth).array.map!(e => e.name).array;
-			logFiles ~= sameDayLogs.filter!(f => !logFiles.canFind(f)).array;
-		}
+		if (!exists(logFile))
+			continue;
+		auto content = cast(string)read(logFile);
+		dfeedId = extractDfeedId(content);
+		// Extract date prefix from filename (e.g., "2025-11-19")
+		auto fname = baseName(logFile);
+		if (fname.length >= 10)
+			dayPrefix = fname[0..10];
+		if (dfeedId.length > 0)
+			break;
 	}
-	else
+
+	// Track which log files are related and why
+	struct RelatedLog
 	{
-		// Use find to get logs from the same date
-		if (logFiles.length > 0)
+		string file;
+		string evidence; // Why this log was included
+	}
+	RelatedLog[] relatedLogs;
+
+	// Add primary log file(s)
+	foreach (logFile; logFiles)
+		relatedLogs ~= RelatedLog(logFile, "Primary log (post ID: " ~ postID ~ ")");
+
+	// Find other logs from the same day with the same dfeed_id
+	if (dfeedId.length > 0 && dayPrefix.length > 0)
+	{
+		string[] sameDayLogs;
+		version (Windows)
+			sameDayLogs = dirEntries("logs", dayPrefix ~ "*PostProcess-*.log", SpanMode.depth).array.map!(e => e.name).array;
+		else
 		{
-			auto dayPrefix = baseName(logFiles[0]);
-			if (dayPrefix.length >= 10)
+			auto result2 = execute(["find", "logs/", "-name", dayPrefix ~ "*PostProcess-*.log"]);
+			if (result2.status == 0)
+				sameDayLogs = result2.output.split("\n").filter!(f => f.length > 0).array;
+		}
+
+		// Filter to only logs with matching dfeed_id
+		foreach (logFile; sameDayLogs)
+		{
+			if (logFiles.canFind(logFile))
+				continue; // Already in our list
+			if (!exists(logFile))
+				continue;
+			auto content = cast(string)read(logFile);
+			if (extractDfeedId(content) == dfeedId)
 			{
-				dayPrefix = dayPrefix[0..10];
-				auto result2 = execute(["find", "logs/", "-name", dayPrefix ~ "*PostProcess-*.log"]);
-				if (result2.status == 0)
-				{
-					auto sameDayLogs = result2.output.split("\n").filter!(f => f.length > 0).array;
-					logFiles ~= sameDayLogs.filter!(f => !logFiles.canFind(f)).array;
-				}
+				logFiles ~= logFile;
+				relatedLogs ~= RelatedLog(logFile, "Matched dfeed_id=" ~ dfeedId);
 			}
 		}
 	}
 
 	// Sort logs by filename (which includes timestamp)
-	import std.algorithm.sorting : sort;
 	logFiles.sort();
+	relatedLogs.sort!((a, b) => a.file < b.file);
 
 	// Parse each log file
-	foreach (logFile; logFiles)
+	foreach (ref related; relatedLogs)
 	{
+		auto logFile = related.file;
 		if (!exists(logFile))
 			continue;
 
 		auto content = cast(string)read(logFile);
-		auto logPostID = "";
-		auto m = logFile.match(` - PostProcess-([a-z]{20})\.log`);
+		auto logFileName = baseName(logFile);
+
+		// Extract post ID from filename to show which attempt this is
+		string logPostID;
+		auto m = logFile.matchFirst(`PostProcess-([a-z]{20})\.log`);
 		if (m)
 			logPostID = m.captures[1];
 
+		// Add log file header with evidence
+		events ~= JourneyEvent("", "log_file", logFileName, true, related.evidence, logFileName, 0);
+
+		int lineNum = 0;
 		foreach (line; content.split("\n"))
 		{
+			lineNum++;
 			if (line.length < 30 || line[0] != '[')
 				continue;
 
@@ -160,38 +212,38 @@ JourneyEvent[] parsePostingJourney(string messageID)
 			// Parse different event types
 			if (message.startsWith("IP: "))
 			{
-				events ~= JourneyEvent(timestamp, "info", "IP Address", true, message[4..$]);
+				events ~= JourneyEvent(timestamp, "info", "IP Address", true, message[4..$], logFileName, lineNum);
 			}
 			else if (message.startsWith("CAPTCHA OK"))
 			{
-				events ~= JourneyEvent(timestamp, "captcha", "CAPTCHA solved successfully", true, "");
+				events ~= JourneyEvent(timestamp, "captcha", "CAPTCHA solved successfully", true, "", logFileName, lineNum);
 			}
 			else if (message.startsWith("CAPTCHA failed: "))
 			{
-				events ~= JourneyEvent(timestamp, "captcha", "CAPTCHA failed", false, message[16..$]);
+				events ~= JourneyEvent(timestamp, "captcha", "CAPTCHA failed", false, message[16..$], logFileName, lineNum);
 			}
 			else if (message.startsWith("Spam check failed (spamicity: "))
 			{
 				auto spamMatch = message.matchFirst(`Spam check failed \(spamicity: ([\d.]+)\): (.+)`);
 				if (spamMatch)
 					events ~= JourneyEvent(timestamp, "spam_check", "Spam check failed", false,
-						"Spamicity: " ~ spamMatch[1] ~ " - " ~ spamMatch[2]);
+						"Spamicity: " ~ spamMatch[1] ~ " - " ~ spamMatch[2], logFileName, lineNum);
 			}
 			else if (message.startsWith("Spam check OK (spamicity: "))
 			{
 				auto spamMatch = message.matchFirst(`Spam check OK \(spamicity: ([\d.]+)\)`);
 				if (spamMatch)
 					events ~= JourneyEvent(timestamp, "spam_check", "Spam check passed", true,
-						"Spamicity: " ~ spamMatch[1]);
+						"Spamicity: " ~ spamMatch[1], logFileName, lineNum);
 			}
 			else if (message.startsWith("Quarantined for moderation: "))
 			{
-				events ~= JourneyEvent(timestamp, "moderation", "Quarantined for moderation", false, message[28..$]);
+				events ~= JourneyEvent(timestamp, "moderation", "Quarantined for moderation", false, message[28..$], logFileName, lineNum);
 			}
 			else if (message.startsWith("< Message-ID: <"))
 			{
 				events ~= JourneyEvent(timestamp, "posted", "Post created with Message-ID", true,
-					message[15..$-1]); // Remove "< Message-ID: <" and final ">"
+					message[15..$-1], logFileName, lineNum); // Remove "< Message-ID: <" and final ">"
 			}
 		}
 	}
@@ -201,6 +253,8 @@ JourneyEvent[] parsePostingJourney(string messageID)
 
 void renderJourneyTimeline(JourneyEvent[] events)
 {
+	import std.conv : to;
+
 	if (events.length == 0)
 		return;
 
@@ -214,23 +268,52 @@ void renderJourneyTimeline(JourneyEvent[] events)
 				`.journey-event.success { border-left-color: #4caf50; }` ~
 				`.journey-event.failure { border-left-color: #f44336; }` ~
 				`.journey-event.info { border-left-color: #2196f3; }` ~
+				`.journey-event.log_file { border-left-color: #9c27b0; background: #f3e5f5; margin-top: 20px; }` ~
 				`.journey-timestamp { font-family: monospace; color: #666; font-size: 0.9em; }` ~
 				`.journey-message { font-weight: bold; margin: 5px 0; }` ~
 				`.journey-details { color: #555; font-size: 0.95em; font-family: monospace; }` ~
+				`.journey-source { font-family: monospace; color: #888; font-size: 0.85em; float: right; }` ~
 			`</style>`
 	);
 
 	foreach (event; events)
 	{
-		string cssClass = event.success ? "success" : (event.type == "info" ? "info" : "failure");
-		html.put(
-			`<div class="journey-event `, cssClass, `">` ~
-				`<div class="journey-timestamp">`), html.putEncodedEntities(event.timestamp), html.put(`</div>` ~
-				`<div class="journey-message">`), html.putEncodedEntities(event.message), html.put(`</div>`
-		);
+		string cssClass;
+		if (event.type == "log_file")
+			cssClass = "log_file";
+		else if (event.success)
+			cssClass = "success";
+		else if (event.type == "info")
+			cssClass = "info";
+		else
+			cssClass = "failure";
+
+		html.put(`<div class="journey-event `, cssClass, `">`);
+
+		// Show source file:line for regular events
+		if (event.type != "log_file" && event.sourceFile.length > 0 && event.lineNumber > 0)
+		{
+			html.put(`<span class="journey-source">`);
+			html.putEncodedEntities(event.sourceFile ~ ":" ~ event.lineNumber.to!string);
+			html.put(`</span>`);
+		}
+
+		if (event.timestamp.length > 0)
+		{
+			html.put(`<div class="journey-timestamp">`);
+			html.putEncodedEntities(event.timestamp);
+			html.put(`</div>`);
+		}
+
+		html.put(`<div class="journey-message">`);
+		html.putEncodedEntities(event.message);
+		html.put(`</div>`);
+
 		if (event.details.length > 0)
 		{
-			html.put(`<div class="journey-details">`), html.putEncodedEntities(event.details), html.put(`</div>`);
+			html.put(`<div class="journey-details">`);
+			html.putEncodedEntities(event.details);
+			html.put(`</div>`);
 		}
 		html.put(`</div>`);
 	}
