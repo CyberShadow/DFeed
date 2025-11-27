@@ -27,6 +27,7 @@ import std.datetime.timezone : UTC;
 import std.exception : enforce;
 import std.format : format;
 import std.string : strip, splitLines;
+import std.typecons : Yes;
 
 import ae.net.ietf.headers : Headers;
 import ae.net.ietf.url : UrlParameters, encodeUrlParameter;
@@ -404,6 +405,7 @@ void moderateMessage(ref PostDraft draft, Headers headers, ModerationReason reas
 	learnModeratedMessage(draft, true, 1);
 	draft.serverVars["headers"] = headers.to!(string[][string]).toJson;
 	draft.status = PostDraft.Status.moderation;
+	saveDraft(draft, Yes.force);
 
 	string sanitize(string s) { return "%(%s%)".format(s.only)[1..$-1]; }
 
