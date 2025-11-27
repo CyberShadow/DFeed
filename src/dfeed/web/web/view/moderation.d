@@ -235,6 +235,19 @@ JourneyEvent[] parsePostingJourney(string messageID)
 			{
 				events ~= JourneyEvent(timestamp, "spam_check", "Trusted user, spam check skipped", true, "", logFileName, lineNum);
 			}
+			else if (message.startsWith("Got reply from spam checker "))
+			{
+				auto checkerMatch = message.matchFirst(`Got reply from spam checker [^:]+\.([^.:]+): spamicity ([\d.]+) \(([^)]*)\)`);
+				if (checkerMatch)
+				{
+					auto checkerName = checkerMatch[1];
+					auto spamicity = checkerMatch[2];
+					auto detail = checkerMatch[3];
+					auto detailStr = detail.length > 0 ? " (" ~ detail ~ ")" : "";
+					events ~= JourneyEvent(timestamp, "spam_detail", checkerName, true,
+						"Spamicity: " ~ spamicity ~ detailStr, logFileName, lineNum);
+				}
+			}
 			else if (message.startsWith("Quarantined for moderation: "))
 			{
 				events ~= JourneyEvent(timestamp, "moderation", "Quarantined for moderation", false, message[28..$], logFileName, lineNum);
@@ -267,6 +280,7 @@ void renderJourneyTimeline(JourneyEvent[] events)
 				`.journey-event.success { border-left-color: #4caf50; }` ~
 				`.journey-event.failure { border-left-color: #f44336; }` ~
 				`.journey-event.info { border-left-color: #2196f3; }` ~
+				`.journey-event.spam_detail { border-left-color: #ff9800; background: #fff3e0; margin: 5px 0; padding: 6px 10px; }` ~
 				`.journey-event.log_file { border-left-color: #9c27b0; background: #f3e5f5; margin-top: 20px; }` ~
 				`.journey-timestamp { font-family: monospace; color: #666; font-size: 0.9em; }` ~
 				`.journey-message { font-weight: bold; margin: 5px 0; }` ~
@@ -280,6 +294,8 @@ void renderJourneyTimeline(JourneyEvent[] events)
 		string cssClass;
 		if (event.type == "log_file")
 			cssClass = "log_file";
+		else if (event.type == "spam_detail")
+			cssClass = "spam_detail";
 		else if (event.success)
 			cssClass = "success";
 		else if (event.type == "info")
