@@ -66,7 +66,8 @@ struct JourneyEvent
 JourneyEvent[] parsePostingJourney(string messageID)
 {
 	import std.file : exists, read, dirEntries, SpanMode;
-	import std.algorithm : filter, startsWith, endsWith, sort, map;
+	import std.algorithm : filter, startsWith, endsWith, map;
+	import std.algorithm.mutation : reverse;
 	import std.array : array;
 	import std.string : split, indexOf;
 	import std.regex : matchFirst;
@@ -88,47 +89,39 @@ JourneyEvent[] parsePostingJourney(string messageID)
 	if (postID.length != 20)
 		return events;
 
-	// Helper function to extract dfeed_id from log content
-	string extractDfeedId(string content)
+	// Helper function to extract previous pid from log content (from [ServerVar] pid: xxx)
+	string extractPreviousPid(string content)
 	{
 		foreach (line; content.split("\n"))
 		{
-			if (line.indexOf("[Header] Cookie:") >= 0)
+			if (line.indexOf("[ServerVar] pid:") >= 0)
 			{
-				auto idMatch = line.matchFirst(`dfeed_id=([a-z]{20})`);
-				if (idMatch)
-					return idMatch[1];
+				auto pidMatch = line.matchFirst(`\[ServerVar\] pid: ([a-z]{20})`);
+				if (pidMatch)
+					return pidMatch[1];
 			}
 		}
 		return null;
 	}
 
-	// Find the PostProcess log for this post ID
-	string[] logFiles;
-	version (Windows)
-		logFiles = dirEntries("logs", "*PostProcess-" ~ postID ~ ".log", SpanMode.depth).array.map!(e => e.name).array;
-	else
+	// Helper function to find log file for a given pid
+	string findLogForPid(string pid)
 	{
-		auto result = execute(["find", "logs/", "-name", "*PostProcess-" ~ postID ~ ".log"]);
-		if (result.status == 0)
-			logFiles = result.output.split("\n").filter!(f => f.length > 0).array;
-	}
-
-	// Extract dfeed_id from the primary log to find related attempts
-	string dfeedId;
-	string dayPrefix;
-	foreach (logFile; logFiles)
-	{
-		if (!exists(logFile))
-			continue;
-		auto content = cast(string)read(logFile);
-		dfeedId = extractDfeedId(content);
-		// Extract date prefix from filename (e.g., "2025-11-19")
-		auto fname = baseName(logFile);
-		if (fname.length >= 10)
-			dayPrefix = fname[0..10];
-		if (dfeedId.length > 0)
-			break;
+		version (Windows)
+		{
+			auto matches = dirEntries("logs", "*PostProcess-" ~ pid ~ ".log", SpanMode.depth).array;
+			return matches.length > 0 ? matches[0].name : null;
+		}
+		else
+		{
+			auto result = execute(["find", "logs/", "-name", "*PostProcess-" ~ pid ~ ".log"]);
+			if (result.status == 0)
+			{
+				auto files = result.output.split("\n").filter!(f => f.length > 0).array;
+				return files.length > 0 ? files[0] : null;
+			}
+			return null;
+		}
 	}
 
 	// Track which log files are related and why
@@ -139,42 +132,44 @@ JourneyEvent[] parsePostingJourney(string messageID)
 	}
 	RelatedLog[] relatedLogs;
 
-	// Add primary log file(s)
-	foreach (logFile; logFiles)
-		relatedLogs ~= RelatedLog(logFile, "Primary log (post ID: " ~ postID ~ ")");
+	// Find the primary log and follow the pid chain backwards
+	auto primaryLog = findLogForPid(postID);
+	if (primaryLog is null)
+		return events;
 
-	// Find other logs from the same day with the same dfeed_id
-	if (dfeedId.length > 0 && dayPrefix.length > 0)
+	// Follow the chain of previous pids
+	string currentPid = postID;
+	string currentLog = primaryLog;
+	string nextPid = postID; // For building the "leads to" evidence
+
+	while (currentLog !is null)
 	{
-		string[] sameDayLogs;
-		version (Windows)
-			sameDayLogs = dirEntries("logs", dayPrefix ~ "*PostProcess-*.log", SpanMode.depth).array.map!(e => e.name).array;
-		else
-		{
-			auto result2 = execute(["find", "logs/", "-name", dayPrefix ~ "*PostProcess-*.log"]);
-			if (result2.status == 0)
-				sameDayLogs = result2.output.split("\n").filter!(f => f.length > 0).array;
-		}
+		if (!exists(currentLog))
+			break;
 
-		// Filter to only logs with matching dfeed_id
-		foreach (logFile; sameDayLogs)
-		{
-			if (logFiles.canFind(logFile))
-				continue; // Already in our list
-			if (!exists(logFile))
-				continue;
-			auto content = cast(string)read(logFile);
-			if (extractDfeedId(content) == dfeedId)
-			{
-				logFiles ~= logFile;
-				relatedLogs ~= RelatedLog(logFile, "Matched dfeed_id=" ~ dfeedId);
-			}
-		}
+		string evidence;
+		if (currentPid == postID)
+			evidence = "Primary log (post ID: " ~ postID ~ ")";
+		else
+			evidence = "Previous attempt (retry led to: " ~ nextPid ~ ")";
+
+		relatedLogs ~= RelatedLog(currentLog, evidence);
+
+		// Look for previous pid in this log
+		auto content = cast(string)read(currentLog);
+		auto prevPid = extractPreviousPid(content);
+
+		if (prevPid is null || prevPid == currentPid)
+			break;
+
+		// Find the log for the previous pid
+		nextPid = currentPid;
+		currentPid = prevPid;
+		currentLog = findLogForPid(prevPid);
 	}
 
-	// Sort logs by filename (which includes timestamp)
-	logFiles.sort();
-	relatedLogs.sort!((a, b) => a.file < b.file);
+	// Reverse so oldest attempt is first
+	relatedLogs.reverse();
 
 	// Parse each log file
 	foreach (ref related; relatedLogs)
@@ -235,6 +230,10 @@ JourneyEvent[] parsePostingJourney(string messageID)
 				if (spamMatch)
 					events ~= JourneyEvent(timestamp, "spam_check", "Spam check passed", true,
 						"Spamicity: " ~ spamMatch[1], logFileName, lineNum);
+			}
+			else if (message.startsWith("User is trusted, skipping spam check"))
+			{
+				events ~= JourneyEvent(timestamp, "spam_check", "Trusted user, spam check skipped", true, "", logFileName, lineNum);
 			}
 			else if (message.startsWith("Quarantined for moderation: "))
 			{
