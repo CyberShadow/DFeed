@@ -21,15 +21,18 @@ import std.datetime.systime : SysTime;
 import std.datetime.timezone : UTC;
 import std.format : format;
 
+import ae.net.ietf.url : encodeUrlParameter;
 import ae.utils.text.html : encodeHtmlEntities;
 
 import dfeed.database : query, selectValue;
 import dfeed.groups : getGroupInfo;
 import dfeed.loc;
+import dfeed.message : idToUrl;
 import dfeed.web.web.page : html, NotFoundException;
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
 import dfeed.web.web.part.profile : getProfileHash;
 import dfeed.web.web.part.strings : summarizeTime, formatShortTime;
+import dfeed.web.web.user : user;
 
 /// Look up author name and email from a profile hash.
 /// Returns null if not found.
@@ -145,5 +148,46 @@ void discussionUserProfile(string profileHash, out string title, out string auth
 
 	html.put(`</div>`); // user-profile-info
 	html.put(`</div>`); // user-profile-header
+
+	// Recent posts section
+	html.put(`<div class="user-profile-posts">`);
+	html.put(`<h2>`, _!`Recent posts`, `</h2>`);
+
+	enum recentPostsLimit = 10;
+	int recentCount = 0;
+
+	html.put(`<table class="forum-table">`);
+	html.put(`<tr><th>`, _!`Subject`, `</th><th>`, _!`Group`, `</th><th>`, _!`Date`, `</th></tr>`);
+
+	foreach (string id, string subject, string grp, long time, int rowid;
+		query!"SELECT p.[ID], p.[Subject], g.[Group], p.[Time], p.[ROWID] FROM [Posts] p LEFT JOIN [Groups] g ON p.[ID] = g.[ID] WHERE p.[Author] = ? AND p.[AuthorEmail] = ? ORDER BY p.[Time] DESC LIMIT ?"
+			.iterate(author, authorEmail, recentPostsLimit))
+	{
+		recentCount++;
+		auto postTime = SysTime(time, UTC());
+		auto groupInfo = getGroupInfo(grp);
+		string groupName = groupInfo ? groupInfo.publicName : grp;
+
+		html.put(`<tr>`);
+		html.put(`<td><a class="`, user.isRead(rowid) ? "forum-read" : "forum-unread", `" href="`);
+		html.put(encodeHtmlEntities(idToUrl(id)));
+		html.put(`">`);
+		html.put(encodeHtmlEntities(subject));
+		html.put(`</a></td>`);
+		html.put(`<td>`, encodeHtmlEntities(groupName), `</td>`);
+		html.put(`<td>`, summarizeTime(postTime), `</td>`);
+		html.put(`</tr>`);
+	}
+
+	html.put(`</table>`);
+
+	// "View all posts" link (only for logged-in users to avoid exposing email in URL)
+	if (postCount > recentPostsLimit && user.isLoggedIn())
+	{
+		string searchUrl = "/search?author=" ~ encodeUrlParameter(author) ~ "&authoremail=" ~ encodeUrlParameter(authorEmail);
+		html.put(`<p><a href="`, searchUrl, `">`, _!`View all %d posts`.format(postCount), ` &raquo;</a></p>`);
+	}
+
+	html.put(`</div>`); // user-profile-posts
 	html.put(`</div>`); // user-profile
 }

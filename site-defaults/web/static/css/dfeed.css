@@ -1759,3 +1759,27 @@ body.frame .post-gravatar {
 .user-profile-stats td:last-child {
 	font-weight: 500;
 }
+
+.user-profile-posts {
+	margin-top: 1.5em;
+}
+
+.user-profile-posts h2 {
+	margin-bottom: 0.5em;
+}
+
+.user-profile-posts .forum-table {
+	width: 100%;
+}
+
+.user-profile-posts .forum-table th {
+	text-align: left;
+	padding: 0.3em 0.5em;
+	background: #f5f5f5;
+	border-bottom: 1px solid #ddd;
+}
+
+.user-profile-posts .forum-table td {
+	padding: 0.3em 0.5em;
+	border-bottom: 1px solid #eee;
+}
