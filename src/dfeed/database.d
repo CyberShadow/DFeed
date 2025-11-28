@@ -63,6 +63,11 @@ SQL",
 		q"SQL
 CREATE INDEX [PostTimeAuthorEmail] ON [Posts] ([Time] DESC, [AuthorEmail]);
 SQL",
+
+		// Add index for user profile queries filtering by Author and AuthorEmail, with Time for ORDER BY
+		q"SQL
+CREATE INDEX [PostAuthorAuthorEmailTime] ON [Posts] ([Author], [AuthorEmail], [Time] DESC);
+SQL",
 	]);
 
 	// Enable WAL mode for better concurrency and performance on COW filesystems
