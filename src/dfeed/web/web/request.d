@@ -970,12 +970,16 @@ struct Cached(T)
 
 	bool isValid()
 	{
+		import std.file : FileException;
 		import dfeed.web.web.statics : timeLastModified;
 		if (this is typeof(this).init)
 			return false;
 		foreach (fileName, mtime; key)
-			if (timeLastModified(fileName) != mtime)
-				return false;
+			try
+				if (timeLastModified(fileName) != mtime)
+					return false;
+			catch (FileException)
+				return false; // File no longer exists
 		return true;
 	}
 
