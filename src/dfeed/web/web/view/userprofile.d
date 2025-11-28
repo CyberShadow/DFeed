@@ -17,15 +17,19 @@
 /// User profile view.
 module dfeed.web.web.view.userprofile;
 
+import std.datetime.systime : SysTime;
+import std.datetime.timezone : UTC;
 import std.format : format;
 
 import ae.utils.text.html : encodeHtmlEntities;
 
 import dfeed.database : query, selectValue;
+import dfeed.groups : getGroupInfo;
 import dfeed.loc;
 import dfeed.web.web.page : html, NotFoundException;
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
 import dfeed.web.web.part.profile : getProfileHash;
+import dfeed.web.web.part.strings : summarizeTime, formatShortTime;
 
 /// Look up author name and email from a profile hash.
 /// Returns null if not found.
@@ -54,10 +58,34 @@ void discussionUserProfile(string profileHash, out string title, out string auth
 
 	title = author;
 
-	// Get post count
-	int postCount = query!"SELECT COUNT(*) FROM [Posts] WHERE [Author] = ? AND [AuthorEmail] = ?"
+	// Get post count and time range
+	int postCount;
+	long firstPostTime, lastPostTime;
+	foreach (int count, long minTime, long maxTime;
+		query!"SELECT COUNT(*), MIN([Time]), MAX([Time]) FROM [Posts] WHERE [Author] = ? AND [AuthorEmail] = ?"
+			.iterate(author, authorEmail))
+	{
+		postCount = count;
+		firstPostTime = minTime;
+		lastPostTime = maxTime;
+	}
+
+	// Get thread vs reply breakdown
+	int threadCount = query!"SELECT COUNT(*) FROM [Posts] WHERE [Author] = ? AND [AuthorEmail] = ? AND ([ParentID] IS NULL OR [ParentID] = '')"
 		.iterate(author, authorEmail)
 		.selectValue!int;
+	int replyCount = postCount - threadCount;
+
+	// Get most active group
+	string mostActiveGroup;
+	int mostActiveGroupCount;
+	foreach (string grp, int cnt;
+		query!"SELECT [Group], COUNT(*) as cnt FROM [Groups] WHERE [ID] IN (SELECT [ID] FROM [Posts] WHERE [Author] = ? AND [AuthorEmail] = ?) GROUP BY [Group] ORDER BY cnt DESC LIMIT 1"
+			.iterate(author, authorEmail))
+	{
+		mostActiveGroup = grp;
+		mostActiveGroupCount = cnt;
+	}
 
 	string gravatarHash = getGravatarHash(authorEmail);
 
@@ -78,9 +106,40 @@ void discussionUserProfile(string profileHash, out string title, out string auth
 	html.put(encodeHtmlEntities(author));
 	html.put(`</h1>`);
 
-	html.put(`<p>`);
-	html.put(_!`%d posts`.format(postCount));
-	html.put(`</p>`);
+	// Stats table
+	html.put(`<table class="user-profile-stats">`);
+
+	// Post count
+	html.put(`<tr><td>`, _!`Posts:`, `</td><td>`, format("%d", postCount), `</td></tr>`);
+
+	// Thread/reply breakdown
+	html.put(`<tr><td>`, _!`Threads started:`, `</td><td>`, format("%d", threadCount), `</td></tr>`);
+	html.put(`<tr><td>`, _!`Replies:`, `</td><td>`, format("%d", replyCount), `</td></tr>`);
+
+	// First post (tenure)
+	if (firstPostTime)
+	{
+		auto firstTime = SysTime(firstPostTime, UTC());
+		html.put(`<tr><td>`, _!`First post:`, `</td><td>`, formatShortTime(firstTime, false), `</td></tr>`);
+	}
+
+	// Last post (last seen)
+	if (lastPostTime)
+	{
+		auto lastTime = SysTime(lastPostTime, UTC());
+		html.put(`<tr><td>`, _!`Last seen:`, `</td><td>`, summarizeTime(lastTime), `</td></tr>`);
+	}
+
+	// Most active group
+	if (mostActiveGroup.length)
+	{
+		auto groupInfo = getGroupInfo(mostActiveGroup);
+		string groupName = groupInfo ? groupInfo.publicName : mostActiveGroup;
+		string groupUrl = groupInfo ? "/group/" ~ groupInfo.urlName : "#";
+		html.put(`<tr><td>`, _!`Most active in:`, `</td><td><a href="`, groupUrl, `">`, encodeHtmlEntities(groupName), `</a></td></tr>`);
+	}
+
+	html.put(`</table>`);
 
 	html.put(`<p><a href="`, gravatarUrl, `">`, _!`Gravatar profile`, `</a></p>`);
 

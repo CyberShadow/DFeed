@@ -1729,3 +1729,33 @@ body.frame .post-gravatar {
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
+
+/*************** User Profile ***************/
+
+.user-profile {
+	margin-bottom: 1em;
+}
+
+.user-profile-header {
+	display: flex;
+	align-items: flex-start;
+	gap: 1.5em;
+}
+
+.user-profile-info h1 {
+	margin-top: 0;
+	margin-bottom: 0.5em;
+}
+
+.user-profile-stats {
+	margin-bottom: 1em;
+}
+
+.user-profile-stats td:first-child {
+	color: #666;
+	padding-right: 1em;
+}
+
+.user-profile-stats td:last-child {
+	font-weight: 500;
+}
