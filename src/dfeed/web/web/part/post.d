@@ -32,6 +32,7 @@ import dfeed.web.user : User;
 import dfeed.web.web.page : html;
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
 import dfeed.web.web.part.postbody : formatBody;
+import dfeed.web.web.part.profile : profileUrl;
 import dfeed.web.web.part.strings : formatShortTime, summarizeTime;
 import dfeed.web.web.postinfo : PostInfo, getPostInfo, idToThreadUrl;
 import dfeed.web.web.statics : staticPath;
@@ -142,7 +143,7 @@ void miniPostInfo(Rfc850Post post, Rfc850Post[string] knownPosts, bool showActio
 		html.put(
 			`<table class="mini-post-info"><tr>` ~
 				`<td class="mini-post-info-avatar">`);
-		putGravatar(gravatarHash, author, "http://www.gravatar.com/" ~ gravatarHash, _!`%s's Gravatar profile`.format(author), null, 32);
+		putGravatar(gravatarHash, author, profileUrl(author, authorEmail), _!`%s's profile`.format(author), null, 32);
 		html.put(
 				`</td>` ~
 				`<td>` ~
@@ -237,7 +238,7 @@ void formatPost(Rfc850Post post, Rfc850Post[string] knownPosts, bool markAsRead 
 			`<tr>` ~
 				`<td class="post-info">` ~
 					`<div class="post-author">`), html.putEncodedEntities(author), html.put(`</div>`);
-		putGravatar(gravatarHash, author, "http://www.gravatar.com/" ~ gravatarHash, _!`%s's Gravatar profile`.format(author), null, 80);
+		putGravatar(gravatarHash, author, profileUrl(author, authorEmail), _!`%s's profile`.format(author), null, 80);
 		if (infoBits.length)
 		{
 			html.put(`<hr>`);

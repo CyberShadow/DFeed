@@ -47,6 +47,7 @@ import dfeed.web.web.page : html, Redirect;
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
 import dfeed.web.web.part.pager;
 import dfeed.web.web.part.post : miniPostInfo;
+import dfeed.web.web.part.profile : profileUrl;
 import dfeed.web.web.part.strings : summarizeTime;
 import dfeed.web.web.postinfo : getPost;
 import dfeed.web.web.user : user;
@@ -291,7 +292,7 @@ void formatSearchResult(Rfc850Post post, string snippet)
 			`<tr>` ~
 				`<td class="post-info">` ~
 					`<div class="post-author">`), html.putEncodedEntities(author), html.put(`</div>`);
-		putGravatar(gravatarHash, author, "http://www.gravatar.com/" ~ gravatarHash, _!`%s's Gravatar profile`.format(author), null, 80);
+		putGravatar(gravatarHash, author, profileUrl(author, authorEmail), _!`%s's profile`.format(author), null, 80);
 
 		html.put(
 				`</td>` ~

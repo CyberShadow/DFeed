@@ -34,6 +34,7 @@ import dfeed.message : Rfc850Post, idToUrl, idToFragment, getGroup;
 import dfeed.web.web.page : html;
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
 import dfeed.web.web.part.post : getParentLink, miniPostInfo, getPostActions, postActions, postLink, formatPost, formatPostParts;
+import dfeed.web.web.part.profile : profileUrl;
 import dfeed.web.web.part.postbody : formatBody;
 import dfeed.web.web.part.strings : formatShortTime, summarizeTime, formatAbsoluteTime;
 import dfeed.web.web.part.thread : discussionThreadOverview;
@@ -102,7 +103,7 @@ void formatSplitPost(Rfc850Post post, bool footerNav)
 			`<tr><td class="horizontal-post-info">` ~
 				`<table><tr>` ~
 					`<td class="post-info-avatar" rowspan="`, text(infoRows.length), `">`);
-		putGravatar(gravatarHash, author, "http://www.gravatar.com/" ~ gravatarHash, _!`%s's Gravatar profile`.format(author), null, 48);
+		putGravatar(gravatarHash, author, profileUrl(author, authorEmail), _!`%s's profile`.format(author), null, 48);
 		html.put(
 					`</td>` ~
 					`<td><table>`);

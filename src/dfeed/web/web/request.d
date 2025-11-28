@@ -61,6 +61,7 @@ import dfeed.web.web.view.search : discussionSearch;
 import dfeed.web.web.view.settings;
 import dfeed.web.web.view.subscription : discussionSubscriptionPosts, discussionSubscriptionUnsubscribe;
 import dfeed.web.web.view.thread : getPostAtThreadIndex, discussionThread, discussionFirstUnread;
+import dfeed.web.web.view.userprofile : discussionUserProfile;
 import dfeed.web.web.view.widgets;
 
 import ae.net.http.common : HttpRequest, HttpResponse, HttpStatusCode;
@@ -535,6 +536,16 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			{
 				breadcrumbs ~= title = _!"Search";
 				discussionSearch(parameters);
+				break;
+			}
+			case "user":
+			{
+				enforce(path.length > 1, _!"No user specified");
+				string profileHash = pathX;
+				string author;
+				discussionUserProfile(profileHash, title, author);
+				breadcrumbs ~= _!"Users";
+				breadcrumbs ~= `<a href="/user/` ~ encodeHtmlEntities(profileHash) ~ `">` ~ encodeHtmlEntities(author) ~ `</a>`;
 				break;
 			}
 			case "delete":

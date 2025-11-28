@@ -27,6 +27,7 @@ import dfeed.sinks.cache;
 import dfeed.web.web.page : html;
 import dfeed.web.web.perf;
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
+import dfeed.web.web.part.profile : profileUrl;
 import dfeed.web.web.part.strings : summarizeTime;
 import dfeed.web.web.postinfo : PostInfo, getPostInfo;
 import dfeed.web.web.statics;
@@ -80,7 +81,7 @@ void summarizeFrameThread(PostInfo* info, string infoText)
 	if (info)
 		with (*info)
 		{
-			putGravatar(getGravatarHash(info.authorEmail), author, idToUrl(id), null, `target="_top" class="forum-postsummary-gravatar" `);
+			putGravatar(getGravatarHash(info.authorEmail), author, profileUrl(author, authorEmail), _!`%s's profile`.format(author), `target="_top" class="forum-postsummary-gravatar" `);
 			html.put(
 				`<a target="_top" class="forum-postsummary-subject `, (user.isRead(rowid) ? "forum-read" : "forum-unread"), `" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`">`), html.putEncodedEntities(subject), html.put(`</a><br>` ~
 				`<div class="forum-postsummary-info">`, infoText, `</div>`,

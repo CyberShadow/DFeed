@@ -42,6 +42,7 @@ import dfeed.web.web.cache : postCountCache, getPostCounts;
 import dfeed.web.web.page : html;
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
 import dfeed.web.web.part.pager : THREADS_PER_PAGE, getPageOffset, threadPager, indexToPage, getPageCount, getPageCount, pager;
+import dfeed.web.web.part.profile : profileUrl;
 import dfeed.web.web.part.strings : formatTinyTime, formatShortTime, formatLongTime, formatAbsoluteTime, summarizeTime, formatNumber;
 import dfeed.web.web.part.thread : formatThreadedPosts;
 import dfeed.web.web.postinfo : PostInfo, getPostInfo, getPost;
@@ -115,7 +116,7 @@ void discussionGroup(GroupInfo groupInfo, int page)
 		if (info)
 			with (*info)
 			{
-				putGravatar(getGravatarHash(info.authorEmail), author, idToUrl(tid, "thread"), null, `class="forum-postsummary-gravatar" `);
+				putGravatar(getGravatarHash(info.authorEmail), author, profileUrl(author, authorEmail), _!`%s's profile`.format(author), `class="forum-postsummary-gravatar" `);
 				html.put(
 				//	`<!-- Thread ID: ` ~ encodeHtmlEntities(threadID) ~ ` | First Post ID: ` ~ encodeHtmlEntities(id) ~ `-->` ~
 					`<div class="truncated"><a class="forum-postsummary-subject `, (isRead ? "forum-read" : "forum-unread"), `" href="`), html.putEncodedEntities(idToUrl(tid, "thread")), html.put(`" title="`), html.putEncodedEntities(subject), html.put(`">`), html.putEncodedEntities(subject), html.put(`</a></div>` ~
