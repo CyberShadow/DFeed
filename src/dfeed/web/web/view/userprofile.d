@@ -17,6 +17,7 @@
 /// User profile view.
 module dfeed.web.web.view.userprofile;
 
+import std.algorithm.sorting : sort;
 import std.datetime.systime : SysTime;
 import std.datetime.timezone : UTC;
 import std.format : format;
@@ -30,7 +31,7 @@ import dfeed.loc;
 import dfeed.message : idToUrl;
 import dfeed.web.web.page : html, NotFoundException;
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
-import dfeed.web.web.part.profile : getProfileHash;
+import dfeed.web.web.part.profile : getProfileHash, profileUrl;
 import dfeed.web.web.part.strings : summarizeTime, formatShortTime;
 import dfeed.web.web.user : user;
 
@@ -149,6 +150,36 @@ void discussionUserProfile(string profileHash, out string title, out string auth
 	html.put(`</div>`); // user-profile-info
 	html.put(`</div>`); // user-profile-header
 
+	// "See also" section for related profiles
+	static struct RelatedProfile
+	{
+		string author;
+		string email;
+		int postCount;
+		long lastPostTime;
+	}
+
+	RelatedProfile[] relatedProfiles;
+
+	// Same name, different email
+	foreach (string otherAuthor, string otherEmail, int cnt, long lastPost;
+		query!"SELECT [Author], [AuthorEmail], COUNT(*) as cnt, MAX([Time]) as lastPost FROM [Posts] WHERE [Author] = ? AND [AuthorEmail] != ? GROUP BY [Author], [AuthorEmail]"
+			.iterate(author, authorEmail))
+	{
+		relatedProfiles ~= RelatedProfile(otherAuthor, otherEmail, cnt, lastPost);
+	}
+
+	// Same email, different name
+	foreach (string otherAuthor, string otherEmail, int cnt, long lastPost;
+		query!"SELECT [Author], [AuthorEmail], COUNT(*) as cnt, MAX([Time]) as lastPost FROM [Posts] WHERE [AuthorEmail] = ? AND [Author] != ? GROUP BY [Author], [AuthorEmail]"
+			.iterate(authorEmail, author))
+	{
+		relatedProfiles ~= RelatedProfile(otherAuthor, otherEmail, cnt, lastPost);
+	}
+
+	// Sort by last seen, newest first
+	relatedProfiles.sort!((a, b) => a.lastPostTime > b.lastPostTime);
+
 	// Recent posts section
 	html.put(`<div class="user-profile-posts">`);
 	html.put(`<h2>`, _!`Recent posts`, `</h2>`);
@@ -189,5 +220,36 @@ void discussionUserProfile(string profileHash, out string title, out string auth
 	}
 
 	html.put(`</div>`); // user-profile-posts
+
+	// "See also" section for related profiles
+	if (relatedProfiles.length)
+	{
+		html.put(`<div class="user-profile-seealso">`);
+		html.put(`<h2>`, _!`See also`, `</h2>`);
+		html.put(`<table class="forum-table">`);
+		html.put(`<tr><th>`, _!`User`, `</th><th>`, _!`Last seen`, `</th></tr>`);
+
+		foreach (ref profile; relatedProfiles)
+		{
+			auto profileGravatarHash = getGravatarHash(profile.email);
+			auto lastTime = SysTime(profile.lastPostTime, UTC());
+
+			html.put(`<tr>`);
+			html.put(`<td class="seealso-user">`);
+			putGravatar(profileGravatarHash, profile.author, profileUrl(profile.author, profile.email),
+				_!`%s's profile`.format(profile.author), `class="forum-postsummary-gravatar" `);
+			html.put(`<div class="truncated"><a class="forum-postsummary-subject" href="`, profileUrl(profile.author, profile.email), `">`);
+			html.put(encodeHtmlEntities(profile.author));
+			html.put(`</a></div>`);
+			html.put(`<div class="truncated forum-postsummary-info">`, format(_!`%d posts`, profile.postCount), `</div>`);
+			html.put(`</td>`);
+			html.put(`<td class="seealso-lastseen">`, summarizeTime(lastTime), `</td>`);
+			html.put(`</tr>`);
+		}
+
+		html.put(`</table>`);
+		html.put(`</div>`); // user-profile-seealso
+	}
+
 	html.put(`</div>`); // user-profile
 }

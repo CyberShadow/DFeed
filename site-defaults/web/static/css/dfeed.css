@@ -1760,6 +1760,33 @@ body.frame .post-gravatar {
 	font-weight: 500;
 }
 
+.user-profile-seealso {
+	margin-top: 1.5em;
+}
+
+.user-profile-seealso h2 {
+	margin-bottom: 0.5em;
+}
+
+.user-profile-seealso a.forum-postsummary-gravatar {
+	float: left;
+	margin-right: 0.5em;
+	display: block;
+}
+
+#forum-content .user-profile-seealso a.forum-postsummary-gravatar img.post-gravatar {
+	width: 2.2rem;
+	height: 2.2rem;
+	border-width: 0.3rem;
+	margin: 0;
+	overflow: hidden;
+}
+
+.seealso-lastseen {
+	text-align: center;
+	white-space: nowrap;
+}
+
 .user-profile-posts {
 	margin-top: 1.5em;
 }
