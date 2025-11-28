@@ -61,7 +61,7 @@ import dfeed.web.web.view.search : discussionSearch;
 import dfeed.web.web.view.settings;
 import dfeed.web.web.view.subscription : discussionSubscriptionPosts, discussionSubscriptionUnsubscribe;
 import dfeed.web.web.view.thread : getPostAtThreadIndex, discussionThread, discussionFirstUnread;
-import dfeed.web.web.view.userprofile : discussionUserProfile;
+import dfeed.web.web.view.userprofile : discussionUserProfile, lookupAuthorByHash;
 import dfeed.web.web.view.widgets;
 
 import ae.net.http.common : HttpRequest, HttpResponse, HttpStatusCode;
@@ -74,7 +74,7 @@ import ae.utils.digest;
 import ae.utils.exception;
 import ae.utils.json : toJson;
 import ae.utils.meta : I;
-import ae.utils.regex : re;
+import ae.utils.regex : re, escapeRE;
 import ae.utils.text.html : encodeHtmlEntities;
 
 HttpRequest currentRequest;
@@ -546,6 +546,32 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 				discussionUserProfile(profileHash, title, author);
 				breadcrumbs ~= _!"Users";
 				breadcrumbs ~= `<a href="/user/` ~ encodeHtmlEntities(profileHash) ~ `">` ~ encodeHtmlEntities(author) ~ `</a>`;
+				break;
+			}
+			case "subscribe-user":
+			{
+				enforce(path.length > 1, _!"No user specified");
+				enforce(user.isLoggedIn(), _!"Please log in to do that");
+				string profileHash = pathX;
+				auto authorInfo = lookupAuthorByHash(profileHash);
+				enforce(authorInfo[0] !is null, _!"User not found");
+				string authorName = authorInfo[0];
+				string authorEmail = authorInfo[1];
+
+				// Create a content subscription with author name and email filters prefilled
+				// Use regex mode with escaped strings for exact matching
+				auto subscription = createSubscription(user.getName(), "content", [
+					"trigger-content-author-name-enabled" : "on",
+					"trigger-content-author-name-match-type" : "regex",
+					"trigger-content-author-name-case-sensitive" : "on",
+					"trigger-content-author-name-str" : "^" ~ authorName.escapeRE ~ "$",
+					"trigger-content-author-email-enabled" : "on",
+					"trigger-content-author-email-match-type" : "regex",
+					"trigger-content-author-email-case-sensitive" : "on",
+					"trigger-content-author-email-str" : "^" ~ authorEmail.escapeRE ~ "$",
+				]);
+				title = _!"Subscribe to user";
+				discussionSubscriptionEdit(subscription);
 				break;
 			}
 			case "delete":

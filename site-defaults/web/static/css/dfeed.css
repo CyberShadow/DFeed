@@ -1747,6 +1747,11 @@ body.frame .post-gravatar {
 	margin-bottom: 0.5em;
 }
 
+.user-profile-actions {
+	margin-left: 0.35em;
+	margin-right: 0.35em;
+}
+
 .user-profile-stats {
 	margin-bottom: 1em;
 }

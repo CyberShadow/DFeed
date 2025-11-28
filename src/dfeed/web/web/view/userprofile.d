@@ -33,6 +33,7 @@ import dfeed.web.web.page : html, NotFoundException;
 import dfeed.web.web.part.gravatar : getGravatarHash, putGravatar;
 import dfeed.web.web.part.profile : getProfileHash, profileUrl;
 import dfeed.web.web.part.strings : summarizeTime, formatShortTime;
+import dfeed.web.web.statics : staticPath;
 import dfeed.web.web.user : user;
 
 /// Look up author name and email from a profile hash.
@@ -102,6 +103,16 @@ void discussionUserProfile(string profileHash, out string title, out string auth
 	html.put(`<div class="user-profile-avatar">`);
 	putGravatar(gravatarHash, author, gravatarUrl,
 		_!`%s's Gravatar profile`.format(author), null, 128);
+	html.put(`<div class="user-profile-actions">`);
+	html.put(`<a class="actionlink picturelink" href="`, gravatarUrl, `" title="`, _!`View Gravatar profile`, `">`);
+	html.put(`<img src="`, staticPath("/images/picture.png"), `">`, _!`Gravatar profile`, `</a>`);
+	if (user.isLoggedIn())
+	{
+		html.put(` `);
+		html.put(`<a class="actionlink subscribelink" href="/subscribe-user/`, profileHash, `" title="`, _!`Subscribe to this user's posts`, `">`);
+		html.put(`<img src="`, staticPath("/images/star.png"), `">`, _!`Subscribe`, `</a>`);
+	}
+	html.put(`</div>`);
 	html.put(`</div>`);
 
 	// Name and basic info
@@ -144,8 +155,6 @@ void discussionUserProfile(string profileHash, out string title, out string auth
 	}
 
 	html.put(`</table>`);
-
-	html.put(`<p><a href="`, gravatarUrl, `">`, _!`Gravatar profile`, `</a></p>`);
 
 	html.put(`</div>`); // user-profile-info
 	html.put(`</div>`); // user-profile-header
