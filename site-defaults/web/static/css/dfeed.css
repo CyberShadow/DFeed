@@ -201,6 +201,15 @@ a.secretlink:visited {
 	color: #777;
 }
 
+a.forum-postsummary-author {
+	color: inherit;
+	text-decoration: none;
+}
+
+a.forum-postsummary-author:hover {
+	text-decoration: underline;
+}
+
 #forum-content a img {
 	border: none;
 }

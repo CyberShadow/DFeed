@@ -134,7 +134,7 @@ void discussionGroup(GroupInfo groupInfo, int page)
 			{
 				html.put(
 					`<a class="forum-postsummary-time `, user.isRead(rowid) ? "forum-read" : "forum-unread", `" href="`), html.putEncodedEntities(idToUrl(id)), html.put(`">`, summarizeTime(time), `</a>` ~
-					`<div class="truncated">`, _!`by`, ` <span class="forum-postsummary-author" title="`), html.putEncodedEntities(author), html.put(`">`), html.putEncodedEntities(author), html.put(`</span></div>`);
+					`<div class="truncated">`, _!`by`, ` <a class="forum-postsummary-author" href="`, profileUrl(author, authorEmail), `" title="`), html.putEncodedEntities(author), html.put(`">`), html.putEncodedEntities(author), html.put(`</a></div>`);
 				return;
 			}
 		html.put(`<div class="forum-no-data">-</div>`);
@@ -243,9 +243,9 @@ void discussionGroupNarrowIndex(GroupInfo groupInfo, int page)
 		html.putEncodedEntities(formatShortTime(thread.firstPost.time, false));
 		html.put(`</span>` ~
 			`</time>` ~
-			`<div class="firstpost-author-name">`);
+			`<div class="firstpost-author-name"><a href="`, profileUrl(thread.firstPost.author, thread.firstPost.authorEmail), `">`);
 		html.putEncodedEntities(thread.firstPost.author);
-		html.put(`</div>` ~
+		html.put(`</a></div>` ~
 			`</div>` ~
 			`<div class="replies">` ~
 			`<div class="replies-total">` ~
@@ -300,9 +300,9 @@ void discussionGroupNarrowIndex(GroupInfo groupInfo, int page)
 				`</div>` ~
 				`<div class="lastpost-author">` ~
 				`<img class="lastpost-author-image" src="//www.gravatar.com/avatar/`, getGravatarHash(thread.lastPost.authorEmail), `?d=identicon">`);
-			html.put(`<span class="lastpost-author-name">`);
+			html.put(`<a class="lastpost-author-name" href="`, profileUrl(thread.lastPost.author, thread.lastPost.authorEmail), `">`);
 			html.putEncodedEntities(thread.lastPost.author);
-			html.put(`</span>` ~
+			html.put(`</a>` ~
 				`</div>` ~
 				`</div>`);
 		}
@@ -428,8 +428,9 @@ void formatVSplitPosts(PostInfo*[] postInfos, string selectedID = null)
 						), html.putEncodedEntities(postInfo.subject), html.put(
 					`</a>` ~
 				`</td>` ~
-				`<td>`
-					), html.putEncodedEntities(postInfo.author), html.put(
+				`<td>` ~
+					`<a href="`, profileUrl(postInfo.author, postInfo.authorEmail), `">`
+					), html.putEncodedEntities(postInfo.author), html.put(`</a>` ~
 				`</td>` ~
 				`<td>` ~
 					`<div class="thread-post-time">`, summarizeTime(postInfo.time, true), `</div>`,
