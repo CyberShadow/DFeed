@@ -674,15 +674,17 @@ void discussionUnbanByKeyPage(string key, UrlParameters postParams)
 			html.put(`</li>`);
 		}
 
+		html.put(
+			`<form action="" method="post" class="forum-form unban-form" id="unbanform">` ~
+				`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
+				`<input type="hidden" name="lookup-key" value="`), html.putEncodedEntities(key), html.put(`">`);
+
 		html.put(`<ul class="unban-tree">`);
 		foreach (root; tree.roots)
 			renderNode(root);
 		html.put(`</ul>`);
 
 		html.put(
-			`<form action="" method="post" class="forum-form unban-form" id="unbanform">` ~
-				`<input type="hidden" name="secret" value="`, userSettings.secret, `">` ~
-				`<input type="hidden" name="lookup-key" value="`), html.putEncodedEntities(key), html.put(`">` ~
 				`<input type="submit" name="unban" value="`, _!`Unban Selected`, `"></input>` ~
 				`<input type="submit" name="cancel" value="`, _!`Cancel`, `"></input>` ~
 			`</form>`);
