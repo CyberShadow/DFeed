@@ -33,6 +33,9 @@ import std.regex : replaceAll, replaceFirst;
 static import std.file;
 import std.regex : Regex, matchAll;
 
+import std.ascii : LetterCase;
+import std.digest.md : md5Of, toHexString;
+
 import ae.net.http.responseex : HttpResponseEx;
 import ae.sys.data : Data, DataVec;
 import ae.utils.meta : isDebug;
@@ -41,7 +44,8 @@ import ae.utils.regex : re;
 import dfeed.paths : resolveSiteFileBase, resolveSiteFile, resolveStaticFileBase;
 import dfeed.web.web.config : config;
 
-/// Caching wrapper
+/// Caching wrapper for file modification time.
+/// Caches stat calls for a few seconds to reduce filesystem overhead.
 SysTime timeLastModified(string path)
 {
 	static if (is(MonoTimeImpl!(ClockType.coarse)))
@@ -67,12 +71,38 @@ SysTime timeLastModified(string path)
 	return cache[path] = std.file.timeLastModified(path);
 }
 
+/// Cached content hash for cache-busting static URLs.
+/// Only recomputes hash when file modification time changes.
+/// Uses the timeLastModified cache to minimize stat calls.
+string fileContentHash(string path)
+{
+	static struct CacheEntry
+	{
+		long mtime;
+		string hash;
+	}
+	static CacheEntry[string] hashCache;
+
+	auto mtime = timeLastModified(path).stdTime;
+
+	if (auto entry = path in hashCache)
+		if (entry.mtime == mtime)
+			return entry.hash;
+
+	// Compute hash - use first 16 hex chars of MD5 (64 bits)
+	auto content = cast(ubyte[]) std.file.read(path);
+	auto hash = md5Of(content).toHexString!(LetterCase.lower)[0..16].idup;
+
+	hashCache[path] = CacheEntry(mtime, hash);
+	return hash;
+}
+
 string staticPath(string path)
 {
 	auto resolvedBase = resolveStaticFileBase(path)
 		.enforce("Static file not found: " ~ path);
 	auto resolvedFile = resolvedBase ~ path;
-	auto url = "/static/" ~ text(timeLastModified(resolvedFile).stdTime) ~ path;
+	auto url = "/static/" ~ fileContentHash(resolvedFile) ~ path;
 	if (config.staticDomain !is null)
 		url = "//" ~ config.staticDomain ~ url;
 	return url;
@@ -122,8 +152,15 @@ string createBundles(string page, Regex!char re)
 	if (paths.length == 0)
 		return page;
 
-	auto maxTime = paths.map!(path => path[8..26].to!long).reduce!max;
-	string bundleUrl = "/static-bundle/%d/%-(%s+%)".format(maxTime, paths.map!(path => path[27..$]));
+	// Extract hashes and compute combined bundle hash
+	// URL format: /static/<16-char-hash>/<path>
+	// Positions: 0-7="/static/", 8-23=hash, 24="/", 25+=path
+	import std.algorithm.iteration : joiner;
+	import std.array : array;
+	auto hashes = paths.map!(path => path[8..24]);
+	auto combinedHash = md5Of(cast(ubyte[]) hashes.joiner.array)
+		.toHexString!(LetterCase.lower)[0..16];
+	string bundleUrl = "/static-bundle/%s/%-(%s+%)".format(combinedHash, paths.map!(path => path[25..$]));
 	int index;
 	page = page.replaceAll!(captures => index++ ? null : captures[0].replace(captures[1], bundleUrl))(re);
 	return page;
