@@ -468,6 +468,8 @@ function getSelectablesContainer() {
 function getSelectableLink(row) {
 	if ($('#group-split').length) {
 		return row.find('a.postlink');
+	} else if ($('#group-index').length) {
+		return row.find('a.forum-postsummary-subject');
 	} else {
 		return row.find('a').first();
 	}
