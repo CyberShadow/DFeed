@@ -42,7 +42,7 @@ import dfeed.message;
 import dfeed.site;
 import dfeed.sources.newsgroups : NntpConfig;
 import dfeed.web.captcha;
-import dfeed.web.spam;
+import dfeed.web.spam : Spamicity, spamCheck, spamThreshold;
 import dfeed.web.user;
 import dfeed.web.web.postmod : ModerationReason, shouldModerate;
 import dfeed.web.web.posting : moderateMessage;
@@ -373,7 +373,10 @@ private:
 			log("  (user solved %d CAPTCHAs)".format(n));
 		}
 
-		checkForModeration();
+		// Now run spam check to get spamicity for shouldModerate()
+		log("Running spam check after CAPTCHA");
+		status = PostingStatus.spamCheck;
+		spamCheck(this, &onSpamResultAfterCaptcha, &logLine);
 	}
 
 	void onSpamResult(Spamicity spamicity, string errorMessage)
@@ -406,6 +409,17 @@ private:
 		}
 		log("Spam check OK (spamicity: %.2f)".format(spamicity));
 
+		checkForModeration();
+	}
+
+	void onSpamResultAfterCaptcha(Spamicity spamicity, string errorMessage)
+	{
+		// Cache the overall spamicity for later retrieval
+		draft.serverVars["spamicity"] = spamicity.text;
+		log("Spam check after CAPTCHA: spamicity %.2f".format(spamicity));
+
+		// CAPTCHA was solved, so proceed to moderation check.
+		// shouldModerate() will quarantine if spamicity is very high.
 		checkForModeration();
 	}
 
