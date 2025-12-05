@@ -178,6 +178,92 @@
           # Verify that the package builds successfully
           build = self.packages.${system}.default;
 
+          # Run Playwright end-to-end tests
+          playwright = pkgs.stdenv.mkDerivation {
+            pname = "dfeed-playwright-tests";
+            version = "unstable";
+
+            src = ./.;
+
+            nativeBuildInputs = with pkgs; [
+              playwright-test
+              curl
+              sqlite
+            ];
+
+            # Playwright needs writable home for cache
+            HOME = "/tmp/playwright-home";
+
+            buildPhase = ''
+              runHook preBuild
+
+              # Create test environment
+              mkdir -p site/config data/db
+
+              # Create minimal site.ini
+              cat > site/config/site.ini << 'SITEINI'
+              name = DFeed Test Instance
+              host = localhost
+              proto = http
+              SITEINI
+
+              # Create web.ini with test port
+              cat > site/config/web.ini << 'WEBINI'
+              [listen]
+              port = 8080
+              WEBINI
+
+              # Database is automatically created and migrated by dfeed
+
+              # Start dfeed server in background
+              ${self.packages.${system}.default}/bin/dfeed --no-sources &
+              DFEED_PID=$!
+
+              # Wait for server to be ready (up to 30 seconds)
+              echo "Waiting for DFeed server to start..."
+              for i in $(seq 1 30); do
+                if curl -s http://localhost:8080/ > /dev/null 2>&1; then
+                  echo "Server is ready!"
+                  break
+                fi
+                if ! kill -0 $DFEED_PID 2>/dev/null; then
+                  echo "Server process died unexpectedly"
+                  exit 1
+                fi
+                sleep 1
+              done
+
+              # Verify server is actually responding
+              if ! curl -s http://localhost:8080/ > /dev/null 2>&1; then
+                echo "Server failed to start within 30 seconds"
+                kill $DFEED_PID 2>/dev/null || true
+                exit 1
+              fi
+
+              # Run Playwright tests
+              cd tests
+              playwright test --reporter=list || TEST_RESULT=$?
+              cd ..
+
+              # Stop server
+              kill $DFEED_PID 2>/dev/null || true
+              wait $DFEED_PID 2>/dev/null || true
+
+              # Check test result
+              if [ "''${TEST_RESULT:-0}" != "0" ]; then
+                echo "Playwright tests failed"
+                exit 1
+              fi
+
+              runHook postBuild
+            '';
+
+            installPhase = ''
+              mkdir -p $out
+              echo "Playwright tests passed" > $out/result
+            '';
+          };
+
           # Run D unittests
           unittests = pkgs.stdenv.mkDerivation {
             pname = "dfeed-unittests";
