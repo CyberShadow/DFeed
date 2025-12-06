@@ -24,6 +24,7 @@ import std.range.primitives;
 import std.string;
 import std.file;
 
+import ae.net.asockets : socketManager, onNextTick;
 import ae.net.ietf.headers;
 import ae.net.ietf.url;
 import ae.net.nntp.client;
@@ -257,6 +258,12 @@ final class PostProcess
 	{
 		assert(status != PostingStatus.redirect, "Attempting to run a duplicate PostProcess");
 
+		// Allow the scope(exit) in callers to run before we begin our own processing
+		socketManager.onNextTick(&runImpl);
+	}
+
+	private void runImpl()
+	{
 		if ("preapproved" in draft.serverVars)
 		{
 			log("Pre-approved, skipping spam check / CAPTCHA");
