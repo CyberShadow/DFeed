@@ -218,6 +218,27 @@
               enabled = false
               SPAMINI
 
+              # Configure test group with dummy captcha and disabled rate limiting for testing
+              cat > site/config/groups.ini << 'GROUPSINI'
+              [sets.test]
+              name=Test
+              shortName=Test
+              visible=true
+
+              [groups.test]
+              internalName=test
+              publicName=Test Forum
+              navName=Test
+              urlName=test
+              groupSet=test
+              description=A test forum for trying out posting
+              sinkType=local
+              announce=false
+              captcha=dummy
+              postThrottleRejectCount=0
+              postThrottleCaptchaCount=0
+              GROUPSINI
+
               # Database is automatically created and migrated by dfeed
 
               # Start dfeed server in background

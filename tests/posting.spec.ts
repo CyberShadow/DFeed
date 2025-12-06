@@ -98,4 +98,99 @@ test.describe("Posting", () => {
     // Form should still be visible for editing
     await expect(page.locator("#postform")).toBeVisible();
   });
+
+  test("spam detection triggers CAPTCHA challenge", async ({ page }) => {
+    const timestamp = Date.now();
+    // "spamtest" in subject triggers SimpleChecker's spam detection
+    const testSubject = `spamtest ${timestamp}`;
+    const testBody = `Testing CAPTCHA flow ${timestamp}`;
+
+    await page.goto("/newpost/test");
+
+    // Fill in the form with spam-triggering subject
+    await page.fill("#postform-name", "Test User");
+    await page.fill("#postform-email", "test@example.com");
+    await page.fill("#postform-subject", testSubject);
+    await page.fill("#postform-text", testBody);
+
+    // Submit the form
+    await page.click('input[name="action-send"]');
+
+    // Should be challenged with CAPTCHA (dummy checkbox)
+    // The page should show the CAPTCHA checkbox
+    const captchaCheckbox = page.locator('input[name="dummy_captcha_checkbox"]');
+    await expect(captchaCheckbox).toBeVisible();
+
+    // Should show "I am not a robot" text
+    await expect(page.locator("body")).toContainText("I am not a robot");
+
+    // Form should still be visible with our data preserved
+    await expect(page.locator("#postform")).toBeVisible();
+    await expect(page.locator("#postform-subject")).toHaveValue(testSubject);
+  });
+
+  test("solving CAPTCHA allows post submission", async ({ page }) => {
+    const timestamp = Date.now();
+    // "spamtest" in subject triggers SimpleChecker's spam detection
+    const testSubject = `spamtest solved ${timestamp}`;
+    const testBody = `Testing CAPTCHA solution ${timestamp}`;
+
+    await page.goto("/newpost/test");
+
+    // Fill in the form with spam-triggering subject
+    await page.fill("#postform-name", "Test User");
+    await page.fill("#postform-email", "test@example.com");
+    await page.fill("#postform-subject", testSubject);
+    await page.fill("#postform-text", testBody);
+
+    // Submit the form - should trigger CAPTCHA
+    await page.click('input[name="action-send"]');
+
+    // Wait for CAPTCHA checkbox to appear
+    const captchaCheckbox = page.locator('input[name="dummy_captcha_checkbox"]');
+    await expect(captchaCheckbox).toBeVisible();
+
+    // Check the CAPTCHA checkbox
+    await captchaCheckbox.check();
+
+    // Submit again with CAPTCHA solved
+    await page.click('input[name="action-send"]');
+
+    // Should redirect to the posted thread
+    await expect(page).toHaveURL(/\/(thread|post)\//);
+
+    // Verify the post content is visible
+    await expect(page.locator("body")).toContainText(testSubject);
+    await expect(page.locator("body")).toContainText(testBody);
+  });
+
+  test("CAPTCHA-solved post appears in group listing", async ({ page }) => {
+    const timestamp = Date.now();
+    const testSubject = `spamtest listing ${timestamp}`;
+    const testBody = `CAPTCHA listing test ${timestamp}`;
+
+    await page.goto("/newpost/test");
+
+    // Fill in and submit with spam-triggering subject
+    await page.fill("#postform-name", "Test User");
+    await page.fill("#postform-email", "test@example.com");
+    await page.fill("#postform-subject", testSubject);
+    await page.fill("#postform-text", testBody);
+    await page.click('input[name="action-send"]');
+
+    // Solve CAPTCHA
+    const captchaCheckbox = page.locator('input[name="dummy_captcha_checkbox"]');
+    await expect(captchaCheckbox).toBeVisible();
+    await captchaCheckbox.check();
+    await page.click('input[name="action-send"]');
+
+    // Wait for posting to complete
+    await expect(page).toHaveURL(/\/(thread|post)\//);
+
+    // Navigate to group listing
+    await page.goto("/group/test");
+
+    // Verify the new thread appears in the listing
+    await expect(page.locator("body")).toContainText(testSubject);
+  });
 });
