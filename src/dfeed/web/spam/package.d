@@ -182,6 +182,7 @@ void initSpamCheckers()
 		spamCheckers ~= c;
 	if (auto c = createService!OpenAI("apis/openai"))
 		spamCheckers ~= c;
-	spamCheckers ~= new StopForumSpam();
+	if (auto c = createService!StopForumSpam("apis/stopforumspam"))
+		spamCheckers ~= c;
 	//spamCheckers ~= new BlogSpam();
 }

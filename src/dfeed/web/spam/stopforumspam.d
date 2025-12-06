@@ -32,8 +32,15 @@ static import ae.utils.xml; // Issue 7016
 
 class StopForumSpam : SpamChecker
 {
+	struct Config { bool enabled; }
+	Config config;
+	this(Config config) { this.config = config; }
+
 	override void check(PostProcess process, SpamResultHandler handler)
 	{
+		if (!config.enabled)
+			return handler(unconfiguredHam, "StopForumSpam is disabled");
+
 		enum DAYS_THRESHOLD = 3; // consider an IP match as a positive if it was last seen at most this many days ago
 
 		auto ip = process.ip;
