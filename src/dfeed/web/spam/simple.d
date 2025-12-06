@@ -36,6 +36,11 @@ class SimpleChecker : SpamChecker
 			return handler(likelySpam, _!"You seem to be posting using an unusual user-agent");
 
 		auto subject = process.draft.clientVars.get("subject", "").toLower();
+
+		// "hardspamtest" triggers certainlySpam (for testing moderation flow)
+		if (subject.contains("hardspamtest"))
+			return handler(certainlySpam, _!"Your subject contains a keyword that triggers moderation");
+
 		foreach (keyword; ["kitchen", "spamtest"])
 			if (subject.contains(keyword))
 				return handler(likelySpam, _!"Your subject contains a suspicious keyword or character sequence");
