@@ -198,7 +198,7 @@
               runHook preBuild
 
               # Create test environment
-              mkdir -p site/config data/db
+              mkdir -p site/config/apis data/db
 
               # Create minimal site.ini
               cat > site/config/site.ini << 'SITEINI'
@@ -212,6 +212,11 @@
               [listen]
               port = 8080
               WEBINI
+
+              # Disable StopForumSpam in sandbox (no network access)
+              cat > site/config/apis/stopforumspam.ini << 'SPAMINI'
+              enabled = false
+              SPAMINI
 
               # Database is automatically created and migrated by dfeed
 
