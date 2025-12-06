@@ -21,6 +21,7 @@ import std.exception;
 public import dfeed.web.captcha.common;
 
 static import dfeed.web.captcha.dcaptcha;
+static import dfeed.web.captcha.dummy;
 static import dfeed.web.captcha.recaptcha;
 
 Captcha getCaptcha(string name)
