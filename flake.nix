@@ -29,7 +29,7 @@
           pname = "dfeed";
           version = "unstable";
 
-          src = ./.;
+          src = self;
 
           # Don't strip debug symbols (we build with -g)
           dontStrip = true;
@@ -183,7 +183,7 @@
             pname = "dfeed-playwright-tests";
             version = "unstable";
 
-            src = ./.;
+            src = self;
 
             nativeBuildInputs = with pkgs; [
               playwright-test
@@ -269,7 +269,7 @@
             pname = "dfeed-unittests";
             version = "unstable";
 
-            src = ./.;
+            src = self;
 
             nativeBuildInputs = with pkgs; [
               dmd
