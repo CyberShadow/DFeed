@@ -193,4 +193,100 @@ test.describe("Posting", () => {
     // Verify the new thread appears in the listing
     await expect(page.locator("body")).toContainText(testSubject);
   });
+
+  test("hard spam detection triggers CAPTCHA challenge", async ({ page }) => {
+    const timestamp = Date.now();
+    // "hardspamtest" in subject triggers certainlySpam (1.0) response
+    const testSubject = `hardspamtest ${timestamp}`;
+    const testBody = `Testing hard spam moderation flow ${timestamp}`;
+
+    await page.goto("/newpost/test");
+
+    // Fill in the form with hard spam-triggering subject
+    await page.fill("#postform-name", "Test User");
+    await page.fill("#postform-email", "test@example.com");
+    await page.fill("#postform-subject", testSubject);
+    await page.fill("#postform-text", testBody);
+
+    // Submit the form
+    await page.click('input[name="action-send"]');
+
+    // Should be challenged with CAPTCHA (dummy checkbox)
+    const captchaCheckbox = page.locator('input[name="dummy_captcha_checkbox"]');
+    await expect(captchaCheckbox).toBeVisible();
+
+    // Should show "I am not a robot" text
+    await expect(page.locator("body")).toContainText("I am not a robot");
+  });
+
+  test("hard spam post is quarantined after solving CAPTCHA", async ({
+    page,
+  }) => {
+    const timestamp = Date.now();
+    // "hardspamtest" in subject triggers certainlySpam (1.0) response
+    const testSubject = `hardspamtest moderated ${timestamp}`;
+    const testBody = `Testing hard spam quarantine ${timestamp}`;
+
+    await page.goto("/newpost/test");
+
+    // Fill in the form with hard spam-triggering subject
+    await page.fill("#postform-name", "Test User");
+    await page.fill("#postform-email", "test@example.com");
+    await page.fill("#postform-subject", testSubject);
+    await page.fill("#postform-text", testBody);
+
+    // Submit the form - should trigger CAPTCHA
+    await page.click('input[name="action-send"]');
+
+    // Wait for CAPTCHA checkbox to appear
+    const captchaCheckbox = page.locator('input[name="dummy_captcha_checkbox"]');
+    await expect(captchaCheckbox).toBeVisible();
+
+    // Check the CAPTCHA checkbox
+    await captchaCheckbox.check();
+
+    // Submit again with CAPTCHA solved
+    await page.click('input[name="action-send"]');
+
+    // Should NOT redirect to thread - should show moderation message
+    // The URL should stay on posting page (not redirect to thread)
+    await expect(page).not.toHaveURL(/\/(thread|post)\//);
+
+    // Should show moderation message
+    await expect(page.locator("body")).toContainText(
+      "approved by a moderator"
+    );
+  });
+
+  test("quarantined post does not appear in group listing", async ({ page }) => {
+    const timestamp = Date.now();
+    const testSubject = `hardspamtest hidden ${timestamp}`;
+    const testBody = `This post should be hidden ${timestamp}`;
+
+    await page.goto("/newpost/test");
+
+    // Fill in and submit with hard spam-triggering subject
+    await page.fill("#postform-name", "Test User");
+    await page.fill("#postform-email", "test@example.com");
+    await page.fill("#postform-subject", testSubject);
+    await page.fill("#postform-text", testBody);
+    await page.click('input[name="action-send"]');
+
+    // Solve CAPTCHA
+    const captchaCheckbox = page.locator('input[name="dummy_captcha_checkbox"]');
+    await expect(captchaCheckbox).toBeVisible();
+    await captchaCheckbox.check();
+    await page.click('input[name="action-send"]');
+
+    // Should show moderation message
+    await expect(page.locator("body")).toContainText(
+      "approved by a moderator"
+    );
+
+    // Navigate to group listing
+    await page.goto("/group/test");
+
+    // Verify the quarantined thread does NOT appear in the listing
+    await expect(page.locator("body")).not.toContainText(testSubject);
+  });
 });
