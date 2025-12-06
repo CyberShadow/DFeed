@@ -198,16 +198,6 @@ string authHash(string s)
 
 SysTime[][string] lastPostAttempts;
 
-// Reject posts if the threshold of post attempts is met under the
-// given time limit.
-enum postThrottleRejectTime = 30.seconds;
-enum postThrottleRejectCount = 3;
-
-// Challenge posters with a CAPTCHA if the threshold of post attempts
-// is met under the given time limit.
-enum postThrottleCaptchaTime = 3.minutes;
-enum postThrottleCaptchaCount = 3;
-
 string discussionSend(UrlParameters clientVars, Headers headers)
 {
 	import std.algorithm.iteration : filter;
@@ -319,8 +309,15 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 
 				auto now = Clock.currTime();
 
+				// Get per-group rate limit settings
+				auto groupInfo = getGroupInfo(draft.serverVars.get("where", draft.clientVars.get("where", null)));
+				auto postThrottleRejectTime = groupInfo ? groupInfo.postThrottleRejectTime.seconds : 30.seconds;
+				auto postThrottleRejectCount = groupInfo ? groupInfo.postThrottleRejectCount : 3;
+				auto postThrottleCaptchaTime = groupInfo ? groupInfo.postThrottleCaptchaTime.seconds : 180.seconds;
+				auto postThrottleCaptchaCount = groupInfo ? groupInfo.postThrottleCaptchaCount : 3;
+
 				auto ipPostAttempts = lastPostAttempts.get(ip, null);
-				if (ipPostAttempts.length >= postThrottleRejectCount && now - ipPostAttempts[$-postThrottleRejectCount+1] < postThrottleRejectTime)
+				if (postThrottleRejectCount > 0 && ipPostAttempts.length >= postThrottleRejectCount && now - ipPostAttempts[$-postThrottleRejectCount+1] < postThrottleRejectTime)
 				{
 					discussionPostForm(draft, null,
 						PostError(_!"You've attempted to post %d times in the past %s. Please wait a little bit before trying again."
@@ -328,7 +325,7 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 					return null;
 				}
 
-				if (ipPostAttempts.length >= postThrottleCaptchaCount && now - ipPostAttempts[$-postThrottleCaptchaCount+1] < postThrottleCaptchaTime)
+				if (postThrottleCaptchaCount > 0 && ipPostAttempts.length >= postThrottleCaptchaCount && now - ipPostAttempts[$-postThrottleCaptchaCount+1] < postThrottleCaptchaTime)
 				{
 					auto captcha = getCaptcha(draftToPost(draft).captcha);
 					if (captcha)

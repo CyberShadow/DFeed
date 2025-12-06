@@ -41,6 +41,14 @@ struct Config
 		bool subscriptionRequired = true;
 		bool announce;
 		string captcha;
+
+		// Rate limiting: reject posts if threshold is met under time limit (in seconds)
+		uint postThrottleRejectTime = 30;
+		uint postThrottleRejectCount = 3;
+
+		// Rate limiting: challenge with CAPTCHA if threshold is met under time limit (in seconds)
+		uint postThrottleCaptchaTime = 180;  // 3 minutes
+		uint postThrottleCaptchaCount = 3;
 	}
 	OrderedMap!(string, Group) groups;
 }
