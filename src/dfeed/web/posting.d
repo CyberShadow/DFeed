@@ -365,6 +365,7 @@ private:
 		{
 			this.status = PostingStatus.captchaFailed;
 			this.error = PostError(_!"CAPTCHA error:" ~ " " ~ errorMessage, errorData);
+			this.user = User.init;
 			log("CAPTCHA failed: " ~ errorMessage);
 			if (errorData) log("CAPTCHA error data: " ~ errorData.toString());
 			log.close();
@@ -411,6 +412,7 @@ private:
 				log("Quarantined for moderation: " ~ reason.toString());
 			}
 
+			this.user = User.init;
 			log.close();
 			return;
 		}
@@ -436,6 +438,7 @@ private:
 		if (moderationReason.kind != ModerationReason.Kind.none)
 		{
 			this.status = PostingStatus.moderated;
+			this.user = User.init;
 			moderateMessage(draft, headers, moderationReason);
 			log("Quarantined for moderation: " ~ moderationReason.toString());
 			log.close();
@@ -480,6 +483,7 @@ private:
 		{
 			this.status = PostingStatus.serverError;
 			this.error = PostError(_!"NNTP connection error:" ~ " " ~ reason);
+			this.user = User.init;
 			log("NNTP connection error: " ~ reason);
 			log.close();
 		}
@@ -488,6 +492,7 @@ private:
 		{
 			this.status = PostingStatus.serverError;
 			this.error = PostError(_!"NNTP error:" ~ " " ~ error);
+			this.user = User.init;
 			nntp.handleDisconnect = null;
 			if (nntp.connected)
 				nntp.disconnect();
@@ -499,6 +504,7 @@ private:
 		{
 			if (this.status == PostingStatus.posting)
 				this.status = PostingStatus.waiting;
+			this.user = User.init;
 			nntp.handleDisconnect = null;
 			nntp.disconnect();
 			log("Message posted successfully.");
@@ -530,6 +536,7 @@ private:
 		{
 			this.status = PostingStatus.serverError;
 			this.error = PostError(_!"SMTP error:" ~ " " ~ error);
+			this.user = User.init;
 			log("SMTP error: " ~ error);
 			log.close();
 		}
@@ -538,6 +545,7 @@ private:
 		{
 			if (this.status == PostingStatus.posting)
 				this.status = PostingStatus.waiting;
+			this.user = User.init;
 			log("Message posted successfully.");
 			log.close();
 		}
@@ -569,6 +577,7 @@ private:
 		status = PostingStatus.posting;
 		announcePost(post, Fresh.yes);
 		this.status = PostingStatus.posted;
+		this.user = User.init;
 		log("Message stored locally.");
 		log.close();
 	}
@@ -599,6 +608,7 @@ final class PostingNotifySink : NewsSink
 				if (pid in postProcesses)
 				{
 					postProcesses[pid].status = PostingStatus.posted;
+					postProcesses[pid].user = User.init;
 					postProcesses[pid].post.url = rfc850post.url;
 					query!"UPDATE [Drafts] SET [Status]=? WHERE [ID]=?".exec(PostDraft.Status.sent, postProcesses[pid].draft.clientVars.get("did", pid));
 				}
