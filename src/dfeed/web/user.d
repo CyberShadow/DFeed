@@ -1,4 +1,4 @@
-/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2021, 2025  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -513,6 +513,8 @@ final class CRegisteredUser : CGuestUser
 			if (++counter % 100 == 0)
 			{
 				log("Clearing cache.");
+				foreach (username, ref cacheEntry; entries)
+					cacheEntry.readPosts = ReadPostsData.init; // Free memory now
 				entries = null;
 			}
 		}
