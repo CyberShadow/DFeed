@@ -25,6 +25,7 @@ import std.exception;
 import std.base64;
 import ae.net.shutdown;
 import ae.sys.data;
+import std.typecons : RefCounted, refCounted;
 import ae.sys.log;
 import ae.sys.timing;
 import ae.utils.math : flipBits;
@@ -89,10 +90,12 @@ protected:
 
 	// ***********************************************************************
 
+	alias ReadPostsData = RefCounted!Data;
+
 	void getReadPosts()
-	in  { assert(!this.readPosts); }
-	out { assert( this.readPosts); }
-	body
+	in  { assert(this.readPosts is ReadPostsData.init); }
+	out { assert(this.readPosts !is ReadPostsData.init); }
+	do
 	{
 		auto b64 = get("readposts", null, SettingType.server);
 		if (b64.length)
@@ -111,7 +114,7 @@ protected:
 			}
 
 			try
-				readPosts = [uncompress(Data(zcode))].ptr;
+				readPosts = refCounted(uncompress(Data(zcode)));
 			catch (ZlibException e)
 			{
 				import std.file; write("bad-zlib.z", zcode);
@@ -119,35 +122,35 @@ protected:
 			}
 		}
 		else
-			readPosts = new Data();
+			readPosts = refCounted(Data());
 	}
 
-	static string encodeReadPosts(Data* readPosts)
+	static string encodeReadPosts(ref ReadPostsData readPosts)
 	{
-		auto b64 = Base64.encode(cast(ubyte[])compress(*readPosts, 1).contents);
+		auto b64 = Base64.encode(cast(ubyte[])compress(readPosts, 1).contents);
 		return assumeUnique(b64);
 	}
 
 	void saveReadPosts()
-	in  { assert(readPosts && readPosts.length && readPostsDirty); }
-	body
+	in  { assert(readPosts !is ReadPostsData.init && readPosts.length && readPostsDirty); }
+	do
 	{
 		set("readposts", encodeReadPosts(readPosts), SettingType.server);
 	}
 
-	Data* readPosts;
+	ReadPostsData readPosts;
 	bool readPostsDirty;
 
 final:
 	void needReadPosts()
 	{
-		if (!readPosts)
+		if (readPosts is ReadPostsData.init)
 			getReadPosts();
 	}
 
 	void flushReadPosts()
 	{
-		if (readPosts && readPosts.length && readPostsDirty)
+		if (readPosts !is ReadPostsData.init && readPosts.length && readPostsDirty)
 		{
 			saveReadPosts();
 			readPostsDirty = false;
@@ -476,7 +479,7 @@ final class RegisteredUser : GuestUser
 	{
 		static struct Entry
 		{
-			Data* readPosts;
+			ReadPostsData readPosts;
 			bool dirty;
 		}
 		Entry[string] entries;
