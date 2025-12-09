@@ -131,7 +131,7 @@ struct Subscription
 
 	bool haveUnread()
 	{
-		auto user = new RegisteredUser(userName);
+		auto user = registeredUser(userName);
 		foreach (int rowid; query!"SELECT [MessageRowID] FROM [SubscriptionPosts] WHERE [SubscriptionID] = ?".iterate(id))
 			if (!user.isRead(rowid))
 				return true;
@@ -140,7 +140,7 @@ struct Subscription
 
 	int getUnreadCount()
 	{
-		auto user = new RegisteredUser(userName);
+		auto user = registeredUser(userName);
 		int count = 0;
 		foreach (int rowid; query!"SELECT [MessageRowID] FROM [SubscriptionPosts] WHERE [SubscriptionID] = ?".iterate(id))
 			if (!user.isRead(rowid))

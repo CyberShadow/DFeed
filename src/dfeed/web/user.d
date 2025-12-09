@@ -33,6 +33,7 @@ import ae.utils.text;
 import ae.utils.time : StdTime;
 import ae.utils.time.common;
 import ae.utils.time.format;
+import ae.utils.meta.rcclass : RCClass, rcClass;
 import ae.utils.zlib;
 
 enum SettingType
@@ -51,7 +52,7 @@ struct AccountData // for export
 	string[string] settings;
 }
 
-abstract class User
+abstract class CUser
 {
 	abstract string get(string name, string defaultValue, SettingType settingType);
 	abstract void set(string name, string value, SettingType settingType);
@@ -203,10 +204,11 @@ final:
 		return count;
 	}
 }
+alias User = RCClass!CUser;
 
 // ***************************************************************************
 
-class GuestUser : User
+class CGuestUser : CUser
 {
 	string[string] cookies, newCookies;
 	SettingType[string] settingTypes;
@@ -315,7 +317,7 @@ class GuestUser : User
 			.exec(username, encryptPassword(password), session, Clock.currTime.stdTime);
 
 		// Copy cookies to database
-		auto user = new RegisteredUser(username);
+		auto user = registeredUser(username);
 		foreach (name, value; cookies)
 			user.set(name, value, SettingType.server);
 		user.save();
@@ -332,13 +334,15 @@ class GuestUser : User
 	override bool isLoggedIn() { return false; }
 	override SysTime createdAt() { return Clock.currTime(); }
 }
+alias GuestUser = RCClass!CGuestUser;
+alias guestUser = rcClass!CGuestUser;
 
 // ***************************************************************************
 
 import dfeed.loc;
 import dfeed.database;
 
-final class RegisteredUser : GuestUser
+final class CRegisteredUser : CGuestUser
 {
 	string[string] settings, newSettings;
 	string username;
@@ -501,7 +505,7 @@ final class RegisteredUser : GuestUser
 				if (cacheEntry.dirty)
 				{
 					log("Flushing " ~ username);
-					auto user = new RegisteredUser(username);
+					auto user = registeredUser(username);
 					user.set("readposts", encodeReadPosts(cacheEntry.readPosts), SettingType.server);
 					user.save();
 					cacheEntry.dirty = false;
@@ -541,18 +545,20 @@ final class RegisteredUser : GuestUser
 			readPostsCache.entries[username] = ReadPostsCache.Entry(readPosts, true);
 	}
 }
+alias RegisteredUser = RCClass!CRegisteredUser;
+alias registeredUser = rcClass!CRegisteredUser;
 
 // ***************************************************************************
 
 User getUser(string cookieHeader)
 {
-	auto guest = new GuestUser(cookieHeader);
+	auto guest = guestUser(cookieHeader);
 	if ("session" in guest.cookies)
 	{
 		foreach (string username, int level, StdTime creationTime; query!"SELECT `Username`, `Level`, `Created` FROM `Users` WHERE `Session` = ?".iterate(guest.cookies["session"]))
-			return new RegisteredUser(username, cookieHeader, cast(User.Level)level, creationTime);
+			return User(registeredUser(username, cookieHeader, cast(CUser.Level)level, creationTime));
 	}
-	return guest;
+	return User(guest);
 }
 
 // ***************************************************************************
