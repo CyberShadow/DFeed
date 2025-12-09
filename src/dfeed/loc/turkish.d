@@ -1064,6 +1064,56 @@ string translate(string s)
 			return `Markdown gönderilerini HTML olarak işleyin. Devre dışı bırakılırsa, düz metin olarak olduğu gibi gösterilecektir.`;
 		case `Render Markdown`:
 			return `Markdown İşle`;
+		case `I am not a robot`:
+			return `Ben robot değilim`;
+		case `Please confirm you are not a robot`:
+			return `Lütfen robot olmadığınızı onaylayın`;
+		case `Your subject contains a keyword that triggers moderation`:
+			return `Konu başlığınız denetimi tetikleyen bir anahtar kelime içeriyor`;
+		case `%s's profile`:
+			return `%s kullanıcısının profili`;
+		case `No user specified`:
+			return `Kullanıcı belirtilmedi`;
+		case `Users`:
+			return `Kullanıcılar`;
+		case `User not found`:
+			return `Kullanıcı bulunamadı`;
+		case `Subscribe to user`:
+			return `Kullanıcıya abone ol`;
+		case `View Gravatar profile`:
+			return `Gravatar profilini görüntüle`;
+		case `Gravatar profile`:
+			return `Gravatar profili`;
+		case `Subscribe to this user's posts`:
+			return `Bu kullanıcının gönderilerine abone ol`;
+		case `Posts:`:
+			return `Gönderi:`;
+		case `Threads started:`:
+			return `Başlattığı konular:`;
+		case `Replies:`:
+			return `Yanıtlar:`;
+		case `First post:`:
+			return `İlk gönderi:`;
+		case `Last seen:`:
+			return `Son görülme:`;
+		case `Most active in:`:
+			return `En aktif olduğu grup:`;
+		case `Recent posts`:
+			return `Son gönderiler`;
+		case `Subject`:
+			return `Konu`;
+		case `View all %d posts`:
+			return `Tüm %d gönderiyi görüntüle`;
+		case `See also`:
+			return `Ayrıca bakınız`;
+		case `User`:
+			return `Kullanıcı`;
+		case `Last seen`:
+			return `Son görülme`;
+		case `%d posts`:
+			return `%d gönderi`;
+		case `Announcements widget not configured`:
+			return `Duyurular bileşeni yapılandırılmamış`;
 		default:
 			return null;
 	}
