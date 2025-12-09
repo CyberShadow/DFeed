@@ -218,6 +218,11 @@
               enabled = false
               SPAMINI
 
+              # Configure user authentication with a test salt
+              cat > site/config/user.ini << 'USERINI'
+              salt = test-salt-for-playwright-tests-only
+              USERINI
+
               # Configure test group with dummy captcha and disabled rate limiting for testing
               cat > site/config/groups.ini << 'GROUPSINI'
               [sets.test]

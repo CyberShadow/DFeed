@@ -290,3 +290,85 @@ test.describe("Posting", () => {
     await expect(page.locator("body")).not.toContainText(testSubject);
   });
 });
+
+test.describe("Registered User Experience", () => {
+  test("registered user data persists after clearing cookies and signing back in", async ({
+    page,
+    context,
+  }) => {
+    const timestamp = Date.now();
+    const testUsername = `testuser${timestamp}`;
+    const testPassword = "testpass123";
+    const testName = `Test User ${timestamp}`;
+    const testEmail = `test${timestamp}@example.com`;
+    const testSubject = `Registered User Test ${timestamp}`;
+    const testBody = `Testing registered user persistence ${timestamp}`;
+
+    // Step 1: Register a new user
+    await page.goto("/registerform");
+    await expect(page.locator("#registerform")).toBeVisible();
+
+    await page.fill("#loginform-username", testUsername);
+    await page.fill("#loginform-password", testPassword);
+    await page.fill("#loginform-password2", testPassword);
+    await page.click('input[type="submit"]');
+
+    // Should be redirected after successful registration
+    await expect(page).not.toHaveURL(/registerform/);
+
+    // Step 2: Make a post (this saves name/email to user settings)
+    await page.goto("/newpost/test");
+    await expect(page.locator("#postform")).toBeVisible();
+
+    await page.fill("#postform-name", testName);
+    await page.fill("#postform-email", testEmail);
+    await page.fill("#postform-subject", testSubject);
+    await page.fill("#postform-text", testBody);
+    await page.click('input[name="action-send"]');
+
+    // Wait for posting to complete and verify post is displayed
+    await expect(page).toHaveURL(/\/(thread|post)\//);
+    await expect(page.locator("body")).toContainText(testSubject);
+    await expect(page.locator("body")).toContainText(testBody);
+
+    // Step 3: Clear cookies (simulating browser close/cookie expiration)
+    await context.clearCookies();
+
+    // Step 4: Sign back in
+    await page.goto("/loginform");
+    await expect(page.locator("#loginform")).toBeVisible();
+
+    await page.fill("#loginform-username", testUsername);
+    await page.fill("#loginform-password", testPassword);
+    // Ensure "Remember me" is checked for persistent session
+    await page.check("#loginform-remember");
+    await page.click('input[type="submit"]');
+
+    // Wait for navigation to complete (either redirect or error page)
+    await page.waitForLoadState("networkidle");
+
+    // Verify we're redirected (not on login page)
+    await expect(page).not.toHaveURL(/\/login/);
+
+    // Verify user is logged in by checking for logout link with username
+    await expect(
+      page.locator(`a:has-text("Log out ${testUsername}")`)
+    ).toBeVisible();
+
+    // Step 5a: Check that the post is marked as read
+    await page.goto("/group/test");
+
+    // Find the link to our test post - it should have the "forum-read" class
+    const postLink = page.locator(`a:has-text("${testSubject}")`).first();
+    await expect(postLink).toBeVisible();
+    await expect(postLink).toHaveClass(/forum-read/);
+
+    // Step 5b: Check that posting form has same user details pre-filled
+    await page.goto("/newpost/test");
+    await expect(page.locator("#postform")).toBeVisible();
+
+    // Verify name and email are pre-filled with the same values
+    await expect(page.locator("#postform-name")).toHaveValue(testName);
+    await expect(page.locator("#postform-email")).toHaveValue(testEmail);
+  });
+});
