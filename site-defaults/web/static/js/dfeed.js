@@ -603,6 +603,8 @@ var keyboardHelp =
 		'<tr><th colspan="2">' + _('Keyboard shortcuts') + '</th></tr>' +
 		'<tr><td><kbd>j</kbd> / <kbd>' + _('Ctrl') + '</kbd><kbd title="' + _('Down Arrow') + '">&darr;</kbd></td><td>' + _('Select next message') + '</td></tr>' +
 		'<tr><td><kbd>k</kbd> / <kbd>' + _('Ctrl') + '</kbd><kbd title="' + _('Up Arrow') + '">&uarr;</kbd></td><td>' + _('Select previous message') + '</td></tr>' +
+		'<tr><td><kbd>l</kbd> / <kbd>' + _('Ctrl') + '</kbd><kbd title="' + _('Right Arrow') + '">&rarr;</kbd></td><td>' + _('Next page') + '</td></tr>' +
+		'<tr><td><kbd>h</kbd> / <kbd>' + _('Ctrl') + '</kbd><kbd title="' + _('Left Arrow') + '">&larr;</kbd></td><td>' + _('Previous page') + '</td></tr>' +
 		'<tr><td><kbd title="' + _('Enter / Return') + '">&crarr;</kbd></td><td>' + _('Open selected message') + '</td></tr>' +
 		'<tr><td><kbd>n</kbd></td><td>' + _('Create thread') + '</td></tr>' +
 		'<tr><td><kbd>r</kbd></td><td>' + _('Reply') + '</td></tr>' +
@@ -698,6 +700,10 @@ function onKey(e, keyDown) {
 			case '8':
 			case '9':
 				return followLink(c);
+			case 'h':
+				return pagePrev();
+			case 'l':
+				return pageNext();
 		}
 	}
 
@@ -720,6 +726,10 @@ function onKey(e, keyDown) {
 				return focusNext(-1);
 			case 40: // down arrow
 				return focusNext(+1);
+			case 37: // left arrow
+				return pagePrev();
+			case 39: // right arrow
+				return pageNext();
 			case 33: // page up
 				return focusNext(-pageSize);
 			case 34: // page down
@@ -737,6 +747,24 @@ function onKey(e, keyDown) {
 /* These are linked to in responsive horizontal-split post footer */
 function navPrev() { focusNext(-1) && selectFocused(); }
 function navNext() { focusNext(+1) && selectFocused(); }
+
+function pagePrev() {
+	var $link = $('.pager-left a').last();
+	if ($link.length) {
+		window.location.href = $link.attr('href');
+		return true;
+	}
+	return false;
+}
+
+function pageNext() {
+	var $link = $('.pager-right a').first();
+	if ($link.length) {
+		window.location.href = $link.attr('href');
+		return true;
+	}
+	return false;
+}
 
 // **************************************************************************
 // Posting
