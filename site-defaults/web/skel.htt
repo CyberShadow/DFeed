@@ -10,7 +10,15 @@
 <link rel="stylesheet" href="<?static:/css/dfeed.css?>">
 </head>
 <body class="forum <?bodyclass?>">
-<script>document.body.className += ' have-javascript'</script>
+<script>
+    (function() {
+        var theme = localStorage.getItem('theme') || 'light';
+        if (theme === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+        document.body.classList.add('have-javascript');
+    })();
+</script>
 
 <div id="top">
     <div class="site-header">
@@ -23,6 +31,7 @@
                 </select>
                 <button type="submit">Search</button>
             </form>
+            <button id="theme-toggle" title="Toggle dark/light mode">🌓</button>
         </div>
     </div>
 </div>
