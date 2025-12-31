@@ -608,6 +608,14 @@ void discussionApprovePage(string draftID, UrlParameters postParams)
 
 	if (postParams == UrlParameters.init)
 	{
+		// Display user journey timeline if we have a pid
+		if ("pid" in draft.serverVars)
+		{
+			auto messageID = PostProcess.pidToMessageID(draft.serverVars["pid"]);
+			auto journeyEvents = parsePostingJourney(messageID);
+			renderJourneyTimeline(journeyEvents);
+		}
+
 		html.put(
 			`<div id="approveform-info" class="forum-notice">`,
 				_!`Are you sure you want to approve this post?`,
