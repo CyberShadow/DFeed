@@ -297,22 +297,26 @@ void renderJourneyTimeline(JourneyEvent[] events)
 		return;
 
 	html.put(
+		`<style>` ~
+			`.journey-timeline { margin-bottom: 1em; }` ~
+			`.journey-timeline h3 { margin: 0 0 0.5em 0; }` ~
+			`.journey-events { border-top: 2px solid #E6E6E6; font-family: Consolas, Lucida Console, Menlo, monospace; font-size: 0.9em; }` ~
+			`.journey-event { padding: 0.5em 0.75em; border-left: 4px solid #E6E6E6; border-right: 2px solid #E6E6E6; background: #FCFCFC; border-bottom: 1px solid #E6E6E6; }` ~
+			`.journey-event:last-child { border-bottom: 2px solid #E6E6E6; }` ~
+			`.journey-event.success { border-left-color: #5A5; background: #F5FFF5; }` ~
+			`.journey-event.failure { border-left-color: #A55; background: #FFF5F5; }` ~
+			`.journey-event.info { border-left-color: #58A; background: #F5F9FF; }` ~
+			`.journey-event.spam_detail { border-left-color: #A85; background: #FFFAF5; padding: 0.33em 0.75em; }` ~
+			`.journey-event.log_file { border-left-color: #85A; background: #F5F5F5; }` ~
+			`.journey-event.log_file:not(:first-child) { margin-top: 1em; border-top: 2px solid #E6E6E6; }` ~
+			`.journey-timestamp { color: #666; font-size: 0.95em; }` ~
+			`.journey-message { font-weight: bold; }` ~
+			`.journey-details { color: #666; font-size: 0.95em; margin-top: 0.25em; }` ~
+			`.journey-source { color: #999; font-size: 0.9em; float: right; }` ~
+		`</style>` ~
 		`<div class="journey-timeline">` ~
 			`<h3>User Journey</h3>` ~
-			`<style>` ~
-				`.journey-timeline { margin: 20px 0; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; }` ~
-				`.journey-timeline h3 { margin-top: 0; color: #333; }` ~
-				`.journey-event { margin: 10px 0; padding: 10px; background: white; border-left: 4px solid #ccc; }` ~
-				`.journey-event.success { border-left-color: #4caf50; }` ~
-				`.journey-event.failure { border-left-color: #f44336; }` ~
-				`.journey-event.info { border-left-color: #2196f3; }` ~
-				`.journey-event.spam_detail { border-left-color: #ff9800; background: #fff3e0; margin: 5px 0; padding: 6px 10px; }` ~
-				`.journey-event.log_file { border-left-color: #9c27b0; background: #f3e5f5; margin-top: 20px; }` ~
-				`.journey-timestamp { font-family: monospace; color: #666; font-size: 0.9em; }` ~
-				`.journey-message { font-weight: bold; margin: 5px 0; }` ~
-				`.journey-details { color: #555; font-size: 0.95em; font-family: monospace; }` ~
-				`.journey-source { font-family: monospace; color: #888; font-size: 0.85em; float: right; }` ~
-			`</style>`
+			`<div class="journey-events">`
 	);
 
 	foreach (event; events)
@@ -341,14 +345,14 @@ void renderJourneyTimeline(JourneyEvent[] events)
 
 		if (event.timestamp.length > 0)
 		{
-			html.put(`<div class="journey-timestamp">`);
+			html.put(`<span class="journey-timestamp">`);
 			html.putEncodedEntities(event.timestamp);
-			html.put(`</div>`);
+			html.put(` </span>`);
 		}
 
-		html.put(`<div class="journey-message">`);
+		html.put(`<span class="journey-message">`);
 		html.putEncodedEntities(event.message);
-		html.put(`</div>`);
+		html.put(`</span>`);
 
 		if (event.details.length > 0)
 		{
@@ -359,7 +363,7 @@ void renderJourneyTimeline(JourneyEvent[] events)
 		html.put(`</div>`);
 	}
 
-	html.put(`</div>`);
+	html.put(`</div></div>`);
 }
 
 void discussionModeration(Rfc850Post post, UrlParameters postVars)
