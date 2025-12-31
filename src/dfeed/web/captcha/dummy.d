@@ -33,6 +33,18 @@ final class DummyCaptcha : Captcha
 			`</label>`;
 	}
 
+	override string getChallengeDescription(UrlParameters fields)
+	{
+		return "Dummy CAPTCHA: I am not a robot checkbox";
+	}
+
+	override string getResponseDescription(UrlParameters fields)
+	{
+		if ("dummy_captcha_checkbox" !in fields)
+			return null;
+		return fields.get("dummy_captcha_checkbox", "") == "1" ? "checked" : "unchecked";
+	}
+
 	override bool isPresent(UrlParameters fields)
 	{
 		return ("dummy_captcha_checkbox" in fields) !is null;

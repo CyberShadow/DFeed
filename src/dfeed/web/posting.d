@@ -32,6 +32,7 @@ import ae.net.smtp.client;
 import ae.sys.log;
 import ae.utils.array;
 import ae.utils.sini;
+import ae.utils.json;
 import ae.utils.text;
 
 import dfeed.loc;
@@ -276,6 +277,9 @@ final class PostProcess
 		if (captchaPresent)
 		{
 			log("Checking CAPTCHA");
+			auto challengeDesc = captcha.getChallengeDescription(draft.clientVars);
+			if (challengeDesc)
+				log("  CAPTCHA question: " ~ challengeDesc.toJson);
 			status = PostingStatus.captcha;
 			captcha.verify(draft.clientVars, ip, &onCaptchaResult);
 		}

@@ -1,4 +1,4 @@
-/*  Copyright (C) 2012, 2014, 2015, 2017, 2018, 2020, 2021  Vladimir Panteleev <vladimir@thecybershadow.net>
+/*  Copyright (C) 2012, 2014, 2015, 2017, 2018, 2020, 2021, 2025  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -56,6 +56,24 @@ final class Dcaptcha : Captcha
 				.format(`<a href="https://web.libera.chat/#d">`, `</a>`) ~
 			`</p>`
 		;
+	}
+
+	override string getChallengeDescription(UrlParameters fields)
+	{
+		if (!isPresent(fields))
+			return null;
+		auto key = fields["dcaptcha_challenge_field"];
+		auto pchallenge = key in challenges;
+		if (!pchallenge)
+			return null;
+		return pchallenge.question ~ "\n" ~ pchallenge.code;
+	}
+
+	override string getResponseDescription(UrlParameters fields)
+	{
+		if ("dcaptcha_response_field" !in fields)
+			return null;
+		return fields["dcaptcha_response_field"];
 	}
 
 	override bool isPresent(UrlParameters fields)

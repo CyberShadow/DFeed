@@ -29,6 +29,7 @@ import std.string : capitalize, strip;
 import std.typecons : Yes, No;
 
 import ae.net.ietf.url : UrlParameters;
+import ae.utils.json : jsonParse;
 import ae.utils.meta : identity;
 import ae.utils.sini : loadIni;
 import ae.utils.text : splitAsciiLines;
@@ -43,6 +44,7 @@ import dfeed.message : Rfc850Post, idToUrl;
 import dfeed.paths : resolveSiteFile;
 import dfeed.site : site;
 import dfeed.sources.newsgroups : NntpConfig;
+import dfeed.web.captcha.common : getCaptchaResponseFromField;
 import dfeed.web.posting : PostDraft, PostProcess;
 import dfeed.web.user : User;
 import dfeed.web.web.draft : getDraft, draftToPost;
@@ -212,6 +214,30 @@ JourneyEvent[] parsePostingJourney(string messageID)
 			else if (message.startsWith("CAPTCHA OK"))
 			{
 				events ~= JourneyEvent(timestamp, "captcha", "CAPTCHA solved successfully", true, "", logFileName, lineNum);
+			}
+			else if (message.startsWith("  CAPTCHA question: "))
+			{
+				auto jsonStr = message[20..$];
+				string question;
+				try
+					question = jsonParse!string(jsonStr);
+				catch (Exception)
+					question = jsonStr; // Fallback if not valid JSON
+				events ~= JourneyEvent(timestamp, "captcha", "CAPTCHA question", true, question, logFileName, lineNum);
+			}
+			else if (message.startsWith("[Form] "))
+			{
+				// Check if this form field is a CAPTCHA response
+				auto formContent = message[7..$];
+				auto colonPos = formContent.indexOf(": ");
+				if (colonPos >= 0)
+				{
+					auto fieldName = formContent[0..colonPos];
+					auto fieldValue = formContent[colonPos + 2..$];
+					auto captchaResponse = getCaptchaResponseFromField(fieldName, fieldValue);
+					if (captchaResponse !is null)
+						events ~= JourneyEvent(timestamp, "captcha", "CAPTCHA answer", true, captchaResponse, logFileName, lineNum);
+				}
 			}
 			else if (message.startsWith("CAPTCHA failed: "))
 			{
