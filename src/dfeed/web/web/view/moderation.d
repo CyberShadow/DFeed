@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2025  Vladimir Panteleev <vladimir@thecybershadow.net>
+﻿/*  Copyright (C) 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2020, 2025, 2026  Vladimir Panteleev <vladimir@thecybershadow.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -57,12 +57,13 @@ import dfeed.web.web.user : user, userSettings;
 struct JourneyEvent
 {
 	string timestamp;
-	string type;      // "captcha", "spam_check", "moderation", "posted", "info", "log_file", "approval"
+	string type;      // "captcha", "spam_check", "moderation", "posted", "info", "log_file", "approval", "page_visit", "referrer"
 	string message;
 	bool success;     // true for success, false for failure
 	string details;   // additional details like spamicity value
 	string sourceFile; // log file name
 	int lineNumber;    // line number in log file (1-based)
+	string url;       // for page_visit events, the URL to link to
 }
 
 JourneyEvent[] parsePostingJourney(string messageID)
@@ -208,6 +209,126 @@ JourneyEvent[] parsePostingJourney(string messageID)
 		}
 	}
 
+	// Parse Web.log for page visits matching IP and User-Agent
+	// Returns the web events separately (not added to main events array)
+	JourneyEvent[] parseWebLog(string postProcessLogFile, string ip, string userAgent)
+	{
+		JourneyEvent[] webEvents;
+
+		if (ip.length == 0)
+			return webEvents;
+
+		// Replace "PostProcess-xxx.log" with "Web.log" to get the Web log for the same date
+		auto webLogFile = postProcessLogFile.matchFirst(`^(.* - )PostProcess-[a-z]+\.log$`);
+		if (!webLogFile)
+			return webEvents;
+
+		auto logPath = webLogFile[1] ~ "Web.log";
+		if (!exists(logPath))
+			return webEvents;
+
+		auto content = cast(string)read(logPath);
+		auto logFileName = baseName(logPath);
+		int lineNum = 0;
+
+		// Track referrers we've already added to avoid duplicates
+		bool[string] seenReferrers;
+
+		foreach (line; content.split("\n"))
+		{
+			lineNum++;
+			if (line.length < 30 || line[0] != '[')
+				continue;
+
+			// Parse log line: [timestamp] \tIP\tSTATUS\tTIME\tMETHOD\tURL\tCONTENT-TYPE[\tREFERER\tUSER-AGENT]
+			auto closeBracket = line.indexOf("]");
+			if (closeBracket < 0)
+				continue;
+			auto timestamp = line[1..closeBracket];
+			auto rest = line[closeBracket + 2 .. $];
+
+			auto fields = rest.split("\t");
+			if (fields.length < 7)
+				continue;
+
+			// Field indices (first field is empty for alignment):
+			// [0]=empty, [1]=IP, [2]=STATUS, [3]=TIME, [4]=METHOD, [5]=URL, [6]=CONTENT-TYPE, [7]=REFERER, [8]=USER-AGENT
+			auto logIP = fields[1];
+			auto status = fields[2];
+			auto method = fields[4];
+			auto url = fields[5];
+			auto contentType = fields[6];
+			string referer = fields.length > 7 ? fields[7] : "-";
+			string logUserAgent = fields.length > 8 ? fields[8] : "";
+
+			// Check if this matches our user's IP
+			if (logIP != ip)
+				continue;
+
+			// If we have a User-Agent to match, check it (but don't require it)
+			if (userAgent.length > 0 && logUserAgent.length > 0 && logUserAgent != userAgent)
+				continue;
+
+			// Only interested in text/html pages (GET and POST requests)
+			// Also include POST redirects (3xx status with no content type)
+			if (method != "GET" && method != "POST")
+				continue;
+			bool isRedirect = status.length >= 1 && status[0] == '3';
+			if (!contentType.startsWith("text/html") && !(method == "POST" && isRedirect))
+				continue;
+
+			// Skip static resources
+			if (url.canFind("/static/"))
+				continue;
+
+			// Extract just the path from the URL for display
+			string displayPath = url;
+			auto hostEnd = url.indexOf("://");
+			if (hostEnd >= 0)
+			{
+				auto pathStart = url.indexOf("/", hostEnd + 3);
+				if (pathStart >= 0)
+					displayPath = url[pathStart .. $];
+			}
+
+			// Check for external referrer (not from same site)
+			if (referer != "-" && referer.length > 0)
+			{
+				// Check if referrer is external (doesn't contain our host)
+				auto urlHost = url.indexOf("://");
+				string ourHost;
+				if (urlHost >= 0)
+				{
+					auto hostStart = urlHost + 3;
+					auto hostEndPos = url.indexOf("/", hostStart);
+					ourHost = hostEndPos >= 0 ? url[hostStart .. hostEndPos] : url[hostStart .. $];
+				}
+
+				bool isExternal = ourHost.length > 0 && !referer.canFind(ourHost);
+
+				if (isExternal && referer !in seenReferrers)
+				{
+					seenReferrers[referer] = true;
+					auto evt = JourneyEvent(timestamp, "referrer", "External referrer", true, "", logFileName, lineNum);
+					evt.url = referer;
+					webEvents ~= evt;
+				}
+			}
+
+			// Add page visit event
+			auto eventMessage = method == "POST" ? "Form submission" : "Page visit";
+			auto evt = JourneyEvent(timestamp, "page_visit", eventMessage, true, displayPath, logFileName, lineNum);
+			evt.url = url;
+			webEvents ~= evt;
+		}
+
+		return webEvents;
+	}
+
+	// Track IP and User-Agent for web log correlation
+	string userIP;
+	string userAgent;
+
 	// Parse each log file
 	foreach (ref related; relatedLogs)
 	{
@@ -244,7 +365,12 @@ JourneyEvent[] parsePostingJourney(string messageID)
 			// Parse different event types
 			if (message.startsWith("IP: "))
 			{
+				userIP = message[4..$];
 				events ~= JourneyEvent(timestamp, "info", "IP Address", true, message[4..$], logFileName, lineNum);
+			}
+			else if (message.startsWith("[Header] User-Agent: "))
+			{
+				userAgent = message[21..$];
 			}
 			else if (message.startsWith("CAPTCHA OK"))
 			{
@@ -321,9 +447,78 @@ JourneyEvent[] parsePostingJourney(string messageID)
 		}
 	}
 
-	// Search for approval event (added last so it appears in chronological order)
+	// Search for approval event
 	if (primaryLog !is null)
 		searchBannedLog(postID, primaryLog);
+
+	// Parse Web.log for page visits (returns separate array, doesn't modify events)
+	JourneyEvent[] webEvents;
+	if (primaryLog !is null)
+		webEvents = parseWebLog(primaryLog, userIP, userAgent);
+
+	// Interleave web events between PostProcess log sections based on timestamps
+	if (webEvents.length > 0)
+	{
+		// Sort web events by timestamp
+		webEvents.sort!((a, b) => a.timestamp < b.timestamp);
+
+		// Split events into sections (each section starts with a log_file header)
+		struct LogSection
+		{
+			size_t startIdx;  // Index of log_file header in events array
+			size_t endIdx;    // Index after last event in this section
+			string firstTimestamp;  // First non-header event timestamp
+		}
+		LogSection[] sections;
+
+		for (size_t i = 0; i < events.length; i++)
+		{
+			if (events[i].type == "log_file")
+			{
+				LogSection section;
+				section.startIdx = i;
+				// Find the end of this section (next log_file header or end of array)
+				size_t j = i + 1;
+				while (j < events.length && events[j].type != "log_file")
+				{
+					if (section.firstTimestamp.length == 0 && events[j].timestamp.length > 0)
+						section.firstTimestamp = events[j].timestamp;
+					j++;
+				}
+				section.endIdx = j;
+				sections ~= section;
+				i = j - 1;  // Continue from end of section
+			}
+		}
+
+		// Rebuild events with web events interleaved
+		JourneyEvent[] newEvents;
+		size_t webIdx = 0;
+
+		foreach (sectionIdx, ref section; sections)
+		{
+			// Insert web events that occurred before this section's first event
+			while (webIdx < webEvents.length &&
+				   (section.firstTimestamp.length == 0 || webEvents[webIdx].timestamp < section.firstTimestamp))
+			{
+				newEvents ~= webEvents[webIdx];
+				webIdx++;
+			}
+
+			// Add this section's events
+			for (size_t i = section.startIdx; i < section.endIdx; i++)
+				newEvents ~= events[i];
+		}
+
+		// Add any remaining web events after all sections
+		while (webIdx < webEvents.length)
+		{
+			newEvents ~= webEvents[webIdx];
+			webIdx++;
+		}
+
+		events = newEvents;
+	}
 
 	return events;
 }
@@ -348,10 +543,13 @@ void renderJourneyTimeline(JourneyEvent[] events)
 			`.journey-event.spam_detail { border-left-color: #A85; background: #FFFAF5; padding: 0.33em 0.75em; }` ~
 			`.journey-event.log_file { border-left-color: #85A; background: #F5F5F5; }` ~
 			`.journey-event.approval { border-left-color: #5A5; background: #F0FFF0; }` ~
+			`.journey-event.page_visit { border-left-color: #59A; background: #F5FAFF; }` ~
+			`.journey-event.referrer { border-left-color: #A59; background: #FAF5FF; }` ~
 			`.journey-event.log_file:not(:first-child) { margin-top: 1em; border-top: 2px solid #E6E6E6; }` ~
 			`.journey-timestamp { color: #666; font-size: 0.95em; }` ~
 			`.journey-message { font-weight: bold; }` ~
 			`.journey-details { color: #666; font-size: 0.95em; margin-top: 0.25em; }` ~
+			`.journey-details a { color: #369; }` ~
 			`.journey-source { color: #999; font-size: 0.9em; float: right; }` ~
 		`</style>` ~
 		`<div class="journey-timeline">` ~
@@ -368,6 +566,10 @@ void renderJourneyTimeline(JourneyEvent[] events)
 			cssClass = "spam_detail";
 		else if (event.type == "approval")
 			cssClass = "approval";
+		else if (event.type == "page_visit")
+			cssClass = "page_visit";
+		else if (event.type == "referrer")
+			cssClass = "referrer";
 		else if (event.success)
 			cssClass = "success";
 		else if (event.type == "info")
@@ -396,10 +598,25 @@ void renderJourneyTimeline(JourneyEvent[] events)
 		html.putEncodedEntities(event.message);
 		html.put(`</span>`);
 
-		if (event.details.length > 0)
+		if (event.details.length > 0 || event.url.length > 0)
 		{
 			html.put(`<div class="journey-details">`);
-			html.putEncodedEntities(event.details);
+			if (event.url.length > 0)
+			{
+				html.put(`<a href="`);
+				html.putEncodedEntities(event.url);
+				html.put(`" target="_blank" rel="noopener">`);
+				// For page visits, show the path; for referrers, show the full URL
+				if (event.details.length > 0)
+					html.putEncodedEntities(event.details);
+				else
+					html.putEncodedEntities(event.url);
+				html.put(`</a>`);
+			}
+			else
+			{
+				html.putEncodedEntities(event.details);
+			}
 			html.put(`</div>`);
 		}
 		html.put(`</div>`);
