@@ -90,7 +90,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	currentRequest = request;
 	auto response = new HttpResponseEx();
 
-	ip = request.remoteHosts(conn.remoteAddress.toAddrString())[0];
+	ip = conn.remoteAddressStr(request);
 	user = getUser(request.headers.get("Cookie", null));
 	string[] cookies;
 	scope(success)

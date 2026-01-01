@@ -41,6 +41,7 @@ void startWebUI()
 	server = new HttpServer();
 	server.log = log;
 	server.handleRequest = toDelegate(&onRequest);
+	server.remoteIPHeader = config.remoteIPHeader;
 	server.listen(config.listen.port, config.listen.addr);
 
 	addShutdownHandler((scope const(char)[] reason){ server.close(); });

@@ -1,3 +1,8 @@
+# HTTP header to use for the client's real IP address when behind a reverse proxy.
+# Common values: "X-Forwarded-For", "X-Real-IP"
+# If not set, the direct connection IP is used.
+#remoteIPHeader = X-Forwarded-For
+
 # Optional additional cookie-less domain used for static resources.
 # Should not be a subdomain of the main domain.
 #staticDomain = example-static.com

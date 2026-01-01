@@ -29,6 +29,7 @@ struct ListenConfig
 struct Config
 {
 	ListenConfig listen;
+	string remoteIPHeader;  // e.g. "X-Forwarded-For" when behind a reverse proxy
 	string staticDomain = null;
 	string apiSecret = null;
 	bool indexable = false;
