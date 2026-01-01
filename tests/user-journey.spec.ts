@@ -106,5 +106,11 @@ test.describe("User Journey", () => {
     const modCaptchaAnswer = moderationJourney.locator(".journey-event", { has: page.locator(".journey-message", { hasText: "CAPTCHA answer" }) });
     await expect(modCaptchaAnswer.first()).toBeVisible();
     await expect(modCaptchaAnswer.first()).toContainText("checked", { ignoreCase: true });
+
+    // Verify approval event is shown
+    const approvalEvent = moderationJourney.locator(".journey-event.approval");
+    await expect(approvalEvent).toBeVisible();
+    await expect(approvalEvent).toContainText("Approved by moderator");
+    await expect(approvalEvent).toContainText(`Moderator: ${modUsername}`);
   });
 });

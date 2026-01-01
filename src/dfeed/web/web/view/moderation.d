@@ -57,7 +57,7 @@ import dfeed.web.web.user : user, userSettings;
 struct JourneyEvent
 {
 	string timestamp;
-	string type;      // "captcha", "spam_check", "moderation", "posted", "info", "log_file"
+	string type;      // "captcha", "spam_check", "moderation", "posted", "info", "log_file", "approval"
 	string message;
 	bool success;     // true for success, false for failure
 	string details;   // additional details like spamicity value
@@ -173,6 +173,41 @@ JourneyEvent[] parsePostingJourney(string messageID)
 	// Reverse so oldest attempt is first
 	relatedLogs.reverse();
 
+	// Search for approval events in the Banned log file (same date as the PostProcess log)
+	void searchBannedLog(string pid, string postProcessLogFile)
+	{
+		// Replace "PostProcess-xxx.log" with "Banned.log" to get the Banned log for the same date
+		auto bannedLogFile = postProcessLogFile.matchFirst(`^(.* - )PostProcess-[a-z]+\.log$`);
+		if (!bannedLogFile)
+			return;
+
+		auto logPath = bannedLogFile[1] ~ "Banned.log";
+		if (!exists(logPath))
+			return;
+
+		auto content = cast(string)read(logPath);
+		auto logFileName = baseName(logPath);
+		int lineNum = 0;
+
+		foreach (line; content.split("\n"))
+		{
+			lineNum++;
+			if (line.length < 30 || line[0] != '[')
+				continue;
+
+			// Look for approval entries containing our post ID
+			auto approvalMatch = line.matchFirst(`\[([^\]]+)\] User ([^ ]+) is approving draft ([^ ]+) \(post ` ~ pid ~ `\) titled "(.*)" by "(.*)"`);
+			if (approvalMatch)
+			{
+				auto timestamp = approvalMatch[1];
+				auto moderator = approvalMatch[2];
+				events ~= JourneyEvent(timestamp, "approval", "Approved by moderator", true,
+					"Moderator: " ~ moderator, logFileName, lineNum);
+				return; // Found it
+			}
+		}
+	}
+
 	// Parse each log file
 	foreach (ref related; relatedLogs)
 	{
@@ -286,6 +321,10 @@ JourneyEvent[] parsePostingJourney(string messageID)
 		}
 	}
 
+	// Search for approval event (added last so it appears in chronological order)
+	if (primaryLog !is null)
+		searchBannedLog(postID, primaryLog);
+
 	return events;
 }
 
@@ -308,6 +347,7 @@ void renderJourneyTimeline(JourneyEvent[] events)
 			`.journey-event.info { border-left-color: #58A; background: #F5F9FF; }` ~
 			`.journey-event.spam_detail { border-left-color: #A85; background: #FFFAF5; padding: 0.33em 0.75em; }` ~
 			`.journey-event.log_file { border-left-color: #85A; background: #F5F5F5; }` ~
+			`.journey-event.approval { border-left-color: #5A5; background: #F0FFF0; }` ~
 			`.journey-event.log_file:not(:first-child) { margin-top: 1em; border-top: 2px solid #E6E6E6; }` ~
 			`.journey-timestamp { color: #666; font-size: 0.95em; }` ~
 			`.journey-message { font-weight: bold; }` ~
@@ -326,6 +366,8 @@ void renderJourneyTimeline(JourneyEvent[] events)
 			cssClass = "log_file";
 		else if (event.type == "spam_detail")
 			cssClass = "spam_detail";
+		else if (event.type == "approval")
+			cssClass = "approval";
 		else if (event.success)
 			cssClass = "success";
 		else if (event.type == "info")
