@@ -34,6 +34,11 @@ $(document).ready(function() {
 	    return false;
 	});
 
+	$('#theme-toggle').click(function() {
+		var isDark = $('body').toggleClass('dark-mode').hasClass('dark-mode');
+		localStorage.setItem('theme', isDark ? 'dark' : 'light');
+	});
+
 	syntaxHighlight($(document));
 });
 
