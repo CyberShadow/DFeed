@@ -661,12 +661,29 @@ class MarkdownCodeRule : LintRule
 			return false;
 		}
 
+		// Detect fenced code block delimiters (``` or ~~~)
+		static bool isFenceDelimiter(string line)
+		{
+			auto stripped = line.stripLeft();
+			return stripped.startsWith("```") || stripped.startsWith("~~~");
+		}
+
 		auto paragraphs = draft.clientVars.get("text", null).replace("\r\n", "\n").split("\n\n").map!splitLines.array;
 		if (!paragraphs.canFind!(paragraph => !paragraph.all!detectIndent && !paragraph.all!(not!detectIndent)))
 			return false;
 
+		bool inFencedBlock = false;
 		foreach (line; draft.clientVars.get("text", null).splitLines())
 		{
+			// Track fenced code blocks and skip their contents
+			if (isFenceDelimiter(line))
+			{
+				inFencedBlock = !inFencedBlock;
+				continue;
+			}
+			if (inFencedBlock)
+				continue;
+
 			bool isIndented = detectIndent(line);
 			TrieNode* n = &root;
 			foreach (c; line)
@@ -755,6 +772,30 @@ EOF"));
 
 	// https://github.com/CyberShadow/DFeed/issues/125#issuecomment-830469649
 	assert(!check("    Code"));
+
+	// Fenced code blocks with internal indentation should not trigger
+	assert(!check(q"EOF
+Here is some code:
+
+```d
+int x = 1;
+string result = {
+	switch(x) {
+		case 0:
+			return "hi";
+		default:
+			return "bye";
+	}
+}();
+```
+EOF"));
+
+	// Tilde fences should also work
+	assert(!check(q"EOF
+~~~
+	indented content
+~~~
+EOF"));
 }
 
 class MarkdownSyntaxRule : LintRule
