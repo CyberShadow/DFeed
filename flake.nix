@@ -23,13 +23,34 @@
           sha256 = "1qjxlak9hbl9zd3dl5ks0w4zx5z64wjsbk7ic73r1r45fasisdrh";
         };
 
+        # Filter source to only include files needed for D build
+        dfeedSrc = pkgs.lib.cleanSourceWith {
+          src = self;
+          filter = path: type:
+            let
+              baseName = baseNameOf path;
+              relPath = pkgs.lib.removePrefix (toString self + "/") (toString path);
+            in
+              # Include D source directories
+              pkgs.lib.hasPrefix "src/" relPath ||
+              pkgs.lib.hasPrefix "lib/" relPath ||
+              # Include root-level build files
+              baseName == "dub.sdl" ||
+              baseName == "dub.selections.json" ||
+              # Allow traversing directories
+              type == "directory";
+        };
+
+        # Reference site-defaults separately (not part of D source)
+        siteDefaultsSrc = "${self}/site-defaults";
+
       in
       {
         packages.default = pkgs.stdenv.mkDerivation {
           pname = "dfeed";
           version = "unstable";
 
-          src = self;
+          src = dfeedSrc;
 
           # Don't strip debug symbols (we build with -g)
           dontStrip = true;
@@ -53,6 +74,10 @@
             # Make compressors available
             cp ${htmlcompressor} htmlcompressor-1.5.3.jar
             cp ${yuicompressor} yuicompressor-2.4.8.jar
+
+            # Copy site-defaults for minification (not part of D source)
+            cp -r ${siteDefaultsSrc} site-defaults
+            chmod -R u+w site-defaults
           '';
 
           buildPhase = ''
