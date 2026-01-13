@@ -78,6 +78,111 @@ string findPostingLog(string id)
 	return null;
 }
 
+struct DeletedPostInfo
+{
+	string timestamp;
+	string moderator;
+	string reason;
+	string messageContent;
+	string[string] postsRow;
+	string[string] threadsRow;
+}
+
+DeletedPostInfo findDeletedPostInfo(string messageID)
+{
+	import std.file : dirEntries, SpanMode;
+	import std.algorithm : startsWith;
+
+	DeletedPostInfo result;
+
+	foreach (de; dirEntries("logs", "* - Deleted.log", SpanMode.shallow))
+	{
+		auto content = cast(string) read(de.name);
+		auto lines = splitLines(content);
+
+		for (size_t i = 0; i < lines.length; i++)
+		{
+			auto line = lines[i];
+			// Look for deletion line: "[timestamp] User X is deleting post <id> (reason)"
+			auto deletingPos = line.indexOf(" is deleting post ");
+			if (deletingPos < 0)
+				continue;
+
+			// Check if this line is for our message ID
+			if (line.indexOf(messageID) < 0)
+				continue;
+
+			// Extract timestamp (everything before first "]")
+			auto bracketPos = line.indexOf("]");
+			if (bracketPos > 0 && line.length > 1 && line[0] == '[')
+				result.timestamp = line[1 .. bracketPos];
+
+			// Extract moderator name: "User X is deleting"
+			auto userPos = line.indexOf("User ");
+			if (userPos >= 0)
+			{
+				auto afterUser = line[userPos + 5 .. deletingPos];
+				result.moderator = afterUser;
+			}
+
+			// Extract reason from parentheses at end
+			auto lastParen = line.indexOf("(");
+			auto lastCloseParen = line.indexOf(")");
+			if (lastParen >= 0 && lastCloseParen > lastParen)
+				result.reason = line[lastParen + 1 .. lastCloseParen];
+
+			// Extract message content (lines containing "] > ")
+			// Log format: "[timestamp] > content"
+			string[] contentLines;
+			size_t j = i + 1;
+			while (j < lines.length)
+			{
+				auto contentMarker = lines[j].indexOf("] > ");
+				if (contentMarker >= 0)
+				{
+					contentLines ~= lines[j][contentMarker + 4 .. $];
+					j++;
+				}
+				else
+					break;
+			}
+			import std.array : join;
+			result.messageContent = contentLines.join("\n");
+
+			// Look for [Posts] and [Threads] rows
+			while (j < lines.length)
+			{
+				auto postsMarker = lines[j].indexOf("[Posts] row: ");
+				auto threadsMarker = lines[j].indexOf("[Threads] row: ");
+				if (postsMarker >= 0)
+				{
+					try
+						result.postsRow = lines[j][postsMarker + 13 .. $].jsonParse!(string[string]);
+					catch (Exception)
+					{ }
+				}
+				else if (threadsMarker >= 0)
+				{
+					try
+						result.threadsRow = lines[j][threadsMarker + 15 .. $].jsonParse!(string[string]);
+					catch (Exception)
+					{ }
+				}
+				else if (lines[j].indexOf(" is ") >= 0 && lines[j].indexOf("post ") >= 0)
+				{
+					// Start of next log entry
+					break;
+				}
+				j++;
+			}
+
+			return result;
+		}
+	}
+
+	return result;
+}
+
 void moderatePost(
 	string messageID, string reason, string userName,
 	Flag!"deleteLocally" deleteLocally,

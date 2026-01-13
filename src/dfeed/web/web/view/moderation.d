@@ -20,7 +20,7 @@ module dfeed.web.web.view.moderation;
 import std.algorithm.iteration : map, filter, uniq;
 import std.algorithm.searching : canFind, findSplit;
 import std.algorithm.sorting : sort;
-import std.array : array, join;
+import std.array : array, join, empty;
 import std.conv : text;
 import std.datetime.systime : Clock;
 import std.exception : enforce;
@@ -48,7 +48,7 @@ import dfeed.web.captcha.common : getCaptchaResponseFromField;
 import dfeed.web.posting : PostDraft, PostProcess;
 import dfeed.web.user : User;
 import dfeed.web.web.draft : getDraft, draftToPost;
-import dfeed.web.web.moderation : findPostingLog, moderatePost, approvePost, getUnbanPreviewByKey, unbanPoster, UnbanTree;
+import dfeed.web.web.moderation : findPostingLog, moderatePost, approvePost, getUnbanPreviewByKey, unbanPoster, UnbanTree, DeletedPostInfo, findDeletedPostInfo;
 import dfeed.web.web.page : html, Redirect;
 import dfeed.web.web.part.post : formatPost;
 import dfeed.web.web.posting : postDraft;
@@ -711,6 +711,71 @@ void discussionModeration(Rfc850Post post, UrlParameters postVars)
 			);
 		else
 			html.put("No actions specified!");
+	}
+}
+
+void discussionModerationDeleted(string messageID)
+{
+	html.put(
+		`<div class="forum-notice">` ~
+			_!`This post is not in the database.` ~
+		`</div>`
+	);
+
+	// Display user journey timeline (from PostProcess logs)
+	auto journeyEvents = parsePostingJourney(messageID);
+	if (!journeyEvents.empty)
+	{
+		renderJourneyTimeline(journeyEvents);
+	}
+
+	// Look for deleted post info in Deleted.log
+	auto deletedInfo = findDeletedPostInfo(messageID);
+	bool hasDeletedInfo = deletedInfo.messageContent.length > 0 || deletedInfo.postsRow.length > 0;
+
+	if (hasDeletedInfo)
+	{
+		html.put(`<h3>`, _!`Deletion Record`, `</h3>`);
+
+		html.put(`<div class="deleted-post-info">`);
+
+		if (deletedInfo.timestamp.length)
+			html.put(`<p><strong>`, _!`Deleted at:`, `</strong> `, encodeHtmlEntities(deletedInfo.timestamp), `</p>`);
+
+		if (deletedInfo.moderator.length)
+			html.put(`<p><strong>`, _!`Deleted by:`, `</strong> `, encodeHtmlEntities(deletedInfo.moderator), `</p>`);
+
+		if (deletedInfo.reason.length)
+			html.put(`<p><strong>`, _!`Reason:`, `</strong> `, encodeHtmlEntities(deletedInfo.reason), `</p>`);
+
+		// Show post metadata from database row
+		if (deletedInfo.postsRow.length > 0)
+		{
+			auto subject = "Subject" in deletedInfo.postsRow;
+			auto author = "Author" in deletedInfo.postsRow;
+			auto authorEmail = "AuthorEmail" in deletedInfo.postsRow;
+
+			if (subject)
+				html.put(`<p><strong>`, _!`Subject:`, `</strong> `, encodeHtmlEntities(*subject), `</p>`);
+			if (author)
+				html.put(`<p><strong>`, _!`Author:`, `</strong> `, encodeHtmlEntities(*author));
+			if (authorEmail && (*authorEmail).length)
+				html.put(` &lt;`, encodeHtmlEntities(*authorEmail), `&gt;`);
+			if (author)
+				html.put(`</p>`);
+		}
+
+		if (deletedInfo.messageContent.length)
+		{
+			html.put(
+				`<p><strong>`, _!`Original message:`, `</strong></p>` ~
+				`<textarea id="deleteform-message" readonly="readonly" rows="25" cols="80">`
+			);
+			html.putEncodedEntities(deletedInfo.messageContent);
+			html.put(`</textarea>`);
+		}
+
+		html.put(`</div>`);
 	}
 }
 

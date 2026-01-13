@@ -55,7 +55,7 @@ import dfeed.web.web.view.feed : getFeed, getSubscriptionFeed, FEED_HOURS_DEFAUL
 import dfeed.web.web.view.group : discussionGroup, discussionGroupNarrowIndex, discussionGroupThreaded, discussionGroupSplit, discussionGroupVSplit, discussionGroupSplitFromPost, discussionGroupVSplitFromPost;
 import dfeed.web.web.view.index : discussionIndex;
 import dfeed.web.web.view.login : discussionLoginForm, discussionRegisterForm, discussionLogin, discussionRegister;
-import dfeed.web.web.view.moderation : discussionModeration, deletePostApi, discussionFlagPage, discussionApprovePage, discussionUnbanByKeyPage;
+import dfeed.web.web.view.moderation : discussionModeration, discussionModerationDeleted, deletePostApi, discussionFlagPage, discussionApprovePage, discussionUnbanByKeyPage;
 import dfeed.web.web.view.post : discussionSplitPost, discussionVSplitPost, discussionSinglePost;
 import dfeed.web.web.view.search : discussionSearch;
 import dfeed.web.web.view.settings;
@@ -581,12 +581,21 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			{
 				enforce(user.getLevel() >= User.Level.canModerate, _!"You are not a moderator");
 				enforce(path.length > 1, _!"No post specified");
-				auto post = getPost('<' ~ urlDecode(pathX) ~ '>');
-				enforce(post, _!"Post not found");
-				title = _!`Moderating post "%s"`.format(post.subject); // "
-				breadcrumbs ~= `<a href="` ~ encodeHtmlEntities(idToUrl(post.id)) ~ `">` ~ encodeHtmlEntities(post.subject) ~ `</a>`;
-				breadcrumbs ~= `<a href="/moderate/`~pathX~`">` ~ _!`Moderate post` ~ `</a>`;
-				discussionModeration(post, request.method == "POST" ? request.decodePostData() : UrlParameters.init);
+				auto messageID = '<' ~ urlDecode(pathX) ~ '>';
+				auto post = getPost(messageID);
+				if (post)
+				{
+					title = _!`Moderating post "%s"`.format(post.subject); // "
+					breadcrumbs ~= `<a href="` ~ encodeHtmlEntities(idToUrl(post.id)) ~ `">` ~ encodeHtmlEntities(post.subject) ~ `</a>`;
+					breadcrumbs ~= `<a href="/moderate/`~pathX~`">` ~ _!`Moderate post` ~ `</a>`;
+					discussionModeration(post, request.method == "POST" ? request.decodePostData() : UrlParameters.init);
+				}
+				else
+				{
+					title = _!`Post not found`;
+					breadcrumbs ~= `<a href="/moderate/`~pathX~`">` ~ _!`Post not found` ~ `</a>`;
+					discussionModerationDeleted(messageID);
+				}
 				bodyClass ~= " formdoc";
 				break;
 			}
