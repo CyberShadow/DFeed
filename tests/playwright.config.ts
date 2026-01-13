@@ -10,7 +10,15 @@ export default defineConfig({
   },
   projects: [
     {
-      name: 'firefox',
+      name: 'default',
+      testIgnore: /.*-screenshot\.spec\.ts$/,
+      use: {
+        ...devices['Desktop Firefox'],
+      },
+    },
+    {
+      name: 'screenshots',
+      testMatch: /.*-screenshot\.spec\.ts$/,
       use: {
         ...devices['Desktop Firefox'],
       },

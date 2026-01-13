@@ -264,6 +264,55 @@
           };
         };
 
+        # Generate screenshots from Playwright tests
+        packages.screenshots = pkgs.stdenv.mkDerivation {
+          pname = "dfeed-screenshots";
+          version = "unstable";
+
+          src = self;
+
+          nativeBuildInputs = with pkgs; [
+            playwright-test
+            curl
+            sqlite
+            # Fonts for proper rendering in screenshots
+            liberation_ttf
+            dejavu_fonts
+            freefont_ttf
+          ];
+
+          HOME = "/tmp/playwright-home";
+          FONTCONFIG_FILE = pkgs.makeFontsConf {
+            fontDirectories = with pkgs; [
+              liberation_ttf
+              dejavu_fonts
+              freefont_ttf
+            ];
+          };
+
+          buildPhase = ''
+            runHook preBuild
+
+            ${generateTestConfig}
+
+            ${startServer}
+
+            cd tests
+            playwright test --project=screenshots --reporter=list || true
+            cd ..
+
+            ${stopServer}
+
+            runHook postBuild
+          '';
+
+          installPhase = ''
+            mkdir -p $out
+            cp tests/screenshot-*.png $out/ 2>/dev/null || echo "No screenshots found"
+            ls -la $out/
+          '';
+        };
+
         # Development shell for working on the project
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
@@ -314,7 +363,7 @@
 
               # Run Playwright tests
               cd tests
-              playwright test --reporter=list || TEST_RESULT=$?
+              playwright test --project=default --reporter=list || TEST_RESULT=$?
               cd ..
 
               ${stopServer}
