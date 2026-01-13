@@ -41,6 +41,92 @@
               type == "directory";
         };
 
+        # Shared test configuration generation
+        generateTestConfig = ''
+          # Create test environment
+          mkdir -p site/config/apis data/db
+
+          # Create minimal site.ini
+          cat > site/config/site.ini << 'SITEINI'
+          name = DFeed Test Instance
+          host = localhost
+          proto = http
+          SITEINI
+
+          # Create web.ini with test port
+          cat > site/config/web.ini << 'WEBINI'
+          [listen]
+          port = 8080
+          WEBINI
+
+          # Disable StopForumSpam in sandbox (no network access)
+          cat > site/config/apis/stopforumspam.ini << 'SPAMINI'
+          enabled = false
+          SPAMINI
+
+          # Configure user authentication with a test salt
+          cat > site/config/user.ini << 'USERINI'
+          salt = test-salt-for-playwright-tests-only
+          USERINI
+
+          # Configure test group with dummy captcha and disabled rate limiting for testing
+          cat > site/config/groups.ini << 'GROUPSINI'
+          [sets.test]
+          name=Test
+          shortName=Test
+          visible=true
+
+          [groups.test]
+          internalName=test
+          publicName=Test Forum
+          navName=Test
+          urlName=test
+          groupSet=test
+          description=A test forum for trying out posting
+          sinkType=local
+          announce=false
+          captcha=dummy
+          postThrottleRejectCount=0
+          postThrottleCaptchaCount=0
+          GROUPSINI
+
+          # Database is automatically created and migrated by dfeed
+        '';
+
+        # Shared server startup/shutdown logic
+        startServer = ''
+          # Start dfeed server in background
+          ${self.packages.${system}.default}/bin/dfeed --no-sources &
+          DFEED_PID=$!
+
+          # Wait for server to be ready (up to 30 seconds)
+          echo "Waiting for DFeed server to start..."
+          for i in $(seq 1 30); do
+            if curl -s http://localhost:8080/ > /dev/null 2>&1; then
+              echo "Server is ready!"
+              break
+            fi
+            if ! kill -0 $DFEED_PID 2>/dev/null; then
+              echo "Server process died unexpectedly"
+              exit 1
+            fi
+            sleep 1
+          done
+
+          # Verify server is actually responding
+          if ! curl -s http://localhost:8080/ > /dev/null 2>&1; then
+            echo "Server failed to start within 30 seconds"
+            kill $DFEED_PID 2>/dev/null || true
+            exit 1
+          fi
+        '';
+
+        stopServer = ''
+          # Stop server
+          kill $DFEED_PID 2>/dev/null || true
+          wait $DFEED_PID 2>/dev/null || true
+        '';
+
         # Reference site-defaults separately (not part of D source)
         siteDefaultsSrc = "${self}/site-defaults";
 
@@ -222,88 +308,16 @@
             buildPhase = ''
               runHook preBuild
 
-              # Create test environment
-              mkdir -p site/config/apis data/db
+              ${generateTestConfig}
 
-              # Create minimal site.ini
-              cat > site/config/site.ini << 'SITEINI'
-              name = DFeed Test Instance
-              host = localhost
-              proto = http
-              SITEINI
-
-              # Create web.ini with test port
-              cat > site/config/web.ini << 'WEBINI'
-              [listen]
-              port = 8080
-              WEBINI
-
-              # Disable StopForumSpam in sandbox (no network access)
-              cat > site/config/apis/stopforumspam.ini << 'SPAMINI'
-              enabled = false
-              SPAMINI
-
-              # Configure user authentication with a test salt
-              cat > site/config/user.ini << 'USERINI'
-              salt = test-salt-for-playwright-tests-only
-              USERINI
-
-              # Configure test group with dummy captcha and disabled rate limiting for testing
-              cat > site/config/groups.ini << 'GROUPSINI'
-              [sets.test]
-              name=Test
-              shortName=Test
-              visible=true
-
-              [groups.test]
-              internalName=test
-              publicName=Test Forum
-              navName=Test
-              urlName=test
-              groupSet=test
-              description=A test forum for trying out posting
-              sinkType=local
-              announce=false
-              captcha=dummy
-              postThrottleRejectCount=0
-              postThrottleCaptchaCount=0
-              GROUPSINI
-
-              # Database is automatically created and migrated by dfeed
-
-              # Start dfeed server in background
-              ${self.packages.${system}.default}/bin/dfeed --no-sources &
-              DFEED_PID=$!
-
-              # Wait for server to be ready (up to 30 seconds)
-              echo "Waiting for DFeed server to start..."
-              for i in $(seq 1 30); do
-                if curl -s http://localhost:8080/ > /dev/null 2>&1; then
-                  echo "Server is ready!"
-                  break
-                fi
-                if ! kill -0 $DFEED_PID 2>/dev/null; then
-                  echo "Server process died unexpectedly"
-                  exit 1
-                fi
-                sleep 1
-              done
-
-              # Verify server is actually responding
-              if ! curl -s http://localhost:8080/ > /dev/null 2>&1; then
-                echo "Server failed to start within 30 seconds"
-                kill $DFEED_PID 2>/dev/null || true
-                exit 1
-              fi
+              ${startServer}
 
               # Run Playwright tests
               cd tests
               playwright test --reporter=list || TEST_RESULT=$?
               cd ..
 
-              # Stop server
-              kill $DFEED_PID 2>/dev/null || true
-              wait $DFEED_PID 2>/dev/null || true
+              ${stopServer}
 
               # Check test result
               if [ "''${TEST_RESULT:-0}" != "0" ]; then
