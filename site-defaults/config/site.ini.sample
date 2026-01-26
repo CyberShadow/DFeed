@@ -16,7 +16,13 @@ host = forum.example.com
 
 proto = http
 
+# A short description of the website for meta tags.
+# More detailed than 'name', but less detailed than 'about'.
+
+description = A community forum for discussions
+
 # A description of this DFeed instance to be shown on the help page (in the About section).
+# May contain arbitrary HTML.
 
 about = <p>This is an example DFeed instance.</p>
 

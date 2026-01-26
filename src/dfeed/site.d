@@ -21,6 +21,7 @@ struct SiteConfig
 	string name;
 	string host = "localhost";
 	string proto = "http";
+	string description;  // Short description for meta tags (more detailed than name, less than about)
 	string about;
 	string ogImage;  // OpenGraph image URL for social media previews
 	immutable(string)[] moderators;
