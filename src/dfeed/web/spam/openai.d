@@ -27,6 +27,7 @@ import ae.sys.data;
 import ae.sys.dataset;
 import ae.utils.json;
 
+import dfeed.groups : getGroupInfo, GroupInfo;
 import dfeed.loc;
 import dfeed.site;
 import dfeed.web.posting;
@@ -50,13 +51,33 @@ class OpenAI : SpamChecker
 		if (!site.name.length)
 			return handler(unconfiguredHam, "Site name is not set - edit config/site.ini");
 
+		// Look up group info for additional context
+		auto groupName = process.draft.serverVars.get("where", "");
+		GroupInfo groupInfo = groupName.length ? getGroupInfo(groupName) : null;
+
+		// Build site context
+		string siteContext = format("the online forum titled \"%s\"", site.name);
+		if (site.description.length)
+			siteContext ~= format(" (%s)", site.description);
+
+		// Build group context
+		string groupContext;
+		if (groupInfo)
+		{
+			groupContext = format("\n\nThe post is being submitted to the \"%s\" group", groupInfo.publicName);
+			if (groupInfo.description.length)
+				groupContext ~= format(", which is described as: %s", groupInfo.description);
+			else
+				groupContext ~= ".";
+		}
+
 		// Build the prompt - ask for reasoning first, then verdict
 		// This helps the model think through the decision while still being parseable
 		auto systemPrompt = format(
-			"You are a spam detection system for the online forum titled \"%s\". " ~
+			"You are a spam detection system for %s. " ~
 			"Analyze posts and determine if they are spam or legitimate (ham). " ~
 			"First, briefly explain your reasoning (1-2 sentences), then on a new line, " ~
-			"provide your verdict as either 'VERDICT: spam' or 'VERDICT: ham'.\n\n" ~
+			"provide your verdict as either 'VERDICT: spam' or 'VERDICT: ham'.%s\n\n" ~
 			"Consider spam to be:\n" ~
 			"- New threads completely unrelated to this forum's topic (even if they appear helpful for other topics)\n" ~
 			"- Unsolicited advertising or promotional content\n" ~
@@ -66,7 +87,7 @@ class OpenAI : SpamChecker
 			"Consider ham to be:\n" ~
 			"- Posts relevant to this forum's topic and purpose\n" ~
 			"- Posts that continue an existing discussion, even if tangential to the forum's topic",
-			site.name
+			siteContext, groupContext
 		);
 
 		auto userMessage = format(
