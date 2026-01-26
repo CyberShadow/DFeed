@@ -107,6 +107,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 	string returnPage = request.resource;
 	html.clear();
 	string[] tools, extraHeaders;
+	string metaDescription = site.description ? site.description : site.name;
 	string[string] jsVars;
 	auto status = HttpStatusCode.OK;
 	GroupInfo currentGroup; string currentThread; // for search
@@ -152,6 +153,8 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		if (!image)
 			image = site.ogImage;
 
+		metaDescription = description;
+
 		auto canonicalURL = site.proto ~ "://" ~ site.host ~ canonicalLocation;
 
 		extraHeaders ~= [
@@ -161,9 +164,6 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			`<meta property="og:image" content="` ~ encodeHtmlEntities(image) ~ `" />`,
 			`<meta property="og:description" content="` ~ encodeHtmlEntities(description) ~ `" />`,
 		];
-
-		// Maybe emit <meta name="description" ...> here as well one day
-		// Needs changes to forum-template.dd
 	}
 
 	try
@@ -975,6 +975,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 			case "bodyclass"      : return bodyClass;
 			case "tools"          : return toolStr;
 			case "search-options" : return searchOptionStr;
+			case "metadescription": return encodeHtmlEntities(metaDescription);
 			default:
 				if (name.skipOver("active-group:"))
 				{
