@@ -147,7 +147,7 @@ HttpResponse handleRequest(HttpRequest request, HttpServerConnection conn)
 		assert(title, "No title for metadata");
 
 		if (!description)
-			description = site.name;
+			description = site.description ? site.description : site.name;
 
 		if (!image)
 			image = site.ogImage;
