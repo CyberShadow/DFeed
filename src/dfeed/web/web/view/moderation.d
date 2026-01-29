@@ -435,6 +435,24 @@ JourneyEvent[] parsePostingJourney(string messageID)
 						"Spamicity: " ~ spamicity ~ detailStr, logFileName, lineNum);
 				}
 			}
+			else if (message.startsWith("  Details: ") || message.startsWith("  Moderator details: "))
+			{
+				// Append moderator details to the most recent spam-related event
+				auto detailContent = message.startsWith("  Details: ")
+					? message[11..$]
+					: message[21..$];
+				if (events.length > 0)
+				{
+					auto lastEvent = &events[$-1];
+					if (lastEvent.type == "spam_detail" || lastEvent.type == "spam_check")
+					{
+						if (lastEvent.details.length > 0)
+							lastEvent.details ~= "\n" ~ detailContent;
+						else
+							lastEvent.details = detailContent;
+					}
+				}
+			}
 			else if (message.startsWith("Quarantined for moderation: "))
 			{
 				events ~= JourneyEvent(timestamp, "moderation", "Quarantined for moderation", false, message[28..$], logFileName, lineNum);
@@ -615,7 +633,13 @@ void renderJourneyTimeline(JourneyEvent[] events)
 			}
 			else
 			{
-				html.putEncodedEntities(event.details);
+				// Handle multi-line details by replacing newlines with <br>
+				foreach (i, line; event.details.splitAsciiLines.array)
+				{
+					if (i > 0)
+						html.put(`<br>`);
+					html.putEncodedEntities(line);
+				}
 			}
 			html.put(`</div>`);
 		}
