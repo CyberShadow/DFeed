@@ -62,10 +62,10 @@ class BayesChecker : SpamChecker
 	override void check(PostProcess process, SpamResultHandler handler)
 	{
 		if (!modelLoaded)
-			return handler(likelyHam, "No model");
+			return handler(likelyHam, "No model", null);
 
 		auto spamicity = checkDraft(process.draft);
 		auto percent = cast(int)(spamicity * 100);
-		handler(spamicity, "%d%%".format(percent));
+		handler(spamicity, "%d%%".format(percent), null);
 	}
 }

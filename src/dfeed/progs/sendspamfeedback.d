@@ -51,7 +51,13 @@ void main(string[] args)
 				default: break;
 			}
 		}
-		void handler(Spamicity spamicity, string message) { writeln(spamicity < spamThreshold ? "OK!" : "Error: " ~ message); }
+		void handler(Spamicity spamicity, string message, string details = null)
+		{
+			writeln(spamicity < spamThreshold ? "OK!" : "Error: " ~ message);
+			if (details)
+				foreach (line; details.split("\n"))
+					writeln("Details: ", line);
+		}
 		sendSpamFeedback(pp, &handler, feedback);
 		socketManager.loop();
 	}

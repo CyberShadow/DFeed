@@ -391,14 +391,20 @@ private:
 		spamCheck(this, &onSpamResultAfterCaptcha, &logLine);
 	}
 
-	void onSpamResult(Spamicity spamicity, string errorMessage)
+	void onSpamResult(Spamicity spamicity, string errorMessage, string details = null)
 	{
 		// Cache the overall spamicity for later retrieval
 		draft.serverVars["spamicity"] = spamicity.text;
+		// Cache the moderator details for later retrieval
+		if (details)
+			draft.serverVars["spamDetails"] = details;
 
 		if (spamicity >= spamThreshold)
 		{
 			log("Spam check failed (spamicity: %.2f): %s".format(spamicity, errorMessage));
+			if (details)
+				foreach (line; splitAsciiLines(details))
+					log("  Moderator details: %s".format(line));
 
 			// Check if CAPTCHA is available to challenge the user
 			if (getCaptcha(post.captcha))
@@ -410,7 +416,11 @@ private:
 			else
 			{
 				// No CAPTCHA configured - quarantine for moderation
-				auto reason = ModerationReason(ModerationReason.Kind.spam, "No CAPTCHA configured and spam check failed: " ~ errorMessage);
+				// Combine user message and moderator details into the reason details
+				auto reasonDetails = "No CAPTCHA configured and spam check failed: " ~ errorMessage;
+				if (details)
+					reasonDetails ~= " [Details: " ~ details ~ "]";
+				auto reason = ModerationReason(ModerationReason.Kind.spam, reasonDetails);
 				this.status = PostingStatus.moderated;
 				moderateMessage(draft, headers, reason);
 				log("Quarantined for moderation: " ~ reason.toString());
@@ -425,11 +435,17 @@ private:
 		checkForModeration();
 	}
 
-	void onSpamResultAfterCaptcha(Spamicity spamicity, string errorMessage)
+	void onSpamResultAfterCaptcha(Spamicity spamicity, string errorMessage, string details = null)
 	{
 		// Cache the overall spamicity for later retrieval
 		draft.serverVars["spamicity"] = spamicity.text;
+		// Cache the moderator details for later retrieval
+		if (details)
+			draft.serverVars["spamDetails"] = details;
 		log("Spam check after CAPTCHA: spamicity %.2f".format(spamicity));
+		if (details)
+			foreach (line; splitAsciiLines(details))
+				log("  Moderator details: %s".format(line));
 
 		// CAPTCHA was solved, so proceed to moderation check.
 		// shouldModerate() will quarantine if spamicity is very high.

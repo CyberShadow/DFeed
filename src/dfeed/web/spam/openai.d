@@ -47,9 +47,9 @@ class OpenAI : SpamChecker
 	override void check(PostProcess process, SpamResultHandler handler)
 	{
 		if (!config.apiKey)
-			return handler(unconfiguredHam, "OpenAI is not set up");
+			return handler(unconfiguredHam, "OpenAI is not set up", null);
 		if (!site.name.length)
-			return handler(unconfiguredHam, "Site name is not set - edit config/site.ini");
+			return handler(unconfiguredHam, "Site name is not set - edit config/site.ini", null);
 
 		// Look up group info for additional context
 		auto groupName = process.draft.serverVars.get("where", "");
@@ -133,7 +133,7 @@ class OpenAI : SpamChecker
 		httpRequest(request, (HttpResponse response, string disconnectReason) {
 			if (!response)
 			{
-				handler(errorSpam, "OpenAI error: " ~ disconnectReason);
+				handler(errorSpam, "OpenAI error: " ~ disconnectReason, null);
 				return;
 			}
 
@@ -141,7 +141,7 @@ class OpenAI : SpamChecker
 			{
 				auto errorMsg = cast(string)response.getContent().toGC();
 				handler(errorSpam, format("OpenAI API error (HTTP %d): %s",
-					response.status, errorMsg.length > 200 ? errorMsg[0..200] ~ "..." : errorMsg));
+					response.status, errorMsg.length > 200 ? errorMsg[0..200] ~ "..." : errorMsg), null);
 				return;
 			}
 
@@ -156,7 +156,7 @@ class OpenAI : SpamChecker
 				auto choices = responseJson["choices"].array;
 				if (choices.length == 0)
 				{
-					handler(errorSpam, "OpenAI error: No choices in response");
+					handler(errorSpam, "OpenAI error: No choices in response", null);
 					return;
 				}
 
@@ -181,7 +181,7 @@ class OpenAI : SpamChecker
 					else
 					{
 						handler(errorSpam, format("OpenAI error: Could not parse verdict from response: %s",
-							content.length > 200 ? content[0..200] ~ "..." : content));
+							content.length > 200 ? content[0..200] ~ "..." : content), null);
 						return;
 					}
 				}
@@ -235,15 +235,15 @@ class OpenAI : SpamChecker
 				if (!hasLogprobs)
 					spamicity = isSpam ? likelySpam : likelyHam;
 
-				// Return full model response in the message
+				// User-facing message is simple verdict; full reasoning goes to moderator details
 				auto verdict = isSpam ? "spam" : "ham";
-				auto resultMessage = format("%s thinks your post is %s: %s",
-					config.model, verdict, content);
-				handler(spamicity, resultMessage);
+				auto resultMessage = format("%s thinks your post is %s", config.model, verdict);
+				auto moderatorDetails = format("%s response: %s", config.model, content);
+				handler(spamicity, resultMessage, moderatorDetails);
 			}
 			catch (Exception e)
 			{
-				handler(errorSpam, format("OpenAI error: %s", e.msg));
+				handler(errorSpam, format("OpenAI error: %s", e.msg), null);
 			}
 		});
 	}
@@ -272,7 +272,13 @@ void main(string[] args)
 		stdout.writeln();
 		stdout.writeln("--------------------------------------------------------------------");
 
-		void handler(Spamicity spamicity, string message) { stdout.writefln("%s: %s", message, spamicity); }
+		void handler(Spamicity spamicity, string message, string details = null)
+		{
+			stdout.writefln("%s: %s", message, spamicity);
+			if (details)
+				foreach (line; details.split("\n"))
+					stdout.writefln("Details: %s", line);
+		}
 		openai.check(pp, &handler);
 		socketManager.loop();
 	}

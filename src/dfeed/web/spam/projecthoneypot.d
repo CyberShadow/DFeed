@@ -35,7 +35,7 @@ class ProjectHoneyPot : SpamChecker
 	override void check(PostProcess process, SpamResultHandler handler)
 	{
 		if (!config.key)
-			return handler(certainlyHam, "ProjectHoneyPot is not set up");
+			return handler(certainlyHam, "ProjectHoneyPot is not set up", null);
 
 		enum DAYS_THRESHOLD  =  7; // consider an IP match as a positive if it was last seen at most this many days ago
 		enum SCORE_THRESHOLD = 10; // consider an IP match as a positive if its ProjectHoneyPot score is at least this value
@@ -69,20 +69,19 @@ class ProjectHoneyPot : SpamChecker
 			{
 				// Normalize threat score (0-255) to spamicity (0.0-1.0)
 				auto spamicity = threatScore / 255.0;
-				handler(spamicity, format(
-					_!"ProjectHoneyPot thinks you may be a spammer (%s last seen: %d days ago, threat score: %d/255, type: %s)",
-					process.ip,
-					daysLastSeen,
-					threatScore,
-					(
-						( type == 0      ? ["Search Engine"  ] : []) ~
-						((type & 0b0001) ? ["Suspicious"     ] : []) ~
-						((type & 0b0010) ? ["Harvester"      ] : []) ~
-						((type & 0b0100) ? ["Comment Spammer"] : [])
-					).join(", ")));
+				auto typeDesc = (
+					( type == 0      ? ["Search Engine"  ] : []) ~
+					((type & 0b0001) ? ["Suspicious"     ] : []) ~
+					((type & 0b0010) ? ["Harvester"      ] : []) ~
+					((type & 0b0100) ? ["Comment Spammer"] : [])
+				).join(", ");
+				auto userMessage = _!"ProjectHoneyPot thinks you may be a spammer";
+				auto moderatorDetails = format("IP %s last seen: %d days ago, threat score: %d/255, type: %s",
+					process.ip, daysLastSeen, threatScore, typeDesc);
+				handler(spamicity, userMessage, moderatorDetails);
 			}
 			else
-				handler(likelyHam, null);
+				handler(likelyHam, null, null);
 	}
 
 }

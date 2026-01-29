@@ -47,16 +47,20 @@ void spamCheck(PostProcess process, SpamResultHandler handler, void delegate(str
 	bool foundSpam = false;
 	Spamicity maxSpamicity = 0.0;
 	string maxSpamicityMessage = null;
+	string maxSpamicityDetails = null;
 
 	// Start all checks simultaneously
 	foreach (checker; spamCheckers)
 	{
 		try
 			(SpamChecker checker) {
-				checker.check(process, (Spamicity spamicity, string message) {
+				checker.check(process, (Spamicity spamicity, string message, string details = null) {
 					totalResults++;
 					if (log) log("Got reply from spam checker %s: spamicity %.2f (%s)".format(
 						checker.classinfo.name, spamicity, message));
+					if (log && details)
+						foreach (line; details.splitAsciiLines())
+							log("  Details: %s".format(line));
 					if (!foundSpam)
 					{
 						// Track the highest spamicity score
@@ -64,19 +68,20 @@ void spamCheck(PostProcess process, SpamResultHandler handler, void delegate(str
 						{
 							maxSpamicity = spamicity;
 							maxSpamicityMessage = message;
+							maxSpamicityDetails = details;
 						}
 
 						// If spamicity exceeds threshold, immediately report as spam
 						if (spamicity >= spamThreshold)
 						{
-							handler(spamicity, message);
+							handler(spamicity, message, details);
 							foundSpam = true;
 						}
 						else
 						{
 							// If all checkers are done and none found spam, report max spamicity
 							if (totalResults == spamCheckers.length)
-								handler(maxSpamicity, maxSpamicityMessage);
+								handler(maxSpamicity, maxSpamicityMessage, maxSpamicityDetails);
 						}
 					}
 				});
@@ -131,7 +136,12 @@ alias unconfiguredHam = certainlyHam;
 /// Confidence level for errors (challenge instead of outright rejection)
 alias errorSpam = likelySpam;
 
-alias void delegate(Spamicity spamicity, string message) SpamResultHandler;
+/// Callback for spam check results.
+/// Params:
+///   spamicity = Spam confidence score (0.0 = ham, 1.0 = spam)
+///   message = User-facing message explaining the result (shown to post author)
+///   details = Moderator-only details for logging/review (not shown to post author)
+alias void delegate(Spamicity spamicity, string message, string details = null) SpamResultHandler;
 
 enum SpamFeedback { unknown, spam, ham }
 
@@ -141,7 +151,7 @@ class SpamChecker
 
 	void sendFeedback(PostProcess process, SpamResultHandler handler, SpamFeedback feedback)
 	{
-		handler(likelyHam, "Not implemented");
+		handler(likelyHam, "Not implemented", null);
 	}
 }
 

@@ -32,7 +32,7 @@ class Akismet : SpamChecker
 	override void check(PostProcess process, SpamResultHandler handler)
 	{
 		if (!config.key)
-			return handler(unconfiguredHam, "Akismet is not set up");
+			return handler(unconfiguredHam, "Akismet is not set up", null);
 
 		string[string] params = [
 			"blog"                 : site.proto ~ "://" ~ site.host ~ "/",
@@ -46,21 +46,21 @@ class Akismet : SpamChecker
 
 		return httpPost("http://" ~ config.key ~ ".rest.akismet.com/1.1/comment-check", UrlParameters(params), (string result) {
 			if (result == "false")
-				handler(likelyHam, null);
+				handler(likelyHam, null, null);
 			else
 			if (result == "true")
-				handler(likelySpam, _!"Akismet thinks your post looks like spam");
+				handler(likelySpam, _!"Akismet thinks your post looks like spam", null);
 			else
-				handler(errorSpam, _!"Akismet error:" ~ " " ~ result);
+				handler(errorSpam, _!"Akismet error:" ~ " " ~ result, null);
 		}, (string error) {
-			handler(errorSpam, _!"Akismet error:" ~ " " ~ error);
+			handler(errorSpam, _!"Akismet error:" ~ " " ~ error, null);
 		});
 	}
 
 	override void sendFeedback(PostProcess process, SpamResultHandler handler, SpamFeedback feedback)
 	{
 		if (!config.key)
-			return handler(unconfiguredHam, "Akismet is not set up");
+			return handler(unconfiguredHam, "Akismet is not set up", null);
 
 		string[string] params = [
 			"blog"                 : site.proto ~ "://" ~ site.host ~ "/",
@@ -75,11 +75,11 @@ class Akismet : SpamChecker
 		string[SpamFeedback] names = [ SpamFeedback.spam : "spam", SpamFeedback.ham : "ham" ];
 		return httpPost("http://" ~ config.key ~ ".rest.akismet.com/1.1/submit-" ~ names[feedback], UrlParameters(params), (string result) {
 			if (result == "Thanks for making the web a better place.")
-				handler(likelyHam, null);
+				handler(likelyHam, null, null);
 			else
-				handler(errorSpam, "Akismet error: " ~ result);
+				handler(errorSpam, "Akismet error: " ~ result, null);
 		}, (string error) {
-			handler(errorSpam, "Akismet error: " ~ error);
+			handler(errorSpam, "Akismet error: " ~ error, null);
 		});
 	}
 }

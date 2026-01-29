@@ -50,17 +50,17 @@ class BlogSpam : SpamChecker
 			auto result = response.get("result", null);
 			auto reason = response.get("reason", "no reason given");
 			if (result == "OK")
-				handler(likelyHam, reason);
+				handler(likelyHam, reason, null);
 			else
 			if (result == "SPAM")
-				handler(likelySpam, _!"BlogSpam.net thinks your post looks like spam:" ~ " " ~ reason);
+				handler(likelySpam, _!"BlogSpam.net thinks your post looks like spam:" ~ " " ~ reason, null);
 			else
 			if (result == "ERROR")
-				handler(errorSpam, _!"BlogSpam.net error:" ~ " " ~ reason);
+				handler(errorSpam, _!"BlogSpam.net error:" ~ " " ~ reason, null);
 			else
-				handler(errorSpam, _!"BlogSpam.net unexpected response:" ~ " " ~ result);
+				handler(errorSpam, _!"BlogSpam.net unexpected response:" ~ " " ~ result, null);
 		}, (string error) {
-			handler(errorSpam, _!"BlogSpam.net error:" ~ " " ~ error);
+			handler(errorSpam, _!"BlogSpam.net error:" ~ " " ~ error, null);
 		});
 	}
 
@@ -74,14 +74,14 @@ class BlogSpam : SpamChecker
 			auto result = response.get("result", null);
 			auto reason = response.get("reason", "no reason given");
 			if (result == "OK")
-				handler(likelyHam, reason);
+				handler(likelyHam, reason, null);
 			else
 			if (result == "ERROR")
-				handler(errorSpam, _!"BlogSpam.net error:" ~ " " ~ reason);
+				handler(errorSpam, _!"BlogSpam.net error:" ~ " " ~ reason, null);
 			else
-				handler(errorSpam, _!"BlogSpam.net unexpected response:" ~ " " ~ result);
+				handler(errorSpam, _!"BlogSpam.net unexpected response:" ~ " " ~ result, null);
 		}, (string error) {
-			handler(errorSpam, _!"BlogSpam.net error:" ~ " " ~ error);
+			handler(errorSpam, _!"BlogSpam.net error:" ~ " " ~ error, null);
 		});
 	}
 }

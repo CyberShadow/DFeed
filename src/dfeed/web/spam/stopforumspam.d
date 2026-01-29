@@ -39,7 +39,7 @@ class StopForumSpam : SpamChecker
 	override void check(PostProcess process, SpamResultHandler handler)
 	{
 		if (!config.enabled)
-			return handler(unconfiguredHam, "StopForumSpam is disabled");
+			return handler(unconfiguredHam, "StopForumSpam is disabled", null);
 
 		enum DAYS_THRESHOLD = 3; // consider an IP match as a positive if it was last seen at most this many days ago
 
@@ -48,7 +48,7 @@ class StopForumSpam : SpamChecker
 		if (ip.canFind(':') || ip.split(".").length != 4)
 		{
 			// Not an IPv4 address, skip StopForumSpam check
-			return handler(certainlyHam, "Not an IPv4 address");
+			return handler(certainlyHam, "Not an IPv4 address", null);
 		}
 
 		httpGet("http://api.stopforumspam.org/api?ip=" ~ ip, (string result) {
@@ -68,19 +68,22 @@ class StopForumSpam : SpamChecker
 			}
 
 			if (response["appears"].text == "no")
-				handler(likelyHam, null);
+				handler(likelyHam, null, null);
 			else
 			{
 				auto date = response["lastseen"].text.parseTime!"Y-m-d H:i:s"();
 				if (Clock.currTime() - date < dur!"days"(DAYS_THRESHOLD))
-					handler(likelySpam, format(
-						_!"StopForumSpam thinks you may be a spammer (%s last seen: %s, frequency: %s)",
-						process.ip, response["lastseen"].text, response["frequency"].text));
+				{
+					auto userMessage = _!"StopForumSpam thinks you may be a spammer";
+					auto moderatorDetails = format("IP %s last seen: %s, frequency: %s",
+						process.ip, response["lastseen"].text, response["frequency"].text);
+					handler(likelySpam, userMessage, moderatorDetails);
+				}
 				else
-					handler(likelyHam, null);
+					handler(likelyHam, null, null);
 			}
 		}, (string errorMessage) {
-			handler(errorSpam, "StopForumSpam error: " ~ errorMessage);
+			handler(errorSpam, "StopForumSpam error: " ~ errorMessage, null);
 		});
 	}
 }
