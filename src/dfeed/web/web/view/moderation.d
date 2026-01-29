@@ -418,6 +418,13 @@ JourneyEvent[] parsePostingJourney(string messageID)
 					events ~= JourneyEvent(timestamp, "spam_check", "Spam check passed", true,
 						"Spamicity: " ~ spamMatch[1], logFileName, lineNum);
 			}
+			else if (message.startsWith("Spam check after CAPTCHA: spamicity "))
+			{
+				auto spamMatch = message.matchFirst(`Spam check after CAPTCHA: spamicity ([\d.]+)`);
+				if (spamMatch)
+					events ~= JourneyEvent(timestamp, "spam_check", "Spam check after CAPTCHA", true,
+						"Spamicity: " ~ spamMatch[1], logFileName, lineNum);
+			}
 			else if (message.startsWith("User is trusted, skipping spam check"))
 			{
 				events ~= JourneyEvent(timestamp, "spam_check", "Trusted user, spam check skipped", true, "", logFileName, lineNum);
