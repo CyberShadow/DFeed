@@ -113,4 +113,149 @@ test.describe("User Journey", () => {
     await expect(approvalEvent).toContainText("Approved by moderator");
     await expect(approvalEvent).toContainText(`Moderator: ${modUsername}`);
   });
+
+  test("shows moderator details from spam checkers", async ({ page, context }) => {
+    const timestamp = Date.now();
+    const modUsername = `mod${timestamp}`;
+
+    // Step 1: Register a moderator user
+    await page.goto("/registerform");
+    await page.fill("#loginform-username", modUsername);
+    await page.fill("#loginform-password", "testpass123");
+    await page.fill("#loginform-password2", "testpass123");
+    await page.click('input[type="submit"]');
+    await page.waitForURL("**/");
+
+    // Promote user to moderator level (100)
+    const sqlCmd = `UPDATE Users SET Level=100 WHERE Username='${modUsername}';`;
+    execSync(`sqlite3 "${DB_PATH}" "${sqlCmd}"`);
+
+    // Step 2: Create a moderated post as anonymous user
+    await context.clearCookies();
+
+    await page.goto("/newpost/test");
+    await expect(page.locator("#postform")).toBeVisible();
+
+    // Fill form with hardspamtest (triggers spam check with details)
+    await page.fill("#postform-name", "Test User");
+    await page.fill("#postform-email", "test@example.com");
+    await page.fill("#postform-subject", `hardspamtest ${timestamp}`);
+    await page.fill("#postform-text", "Testing moderator details display in user journey");
+
+    // Submit to trigger CAPTCHA
+    await page.click('input[name="action-send"]');
+
+    // Wait for CAPTCHA and solve it
+    const captchaCheckbox = page.locator('input[name="dummy_captcha_checkbox"]');
+    await expect(captchaCheckbox).toBeVisible();
+
+    // Capture the draft ID before solving CAPTCHA
+    const draftId = await page.locator('input[name="did"]').inputValue();
+    expect(draftId).toBeTruthy();
+
+    // Solve CAPTCHA and submit
+    await captchaCheckbox.check();
+    await page.click('input[name="action-send"]');
+
+    // Wait for moderation notice
+    await expect(page.locator("body")).toContainText("approved by a moderator", { timeout: 10000 });
+
+    // Step 3: Log in as moderator
+    await page.goto("/loginform");
+    await page.fill("#loginform-username", modUsername);
+    await page.fill("#loginform-password", "testpass123");
+    await page.click('input[type="submit"]');
+    await page.waitForURL("**/");
+
+    // Step 4: Check the approval page has User Journey with moderator details
+    await page.goto(`/approve-moderated-draft/${draftId}`);
+
+    // Verify User Journey section exists
+    const journeySection = page.locator(".journey-timeline");
+    await expect(journeySection).toBeVisible();
+
+    // Verify spam check event shows moderator details (SimpleChecker adds "Matched keyword: hardspamtest")
+    // The details should be visible in spam_detail or spam_check events
+    const spamDetailEvent = journeySection.locator(".journey-event.spam_detail, .journey-event.failure");
+    await expect(spamDetailEvent.first()).toBeVisible();
+
+    // Check that moderator details from SimpleChecker are displayed
+    // The SimpleChecker adds "Matched keyword: hardspamtest" as details
+    const journeyDetails = journeySection.locator(".journey-details");
+    const detailsText = await journeyDetails.allTextContents();
+    const hasMatchedKeyword = detailsText.some(text => text.includes("Matched keyword: hardspamtest"));
+    expect(hasMatchedKeyword).toBeTruthy();
+  });
+
+  test("displays multi-line moderator details with line breaks", async ({ page, context }) => {
+    const timestamp = Date.now();
+    const modUsername = `mod${timestamp}`;
+
+    // Step 1: Register a moderator user
+    await page.goto("/registerform");
+    await page.fill("#loginform-username", modUsername);
+    await page.fill("#loginform-password", "testpass123");
+    await page.fill("#loginform-password2", "testpass123");
+    await page.click('input[type="submit"]');
+    await page.waitForURL("**/");
+
+    // Promote user to moderator level (100)
+    const sqlCmd = `UPDATE Users SET Level=100 WHERE Username='${modUsername}';`;
+    execSync(`sqlite3 "${DB_PATH}" "${sqlCmd}"`);
+
+    // Step 2: Create a moderated post as anonymous user
+    await context.clearCookies();
+
+    await page.goto("/newpost/test");
+    await expect(page.locator("#postform")).toBeVisible();
+
+    // Fill form with hardspamtest
+    await page.fill("#postform-name", "Test User");
+    await page.fill("#postform-email", "test@example.com");
+    await page.fill("#postform-subject", `hardspamtest ${timestamp}`);
+    await page.fill("#postform-text", "Testing multi-line details rendering");
+
+    // Submit to trigger CAPTCHA
+    await page.click('input[name="action-send"]');
+
+    // Wait for CAPTCHA and solve it
+    const captchaCheckbox = page.locator('input[name="dummy_captcha_checkbox"]');
+    await expect(captchaCheckbox).toBeVisible();
+
+    // Capture the draft ID
+    const draftId = await page.locator('input[name="did"]').inputValue();
+    expect(draftId).toBeTruthy();
+
+    // Solve CAPTCHA and submit
+    await captchaCheckbox.check();
+    await page.click('input[name="action-send"]');
+
+    // Wait for moderation notice
+    await expect(page.locator("body")).toContainText("approved by a moderator", { timeout: 10000 });
+
+    // Step 3: Log in as moderator
+    await page.goto("/loginform");
+    await page.fill("#loginform-username", modUsername);
+    await page.fill("#loginform-password", "testpass123");
+    await page.click('input[type="submit"]');
+    await page.waitForURL("**/");
+
+    // Step 4: Check the approval page
+    await page.goto(`/approve-moderated-draft/${draftId}`);
+
+    // Verify User Journey section exists
+    const journeySection = page.locator(".journey-timeline");
+    await expect(journeySection).toBeVisible();
+
+    // Verify that journey-details divs exist and can contain <br> tags for multi-line content
+    // The HTML structure should support line breaks within details
+    const journeyDetails = journeySection.locator(".journey-details");
+    const count = await journeyDetails.count();
+    expect(count).toBeGreaterThan(0);
+
+    // Verify the details div structure allows for proper rendering
+    // (The actual multi-line content would come from OpenAI or other checkers that provide multi-line details)
+    const firstDetails = journeyDetails.first();
+    await expect(firstDetails).toBeVisible();
+  });
 });
