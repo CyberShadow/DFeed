@@ -235,10 +235,22 @@ class OpenAI : SpamChecker
 				if (!hasLogprobs)
 					spamicity = isSpam ? likelySpam : likelyHam;
 
-				// User-facing message is simple verdict; full reasoning goes to moderator details
+				// User-facing message is simple verdict; full details go to moderator
 				auto verdict = isSpam ? "spam" : "ham";
 				auto resultMessage = format("%s thinks your post is %s", config.model, verdict);
-				auto moderatorDetails = format("%s response: %s", config.model, content);
+
+				// Build comprehensive moderator details
+				auto moderatorDetails = format(
+					"=== OpenAI Spam Check ===\n" ~
+					"Model: %s\n" ~
+					"\n=== System Prompt ===\n%s\n" ~
+					"\n=== User Message ===\n%s\n" ~
+					"\n=== Model Response ===\n%s",
+					config.model,
+					systemPrompt,
+					userMessage,
+					content
+				);
 				handler(spamicity, resultMessage, moderatorDetails);
 			}
 			catch (Exception e)
