@@ -71,8 +71,8 @@ void spamCheck(PostProcess process, SpamResultHandler handler, void delegate(str
 							maxSpamicityDetails = details;
 						}
 
-						// If spamicity exceeds threshold, immediately report as spam
-						if (spamicity >= spamThreshold)
+						// If spamicity is 100%, immediately report as spam
+						if (spamicity >= certainlySpam)
 						{
 							handler(spamicity, message, details);
 							foundSpam = true;
