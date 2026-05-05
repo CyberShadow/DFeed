@@ -109,6 +109,7 @@ final class PostProcess
 {
 	PostDraft draft;
 	string pid, ip;
+	string userSecret;
 	Headers headers;
 	Rfc850Post post;
 	PostingStatus status;
@@ -116,10 +117,11 @@ final class PostProcess
 	bool captchaPresent;
 	User user;
 
-	this(PostDraft draft, User user, string userID, string ip, Headers headers, Rfc850Post parent)
+	this(PostDraft draft, User user, string userID, string userSecret, string ip, Headers headers, Rfc850Post parent)
 	{
 		this.draft = draft;
 		this.ip = ip;
+		this.userSecret = userSecret;
 		this.headers = headers;
 		this.user = user;
 
@@ -422,7 +424,7 @@ private:
 					reasonDetails ~= " [Details: " ~ details ~ "]";
 				auto reason = ModerationReason(ModerationReason.Kind.spam, reasonDetails);
 				this.status = PostingStatus.moderated;
-				moderateMessage(draft, headers, reason);
+				moderateMessage(draft, headers, this.ip, reason);
 				log("Quarantined for moderation: " ~ reason.toString());
 			}
 
@@ -454,12 +456,12 @@ private:
 
 	void checkForModeration()
 	{
-		auto moderationReason = shouldModerate(draft);
+		auto moderationReason = shouldModerate(draft, this.ip, this.headers, this.userSecret);
 		if (moderationReason.kind != ModerationReason.Kind.none)
 		{
 			this.status = PostingStatus.moderated;
 			this.user = User.init;
-			moderateMessage(draft, headers, moderationReason);
+			moderateMessage(draft, headers, this.ip, moderationReason);
 			log("Quarantined for moderation: " ~ moderationReason.toString());
 			log.close();
 			return;

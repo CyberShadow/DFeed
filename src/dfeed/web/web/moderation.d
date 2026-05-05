@@ -31,7 +31,6 @@ import std.stdio : File;
 import std.string : splitLines, indexOf;
 import std.typecons : Flag, Yes;
 
-import ae.net.http.common : HttpRequest;
 import ae.net.ietf.headers : Headers;
 import ae.net.ietf.url : UrlParameters;
 import ae.sys.log : Logger, fileLogger;
@@ -56,7 +55,6 @@ import dfeed.web.web.draft : getDraft, saveDraft;
 import dfeed.web.web.postinfo : getPost;
 import dfeed.web.web.posting : postDraft;
 import dfeed.web.web.postmod : learnModeratedMessage;
-import dfeed.web.web.user : userSettings;
 
 string findPostingLog(string id)
 {
@@ -333,10 +331,10 @@ struct BanCheckResult
 
 /// If the user is banned, returns the matched key and ban reason.
 /// Otherwise, returns an empty BanCheckResult.
-BanCheckResult banCheck(string ip, HttpRequest request)
+BanCheckResult banCheck(string ip, Headers headers, string userSecret)
 {
 	string[] keys = [ip];
-	foreach (cookie; request.headers.get("Cookie", null).split("; "))
+	foreach (cookie; headers.get("Cookie", null).split("; "))
 	{
 		auto p = cookie.indexOf("=");
 		if (p<0) continue;
@@ -346,9 +344,8 @@ BanCheckResult banCheck(string ip, HttpRequest request)
 			if (value.length)
 				keys ~= value;
 	}
-	string secret = userSettings.secret;
-	if (secret.length)
-		keys ~= secret;
+	if (userSecret.length)
+		keys ~= userSecret;
 
 	string bannedKey = null, reason = null;
 	foreach (key; keys)
@@ -363,8 +360,8 @@ BanCheckResult banCheck(string ip, HttpRequest request)
 		return BanCheckResult.init;
 
 	needBanLog();
-	banLog("Request from banned user: " ~ request.resource);
-	foreach (name, value; request.headers)
+	banLog("Request from banned user matched key: " ~ bannedKey);
+	foreach (name, value; headers)
 		banLog("* %s: %s".format(name, value));
 
 	banLog("Matched on: %s (%s)".format(bannedKey, reason));

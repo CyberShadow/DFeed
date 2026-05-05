@@ -56,7 +56,7 @@ import dfeed.web.web.page : html;
 import dfeed.web.web.part.post : formatPost, postLink;
 import dfeed.web.web.part.strings : formatShortTime, formatDuration;
 import dfeed.web.web.postinfo : getPostInfo, getPost;
-import dfeed.web.web.postmod : shouldModerate, learnModeratedMessage, ModerationReason;
+import dfeed.web.web.postmod : learnModeratedMessage, ModerationReason;
 import dfeed.web.web.request : ip;
 import dfeed.web.web.user : user, userSettings;
 
@@ -386,7 +386,10 @@ string discussionSend(UrlParameters clientVars, Headers headers)
 string postDraft(ref PostDraft draft, Headers headers)
 {
 	auto parent = "parent" in draft.serverVars ? getPost(draft.serverVars["parent"]) : null;
-	auto process = new PostProcess(draft, user, userSettings.id, ip, headers, parent);
+	auto process = new PostProcess(
+		draft, user, userSettings.id, userSettings.secret,
+		ip, headers, parent,
+	);
 	if (process.status == PostingStatus.redirect)
 		return process.pid;
 	process.run();
@@ -395,33 +398,12 @@ string postDraft(ref PostDraft draft, Headers headers)
 	return process.pid;
 }
 
-void moderateMessage(ref PostDraft draft, Headers headers, ModerationReason reason)
+string formatModerationMail(
+	ref PostDraft draft, Headers headers, string ip,
+	ModerationReason reason, string mod)
 {
-	import std.range : chain, only;
-
-	learnModeratedMessage(draft, true, 1);
-	draft.serverVars["headers"] = headers.to!(string[][string]).toJson;
-	draft.status = PostDraft.Status.moderation;
-	saveDraft(draft, Yes.force);
-
+	import std.range : only;
 	string sanitize(string s) { return "%(%s%)".format(s.only)[1..$-1]; }
-
-	try
-	{
-		import std.file : readText;
-		auto badStrings = "config/known-spammers.txt".readText().splitLines;
-		foreach (badString; badStrings)
-			if (badString.length && draft.clientVars.get("text", null).canFind(badString))
-			{
-				import ae.sys.log : fileLogger;
-				auto moderationLog = fileLogger("Deleted");
-				scope(exit) moderationLog.close();
-
-				moderationLog("Silently ignoring known spammer: " ~ draft.clientVars.get("did", "").I!sanitize);
-				return;
-			}
-	}
-	catch (Exception e) {}
 
 	string context;
 	{
@@ -450,7 +432,6 @@ void moderateMessage(ref PostDraft draft, Headers headers, ModerationReason reas
 		context ~= contextURL ? ":\n" ~ contextURL : ".";
 	}
 
-	// Check if moderation is due to ban
 	string unbanSection = reason.kind == ModerationReason.Kind.bannedUser && reason.bannedKey.length
 		? `
 If this user was previously banned and you would like to unban them, you can do so here:
@@ -463,8 +444,7 @@ If this user was previously banned and you would like to unban them, you can do 
 		)
 		: "";
 
-	foreach (mod; site.moderators)
-		sendMail((q"EOF
+	return (q"EOF
 From: %1$s <no-reply@%2$s>
 To: %3$s
 Subject: Please moderate: post by %5$s with subject "%7$s"
@@ -499,22 +479,82 @@ You are receiving this message because you are configured as a site moderator on
 To stop receiving messages like this, please ask the administrator of %1$s to remove you from the list of moderators.
 .
 EOF")
-		.format(
-			/* 1*/ site.name.length ? site.name : site.host,
-			/* 2*/ site.host,
-			/* 3*/ mod,
-			/* 4*/ mod.canFind("<") ? mod.findSplit("<")[0].findSplit(" ")[0] : mod.findSplit("@")[0],
-			/* 5*/ draft.clientVars.get("name", "").I!sanitize,
-			/* 6*/ draft.clientVars.get("email", "").I!sanitize,
-			/* 7*/ draft.clientVars.get("subject", "").I!sanitize,
-			/* 8*/ reason.toString(),
-			/* 9*/ draft.clientVars.get("text", "").strip.splitAsciiLines.map!(line => line.length ? "> " ~ line : ">"),
-			/*10*/ site.proto,
-			/*11*/ draft.clientVars.get("did", "").I!sanitize,
-			/*12*/ ip,
-			/*13*/ context,
-			/*14*/ unbanSection,
-		));
+	.format(
+		/* 1*/ site.name.length ? site.name : site.host,
+		/* 2*/ site.host,
+		/* 3*/ mod,
+		/* 4*/ mod.canFind("<") ? mod.findSplit("<")[0].findSplit(" ")[0] : mod.findSplit("@")[0],
+		/* 5*/ draft.clientVars.get("name", "").I!sanitize,
+		/* 6*/ draft.clientVars.get("email", "").I!sanitize,
+		/* 7*/ draft.clientVars.get("subject", "").I!sanitize,
+		/* 8*/ reason.toString(),
+		/* 9*/ draft.clientVars.get("text", "").strip.splitAsciiLines.map!(line => line.length ? "> " ~ line : ">"),
+		/*10*/ site.proto,
+		/*11*/ draft.clientVars.get("did", "").I!sanitize,
+		/*12*/ ip,
+		/*13*/ context,
+		/*14*/ unbanSection,
+	);
+}
+
+void moderateMessage(ref PostDraft draft, Headers headers, string ip, ModerationReason reason)
+{
+	import std.range : only;
+
+	learnModeratedMessage(draft, true, 1);
+	draft.serverVars["headers"] = headers.to!(string[][string]).toJson;
+	draft.status = PostDraft.Status.moderation;
+	saveDraft(draft, Yes.force);
+
+	string sanitize(string s) { return "%(%s%)".format(s.only)[1..$-1]; }
+
+	try
+	{
+		import std.file : readText;
+		auto badStrings = "config/known-spammers.txt".readText().splitLines;
+		foreach (badString; badStrings)
+			if (badString.length && draft.clientVars.get("text", null).canFind(badString))
+			{
+				import ae.sys.log : fileLogger;
+				auto moderationLog = fileLogger("Deleted");
+				scope(exit) moderationLog.close();
+
+				moderationLog("Silently ignoring known spammer: " ~ draft.clientVars.get("did", "").I!sanitize);
+				return;
+			}
+	}
+	catch (Exception e) {}
+
+	foreach (mod; site.moderators)
+		sendMail(formatModerationMail(draft, headers, ip, reason, mod));
+}
+
+// AC3: formatModerationMail uses the explicit ip parameter, not the module-level
+// global that may belong to a different concurrent request.
+unittest
+{
+	import ae.net.ietf.headers : Headers;
+	import dfeed.web.posting : PostDraft;
+	import dfeed.web.web.postmod : ModerationReason;
+	import dfeed.web.web.request : ip;
+
+	auto savedIp = ip;
+	ip = "9.9.9.9";
+	scope(exit) ip = savedIp;
+
+	PostDraft draft;
+	draft.clientVars["name"] = "Test User";
+	draft.clientVars["email"] = "test@example.com";
+	draft.clientVars["subject"] = "Test Subject";
+	draft.clientVars["text"] = "Test message body";
+	draft.clientVars["did"] = "testdraftid";
+	draft.serverVars["where"] = "test.group";
+
+	auto reason = ModerationReason(ModerationReason.Kind.spam, "99%", null);
+	auto mail = formatModerationMail(draft, Headers.init, "1.2.3.4", reason, "moderator@example.com");
+
+	assert(mail.canFind("1.2.3.4"), "moderation email must contain the poster's IP");
+	assert(!mail.canFind("9.9.9.9"), "moderation email must not contain the global IP");
 }
 
 void discussionPostStatusMessage(string messageHtml)
