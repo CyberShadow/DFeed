@@ -28,6 +28,8 @@
 /site/
 
 # Binaries
+/unittest-runner
+/unittest-obj/
 /dfeed
 /dfeed_web
 /mldownload
