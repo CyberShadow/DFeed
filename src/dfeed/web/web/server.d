@@ -21,6 +21,7 @@ import std.functional : toDelegate;
 
 import dfeed.web.moderation : loadBanList;
 import dfeed.web.web.config;
+import dfeed.web.web.draft : startDraftCleanup;
 import dfeed.web.web.perf;
 import dfeed.web.web.request : onRequest;
 
@@ -37,6 +38,8 @@ void startWebUI()
 	static if (measurePerformance) perfLog = createLogger("Performance");
 
 	loadBanList();
+
+	startDraftCleanup();
 
 	server = new HttpServer();
 	server.log = log;

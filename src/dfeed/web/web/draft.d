@@ -19,15 +19,21 @@ module dfeed.web.web.draft;
 
 import std.conv : to;
 import std.datetime.systime : Clock;
+import std.format : format;
 import std.typecons : Flag, No;
+
+import core.time : days, minutes;
 
 import ae.net.ietf.headers : Headers;
 import ae.net.ietf.url : UrlParameters;
+import ae.net.shutdown : addShutdownHandler;
+import ae.sys.log : Logger, createLogger;
+import ae.sys.timing : setInterval;
 import ae.utils.json : toJson, jsonParse;
 import ae.utils.text : randomString;
 
 import dfeed.loc;
-import dfeed.database : query;
+import dfeed.database : query, db;
 import dfeed.groups : GroupInfo;
 import dfeed.message : Rfc850Post, isMarkdown;
 import dfeed.web.posting : PostDraft, PostProcess;
@@ -144,4 +150,57 @@ Rfc850Post draftToPost(PostDraft draft, Headers headers = Headers.init, string i
 {
 	auto parent = "parent" in draft.serverVars ? getPost(draft.serverVars["parent"]) : null;
 	return PostProcess.createPost(draft, headers, ip, parent);
+}
+
+// ***************************************************************************
+
+/// Collection of abandoned reserved drafts.
+///
+/// A `reserved` draft is a placeholder row created the moment a posting form
+/// is opened (`newPostDraft` / `newReplyDraft`), before the user has entered
+/// anything. It is promoted to `edited` as soon as the client auto-saves
+/// (`autoSaveDraft`). A reserved draft that is never edited is therefore an
+/// abandoned form-open - most commonly a crawler following a /reply or
+/// /newpost link - and, for replies, it holds a full copy of the quoted parent
+/// post. Without collection these accumulate without bound.
+
+/// Reserved drafts younger than this are kept, to leave room for a human to
+/// fill in and auto-save the form they just opened.
+private enum reservedDraftLifetime = 1.days;
+
+/// How often to run a collection batch.
+private enum draftPurgeInterval = 1.minutes;
+
+/// Maximum reserved drafts deleted per batch. Bounded to keep each
+/// transaction - and the resulting WAL / copy-on-write churn - small.
+private enum draftPurgeBatchSize = 4096;
+
+private Logger draftLog;
+
+/// Schedule periodic collection of abandoned reserved drafts.
+void startDraftCleanup()
+{
+	draftLog = createLogger("DraftCleanup");
+	auto timer = setInterval(() => purgeReservedDraftsBatch(), draftPurgeInterval);
+	addShutdownHandler((scope const(char)[] reason){ timer.cancel(); });
+}
+
+private void purgeReservedDraftsBatch()
+{
+	auto threshold = (Clock.currTime - reservedDraftLifetime).stdTime;
+	try
+	{
+		// The sub-select stops at LIMIT matches, so no full table scan while a
+		// backlog of reserved drafts exists. The outer DELETE uses the [DraftID]
+		// unique index.
+		query!"DELETE FROM [Drafts] WHERE [ID] IN (SELECT [ID] FROM [Drafts] WHERE [Status] = ? AND [Time] < ? LIMIT ?)"
+			.exec(int(PostDraft.Status.reserved), threshold, draftPurgeBatchSize);
+		auto deleted = db.changes;
+		if (deleted)
+			draftLog(format("Collected %d abandoned reserved draft(s).", deleted));
+	}
+	catch (Exception e)
+		// Maintenance must never take down the web server (e.g. a transient
+		// "disk full" while snapshots pin the old extents). Log and retry next tick.
+		draftLog(format("Draft collection failed: %s", e.msg));
 }
