@@ -42,7 +42,6 @@ import ae.utils.sini : loadIni;
 import dfeed.paths : resolveSiteFile;
 import ae.utils.text : splitAsciiLines, asciiStrip;
 
-import dfeed.common : handleModeration;
 import dfeed.database : query;
 import dfeed.groups : getGroupInfo;
 import dfeed.message : Rfc850Post;
@@ -186,7 +185,6 @@ void moderatePost(
 	Flag!"deleteLocally" deleteLocally,
 	Flag!"ban" ban,
 	Flag!"deleteSource" deleteSource,
-	Flag!"callSinks" callSinks,
 	void delegate(string) feedbackCallback,
 )
 {
@@ -217,11 +215,6 @@ void moderatePost(
 	{
 		banPoster(userName, post.id, reason);
 		feedback("User banned.");
-	}
-
-	if (callSinks)
-	{
-		handleModeration(post, ban);
 	}
 
 	if (deleteSource)

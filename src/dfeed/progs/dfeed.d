@@ -43,7 +43,6 @@ import dfeed.sources.web.stackoverflow;
 import dfeed.sinks.irc;
 import dfeed.sinks.messagedb;
 import dfeed.sinks.subscriptions;
-import dfeed.sinks.twitter;
 import dfeed.web.posting;
 
 bool noDownload;
@@ -80,7 +79,6 @@ void main(string[] args)
 	new MessageDBSink(refresh ? Yes.update : No.update);
 	new PostingNotifySink();
 	new SubscriptionSink();
-	createServices!TwitterSink("sinks/twitter");
 
 	// Start web server
 	startWebUI();

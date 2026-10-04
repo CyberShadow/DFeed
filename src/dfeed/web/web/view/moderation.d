@@ -706,11 +706,6 @@ void discussionModeration(Rfc850Post post, UrlParameters postVars)
 					`</label><br>`
 				: ``,
 
-				`<input type="checkbox" name="callsinks" value="Yes" checked id="deleteform-sinks"></input>` ~
-				`<label for="deleteform-sinks">` ~
-					_!`Try to moderate in other message sinks (e.g. Twitter)` ~
-				`</label><br>`,
-
 				_!`Reason:`, ` <input name="reason" value="spam"></input><br>` ~
 				`<input type="submit" value="`, _!`Moderate`, `"></input>` ~
 			`</form>`
@@ -727,7 +722,6 @@ void discussionModeration(Rfc850Post post, UrlParameters postVars)
 		bool deleteLocally = postVars.get("delete"   , "No") == "Yes";
 		bool ban           = postVars.get("ban"      , "No") == "Yes";
 		bool delSource     = postVars.get("delsource", "No") == "Yes";
-		bool callSinks     = postVars.get("callsinks", "No") == "Yes";
 
 		if (deleteLocally || ban || delSource)
 			moderatePost(
@@ -737,7 +731,6 @@ void discussionModeration(Rfc850Post post, UrlParameters postVars)
 				deleteLocally ? Yes.deleteLocally : No.deleteLocally,
 				ban           ? Yes.ban           : No.ban          ,
 				delSource     ? Yes.deleteSource  : No.deleteSource ,
-				callSinks     ? Yes.callSinks     : No.callSinks    ,
 				(string s) { html.put(encodeHtmlEntities(s) ~ "<br>"); },
 			);
 		else
@@ -827,7 +820,6 @@ void deletePostApi(string group, int artNum)
 		Yes.deleteLocally,
 		No.ban,
 		No.deleteSource,
-		Yes.callSinks,
 		(string s) { html.put(s ~ "\n"); },
 	);
 }

@@ -1042,8 +1042,6 @@ string translate(string s)
 			return `Hiçbir gönderi formu gönderilmedi. Lütfen gönderi formuna geri dönmek için web tarayıcınızda "Geri" düğmesini tıklayın ve yeniden gönderin.`;
 		case `Unban by key`:
 			return `Anahtara göre yasağı kaldır`;
-		case `Try to moderate in other message sinks (e.g. Twitter)`:
-			return `Diğer mesaj havuzlarında denetlemeyi deneyin (örn. Twitter)`;
 		case `The specified key is not banned.`:
 			return `Belirtilen anahtar yasaklanmamış.`;
 		case `Key to unban:`:

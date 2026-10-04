@@ -46,7 +46,7 @@ sinkName=example
 subscriptionRequired=true
 
 # Whether new threads in the post are considered very important, and
-# will be announced to e.g. Twitter (if configured).
+# will be announced to e.g. IRC (if configured).
 announce=false
 
 # CAPTCHA mechanism to use for challenging users who post
